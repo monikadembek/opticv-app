@@ -36,10 +36,10 @@ describe('Home', () => {
     expect(button).not.toBeNull();
   });
 
-  it('should render the Create account button', () => {
+  it('should render the Sign In account button', () => {
     fixture.detectChanges();
     const button = fixture.nativeElement.querySelector(
-      'p-button[label="Create account"]',
+      'p-button[label="Sign In"]',
     );
     expect(button).not.toBeNull();
   });
@@ -50,7 +50,9 @@ describe('Home', () => {
     expect(navigateSpy).toHaveBeenCalledWith(['optimize-cv']);
   });
 
-  it('signUp should not throw', () => {
-    expect(() => component.signUp()).not.toThrow();
+  it('should navigate to login when signIn is called', () => {
+    const navigateSpy = vi.spyOn(router, 'navigate');
+    component.signIn();
+    expect(navigateSpy).toHaveBeenCalledWith(['login']);
   });
 });

@@ -17,6 +17,6 @@ export class Home {
   }
 
   signIn(): void {
-    // go to sign up
+    this.router.navigate(['login']);
   }
 }

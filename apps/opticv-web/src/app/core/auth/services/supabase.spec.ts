@@ -115,7 +115,7 @@ describe('Supabase service', () => {
 
       expect(mockAuth.signInWithOtp).toHaveBeenCalledWith({
         email: 'user@example.com',
-        options: { shouldCreateUser: false },
+        options: { shouldCreateUser: true },
       });
     });
   });
