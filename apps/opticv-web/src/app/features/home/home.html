@@ -1,0 +1,54 @@
+<div>
+  <section
+    class="hero main-container mt-10 pb-20 flex flex-col md:flex-row relative"
+  >
+    <div class="green-row hidden md:block"></div>
+    <div class="hero__content mb-10 sm:mb-5 md:mb-4 z-2 flex-1">
+      <div class="md:mt-5 py-2 bg-green">
+        <h1 class="heading-1 responsive-horizontal-padding text-white">
+          CV Online
+        </h1>
+      </div>
+
+      <div class="py-2">
+        <h2 class="heading-2 responsive-horizontal-padding text-green">
+          Create CV, <br />
+          which will pass ATS requirements <br />
+          and get your dream job!
+        </h2>
+      </div>
+
+      <div class="responsive-horizontal-padding py-4 mb-4 md:mb-8">
+        <p>
+          With the help of AI, optimize your CV for ATS systems and match it to
+          a specific job posting.
+        </p>
+      </div>
+
+      <div class="block md:hidden">
+        <img
+          src="/images/hero-image.png"
+          alt="girl sitting with laptop happy with her hands up"
+          class="hero__image"
+        />
+      </div>
+
+      <div class="hero__buttons responsive-horizontal-padding flex gap-4 mt-8">
+        <p-button label="Optimize CV" (onClick)="goToCreator()"></p-button>
+        <p-button label="Create account" (onClick)="signUp()"></p-button>
+      </div>
+    </div>
+    <div
+      class="hidden md:block responsive-horizontal-padding z-2 relative flex-1"
+    >
+      <img
+        src="/images/hero-image.png"
+        alt="girl sitting with laptop happy with her hands up"
+        class="hero__image"
+      />
+      <div class="circle-solid"></div>
+      <div class="circle-wavy circle-wavy--top"></div>
+      <div class="circle-wavy circle-wavy--bottom"></div>
+    </div>
+  </section>
+</div>

@@ -1,3 +1,118 @@
 /* You can add global styles to this file, and also import other style files */
 @import 'tailwindcss';
 @import 'primeicons/primeicons.css';
+
+@import './assets/css/colors.css';
+@import './assets/css/layout.css';
+@import './assets/css/typography.css';
+
+@theme {
+  --color-primary: #059669;
+  --color-lime: #d7e506;
+  --color-light-yellow: #fdffde;
+  --color-green-light: #10b981;
+}
+
+@font-face {
+  font-family: 'Montserrat';
+  src: url('/fonts/Montserrat/Montserrat-VariableFont_wght.ttf');
+  font-style: normal;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  text-wrap: balance;
+}
+
+body {
+  /* 3. Add accessible line-height */
+  line-height: 1.5;
+  /* 4. Improve text rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: Lato, sans-serif;
+  color: var(--text-color);
+  font-size: 16px;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+a:link {
+  color: inherit;
+}
+
+a:visited {
+  color: inherit;
+}
+
+a:focus {
+  color: var(--primary-color);
+}
+
+a:hover {
+  color: var(--primary-color);
+}
+
+a:active {
+  color: var(--primary-color);
+}
+
+.heading-1 {
+  font-family: Montserrat, Verdana, Geneva, Tahoma, sans-serif;
+  font-size: 2.2rem;
+  font-weight: 600;
+}
+
+.heading-2 {
+  font-family: Montserrat, Verdana, Geneva, Tahoma, sans-serif;
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 2.4rem;
+}
+
+.main-container {
+  max-width: 1440px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.responsive-horizontal-padding {
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+@media screen and (min-width: 768px) {
+  .responsive-horizontal-padding {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+@media screen and (min-width: 1024px) {
+  .responsive-horizontal-padding {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
+}
+@media screen and (min-width: 1280px) {
+  .responsive-horizontal-padding {
+    padding-left: 5rem;
+    padding-right: 5rem;
+  }
+}
+
+/* Global styles */
+.p-component {
+  font-family: var(--font-family);
+}

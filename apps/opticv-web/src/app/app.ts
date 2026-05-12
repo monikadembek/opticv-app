@@ -1,12 +1,20 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { TopHeader } from './layout/top-header/top-header';
+import { Footer } from './layout/footer/footer';
 
 @Component({
-  imports: [RouterModule],
+  imports: [RouterModule, TopHeader, Footer],
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
-  protected title = 'opticv-web';
+  userLabel = signal('U');
+  isUserLoggedIn = signal(false);
+
+  executeSignOut() {
+    // user log out
+  }
 }

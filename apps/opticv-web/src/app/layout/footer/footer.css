@@ -1,0 +1,34 @@
+.icon {
+  width: 24px;
+  height: 24px;
+  fill: var(--white);
+}
+
+.main-footer {
+  display: flex;
+  align-items: center;
+  background-color: var(--p-emerald-700);
+}
+
+.footer-container {
+  width: 100vw;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+@media screen and (min-width: 768px) {
+  .footer-container {
+    padding: 0 30px;
+  }
+}
+@media screen and (min-width: 1024px) {
+  .footer-container {
+    padding: 0 40px;
+  }
+}
+@media screen and (min-width: 1280px) {
+  .footer-container {
+    padding: 0 80px;
+  }
+}

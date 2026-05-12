@@ -5,3 +5,12 @@
 /.nx/workspace-data
 .nx/self-healing
 .angular
+
+# AI/editor tooling directories
+.agents
+.claude
+.cursor
+.gemini
+.opencode
+.github/skills
+README.md

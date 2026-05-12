@@ -1,0 +1,75 @@
+.hero__heading-container {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.hero__image {
+  max-width: 644px;
+  width: 90%;
+  height: auto;
+  margin: 0 auto;
+
+  @media screen and (width > var(--lg)) {
+    height: 450px;
+    width: auto;
+  }
+}
+
+.bg-green {
+  background: var(--primary-color);
+}
+
+.bg-yellow {
+  background: var(--light-yellow);
+}
+
+.text-white {
+  color: var(--white);
+}
+
+.text-green {
+  color: var(--primary-color);
+}
+
+.button-outlined ::ng-deep .p-button {
+  border: 2px solid var(--primary-color) !important;
+}
+
+.green-row {
+  width: 100%;
+  height: 69px;
+  z-index: 1;
+  position: absolute;
+  top: 20px;
+  background: var(--primary-color);
+}
+
+.circle-solid {
+  width: 4.5rem;
+  height: 4.5rem;
+  background-color: var(--lime);
+  border-radius: 50%;
+  position: absolute;
+  top: 26%;
+  left: 20%;
+}
+
+.circle-wavy {
+  width: 6rem;
+  height: 6rem;
+  background-color: transparent;
+  background-image: url('/images/circle-wavy.png');
+  background-position: center center;
+  border-radius: 50%;
+  position: absolute;
+}
+
+.circle-wavy--top {
+  top: 10%;
+  left: 12%;
+}
+
+.circle-wavy--bottom {
+  bottom: 10%;
+  left: -5%;
+}
