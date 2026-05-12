@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compileOnSave": false,
+  "files": [],
+  "references": [
+    {
+      "path": "./apps/opticv-be-e2e"
+    },
+    {
+      "path": "./apps/opticv-be"
+    },
+    {
+      "path": "./packages/shared/datatypes"
+    },
+    {
+      "path": "./apps/opticv-web-e2e"
+    },
+    {
+      "path": "./apps/opticv-web"
+    }
+  ]
+}
