@@ -2,13 +2,12 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 
-
 @Component({
   selector: 'app-home',
   imports: [ButtonModule],
   templateUrl: './home.html',
   styleUrl: './home.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Home {
   private router = inject(Router);
