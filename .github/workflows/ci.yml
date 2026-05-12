@@ -34,4 +34,4 @@ jobs:
       - run: npm ci
 
       - run: npx nx format:check
-      - run: npx nx run-many -t lint test build typecheck e2e-ci
+      - run: npx nx run-many -t lint test build typecheck e2e
