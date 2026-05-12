@@ -16,7 +16,7 @@ export class Home {
     this.router.navigate(['optimize-cv']);
   }
 
-  signUp(): void {
+  signIn(): void {
     // go to sign up
   }
 }
