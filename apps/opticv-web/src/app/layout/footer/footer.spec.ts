@@ -27,11 +27,15 @@ describe('Footer', () => {
   });
 
   it('should display copyright text', () => {
-    expect(fixture.nativeElement.textContent).toContain('2026 Opti CV. All rights reserved.');
+    expect(fixture.nativeElement.textContent).toContain(
+      '2026 Opti CV. All rights reserved.',
+    );
   });
 
   it('should render a Facebook link', () => {
-    const link = fixture.debugElement.query(By.css('a[href="https://www.facebook.com"]'));
+    const link = fixture.debugElement.query(
+      By.css('a[href="https://www.facebook.com"]'),
+    );
     expect(link).toBeTruthy();
   });
 

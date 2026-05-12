@@ -30,13 +30,17 @@ describe('Home', () => {
 
   it('should render the Optimize CV button', () => {
     fixture.detectChanges();
-    const button = fixture.nativeElement.querySelector('p-button[label="Optimize CV"]');
+    const button = fixture.nativeElement.querySelector(
+      'p-button[label="Optimize CV"]',
+    );
     expect(button).not.toBeNull();
   });
 
   it('should render the Create account button', () => {
     fixture.detectChanges();
-    const button = fixture.nativeElement.querySelector('p-button[label="Create account"]');
+    const button = fixture.nativeElement.querySelector(
+      'p-button[label="Create account"]',
+    );
     expect(button).not.toBeNull();
   });
 
