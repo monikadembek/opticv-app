@@ -1,0 +1,91 @@
+.header {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100vw;
+  height: 80px;
+  background: var(--white);
+  border-bottom: 1px solid var(--color-green-light);
+  z-index: 101;
+}
+
+.header-container {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+@media screen and (min-width: 768px) {
+  .header-container {
+    padding: 0 30px;
+  }
+}
+@media screen and (min-width: 1024px) {
+  .header-container {
+    padding: 0 40px;
+  }
+}
+@media screen and (min-width: 1280px) {
+  .header-container {
+    padding: 0 80px;
+  }
+}
+
+::ng-deep .p-menubar-start {
+  margin-right: auto;
+}
+
+p-menubar {
+  width: 100%;
+}
+
+.header ::ng-deep .p-menubar.top-menubar {
+  background: var(--white);
+}
+
+::ng-deep .p-menubar.top-menubar {
+  padding: 0 !important;
+  border: none;
+}
+
+::ng-deep .top-menubar .p-menubar-end {
+  margin-left: 0 !important;
+}
+
+.logo {
+  font-size: 1.8rem;
+  color: var(--primary-color);
+  font-family: Lato, sans-serif;
+  font-weight: 900;
+  transition: all 0.3s;
+}
+
+.logo:hover {
+  color: var(--color-green-light);
+}
+
+::ng-deep .p-menubar {
+  background: var(--white);
+}
+
+::ng-deep .p-menubar-mobile .p-menubar-root-list {
+  z-index: 200;
+}
+
+/* Basic container positioning */
+.user-menu-container {
+  position: relative;
+}
+
+/* Basic styling for menu visibility */
+::ng-deep .p-menu {
+  display: block !important;
+  min-width: 200px;
+}
+
+/* Remove any transform that might interfere with positioning */
+::ng-deep .p-menu-overlay {
+  transform: none !important;
+}

@@ -1,0 +1,17 @@
+:root {
+  /* --black: #262626; */
+  --black: #404040;
+  --white: #fff;
+  --lime: #d7e506;
+  --green: #298f3d;
+  --light-yellow: #fdffde;
+
+  --color-green-light: #10b981;
+  --green: #059669;
+
+  --primary-color: var(--green);
+  --secondary-color: var(--lime);
+
+  --text-color: #242c27;
+  --text-grey-color: #71717b;
+}

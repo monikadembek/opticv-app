@@ -1,0 +1,34 @@
+<header class="header">
+  <div class="header-container">
+    <p-menubar [model]="items" class="top-menubar">
+      <ng-template #start>
+        <div>
+          <a routerLink="/" class="logo">Opti CV</a>
+        </div>
+      </ng-template>
+      <ng-template #item let-item let-root="root">
+        <a [routerLink]="item.route" routerLinkActive="active" class="p-menubar-item-link">
+          {{ item.label }}
+        </a>
+    </ng-template>
+      <ng-template #end>
+        <div class="flex items-center gap-4">
+        @if(!isLoggedIn()) {
+        <p-button
+          label="Sign In"
+          size="small"
+          (onClick)="navigateToLoginPage()"
+        ></p-button>
+        } @else {
+          <p-avatar [label]="userLabel()" class="mr-2" [style]="{ 'background-color': '#10b981', color: '#ffffff' }" shape="circle" />
+          <p-button
+            label="Sign Out"
+            size="small"
+            (onClick)="emitSignOut()"
+          ></p-button>
+        }
+        </div>
+      </ng-template>
+    </p-menubar>
+  </div>
+</header>
