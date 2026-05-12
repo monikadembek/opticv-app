@@ -2,7 +2,10 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
+    "rootDir": "./src",
     "composite": false,
+    "declaration": false,
+    "declarationMap": false,
     "emitDeclarationOnly": false,
     "types": ["vitest/globals"]
   },
