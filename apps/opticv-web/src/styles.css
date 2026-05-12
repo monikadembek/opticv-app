@@ -13,51 +13,16 @@
   --color-green-light: #10b981;
 }
 
-/* 1. Use a more-intuitive box-sizing model */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+@font-face {
+  font-family: 'Montserrat';
+  src: url('/fonts/Montserrat/Montserrat-VariableFont_wght.ttf');
+  font-style: normal;
 }
 
-/* 2. Remove default margin */
-* {
-  margin: 0;
-}
-
-/* 5. Improve media defaults */
-img,
-picture,
-video,
-canvas,
-svg {
-  display: block;
-  max-width: 100%;
-}
-
-/* 6. Inherit fonts for form controls */
-input,
-button,
-textarea,
-select {
-  font: inherit;
-}
-
-/* 7. Avoid text overflows */
-p,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  overflow-wrap: break-word;
-}
-
-/* 8. Improve line wrapping */
 p {
   text-wrap: pretty;
 }
+
 h1,
 h2,
 h3,
@@ -65,14 +30,6 @@ h4,
 h5,
 h6 {
   text-wrap: balance;
-}
-
-/*
-  9. Create a root stacking context
-*/
-#root,
-#__next {
-  isolation: isolate;
 }
 
 body {
@@ -111,10 +68,24 @@ a:active {
   color: var(--primary-color);
 }
 
+.heading-1 {
+  font-family: Montserrat, Verdana, Geneva, Tahoma, sans-serif;
+  font-size: 2.2rem;
+  font-weight: 600;
+}
+
+.heading-2 {
+  font-family: Montserrat, Verdana, Geneva, Tahoma, sans-serif;
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 2.4rem;
+}
+
 .main-container {
   max-width: 1440px;
   width: 100%;
-  margin: 0 auto;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .responsive-horizontal-padding {
