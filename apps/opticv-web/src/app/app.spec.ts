@@ -1,9 +1,11 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { App } from './app';
 import { TopHeader } from './layout/top-header/top-header';
 import { Footer } from './layout/footer/footer';
+import { Supabase } from './core/auth/services/supabase';
+import { ToastModule } from 'primeng/toast';
 
 @Component({ selector: 'app-top-header', template: '', standalone: true })
 class TopHeaderStub {
@@ -15,15 +17,35 @@ class TopHeaderStub {
 @Component({ selector: 'app-footer', template: '', standalone: true })
 class FooterStub {}
 
+@Component({ selector: 'p-toast', template: '', standalone: true })
+class ToastStub {}
+
+const mockSession = { user: { email: 'test@example.com' } } as any;
+
+function createSupabaseMock(sessionValue: any = null, userValue: any = null) {
+  return {
+    currentSession: signal(sessionValue).asReadonly(),
+    currentUser: signal(userValue).asReadonly(),
+    signOut: vi.fn().mockResolvedValue(undefined),
+  };
+}
+
 describe('App', () => {
+  let supabaseMock: ReturnType<typeof createSupabaseMock>;
+
   beforeEach(async () => {
+    supabaseMock = createSupabaseMock();
+
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        { provide: Supabase, useValue: supabaseMock },
+      ],
     })
       .overrideComponent(App, {
-        remove: { imports: [TopHeader, Footer] },
-        add: { imports: [TopHeaderStub, FooterStub] },
+        remove: { imports: [TopHeader, Footer, ToastModule] },
+        add: { imports: [TopHeaderStub, FooterStub, ToastStub] },
       })
       .compileComponents();
   });
@@ -33,14 +55,28 @@ describe('App', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should initialize userLabel signal to "U"', () => {
+  it('should initialize userLabel signal to "U" when no user is logged in', () => {
     const fixture = TestBed.createComponent(App);
     expect(fixture.componentInstance.userLabel()).toBe('U');
   });
 
-  it('should initialize isUserLoggedIn signal to false', () => {
+  it('should initialize isUserLoggedIn signal to false when no session exists', () => {
     const fixture = TestBed.createComponent(App);
     expect(fixture.componentInstance.isUserLoggedIn()).toBe(false);
+  });
+
+  it('should set isUserLoggedIn to true when a session exists', async () => {
+    supabaseMock = createSupabaseMock(mockSession, mockSession.user);
+    await TestBed.overrideProvider(Supabase, { useValue: supabaseMock });
+    const fixture = TestBed.createComponent(App);
+    expect(fixture.componentInstance.isUserLoggedIn()).toBe(true);
+  });
+
+  it('should derive userLabel from the current user email initial', async () => {
+    supabaseMock = createSupabaseMock(mockSession, mockSession.user);
+    await TestBed.overrideProvider(Supabase, { useValue: supabaseMock });
+    const fixture = TestBed.createComponent(App);
+    expect(fixture.componentInstance.userLabel()).toBe('T');
   });
 
   it('should render app-top-header', async () => {
@@ -61,15 +97,14 @@ describe('App', () => {
     expect(fixture.nativeElement.querySelector('app-footer')).toBeTruthy();
   });
 
-  it('should pass isUserLoggedIn false to top-header by default', async () => {
+  it('executeSignOut should call supabase signOut and navigate to login', async () => {
     const fixture = TestBed.createComponent(App);
-    await fixture.whenStable();
-    fixture.detectChanges();
-    expect(fixture.componentInstance.isUserLoggedIn()).toBe(false);
-  });
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate');
 
-  it('executeSignOut should not throw', () => {
-    const fixture = TestBed.createComponent(App);
-    expect(() => fixture.componentInstance.executeSignOut()).not.toThrow();
+    await fixture.componentInstance.executeSignOut();
+
+    expect(supabaseMock.signOut).toHaveBeenCalled();
+    expect(navigateSpy).toHaveBeenCalledWith(['login']);
   });
 });

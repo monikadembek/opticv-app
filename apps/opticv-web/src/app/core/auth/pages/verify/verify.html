@@ -1,0 +1,42 @@
+<div class="container">
+  <div class="w-100 p-6 text-center border border-gray-300 rounded-md">
+    <h1 class="text-xl font-bold mb-10">OTP Verification Code</h1>
+    <form
+      #otpForm="ngForm"
+      (ngSubmit)="onSubmit(otpForm)"
+      class="flex flex-col gap-5"
+    >
+      <div
+        class="flex flex-col gap-4 justify-center items-center w-full sm:w-56 m-auto"
+      >
+        <p-inputotp
+          #otpModel="ngModel"
+          [(ngModel)]="code"
+          [invalid]="otpModel.invalid && (otpModel.touched || otpForm.submitted)"
+          name="code"
+          required
+          [length]="6"
+          [integerOnly]="true"
+          class="mb-2"
+        />
+        @if (otpModel.invalid && otpModel.dirty) {
+        <p-message severity="error" size="small" variant="simple"
+          >Passcode is required.</p-message
+        >
+        }
+      </div>
+      <button pButton severity="success" type="submit">
+        <span pButtonLabel>Submit</span>
+      </button>
+    </form>
+    @if(errorMessage()) {
+    <p-message
+      severity="error"
+      size="small"
+      variant="simple"
+      class="m-auto mt-8 text-center flex justify-center"
+      >{{errorMessage()}}</p-message
+    >
+    }
+  </div>
+</div>

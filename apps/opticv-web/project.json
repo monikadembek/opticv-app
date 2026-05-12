@@ -59,6 +59,10 @@
         },
         "development": {
           "buildTarget": "opticv-web:build:development"
+        },
+        "no-ssr": {
+          "buildTarget": "opticv-web:build:development",
+          "ssr": false
         }
       },
       "defaultConfiguration": "development"
