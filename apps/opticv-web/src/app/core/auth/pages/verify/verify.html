@@ -25,7 +25,12 @@
         >
         }
       </div>
-      <button pButton severity="success" type="submit">
+      <button
+        pButton
+        severity="success"
+        type="submit"
+        [loading]="isSubmitting()"
+      >
         <span pButtonLabel>Submit</span>
       </button>
     </form>

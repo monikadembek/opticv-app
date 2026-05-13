@@ -35,9 +35,11 @@ export class Login {
 
   email = '';
   readonly errorMessage = signal('');
+  readonly isSubmitting = signal(false);
 
   async onSubmit(loginForm: NgForm) {
     this.errorMessage.set('');
+    this.isSubmitting.set(true);
     const { email } = loginForm.form.value;
 
     if (loginForm.valid && email.length > 0) {
@@ -56,6 +58,7 @@ export class Login {
       if (error) {
         console.log(error);
         this.errorMessage.set('Error during sign in process');
+        this.isSubmitting.set(false);
       }
     }
   }
