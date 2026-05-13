@@ -37,6 +37,7 @@
         pButton
         severity="success"
         type="submit"
+        [loading]="isSubmitting()"
         [disabled]="loginForm.invalid || loginForm.untouched"
       >
         <span pButtonLabel>Sign in</span>
