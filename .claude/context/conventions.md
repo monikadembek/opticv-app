@@ -64,7 +64,7 @@ Passwordless authentication via Supabase email OTP (6-digit code).
 
 ---
 
-## Angular Best Practices
+## Angular Best Practices - to be followed for frontend app opticv-web:
 
 - Always use standalone components over NgModules
 - Must NOT set `standalone: true` inside Angular decorators. It's the default in Angular v20+.
@@ -74,12 +74,12 @@ Passwordless authentication via Supabase email OTP (6-digit code).
 - Use `NgOptimizedImage` for all static images.
   - `NgOptimizedImage` does not work for inline base64 images.
 
-## Accessibility Requirements
+### 1. Accessibility Requirements
 
 - It MUST pass all AXE checks.
 - It MUST follow all WCAG AA minimums, including focus management, color contrast, and ARIA attributes.
 
-### Components
+### 2. Components
 
 - Keep components small and focused on a single responsibility
 - Use `input()` and `output()` functions instead of decorators
@@ -91,7 +91,7 @@ Passwordless authentication via Supabase email OTP (6-digit code).
 - Do NOT use `ngStyle`, use `style` bindings instead
 - When using external templates/styles, use paths relative to the component TS file.
 
-## State Management
+### 3. State Management
 
 - Use ngrx signals store for state shared among features or components
 - Use signals for local component state
@@ -99,14 +99,14 @@ Passwordless authentication via Supabase email OTP (6-digit code).
 - Keep state transformations pure and predictable
 - Do NOT use `mutate` on signals, use `update` or `set` instead
 
-## Templates
+### 4. Templates
 
 - Keep templates simple and avoid complex logic
 - Use native control flow (`@if`, `@for`, `@switch`) instead of `*ngIf`, `*ngFor`, `*ngSwitch`
 - Use the async pipe to handle observables
 - Do not assume globals like (`new Date()`) are available.
 
-## Services
+### 5. Services
 
 - Design services around a single responsibility
 - Use the `providedIn: 'root'` option for singleton services
