@@ -10,6 +10,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
+OptiCV App – application which will help users to optimize their CV with AI
+
 This is an **Nx monorepo** with three main projects:
 
 - `opticv-web` — Angular 21 frontend (standalone components, SSR, PrimeNG UI, Supabase auth)
@@ -138,6 +140,7 @@ packages/
 The app uses **passwordless OTP authentication** via Supabase — no passwords, no backend auth module.
 
 **Flow:**
+
 1. User submits email on `/login` → `SupabaseService.signInWithOtp()` sends a 6-digit code to that email
 2. User enters the code on `/verify` → `SupabaseService.verifyOtp()` validates it and establishes a Supabase session
 3. Session token is persisted in the Supabase client and attached to every outgoing HTTP request by `AuthInterceptor`
@@ -146,16 +149,17 @@ The app uses **passwordless OTP authentication** via Supabase — no passwords, 
 
 **Frontend files (all under `apps/opticv-web/src/app/core/auth/`):**
 
-| Path | Purpose |
-|---|---|
-| `services/supabase.ts` | `SupabaseService` — wraps Supabase client; exposes `user` and `session` signals, `signInWithOtp()`, `verifyOtp()`, `signOut()` |
-| `guards/auth-guard.ts` | `CanActivateFn` — redirects to `/login` when no session |
-| `guards/guest-guard.ts` | `CanActivateFn` — redirects authenticated users away from login/verify pages |
-| `pages/login/login.ts` | Email input page; initiates OTP flow |
-| `pages/verify/verify.ts` | OTP input page (PrimeNG `InputOtp`, 6 digits); completes sign-in |
-| `interceptors/auth-interceptor.ts` | Attaches `Authorization: Bearer <token>` to all HTTP requests |
+| Path                               | Purpose                                                                                                                        |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `services/supabase.ts`             | `SupabaseService` — wraps Supabase client; exposes `user` and `session` signals, `signInWithOtp()`, `verifyOtp()`, `signOut()` |
+| `guards/auth-guard.ts`             | `CanActivateFn` — redirects to `/login` when no session                                                                        |
+| `guards/guest-guard.ts`            | `CanActivateFn` — redirects authenticated users away from login/verify pages                                                   |
+| `pages/login/login.ts`             | Email input page; initiates OTP flow                                                                                           |
+| `pages/verify/verify.ts`           | OTP input page (PrimeNG `InputOtp`, 6 digits); completes sign-in                                                               |
+| `interceptors/auth-interceptor.ts` | Attaches `Authorization: Bearer <token>` to all HTTP requests                                                                  |
 
 **Configuration:**
+
 - Supabase URL and anon key are set in `apps/opticv-web/src/environments/environment.ts`
 - `AuthInterceptor` is registered globally in `app.config.ts`
 - Routes for login and verify use `guestGuard`; protected routes use `authGuard` (see `app.routes.ts`)

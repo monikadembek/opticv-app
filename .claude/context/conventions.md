@@ -1,5 +1,7 @@
 ## Project Overview
 
+OptiCV App – application which will help users to optimize their CV with AI
+
 This is an **Nx monorepo** with three main projects:
 
 - `web-ng-app` — Angular 21 frontend (standalone components, SSR, PrimeNG UI, Supabase auth)
