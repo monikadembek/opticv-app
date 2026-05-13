@@ -25,6 +25,7 @@ export class Verify implements OnInit {
   private readonly router = inject(Router);
 
   readonly errorMessage = signal('');
+  readonly isSubmitting = signal(false);
   code = '';
   readonly isEmailPending = computed(() => !!this.supabase.pendingEmail());
 
@@ -36,6 +37,7 @@ export class Verify implements OnInit {
 
   async onSubmit(form: NgForm) {
     this.errorMessage.set('');
+    this.isSubmitting.set(true);
     const { code } = form.form.value;
 
     if (form.valid) {
@@ -55,6 +57,7 @@ export class Verify implements OnInit {
       if (error) {
         console.log(error);
         this.errorMessage.set('Error during sign in process');
+        this.isSubmitting.set(false);
       }
     }
   }
