@@ -24,7 +24,6 @@ export class UsersController {
 
   @Post('sync')
   @HttpCode(HttpStatus.OK)
-  @UsePipes(new ValidationPipe({ whitelist: true }))
   async sync(
     @Headers('x-webhook-secret') webhookSecret: string | undefined,
     @Body() body: WebhookPayloadDto,
@@ -50,7 +49,7 @@ export class UsersController {
       email: body.record.email,
     });
 
-    Logger.log('New user created: ', upsertUser.email);
+    Logger.log('New user created: ', upsertUser.id);
 
     return { received: true };
   }
