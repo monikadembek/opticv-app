@@ -1,13 +1,198 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  output = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum SubscriptionTier {
+  FREE
+  PRO
+  PRO_ANNUAL
+  SPRINT
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  TRIALING
+}
+
+enum PromptType {
+  RESUME_AUTOPSY
+  KEYWORD_GAP
+  SUMMARY_REWRITE
+  BULLET_UPGRADE
+  COVER_LETTER
+  INTERVIEW_PREP
+  LINKEDIN_REWRITE
+}
+
+enum OutputStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// ─── User ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id          String   @id @default(uuid())
+  supabaseId  String   @unique
+  email       String   @unique
+  displayName String?
+  avatarUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subscription        Subscription?
+  cvDocuments         CvDocument[]
+  applications        JobApplication[]
+  usageLogs           UsageLog[]
+
+  @@map("users")
+}
+
+// ─── Subscription ─────────────────────────────────────────────────────────────
+
+model Subscription {
+  id                   String             @id @default(uuid())
+  userId               String             @unique
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tier                 SubscriptionTier   @default(FREE)
+  status               SubscriptionStatus @default(ACTIVE)
+
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@map("subscriptions")
+}
+
+// ─── CV Document ──────────────────────────────────────────────────────────────
+
+model CvDocument {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fileName     String
+  fileSize     Int
+  mimeType     String
+  storageKey   String
+  parsedText   String?
+  isActive     Boolean  @default(true)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  applications JobApplication[]
+
+  @@map("cv_documents")
+}
+
+// ─── Job Application ──────────────────────────────────────────────────────────
+
+model JobApplication {
+  id             String     @id @default(uuid())
+  userId         String
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cvDocumentId   String
+  cvDocument     CvDocument @relation(fields: [cvDocumentId], references: [id])
+
+  jobTitle       String?
+  companyName    String?
+  jobDescription String
+  atsScore       Int?
+  notes          String?
+
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  optimizationResults OptimizationResult[]
+
+  @@map("job_applications")
+}
+
+// ─── Optimization Result ──────────────────────────────────────────────────────
+
+model OptimizationResult {
+  id                String         @id @default(uuid())
+  applicationId     String
+  application       JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  promptType        PromptType
+  promptVersionId   String?
+  promptVersion     PromptVersion? @relation(fields: [promptVersionId], references: [id])
+
+  status            OutputStatus   @default(PENDING)
+  inputTokens       Int?
+  outputTokens      Int?
+
+  structuredOutput  Json?
+  textOutput        String?
+  userEditedOutput  String?
+
+  errorMessage      String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@unique([applicationId, promptType])
+  @@map("optimization_results")
+}
+
+// ─── Prompt Version ───────────────────────────────────────────────────────────
+
+model PromptVersion {
+  id                 String     @id @default(uuid())
+  promptType         PromptType
+  version            Int
+  isActive           Boolean    @default(false)
+  systemPrompt       String
+  userPromptTemplate String
+  modelId            String
+  notes              String?
+
+  createdAt          DateTime   @default(now())
+
+  optimizationResults OptimizationResult[]
+
+  @@unique([promptType, version])
+  @@map("prompt_versions")
+}
+
+// ─── Usage Log ────────────────────────────────────────────────────────────────
+
+model UsageLog {
+  id           String     @id @default(uuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  promptType   PromptType
+  modelId      String
+  inputTokens  Int
+  outputTokens Int
+  costUsd      Decimal    @db.Decimal(10, 6)
+
+  createdAt    DateTime   @default(now())
+
+  @@index([userId, createdAt])
+  @@map("usage_logs")
 }
