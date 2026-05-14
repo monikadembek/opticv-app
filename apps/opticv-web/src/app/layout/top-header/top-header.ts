@@ -1,4 +1,4 @@
-import { Component, inject, input, output } from '@angular/core';
+import { Component, effect, inject, input, output } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
@@ -18,19 +18,25 @@ export class TopHeader {
   userLabel = input('U');
   signOut = output<void>();
 
-  items: MenuItem[] | undefined;
+  items: MenuItem[] = [
+    {
+      label: 'Home',
+      route: '/',
+    },
+  ];
 
-  ngOnInit(): void {
-    this.items = [
-      {
-        label: 'Home',
-        routerLink: '/',
-      },
-      {
-        label: 'Optimize CV',
-        routerLink: '/optimize-cv',
-      },
-    ];
+  constructor() {
+    effect(() => {
+      const loggedInMenuItems: MenuItem[] = [
+        {
+          label: 'Upload CV',
+          route: '/upload-cv',
+        },
+      ];
+      if (this.isLoggedIn()) {
+        this.items = [...this.items, ...loggedInMenuItems];
+      }
+    });
   }
 
   navigateToLoginPage(): void {
