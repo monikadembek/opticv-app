@@ -29,6 +29,10 @@ export class TopHeader {
     effect(() => {
       const loggedInMenuItems: MenuItem[] = [
         {
+          label: 'Dashboard',
+          route: '/dashboard',
+        },
+        {
           label: 'Upload CV',
           route: '/upload-cv',
         },

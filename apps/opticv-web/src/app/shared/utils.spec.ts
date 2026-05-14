@@ -1,4 +1,4 @@
-import { formatFileSize } from './utils';
+import { formatFileSize, getMimeLabel } from './utils';
 
 describe('formatFileSize', () => {
   it('should format bytes', () => {
@@ -17,5 +17,25 @@ describe('formatFileSize', () => {
     expect(formatFileSize(1024 * 1024)).toBe('1.0 MB');
     expect(formatFileSize(5 * 1024 * 1024)).toBe('5.0 MB');
     expect(formatFileSize(1.5 * 1024 * 1024)).toBe('1.5 MB');
+  });
+});
+
+describe('getMimeLabel', () => {
+  it('should return "PDF" for application/pdf', () => {
+    expect(getMimeLabel('application/pdf')).toBe('PDF');
+  });
+
+  it('should return "DOCX" for the Word document MIME type', () => {
+    expect(
+      getMimeLabel(
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      ),
+    ).toBe('DOCX');
+  });
+
+  it('should return the original MIME type for unknown types', () => {
+    expect(getMimeLabel('image/png')).toBe('image/png');
+    expect(getMimeLabel('text/plain')).toBe('text/plain');
+    expect(getMimeLabel('')).toBe('');
   });
 });
