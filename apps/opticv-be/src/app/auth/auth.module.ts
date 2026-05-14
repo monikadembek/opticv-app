@@ -6,6 +6,6 @@ import { UsersModule } from '../users/users.module';
 @Module({
   imports: [UsersModule],
   providers: [SupabaseClientProvider, SupabaseGuard],
-  exports: [SupabaseGuard],
+  exports: [SupabaseGuard, SupabaseClientProvider, UsersModule],
 })
 export class AuthModule {}
