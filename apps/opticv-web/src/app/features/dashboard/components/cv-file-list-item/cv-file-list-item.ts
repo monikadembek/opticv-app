@@ -7,8 +7,7 @@ import {
 import { DatePipe } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import type { CvDocumentListItem } from '@opticv/datatypes';
-import { formatFileSize } from '../../../../shared/utils';
-import { getMimeLabel } from '../../../../shared/utils';
+import { formatFileSize, getMimeLabel } from '../../../../shared/utils';
 
 @Component({
   selector: 'app-cv-file-list-item',

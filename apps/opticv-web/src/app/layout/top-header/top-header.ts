@@ -38,7 +38,13 @@ export class TopHeader {
         },
       ];
       if (this.isLoggedIn()) {
-        this.items = [...this.items, ...loggedInMenuItems];
+        this.items = [
+          {
+            label: 'Home',
+            route: '/',
+          },
+          ...loggedInMenuItems,
+        ];
       }
     });
   }
