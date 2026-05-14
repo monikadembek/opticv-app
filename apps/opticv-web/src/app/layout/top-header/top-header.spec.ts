@@ -40,14 +40,23 @@ describe('TopHeader', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('ngOnInit', () => {
-    it('should initialize menu items with Home and Optimize CV', () => {
+  describe('menu items', () => {
+    it('should initialize with only Home when not logged in', () => {
+      fixture.componentRef.setInput('isLoggedIn', false);
       fixture.detectChanges();
-      expect(component.items).toHaveLength(2);
+      expect(component.items).toHaveLength(1);
       expect(component.items![0].label).toBe('Home');
-      expect(component.items![0].routerLink).toBe('/');
-      expect(component.items![1].label).toBe('Optimize CV');
-      expect(component.items![1].routerLink).toBe('/optimize-cv');
+      expect(component.items![0]['route']).toBe('/');
+    });
+
+    it('should add Dashboard and Upload CV items when logged in', () => {
+      fixture.componentRef.setInput('isLoggedIn', true);
+      fixture.detectChanges();
+      expect(component.items).toHaveLength(3);
+      expect(component.items![1].label).toBe('Dashboard');
+      expect(component.items![1]['route']).toBe('/dashboard');
+      expect(component.items![2].label).toBe('Upload CV');
+      expect(component.items![2]['route']).toBe('/upload-cv');
     });
   });
 

@@ -91,14 +91,25 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ### 7. Implement CV file upload
 
-**Status: in progress**
+**Status: done**
 
 - create account on Cloudflare R2 for storage
 - upload user cv file - allow pdf or docx
+- backend endpoint
+- frontend new page upload-cv
 
 ---
 
-### 8. Implement parsing of uploaded user CV file
+### 8. Show list of user uploaded files in dashboard
+
+**status: in progress**
+
+- new endpoint to retrieve user cvs
+- add dashboard page and display there a list of user uploaded cvs
+
+---
+
+### 9. Implement parsing of uploaded user CV file
 
 **status: todo**
 

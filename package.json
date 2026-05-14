@@ -80,6 +80,7 @@
     "@angular/router": "~21.2.0",
     "@angular/ssr": "~21.2.0",
     "@aws-sdk/client-s3": "^3.1045.0",
+    "@aws-sdk/s3-request-presigner": "^3.1046.0",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.0",

@@ -6,9 +6,11 @@ import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
+  GetObjectCommand,
 } from '@aws-sdk/client-s3';
 
 const mockSend = jest.fn();
+const mockGetSignedUrl = jest.fn();
 
 jest.mock('@aws-sdk/client-s3', () => {
   const actual = jest.requireActual<typeof import('@aws-sdk/client-s3')>(
@@ -19,6 +21,10 @@ jest.mock('@aws-sdk/client-s3', () => {
     S3Client: jest.fn().mockImplementation(() => ({ send: mockSend })),
   };
 });
+
+jest.mock('@aws-sdk/s3-request-presigner', () => ({
+  getSignedUrl: (...args: unknown[]) => mockGetSignedUrl(...args),
+}));
 
 const mockConfig = {
   getOrThrow: jest.fn((key: string) => {
@@ -96,6 +102,36 @@ describe('R2Service', () => {
       await expect(service.delete('key')).rejects.toThrow(
         InternalServerErrorException,
       );
+    });
+  });
+
+  describe('getPresignedUrl', () => {
+    it('returns a signed URL for the given key and TTL', async () => {
+      mockGetSignedUrl.mockResolvedValueOnce('https://signed.url/file.pdf');
+
+      const url = await service.getPresignedUrl('uploads/user/file.pdf', 900);
+
+      expect(mockGetSignedUrl).toHaveBeenCalledTimes(1);
+      const [, command, opts] = mockGetSignedUrl.mock.calls[0] as [
+        unknown,
+        GetObjectCommand,
+        { expiresIn: number },
+      ];
+      expect(command).toBeInstanceOf(GetObjectCommand);
+      expect(command.input).toMatchObject({
+        Bucket: 'test-bucket',
+        Key: 'uploads/user/file.pdf',
+      });
+      expect(opts.expiresIn).toBe(900);
+      expect(url).toBe('https://signed.url/file.pdf');
+    });
+
+    it('throws InternalServerErrorException when getSignedUrl fails', async () => {
+      mockGetSignedUrl.mockRejectedValueOnce(new Error('presign error'));
+
+      await expect(
+        service.getPresignedUrl('key', 900),
+      ).rejects.toThrow(InternalServerErrorException);
     });
   });
 });

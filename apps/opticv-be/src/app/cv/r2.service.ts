@@ -8,7 +8,9 @@ import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
+  GetObjectCommand,
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 @Injectable()
 export class R2Service {
@@ -62,6 +64,20 @@ export class R2Service {
     } catch (error) {
       this.logger.error(error);
       throw new InternalServerErrorException('File deletion failed.');
+    }
+  }
+
+  async getPresignedUrl(key: string, ttlSeconds: number): Promise<string> {
+    try {
+      const command = new GetObjectCommand({ Bucket: this.bucket, Key: key });
+      return await getSignedUrl(this.client, command, {
+        expiresIn: ttlSeconds,
+      });
+    } catch (error) {
+      this.logger.error(error);
+      throw new InternalServerErrorException(
+        'Failed to generate download URL.',
+      );
     }
   }
 }

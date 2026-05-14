@@ -29,12 +29,22 @@ export class TopHeader {
     effect(() => {
       const loggedInMenuItems: MenuItem[] = [
         {
+          label: 'Dashboard',
+          route: '/dashboard',
+        },
+        {
           label: 'Upload CV',
           route: '/upload-cv',
         },
       ];
       if (this.isLoggedIn()) {
-        this.items = [...this.items, ...loggedInMenuItems];
+        this.items = [
+          {
+            label: 'Home',
+            route: '/',
+          },
+          ...loggedInMenuItems,
+        ];
       }
     });
   }

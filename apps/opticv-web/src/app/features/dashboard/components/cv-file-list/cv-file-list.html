@@ -1,0 +1,9 @@
+<div class="flex flex-col gap-3">
+  @for (file of files(); track file.id) {
+  <app-cv-file-list-item
+    [file]="file"
+    (download)="download.emit($event)"
+    (delete)="delete.emit($event)"
+  />
+  }
+</div>

@@ -25,3 +25,8 @@ export type UploadCvResponse = Pick<
   CvDocument,
   'id' | 'fileName' | 'fileSize' | 'mimeType' | 'storageKey' | 'createdAt'
 >;
+
+export type CvDocumentListItem = Pick<
+  CvDocument,
+  'id' | 'fileName' | 'fileSize' | 'mimeType' | 'createdAt' | 'parsedText'
+>;

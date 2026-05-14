@@ -1,7 +1,10 @@
 import {
   Controller,
+  Delete,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
   UploadedFile,
   UseGuards,
@@ -13,7 +16,7 @@ import { SupabaseGuard } from '../auth/supabase.guard';
 import type { UserModel } from '../../generated/prisma/models.js';
 import { CvService } from './cv.service';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import type { UploadCvResponse } from '@opticv/datatypes';
+import type { CvDocumentListItem, UploadCvResponse } from '@opticv/datatypes';
 
 @Controller('cv')
 @UseGuards(SupabaseGuard)
@@ -28,5 +31,29 @@ export class CvController {
     @CurrentUser() user: UserModel,
   ): Promise<UploadCvResponse> {
     return this.cvService.uploadCv(file, user.id);
+  }
+
+  @Get()
+  getUserCvs(
+    @CurrentUser() user: UserModel,
+  ): Promise<CvDocumentListItem[]> {
+    return this.cvService.getUserCvs(user.id);
+  }
+
+  @Get(':id/download')
+  getDownloadUrl(
+    @Param('id') id: string,
+    @CurrentUser() user: UserModel,
+  ): Promise<{ url: string }> {
+    return this.cvService.getDownloadUrl(id, user.id);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  deleteCv(
+    @Param('id') id: string,
+    @CurrentUser() user: UserModel,
+  ): Promise<void> {
+    return this.cvService.deleteCv(id, user.id);
   }
 }

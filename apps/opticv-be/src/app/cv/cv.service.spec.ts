@@ -1,6 +1,8 @@
 import {
   BadRequestException,
+  ForbiddenException,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CvService } from './cv.service';
@@ -15,17 +17,24 @@ const mockDoc = {
   mimeType: 'application/pdf',
   storageKey: 'uploads/user-id/uuid.pdf',
   createdAt: new Date('2024-01-01'),
+  parsedText: null,
 };
 
 const mockPrisma = {
   cvDocument: {
     create: jest.fn().mockResolvedValue(mockDoc),
+    findMany: jest.fn().mockResolvedValue([mockDoc]),
+    findUnique: jest.fn().mockResolvedValue(mockDoc),
+    delete: jest.fn().mockResolvedValue(mockDoc),
   },
 };
 
 const mockR2 = {
   upload: jest.fn().mockResolvedValue(undefined),
   delete: jest.fn().mockResolvedValue(undefined),
+  getPresignedUrl: jest
+    .fn()
+    .mockResolvedValue('https://signed.url/file.pdf'),
 };
 
 function makeFile(
@@ -154,6 +163,116 @@ describe('CvService', () => {
       await expect(service.uploadCv(file, 'user-id')).rejects.toThrow(
         InternalServerErrorException,
       );
+    });
+  });
+
+  describe('getUserCvs', () => {
+    it('returns a list of CV documents for the given user ordered by createdAt desc', async () => {
+      mockPrisma.cvDocument.findMany.mockResolvedValueOnce([mockDoc]);
+
+      const result = await service.getUserCvs('user-id');
+
+      expect(mockPrisma.cvDocument.findMany).toHaveBeenCalledWith({
+        where: { userId: 'user-id' },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          fileName: true,
+          fileSize: true,
+          mimeType: true,
+          createdAt: true,
+          parsedText: true,
+        },
+      });
+      expect(result).toEqual([mockDoc]);
+    });
+
+    it('returns an empty array when user has no documents', async () => {
+      mockPrisma.cvDocument.findMany.mockResolvedValueOnce([]);
+      const result = await service.getUserCvs('user-id');
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('getDownloadUrl', () => {
+    it('returns a pre-signed URL for a document owned by the user', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(mockDoc);
+      mockR2.getPresignedUrl.mockResolvedValueOnce(
+        'https://signed.url/file.pdf',
+      );
+
+      const result = await service.getDownloadUrl('doc-id', 'user-id');
+
+      expect(mockR2.getPresignedUrl).toHaveBeenCalledWith(
+        mockDoc.storageKey,
+        900,
+      );
+      expect(result).toEqual({ url: 'https://signed.url/file.pdf' });
+    });
+
+    it('throws NotFoundException when document does not exist', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(null);
+      await expect(
+        service.getDownloadUrl('missing-id', 'user-id'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ForbiddenException when document belongs to another user', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce({
+        ...mockDoc,
+        userId: 'other-user',
+      });
+      await expect(
+        service.getDownloadUrl('doc-id', 'user-id'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws InternalServerErrorException when storageKey is missing', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce({
+        ...mockDoc,
+        storageKey: '',
+      });
+      await expect(
+        service.getDownloadUrl('doc-id', 'user-id'),
+      ).rejects.toThrow(InternalServerErrorException);
+    });
+  });
+
+  describe('deleteCv', () => {
+    it('deletes the R2 object and DB record for a document owned by the user', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(mockDoc);
+
+      await service.deleteCv('doc-id', 'user-id');
+
+      expect(mockR2.delete).toHaveBeenCalledWith(mockDoc.storageKey);
+      expect(mockPrisma.cvDocument.delete).toHaveBeenCalledWith({
+        where: { id: 'doc-id' },
+      });
+    });
+
+    it('throws NotFoundException when document does not exist', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(null);
+      await expect(service.deleteCv('missing-id', 'user-id')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('throws ForbiddenException when document belongs to another user', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce({
+        ...mockDoc,
+        userId: 'other-user',
+      });
+      await expect(service.deleteCv('doc-id', 'user-id')).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('does not delete the DB record when R2 deletion fails', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(mockDoc);
+      mockR2.delete.mockRejectedValueOnce(new Error('R2 error'));
+
+      await expect(service.deleteCv('doc-id', 'user-id')).rejects.toThrow();
+      expect(mockPrisma.cvDocument.delete).not.toHaveBeenCalled();
     });
   });
 });
