@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CvController } from './cv.controller';
 import { CvService } from './cv.service';
 import { SupabaseGuard } from '../auth/supabase.guard';
-import type { UploadCvResponse } from '@opticv/datatypes';
+import type { CvDocumentListItem, UploadCvResponse } from '@opticv/datatypes';
 import type { UserModel } from '../../generated/prisma/models.js';
 
 const allowAllGuard: CanActivate = { canActivate: () => true };
@@ -17,8 +17,22 @@ const mockUploadResponse: UploadCvResponse = {
   createdAt: new Date('2024-01-01'),
 };
 
+const mockListItem: CvDocumentListItem = {
+  id: 'doc-id',
+  fileName: 'cv.pdf',
+  fileSize: 1024,
+  mimeType: 'application/pdf',
+  createdAt: new Date('2024-01-01'),
+  parsedText: null,
+};
+
 const mockCvService = {
   uploadCv: jest.fn().mockResolvedValue(mockUploadResponse),
+  getUserCvs: jest.fn().mockResolvedValue([mockListItem]),
+  getDownloadUrl: jest
+    .fn()
+    .mockResolvedValue({ url: 'https://signed.url/file.pdf' }),
+  deleteCv: jest.fn().mockResolvedValue(undefined),
 };
 
 function makeFile(
@@ -77,6 +91,35 @@ describe('CvController', () => {
       await expect(controller.uploadCv(file, mockUser)).rejects.toThrow(
         'service error',
       );
+    });
+  });
+
+  describe('getUserCvs', () => {
+    it('delegates to CvService.getUserCvs with userId and returns list', async () => {
+      const result = await controller.getUserCvs(mockUser);
+
+      expect(mockCvService.getUserCvs).toHaveBeenCalledWith(mockUser.id);
+      expect(result).toEqual([mockListItem]);
+    });
+  });
+
+  describe('getDownloadUrl', () => {
+    it('delegates to CvService.getDownloadUrl with id and userId', async () => {
+      const result = await controller.getDownloadUrl('doc-id', mockUser);
+
+      expect(mockCvService.getDownloadUrl).toHaveBeenCalledWith(
+        'doc-id',
+        mockUser.id,
+      );
+      expect(result).toEqual({ url: 'https://signed.url/file.pdf' });
+    });
+  });
+
+  describe('deleteCv', () => {
+    it('delegates to CvService.deleteCv with id and userId', async () => {
+      await controller.deleteCv('doc-id', mockUser);
+
+      expect(mockCvService.deleteCv).toHaveBeenCalledWith('doc-id', mockUser.id);
     });
   });
 });

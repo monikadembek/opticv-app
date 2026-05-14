@@ -1,12 +1,14 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { R2Service } from './r2.service';
-import { UploadCvResponse } from '@opticv/datatypes';
+import { CvDocumentListItem, UploadCvResponse } from '@opticv/datatypes';
 
 const ALLOWED_MIME_TYPES = [
   'application/pdf',
@@ -83,5 +85,44 @@ export class CvService {
         );
       throw new InternalServerErrorException('Failed to save file record.');
     }
+  }
+
+  async getUserCvs(userId: string): Promise<CvDocumentListItem[]> {
+    return this.prisma.cvDocument.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        fileName: true,
+        fileSize: true,
+        mimeType: true,
+        createdAt: true,
+        parsedText: true,
+      },
+    });
+  }
+
+  async getDownloadUrl(
+    id: string,
+    userId: string,
+  ): Promise<{ url: string }> {
+    const doc = await this.prisma.cvDocument.findUnique({ where: { id } });
+    if (!doc) throw new NotFoundException('CV document not found.');
+    if (doc.userId !== userId) throw new ForbiddenException();
+    if (!doc.storageKey) {
+      throw new InternalServerErrorException(
+        'Storage key is missing for this document.',
+      );
+    }
+    const url = await this.r2.getPresignedUrl(doc.storageKey, 900);
+    return { url };
+  }
+
+  async deleteCv(id: string, userId: string): Promise<void> {
+    const doc = await this.prisma.cvDocument.findUnique({ where: { id } });
+    if (!doc) throw new NotFoundException('CV document not found.');
+    if (doc.userId !== userId) throw new ForbiddenException();
+    await this.r2.delete(doc.storageKey);
+    await this.prisma.cvDocument.delete({ where: { id } });
   }
 }
