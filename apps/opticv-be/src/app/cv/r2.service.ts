@@ -4,7 +4,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 @Injectable()
 export class R2Service {
@@ -42,6 +42,20 @@ export class R2Service {
     } catch (error) {
       Logger.error(error);
       throw new InternalServerErrorException('File storage failed.');
+    }
+  }
+
+  async delete(key: string): Promise<void> {
+    try {
+      await this.client.send(
+        new DeleteObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+        }),
+      );
+    } catch (error) {
+      Logger.error(error);
+      throw new InternalServerErrorException('File deletion failed.');
     }
   }
 }

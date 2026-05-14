@@ -72,6 +72,11 @@ export class CvService {
       } as UploadCvResponse;
     } catch (error) {
       Logger.error(error);
+      await this.r2.delete(storageKey).catch((deleteError) =>
+        Logger.error(
+          `Failed to clean up R2 object after DB error: ${deleteError}`,
+        ),
+      );
       throw new InternalServerErrorException('Failed to save file record.');
     }
   }
