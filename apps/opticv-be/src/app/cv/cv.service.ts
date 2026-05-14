@@ -28,6 +28,8 @@ export class CvService {
     private readonly r2: R2Service,
   ) {}
 
+  private readonly logger = new Logger(CvService.name);
+
   async uploadCv(
     file: Express.Multer.File | undefined,
     userId: string,
@@ -71,12 +73,14 @@ export class CvService {
         createdAt: doc.createdAt,
       } as UploadCvResponse;
     } catch (error) {
-      Logger.error(error);
-      await this.r2.delete(storageKey).catch((deleteError) =>
-        Logger.error(
-          `Failed to clean up R2 object after DB error: ${deleteError}`,
-        ),
-      );
+      this.logger.error(error);
+      await this.r2
+        .delete(storageKey)
+        .catch((deleteError) =>
+          this.logger.error(
+            `Failed to clean up R2 object after DB error: ${deleteError}`,
+          ),
+        );
       throw new InternalServerErrorException('Failed to save file record.');
     }
   }

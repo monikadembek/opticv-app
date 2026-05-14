@@ -62,8 +62,4 @@ export class UploadCv {
       },
     });
   }
-
-  // uploadAnother(): void {
-  //   this.uploadedFile.set(null);
-  // }
 }

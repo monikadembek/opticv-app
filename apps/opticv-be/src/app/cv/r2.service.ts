@@ -4,12 +4,18 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
 
 @Injectable()
 export class R2Service {
   private readonly client: S3Client;
   private readonly bucket: string;
+
+  private readonly logger = new Logger(R2Service.name);
 
   constructor(private readonly config: ConfigService) {
     this.bucket = this.config.getOrThrow<string>('R2_BUCKET_NAME');
@@ -40,7 +46,7 @@ export class R2Service {
         }),
       );
     } catch (error) {
-      Logger.error(error);
+      this.logger.error(error);
       throw new InternalServerErrorException('File storage failed.');
     }
   }
@@ -54,7 +60,7 @@ export class R2Service {
         }),
       );
     } catch (error) {
-      Logger.error(error);
+      this.logger.error(error);
       throw new InternalServerErrorException('File deletion failed.');
     }
   }

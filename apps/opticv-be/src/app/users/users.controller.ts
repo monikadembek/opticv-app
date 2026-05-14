@@ -15,6 +15,8 @@ import { WebhookPayloadDto } from './dto/webhook-payload.dto';
 
 @Controller('users')
 export class UsersController {
+  private readonly logger = new Logger(UsersController.name);
+
   constructor(
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
@@ -47,7 +49,7 @@ export class UsersController {
       email: body.record.email,
     });
 
-    Logger.log('New user created: ', upsertUser.id);
+    this.logger.log('New user created: ', upsertUser.id);
 
     return { received: true };
   }
