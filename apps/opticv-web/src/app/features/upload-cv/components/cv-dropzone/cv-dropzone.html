@@ -1,0 +1,54 @@
+<div
+  role="region"
+  aria-label="CV file upload area"
+  class="flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-10 transition-colors"
+  [class]="isDragOver() ? 'border-primary bg-primary/5' : 'border-surface-300'"
+>
+  @if (selectedFile()) {
+  <div class="flex w-full items-center gap-4 rounded-lg bg-surface-100 p-4">
+    <span class="pi pi-file text-2xl text-primary"></span>
+    <div class="flex-1 overflow-hidden">
+      <p class="truncate font-medium text-surface-900">
+        {{ selectedFile()!.name }}
+      </p>
+      <p class="text-sm text-surface-500">{{ filesize() }}</p>
+    </div>
+    <button
+      type="button"
+      class="pi pi-times cursor-pointer rounded-full p-1 text-surface-500 hover:text-surface-900"
+      aria-label="Remove file"
+      (click)="removeFile()"
+      [disabled]="isLoading()"
+    ></button>
+  </div>
+
+  <p-button
+    class="mt-6"
+    label="Upload CV"
+    [loading]="isLoading()"
+    [disabled]="isLoading()"
+    (onClick)="submit()"
+  />
+  } @else {
+  <span class="pi pi-cloud-upload mb-4 text-5xl text-surface-400"></span>
+  <p class="mb-5 text-lg font-semibold text-surface-700">
+    Drag & drop your CV here
+  </p>
+
+  <label
+    class="cursor-pointer rounded-md border border-primary px-4 py-2 text-sm font-medium text-primary hover:bg-primary/5"
+  >
+    <input
+      type="file"
+      class="sr-only"
+      accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      aria-label="Choose a CV file"
+      (change)="onFileInputChange($event)"
+    />
+    Browse files
+  </label>
+
+  @if (validationError()) {
+  <p role="alert" class="mt-4 text-sm text-red-600">{{ validationError() }}</p>
+  } }
+</div>

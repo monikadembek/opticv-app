@@ -53,6 +53,9 @@
     "serve": {
       "continuous": true,
       "executor": "@angular/build:dev-server",
+      "options": {
+        "proxyConfig": "apps/opticv-web/proxy.conf.json"
+      },
       "configurations": {
         "production": {
           "buildTarget": "opticv-web:build:production"

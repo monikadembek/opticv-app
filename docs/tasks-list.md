@@ -55,7 +55,7 @@
 
 ### 6. Handle user creation on the backend
 
-**status: in progress**
+**status: done**
 
 Option 1 — Supabase Database Webhook (recommended)
 
@@ -88,3 +88,18 @@ My recommendation: Option 1 (webhook) + Option 2 as a safety net.
 Use the Supabase webhook as the primary creation path, and add a lightweight upsert-if-missing check in your JWT guard as a fallback. This way you're never in a state where a valid Supabase session has no corresponding User row, regardless of how the user landed in the app.
 
 ---
+
+### 7. Implement CV file upload
+
+**Status: in progress**
+
+- create account on Cloudflare R2 for storage
+- upload user cv file - allow pdf or docx
+
+---
+
+### 8. Implement parsing of uploaded user CV file
+
+**status: todo**
+
+- parse pdfs and docx files

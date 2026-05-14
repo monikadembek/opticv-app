@@ -1,5 +1,6 @@
 import { Route } from '@angular/router';
 import { guestGuard } from './core/auth/guards/guest-guard';
+import { authGuard } from './core/auth/guards/auth-guard';
 
 export const appRoutes: Route[] = [
   {
@@ -17,6 +18,12 @@ export const appRoutes: Route[] = [
   {
     path: 'home',
     loadComponent: () => import('./features/home/home').then((c) => c.Home),
+  },
+  {
+    path: 'upload-cv',
+    loadComponent: () =>
+      import('./features/upload-cv/upload-cv').then((c) => c.UploadCv),
+    canActivate: [authGuard],
   },
   {
     path: '',

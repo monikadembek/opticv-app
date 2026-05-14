@@ -1,0 +1,31 @@
+<div class="mx-auto max-w-2xl px-4 py-12">
+  <h1 class="mb-4 text-3xl font-bold text-surface-900">Upload your CV</h1>
+  <p class="mb-4 text-surface-500">
+    Upload your CV to get started with AI-powered optimization.
+  </p>
+  <p class="mb-10 text-sm text-surface-400 font-semibold text-green-600">
+    Accepted formats: PDF, DOCX &nbsp;&nbsp;&nbsp; Max size: 5 MB
+  </p>
+
+  <app-cv-dropzone
+    [isLoading]="isLoading()"
+    (fileSelected)="onFileSelected($event)"
+  />
+
+  @if (uploadedFile()) {
+  <p class="mt-8 mb-5 font-bold">Added file:</p>
+  <div class="flex items-center gap-4">
+    <span class="pi pi-file-pdf text-3xl text-primary"></span>
+    <div class="flex-1 overflow-hidden">
+      <p class="truncate font-semibold text-surface-900">
+        {{ uploadedFile()!.fileName }}
+      </p>
+      <p class="text-sm text-surface-500">
+        {{ filesize() }} &middot; Uploaded {{ uploadedFile()!.createdAt | date:
+        'medium' }}
+      </p>
+    </div>
+    <span class="pi pi-check-circle text-xl text-green-500"></span>
+  </div>
+  }
+</div>

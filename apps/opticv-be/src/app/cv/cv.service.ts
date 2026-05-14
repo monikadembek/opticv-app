@@ -1,0 +1,87 @@
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { R2Service } from './r2.service';
+import { UploadCvResponse } from '@opticv/datatypes';
+
+const ALLOWED_MIME_TYPES = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+] as const;
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+const MIME_TO_EXT: Record<string, string> = {
+  'application/pdf': 'pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+    'docx',
+};
+
+@Injectable()
+export class CvService {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly r2: R2Service,
+  ) {}
+
+  private readonly logger = new Logger(CvService.name);
+
+  async uploadCv(
+    file: Express.Multer.File | undefined,
+    userId: string,
+  ): Promise<UploadCvResponse> {
+    if (!file) {
+      throw new BadRequestException('No file provided.');
+    }
+
+    if (!(ALLOWED_MIME_TYPES as readonly string[]).includes(file.mimetype)) {
+      throw new BadRequestException('Only PDF and DOCX files are accepted.');
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      throw new BadRequestException('File must be smaller than 5 MB.');
+    }
+
+    const ext = MIME_TO_EXT[file.mimetype];
+    const storageKey = `uploads/${userId}/${crypto.randomUUID()}.${ext}`;
+
+    await this.r2.upload(storageKey, file.buffer, file.mimetype);
+
+    try {
+      const doc = await this.prisma.cvDocument.create({
+        data: {
+          userId,
+          fileName: file.originalname,
+          fileSize: file.size,
+          mimeType: file.mimetype,
+          storageKey,
+          parsedText: null,
+          isActive: true,
+        },
+      });
+
+      return {
+        id: doc.id,
+        fileName: doc.fileName,
+        fileSize: doc.fileSize,
+        mimeType: doc.mimeType,
+        storageKey: doc.storageKey,
+        createdAt: doc.createdAt,
+      } as UploadCvResponse;
+    } catch (error) {
+      this.logger.error(error);
+      await this.r2
+        .delete(storageKey)
+        .catch((deleteError) =>
+          this.logger.error(
+            `Failed to clean up R2 object after DB error: ${deleteError}`,
+          ),
+        );
+      throw new InternalServerErrorException('Failed to save file record.');
+    }
+  }
+}

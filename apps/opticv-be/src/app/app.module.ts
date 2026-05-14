@@ -7,6 +7,7 @@ import { configuration } from '../../config/configuration';
 import { validationSchema } from '../../config/validation';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { CvModule } from './cv/cv.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { AuthModule } from './auth/auth.module';
     PrismaModule,
     UsersModule,
     AuthModule,
+    CvModule,
   ],
   controllers: [AppController],
   providers: [AppService],
