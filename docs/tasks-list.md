@@ -102,10 +102,13 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ### 8. Show list of user uploaded files in dashboard
 
-**status: in progress**
+**status: done**
 
-- new endpoint to retrieve user cvs
+- new endpoint to retrieve licv of user cvs from CvDocument table
+- new endpoint to delete cv
+- new endpoint to download cv
 - add dashboard page and display there a list of user uploaded cvs
+- add buttons to download and delete cv
 
 ---
 
@@ -114,3 +117,10 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 **status: todo**
 
 - parse pdfs and docx files
+- store parsed content in table CvDocument in parsedText field
+
+---
+
+### 10. Refactor Dashboard page
+
+- implement httpResource to get list of user cvs
