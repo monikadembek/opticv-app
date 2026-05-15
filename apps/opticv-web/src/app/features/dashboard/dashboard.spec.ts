@@ -13,6 +13,7 @@ const mockFile: CvDocumentListItem = {
   mimeType: 'application/pdf',
   createdAt: '2024-01-01T00:00:00.000Z',
   parsedText: null,
+  parseStatus: 'COMPLETED',
 };
 
 describe('Dashboard', () => {

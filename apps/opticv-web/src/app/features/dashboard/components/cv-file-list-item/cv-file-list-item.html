@@ -8,6 +8,22 @@
       getMimeLabel(file().mimeType) }} &middot; {{ file().createdAt | date: 'd
       MMM y' }}
     </span>
+    <span class="flex items-center gap-1 text-xs mt-0.5">
+      @switch (file().parseStatus) {
+        @case ('PENDING') {
+          <i class="pi pi-spin pi-spinner text-surface-400" aria-hidden="true"></i>
+          <span class="text-surface-400">Parsing&hellip;</span>
+        }
+        @case ('COMPLETED') {
+          <i class="pi pi-check-circle text-green-500" aria-hidden="true"></i>
+          <span class="text-green-500">Parsed</span>
+        }
+        @case ('FAILED') {
+          <i class="pi pi-exclamation-triangle text-orange-500" aria-hidden="true"></i>
+          <span class="text-orange-500">Parsing failed</span>
+        }
+      }
+    </span>
   </div>
   <div class="flex gap-2 shrink-0">
     <p-button
