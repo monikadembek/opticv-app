@@ -2,6 +2,7 @@ import { CanActivate } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CvController } from './cv.controller';
 import { CvService } from './cv.service';
+import { CvExtractionService } from './cv-extraction.service';
 import { SupabaseGuard } from '../auth/supabase.guard';
 import type { CvDocumentListItem, UploadCvResponse } from '@opticv/datatypes';
 import type { UserModel } from '../../generated/prisma/models.js';
@@ -15,6 +16,7 @@ const mockUploadResponse: UploadCvResponse = {
   mimeType: 'application/pdf',
   storageKey: 'uploads/user-id/uuid.pdf',
   createdAt: new Date('2024-01-01'),
+  parseStatus: 'COMPLETED',
 };
 
 const mockListItem: CvDocumentListItem = {
@@ -24,6 +26,7 @@ const mockListItem: CvDocumentListItem = {
   mimeType: 'application/pdf',
   createdAt: new Date('2024-01-01'),
   parsedText: null,
+  parseStatus: 'PENDING',
 };
 
 const mockCvService = {
@@ -33,6 +36,10 @@ const mockCvService = {
     .fn()
     .mockResolvedValue({ url: 'https://signed.url/file.pdf' }),
   deleteCv: jest.fn().mockResolvedValue(undefined),
+};
+
+const mockCvExtractionService = {
+  extractStructuredData: jest.fn().mockResolvedValue({}),
 };
 
 function makeFile(
@@ -66,7 +73,10 @@ describe('CvController', () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CvController],
-      providers: [{ provide: CvService, useValue: mockCvService }],
+      providers: [
+        { provide: CvService, useValue: mockCvService },
+        { provide: CvExtractionService, useValue: mockCvExtractionService },
+      ],
     })
       .overrideGuard(SupabaseGuard)
       .useValue(allowAllGuard)

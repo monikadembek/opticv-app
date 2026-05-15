@@ -15,13 +15,17 @@ import { memoryStorage } from 'multer';
 import { SupabaseGuard } from '../auth/supabase.guard';
 import type { UserModel } from '../../generated/prisma/models.js';
 import { CvService } from './cv.service';
+import { CvExtractionService } from './cv-extraction.service';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import type { CvDocumentListItem, UploadCvResponse } from '@opticv/datatypes';
+import type { CvDocumentListItem, CvStructuredData, UploadCvResponse } from '@opticv/datatypes';
 
 @Controller('cv')
 @UseGuards(SupabaseGuard)
 export class CvController {
-  constructor(private readonly cvService: CvService) {}
+  constructor(
+    private readonly cvService: CvService,
+    private readonly cvExtractionService: CvExtractionService,
+  ) {}
 
   @Post('upload')
   @HttpCode(HttpStatus.CREATED)
@@ -55,5 +59,15 @@ export class CvController {
     @CurrentUser() user: UserModel,
   ): Promise<void> {
     return this.cvService.deleteCv(id, user.id);
+  }
+
+  @Post(':id/extract')
+  @HttpCode(HttpStatus.OK)
+  async extractCv(
+    @Param('id') id: string,
+    @CurrentUser() user: UserModel,
+  ): Promise<{ data: CvStructuredData }> {
+    const data = await this.cvExtractionService.extractStructuredData(id, user.id);
+    return { data };
   }
 }

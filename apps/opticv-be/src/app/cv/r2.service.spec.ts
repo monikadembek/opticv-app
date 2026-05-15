@@ -3,7 +3,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { R2Service } from './r2.service';
 import {
-  S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
