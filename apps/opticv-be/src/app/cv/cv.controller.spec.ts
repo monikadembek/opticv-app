@@ -2,6 +2,7 @@ import { CanActivate } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CvController } from './cv.controller';
 import { CvService } from './cv.service';
+import { CvExtractionService } from './cv-extraction.service';
 import { SupabaseGuard } from '../auth/supabase.guard';
 import type { CvDocumentListItem, UploadCvResponse } from '@opticv/datatypes';
 import type { UserModel } from '../../generated/prisma/models.js';
@@ -15,6 +16,7 @@ const mockUploadResponse: UploadCvResponse = {
   mimeType: 'application/pdf',
   storageKey: 'uploads/user-id/uuid.pdf',
   createdAt: new Date('2024-01-01'),
+  parseStatus: 'COMPLETED',
 };
 
 const mockListItem: CvDocumentListItem = {
@@ -24,6 +26,7 @@ const mockListItem: CvDocumentListItem = {
   mimeType: 'application/pdf',
   createdAt: new Date('2024-01-01'),
   parsedText: null,
+  parseStatus: 'PENDING',
 };
 
 const mockCvService = {
@@ -33,6 +36,10 @@ const mockCvService = {
     .fn()
     .mockResolvedValue({ url: 'https://signed.url/file.pdf' }),
   deleteCv: jest.fn().mockResolvedValue(undefined),
+};
+
+const mockCvExtractionService = {
+  extractStructuredData: jest.fn().mockResolvedValue({}),
 };
 
 function makeFile(
@@ -66,7 +73,10 @@ describe('CvController', () => {
     jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CvController],
-      providers: [{ provide: CvService, useValue: mockCvService }],
+      providers: [
+        { provide: CvService, useValue: mockCvService },
+        { provide: CvExtractionService, useValue: mockCvExtractionService },
+      ],
     })
       .overrideGuard(SupabaseGuard)
       .useValue(allowAllGuard)
@@ -120,6 +130,31 @@ describe('CvController', () => {
       await controller.deleteCv('doc-id', mockUser);
 
       expect(mockCvService.deleteCv).toHaveBeenCalledWith('doc-id', mockUser.id);
+    });
+  });
+
+  describe('extractCv', () => {
+    it('delegates to CvExtractionService.extractStructuredData and wraps result in data envelope', async () => {
+      const structuredData = { contact: { name: 'Jane' } };
+      mockCvExtractionService.extractStructuredData.mockResolvedValueOnce(structuredData);
+
+      const result = await controller.extractCv('doc-id', mockUser);
+
+      expect(mockCvExtractionService.extractStructuredData).toHaveBeenCalledWith(
+        'doc-id',
+        mockUser.id,
+      );
+      expect(result).toEqual({ data: structuredData });
+    });
+
+    it('propagates errors thrown by CvExtractionService', async () => {
+      mockCvExtractionService.extractStructuredData.mockRejectedValueOnce(
+        new Error('extraction failed'),
+      );
+
+      await expect(controller.extractCv('doc-id', mockUser)).rejects.toThrow(
+        'extraction failed',
+      );
     });
   });
 });

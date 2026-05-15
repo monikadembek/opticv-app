@@ -121,6 +121,22 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 10. Refactor Dashboard page
+### 10. CV structured extraction
+
+**status: in progress**
+
+- extract cv data as structured output json from parsed text
+- use some cheap model from Open AI for now, for example GPT-4.0-mini model
+- prepare new endpoint which will be consumed by frontend as the first step in cv optimization creator after usr selects cv from the list
+
+---
+
+### 11. Handle CV files with images (photo)
+
+- rethink the parsing strategy to handle cv files which may contain user photo
+
+---
+
+### 12. Refactor Dashboard page
 
 - implement httpResource to get list of user cvs

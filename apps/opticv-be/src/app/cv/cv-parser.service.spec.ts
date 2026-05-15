@@ -8,7 +8,7 @@ jest.mock('mammoth', () => ({ extractRawText: jest.fn() }));
 
 import * as mammoth from 'mammoth';
 
-const mockMammoth = mammoth as { extractRawText: jest.Mock };
+const mockMammoth = mammoth as unknown as { extractRawText: jest.Mock };
 
 describe('CvParserService', () => {
   let service: CvParserService;
