@@ -22,7 +22,7 @@ export class OpenAiExtractionService extends AiExtractionProvider {
     this.logger.log('Calling OpenAI gpt-4o-mini for CV extraction');
 
     const response = await this.client.chat.completions.create({
-      model: CV_EXTRACTION_OPENAI_MODEL || 'gpt-4o-mini',
+      model: CV_EXTRACTION_OPENAI_MODEL,
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: EXTRACTION_SYSTEM_PROMPT },

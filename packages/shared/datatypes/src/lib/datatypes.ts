@@ -51,12 +51,12 @@ export type CvLanguage = {
 export type CvStructuredData = {
   contact: CvContactInfo;
   summary: string | null;
-  experience: CvExperienceItem;
-  education: CvEducationItem;
+  experience: CvExperienceItem[];
+  education: CvEducationItem[];
   skills: string[];
-  certifications: CvCertification;
-  projects: CvProject;
-  languages: CvLanguage;
+  certifications: CvCertification[];
+  projects: CvProject[];
+  languages: CvLanguage[];
   other: string | null;
 };
 
