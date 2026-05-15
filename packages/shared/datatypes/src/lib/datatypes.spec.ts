@@ -20,6 +20,7 @@ describe('datatypes', () => {
       mimeType: 'application/pdf',
       storageKey: 'key/cv.pdf',
       createdAt: new Date(),
+      parseStatus: 'PENDING',
     };
     expect(response.fileName).toBe('cv.pdf');
   });
