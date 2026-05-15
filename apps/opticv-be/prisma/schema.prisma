@@ -178,11 +178,13 @@ model OptimizationResult {
 model PromptVersion {
   id                 String     @id @default(uuid())
   promptType         PromptType
-  version            Int
+  version            String
   isActive           Boolean    @default(false)
   systemPrompt       String
   userPromptTemplate String
-  modelId            String
+  modelPreference    String
+  outputSchema       Json?
+  maxTokens          Int?
   notes              String?
 
   createdAt          DateTime   @default(now())

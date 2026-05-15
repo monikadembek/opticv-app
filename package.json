@@ -8,6 +8,9 @@
     "build-datatypes": "nx build datatypes"
   },
   "private": true,
+  "prisma": {
+    "seed": "npx tsx apps/opticv-be/prisma/seed.ts"
+  },
   "devDependencies": {
     "@angular-devkit/core": "~21.2.0",
     "@angular-devkit/schematics": "~21.2.0",
