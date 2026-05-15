@@ -131,12 +131,25 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 11. Handle CV files with images (photo)
+### 11. Prepare prompt templates for CV optimizations
+
+**status: in progress**
+
+- prepare prompt templates for 7 steps of CV optimization process
+- seed database with prompt templates
+
+---
+
+### 12. Handle CV files with images (photo)
+
+**status - todo**
 
 - rethink the parsing strategy to handle cv files which may contain user photo
 
 ---
 
-### 12. Refactor Dashboard page
+### 13. Refactor Dashboard page
+
+**status - todo**
 
 - implement httpResource to get list of user cvs
