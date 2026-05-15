@@ -132,4 +132,29 @@ describe('CvController', () => {
       expect(mockCvService.deleteCv).toHaveBeenCalledWith('doc-id', mockUser.id);
     });
   });
+
+  describe('extractCv', () => {
+    it('delegates to CvExtractionService.extractStructuredData and wraps result in data envelope', async () => {
+      const structuredData = { contact: { name: 'Jane' } };
+      mockCvExtractionService.extractStructuredData.mockResolvedValueOnce(structuredData);
+
+      const result = await controller.extractCv('doc-id', mockUser);
+
+      expect(mockCvExtractionService.extractStructuredData).toHaveBeenCalledWith(
+        'doc-id',
+        mockUser.id,
+      );
+      expect(result).toEqual({ data: structuredData });
+    });
+
+    it('propagates errors thrown by CvExtractionService', async () => {
+      mockCvExtractionService.extractStructuredData.mockRejectedValueOnce(
+        new Error('extraction failed'),
+      );
+
+      await expect(controller.extractCv('doc-id', mockUser)).rejects.toThrow(
+        'extraction failed',
+      );
+    });
+  });
 });
