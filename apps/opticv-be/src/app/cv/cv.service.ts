@@ -5,9 +5,11 @@ import {
   InternalServerErrorException,
   Logger,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { R2Service } from './r2.service';
+import { CvParserService } from './cv-parser.service';
 import { CvDocumentListItem, UploadCvResponse } from '@opticv/datatypes';
 
 const ALLOWED_MIME_TYPES = [
@@ -28,6 +30,7 @@ export class CvService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly r2: R2Service,
+    private readonly cvParser: CvParserService,
   ) {}
 
   private readonly logger = new Logger(CvService.name);
@@ -53,6 +56,7 @@ export class CvService {
 
     await this.r2.upload(storageKey, file.buffer, file.mimetype);
 
+    let docId: string | undefined;
     try {
       const doc = await this.prisma.cvDocument.create({
         data: {
@@ -62,8 +66,31 @@ export class CvService {
           mimeType: file.mimetype,
           storageKey,
           parsedText: null,
+          parseStatus: 'PENDING',
           isActive: true,
         },
+      });
+      docId = doc.id;
+
+      let parsedText: string;
+      try {
+        parsedText = await this.cvParser.parse(file.buffer, file.mimetype);
+      } catch (parseError) {
+        this.logger.error(`Failed to parse CV document ${doc.id}: ${parseError}`);
+        await this.prisma.cvDocument
+          .delete({ where: { id: doc.id } })
+          .catch((e) => this.logger.error(`Failed to clean up DB record ${doc.id} after parse failure: ${e}`));
+        await this.r2
+          .delete(storageKey)
+          .catch((e) => this.logger.error(`Failed to clean up R2 object after parse failure: ${e}`));
+        throw new UnprocessableEntityException(
+          'Could not parse the uploaded file. Please ensure it is a valid, non-protected PDF or DOCX.',
+        );
+      }
+
+      await this.prisma.cvDocument.update({
+        where: { id: doc.id },
+        data: { parsedText, parseStatus: 'COMPLETED' },
       });
 
       return {
@@ -73,16 +100,20 @@ export class CvService {
         mimeType: doc.mimeType,
         storageKey: doc.storageKey,
         createdAt: doc.createdAt,
-      } as UploadCvResponse;
+        parseStatus: 'COMPLETED',
+      };
     } catch (error) {
+      if (error instanceof UnprocessableEntityException) throw error;
       this.logger.error(error);
-      await this.r2
-        .delete(storageKey)
-        .catch((deleteError) =>
-          this.logger.error(
-            `Failed to clean up R2 object after DB error: ${deleteError}`,
-          ),
-        );
+      if (!docId) {
+        await this.r2
+          .delete(storageKey)
+          .catch((deleteError) =>
+            this.logger.error(
+              `Failed to clean up R2 object after DB error: ${deleteError}`,
+            ),
+          );
+      }
       throw new InternalServerErrorException('Failed to save file record.');
     }
   }
@@ -98,6 +129,7 @@ export class CvService {
         mimeType: true,
         createdAt: true,
         parsedText: true,
+        parseStatus: true,
       },
     });
   }
