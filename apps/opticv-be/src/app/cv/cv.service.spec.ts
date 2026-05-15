@@ -3,11 +3,13 @@ import {
   ForbiddenException,
   InternalServerErrorException,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CvService } from './cv.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { R2Service } from './r2.service';
+import { CvParserService } from './cv-parser.service';
 
 const mockDoc = {
   id: 'doc-id',
@@ -17,12 +19,14 @@ const mockDoc = {
   mimeType: 'application/pdf',
   storageKey: 'uploads/user-id/uuid.pdf',
   createdAt: new Date('2024-01-01'),
-  parsedText: null,
+  parsedText: 'parsed text',
+  parseStatus: 'COMPLETED' as const,
 };
 
 const mockPrisma = {
   cvDocument: {
     create: jest.fn().mockResolvedValue(mockDoc),
+    update: jest.fn().mockResolvedValue(mockDoc),
     findMany: jest.fn().mockResolvedValue([mockDoc]),
     findUnique: jest.fn().mockResolvedValue(mockDoc),
     delete: jest.fn().mockResolvedValue(mockDoc),
@@ -65,6 +69,7 @@ describe('CvService', () => {
         CvService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: R2Service, useValue: mockR2 },
+        { provide: CvParserService, useValue: { parse: jest.fn().mockResolvedValue('parsed text') } },
       ],
     }).compile();
 
@@ -92,7 +97,7 @@ describe('CvService', () => {
       );
     });
 
-    it('accepts PDF files and returns UploadCvResponse', async () => {
+    it('accepts PDF files, parses synchronously and returns UploadCvResponse with COMPLETED status', async () => {
       const file = makeFile();
       const result = await service.uploadCv(file, 'user-id');
 
@@ -107,6 +112,10 @@ describe('CvService', () => {
           isActive: true,
         }),
       });
+      expect(mockPrisma.cvDocument.update).toHaveBeenCalledWith({
+        where: { id: mockDoc.id },
+        data: { parsedText: 'parsed text', parseStatus: 'COMPLETED' },
+      });
       expect(result).toEqual({
         id: mockDoc.id,
         fileName: mockDoc.fileName,
@@ -114,6 +123,7 @@ describe('CvService', () => {
         mimeType: mockDoc.mimeType,
         storageKey: mockDoc.storageKey,
         createdAt: mockDoc.createdAt,
+        parseStatus: 'COMPLETED',
       });
     });
 
@@ -143,6 +153,25 @@ describe('CvService', () => {
 
       const [key] = mockR2.upload.mock.calls[0] as [string, ...unknown[]];
       expect(key).toMatch(/^uploads\/user-123\/.+\.pdf$/);
+    });
+
+    it('throws UnprocessableEntityException and cleans up when parsing fails', async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          CvService,
+          { provide: PrismaService, useValue: mockPrisma },
+          { provide: R2Service, useValue: mockR2 },
+          { provide: CvParserService, useValue: { parse: jest.fn().mockRejectedValue(new Error('bad pdf')) } },
+        ],
+      }).compile();
+      const svc = module.get<CvService>(CvService);
+
+      const file = makeFile();
+      await expect(svc.uploadCv(file, 'user-id')).rejects.toThrow(
+        UnprocessableEntityException,
+      );
+      expect(mockPrisma.cvDocument.delete).toHaveBeenCalledWith({ where: { id: mockDoc.id } });
+      expect(mockR2.delete).toHaveBeenCalledTimes(1);
     });
 
     it('deletes the R2 object and throws InternalServerErrorException when DB create fails', async () => {
@@ -182,6 +211,7 @@ describe('CvService', () => {
           mimeType: true,
           createdAt: true,
           parsedText: true,
+          parseStatus: true,
         },
       });
       expect(result).toEqual([mockDoc]);

@@ -14,6 +14,7 @@ const mockResponse: UploadCvResponse = {
   mimeType: 'application/pdf',
   storageKey: 'uploads/resume.pdf',
   createdAt: '2026-05-14T10:00:00.000Z',
+  parseStatus: 'COMPLETED',
 };
 
 describe('UploadCv', () => {

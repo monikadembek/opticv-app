@@ -10,6 +10,7 @@ const mockFile: CvDocumentListItem = {
   mimeType: 'application/pdf',
   createdAt: '2024-06-15T00:00:00.000Z',
   parsedText: null,
+  parseStatus: 'COMPLETED',
 };
 
 describe('CvFileListItem', () => {
@@ -84,5 +85,26 @@ describe('CvFileListItem', () => {
     deleteButton.triggerEventHandler('onClick', null);
 
     expect(emitted).toEqual(mockFile);
+  });
+
+  it('should show "Parsed" status for COMPLETED', () => {
+    fixture.componentRef.setInput('file', { ...mockFile, parseStatus: 'COMPLETED' });
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Parsed');
+  });
+
+  it('should show "Parsing…" status for PENDING', () => {
+    fixture.componentRef.setInput('file', { ...mockFile, parseStatus: 'PENDING' });
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Parsing');
+  });
+
+  it('should show "Parsing failed" status for FAILED', () => {
+    fixture.componentRef.setInput('file', { ...mockFile, parseStatus: 'FAILED' });
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.textContent).toContain('Parsing failed');
   });
 });

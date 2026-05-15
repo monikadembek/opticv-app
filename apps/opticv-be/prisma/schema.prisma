@@ -43,6 +43,12 @@ enum OutputStatus {
   FAILED
 }
 
+enum ParseStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
 // ─── User ─────────────────────────────────────────────────────────────────────
 
 model User {
@@ -98,6 +104,7 @@ model CvDocument {
   mimeType     String
   storageKey   String
   parsedText   String?
+  parseStatus  ParseStatus @default(PENDING)
   isActive     Boolean  @default(true)
 
   createdAt    DateTime @default(now())

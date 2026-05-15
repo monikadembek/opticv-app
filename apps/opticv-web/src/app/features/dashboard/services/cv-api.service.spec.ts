@@ -14,6 +14,7 @@ const mockFile: CvDocumentListItem = {
   mimeType: 'application/pdf',
   createdAt: new Date('2024-01-01').toISOString(),
   parsedText: null,
+  parseStatus: 'COMPLETED',
 };
 
 describe('CvApiService', () => {

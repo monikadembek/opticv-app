@@ -11,6 +11,7 @@ const mockFiles: CvDocumentListItem[] = [
     mimeType: 'application/pdf',
     createdAt: '2024-01-01T00:00:00.000Z',
     parsedText: null,
+    parseStatus: 'COMPLETED',
   },
   {
     id: 'id-2',
@@ -19,6 +20,7 @@ const mockFiles: CvDocumentListItem[] = [
     mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     createdAt: '2024-02-01T00:00:00.000Z',
     parsedText: null,
+    parseStatus: 'PENDING',
   },
 ];
 

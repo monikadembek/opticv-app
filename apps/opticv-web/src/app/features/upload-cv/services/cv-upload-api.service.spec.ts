@@ -40,6 +40,7 @@ describe('CvUploadApiService', () => {
         mimeType: 'application/pdf',
         storageKey: 'uploads/resume.pdf',
         createdAt: new Date().toISOString(),
+        parseStatus: 'COMPLETED',
       };
 
       service.uploadCv(mockFile).subscribe();
@@ -73,6 +74,7 @@ describe('CvUploadApiService', () => {
         mimeType: 'application/pdf',
         storageKey: 'uploads/resume.pdf',
         createdAt: new Date().toISOString(),
+        parseStatus: 'COMPLETED',
       };
       let result: UploadCvResponse | undefined;
 
