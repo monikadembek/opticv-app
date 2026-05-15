@@ -8,6 +8,7 @@ import { validationSchema } from '../../config/validation';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { CvModule } from './cv/cv.module';
+import { PromptModule } from './prompt/prompt.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { CvModule } from './cv/cv.module';
     UsersModule,
     AuthModule,
     CvModule,
+    PromptModule,
   ],
   controllers: [AppController],
   providers: [AppService],
