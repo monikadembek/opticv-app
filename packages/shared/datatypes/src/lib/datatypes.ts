@@ -107,3 +107,35 @@ export type CvDocumentListItem = Pick<
   | 'parsedText'
   | 'parseStatus'
 >;
+
+export type JobApplication = {
+  id: string;
+  userId: string;
+  cvDocumentId: string;
+  jobTitle: string | null;
+  companyName: string | null;
+  jobDescription: string;
+  atsScore: number | null;
+  notes: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+};
+
+export type JobApplicationResponse = JobApplication;
+
+export type JobApplicationListItem = Pick<
+  JobApplication,
+  | 'id'
+  | 'userId'
+  | 'cvDocumentId'
+  | 'jobTitle'
+  | 'companyName'
+  | 'atsScore'
+  | 'createdAt'
+  | 'updatedAt'
+>;
+
+export type JobApplicationListResponse = {
+  data: JobApplicationListItem[];
+  total: number;
+};

@@ -9,6 +9,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { CvModule } from './cv/cv.module';
 import { PromptModule } from './prompt/prompt.module';
+import { JobApplicationModule } from './job-application/job-application.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { PromptModule } from './prompt/prompt.module';
     AuthModule,
     CvModule,
     PromptModule,
+    JobApplicationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

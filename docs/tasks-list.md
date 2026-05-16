@@ -133,23 +133,42 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ### 11. Prepare prompt templates for CV optimizations
 
-**status: in progress**
+**status: done**
 
 - prepare prompt templates for 7 steps of CV optimization process
 - seed database with prompt templates
 
 ---
 
-### 12. Handle CV files with images (photo)
+### 12. Implement Job Application module on backend
+
+**status: in progress**
+
+- add CRUD endpoints related to job application
+
+---
+
+### 13. First step of CV optimization creator
+
+**status: todo**
+
+- add new page /cv-optimization which will hold cv optimization creator
+- add first step of creator where user can select cv and paste job application data
+
+---
+
+### 14. Refactor Dashboard page
+
+**status - todo**
+
+- implement httpResource to get list of user cvs
+
+---
+
+### Handle CV files with images (photo)
 
 **status - todo**
 
 - rethink the parsing strategy to handle cv files which may contain user photo
 
 ---
-
-### 13. Refactor Dashboard page
-
-**status - todo**
-
-- implement httpResource to get list of user cvs
