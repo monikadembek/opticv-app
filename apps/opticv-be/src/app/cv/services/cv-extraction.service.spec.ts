@@ -5,13 +5,20 @@ import {
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CvExtractionService } from './cv-extraction.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { AiExtractionProvider } from './ai/ai-extraction.provider';
 import { AI_EXTRACTION_PROVIDER } from './ai/ai-extraction.token';
 import type { CvStructuredData } from '@opticv/datatypes';
 
 const mockStructuredData: CvStructuredData = {
-  contact: { name: 'Jane Doe', email: 'jane@example.com', phone: null, location: null, linkedin: null, website: null },
+  contact: {
+    name: 'Jane Doe',
+    email: 'jane@example.com',
+    phone: null,
+    location: null,
+    linkedin: null,
+    website: null,
+  },
   summary: 'Experienced engineer',
   experience: [],
   education: [],
@@ -63,9 +70,9 @@ describe('CvExtractionService', () => {
     it('throws NotFoundException when document does not exist', async () => {
       mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(null);
 
-      await expect(service.extractStructuredData('cv-id', 'user-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.extractStructuredData('cv-id', 'user-id'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('throws NotFoundException when document belongs to another user', async () => {
@@ -73,14 +80,17 @@ describe('CvExtractionService', () => {
         makeDoc({ userId: 'other-user' }),
       );
 
-      await expect(service.extractStructuredData('cv-id', 'user-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.extractStructuredData('cv-id', 'user-id'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('returns cached structured data when extractionStatus is COMPLETED', async () => {
       mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(
-        makeDoc({ extractionStatus: 'COMPLETED', structuredData: mockStructuredData }),
+        makeDoc({
+          extractionStatus: 'COMPLETED',
+          structuredData: mockStructuredData,
+        }),
       );
 
       const result = await service.extractStructuredData('cv-id', 'user-id');
@@ -94,10 +104,15 @@ describe('CvExtractionService', () => {
 
       const result = await service.extractStructuredData('cv-id', 'user-id');
 
-      expect(mockAiProvider.extract).toHaveBeenCalledWith('John Doe, Software Engineer...');
+      expect(mockAiProvider.extract).toHaveBeenCalledWith(
+        'John Doe, Software Engineer...',
+      );
       expect(mockPrisma.cvDocument.update).toHaveBeenCalledWith({
         where: { id: 'cv-id' },
-        data: { structuredData: mockStructuredData, extractionStatus: 'COMPLETED' },
+        data: {
+          structuredData: mockStructuredData,
+          extractionStatus: 'COMPLETED',
+        },
       });
       expect(result).toEqual(mockStructuredData);
     });
@@ -109,21 +124,31 @@ describe('CvExtractionService', () => {
 
       await service.extractStructuredData('cv-id', 'user-id');
 
-      const updateCalls = mockPrisma.cvDocument.update.mock.calls as Array<[{ where: unknown; data: unknown }]>;
+      const updateCalls = mockPrisma.cvDocument.update.mock.calls as Array<
+        [{ where: unknown; data: unknown }]
+      >;
       const pendingCall = updateCalls.find(
-        ([arg]) => (arg as { data: { extractionStatus?: string } }).data.extractionStatus === 'PENDING',
+        ([arg]) =>
+          (arg as { data: { extractionStatus?: string } }).data
+            .extractionStatus === 'PENDING',
       );
       expect(pendingCall).toBeDefined();
     });
 
     it('does not set PENDING status when extractionStatus is already PENDING', async () => {
-      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(makeDoc({ extractionStatus: 'PENDING' }));
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(
+        makeDoc({ extractionStatus: 'PENDING' }),
+      );
 
       await service.extractStructuredData('cv-id', 'user-id');
 
-      const updateCalls = mockPrisma.cvDocument.update.mock.calls as Array<[{ where: unknown; data: unknown }]>;
+      const updateCalls = mockPrisma.cvDocument.update.mock.calls as Array<
+        [{ where: unknown; data: unknown }]
+      >;
       const pendingCall = updateCalls.find(
-        ([arg]) => (arg as { data: { extractionStatus?: string } }).data.extractionStatus === 'PENDING',
+        ([arg]) =>
+          (arg as { data: { extractionStatus?: string } }).data
+            .extractionStatus === 'PENDING',
       );
       expect(pendingCall).toBeUndefined();
     });
@@ -133,9 +158,9 @@ describe('CvExtractionService', () => {
         makeDoc({ parsedText: null }),
       );
 
-      await expect(service.extractStructuredData('cv-id', 'user-id')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.extractStructuredData('cv-id', 'user-id'),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('throws BadRequestException when parsedText is blank', async () => {
@@ -143,18 +168,18 @@ describe('CvExtractionService', () => {
         makeDoc({ parsedText: '   ' }),
       );
 
-      await expect(service.extractStructuredData('cv-id', 'user-id')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.extractStructuredData('cv-id', 'user-id'),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('sets extractionStatus to FAILED and throws BadGatewayException when AI provider fails', async () => {
       mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(makeDoc());
       mockAiProvider.extract.mockRejectedValueOnce(new Error('OpenAI timeout'));
 
-      await expect(service.extractStructuredData('cv-id', 'user-id')).rejects.toThrow(
-        BadGatewayException,
-      );
+      await expect(
+        service.extractStructuredData('cv-id', 'user-id'),
+      ).rejects.toThrow(BadGatewayException);
       expect(mockPrisma.cvDocument.update).toHaveBeenCalledWith({
         where: { id: 'cv-id' },
         data: { extractionStatus: 'FAILED' },

@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PromptType } from '../../generated/prisma/enums.js';
-import type { PromptVersionModel } from '../../generated/prisma/models.js';
-import { PrismaService } from '../prisma/prisma.service.js';
-import type { PromptVariables } from './prompt.types.js';
+import { PromptType } from '../../../generated/prisma/enums.js';
+import type { PromptVersionModel } from '../../../generated/prisma/models.js';
+import { PrismaService } from '../../prisma/prisma.service.js';
+import type { PromptVariables } from '../types/prompt.types.js';
 
 const SHARED_CONTEXT = `
 <resume>
@@ -25,8 +25,14 @@ Years of experience: {{yearsExperience}}
 </context>
 `;
 
-function interpolate(str: string, vars: Record<string, string | undefined>): string {
-  return str.replace(/\{\{(\w+)\}\}/g, (match, key: string) => vars[key] ?? match);
+function interpolate(
+  str: string,
+  vars: Record<string, string | undefined>,
+): string {
+  return str.replace(
+    /\{\{(\w+)\}\}/g,
+    (match, key: string) => vars[key] ?? match,
+  );
 }
 
 @Injectable()

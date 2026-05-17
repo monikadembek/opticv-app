@@ -1,15 +1,13 @@
 import {
   BadGatewayException,
   BadRequestException,
-  Inject,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
 import type { CvStructuredData } from '@opticv/datatypes';
-import { PrismaService } from '../prisma/prisma.service';
-import { AiExtractionProvider } from './ai/ai-extraction.provider';
-import { AI_EXTRACTION_PROVIDER } from './ai/ai-extraction.token';
+import { PrismaService } from '../../prisma/prisma.service';
+import { OpenAiService } from '../../ai/services/openai.service';
 
 @Injectable()
 export class CvExtractionService {
@@ -17,18 +15,25 @@ export class CvExtractionService {
 
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(AI_EXTRACTION_PROVIDER) private readonly aiProvider: AiExtractionProvider,
+    readonly openAiService: OpenAiService,
   ) {}
 
-  async extractStructuredData(cvId: string, userId: string): Promise<CvStructuredData> {
-    const doc = await this.prisma.cvDocument.findUnique({ where: { id: cvId } });
+  async extractStructuredData(
+    cvId: string,
+    userId: string,
+  ): Promise<CvStructuredData> {
+    const doc = await this.prisma.cvDocument.findUnique({
+      where: { id: cvId },
+    });
 
     if (!doc || doc.userId !== userId) {
       throw new NotFoundException('CV document not found.');
     }
 
     if (doc.extractionStatus === 'COMPLETED' && doc.structuredData !== null) {
-      this.logger.log(`Cache hit for CV ${cvId} — returning stored structured data`);
+      this.logger.log(
+        `Cache hit for CV ${cvId} — returning stored structured data`,
+      );
       return doc.structuredData as unknown as CvStructuredData;
     }
 
@@ -46,7 +51,7 @@ export class CvExtractionService {
     }
 
     try {
-      const result = await this.aiProvider.extract(doc.parsedText);
+      const result = await this.openAiService.extractCvData(doc.parsedText);
       await this.prisma.cvDocument.update({
         where: { id: cvId },
         data: { structuredData: result, extractionStatus: 'COMPLETED' },
@@ -59,7 +64,9 @@ export class CvExtractionService {
         where: { id: cvId },
         data: { extractionStatus: 'FAILED' },
       });
-      throw new BadGatewayException('AI extraction failed. Please try again later.');
+      throw new BadGatewayException(
+        'AI extraction failed. Please try again later.',
+      );
     }
   }
 }

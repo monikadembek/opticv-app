@@ -8,7 +8,6 @@ import { validationSchema } from '../../config/validation';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { CvModule } from './cv/cv.module';
-import { PromptModule } from './prompt/prompt.module';
 import { JobApplicationModule } from './job-application/job-application.module';
 
 @Module({
@@ -23,7 +22,6 @@ import { JobApplicationModule } from './job-application/job-application.module';
     UsersModule,
     AuthModule,
     CvModule,
-    PromptModule,
     JobApplicationModule,
   ],
   controllers: [AppController],

@@ -8,8 +8,8 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 import { CvService } from './cv.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { R2Service } from './r2.service';
-import { CvParserService } from './cv-parser.service';
+import { R2Service } from './services/r2.service';
+import { CvParserService } from './services/cv-parser.service';
 
 const mockDoc = {
   id: 'doc-id',
@@ -36,9 +36,7 @@ const mockPrisma = {
 const mockR2 = {
   upload: jest.fn().mockResolvedValue(undefined),
   delete: jest.fn().mockResolvedValue(undefined),
-  getPresignedUrl: jest
-    .fn()
-    .mockResolvedValue('https://signed.url/file.pdf'),
+  getPresignedUrl: jest.fn().mockResolvedValue('https://signed.url/file.pdf'),
 };
 
 function makeFile(
@@ -69,7 +67,10 @@ describe('CvService', () => {
         CvService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: R2Service, useValue: mockR2 },
-        { provide: CvParserService, useValue: { parse: jest.fn().mockResolvedValue('parsed text') } },
+        {
+          provide: CvParserService,
+          useValue: { parse: jest.fn().mockResolvedValue('parsed text') },
+        },
       ],
     }).compile();
 
@@ -161,7 +162,12 @@ describe('CvService', () => {
           CvService,
           { provide: PrismaService, useValue: mockPrisma },
           { provide: R2Service, useValue: mockR2 },
-          { provide: CvParserService, useValue: { parse: jest.fn().mockRejectedValue(new Error('bad pdf')) } },
+          {
+            provide: CvParserService,
+            useValue: {
+              parse: jest.fn().mockRejectedValue(new Error('bad pdf')),
+            },
+          },
         ],
       }).compile();
       const svc = module.get<CvService>(CvService);
@@ -170,7 +176,9 @@ describe('CvService', () => {
       await expect(svc.uploadCv(file, 'user-id')).rejects.toThrow(
         UnprocessableEntityException,
       );
-      expect(mockPrisma.cvDocument.delete).toHaveBeenCalledWith({ where: { id: mockDoc.id } });
+      expect(mockPrisma.cvDocument.delete).toHaveBeenCalledWith({
+        where: { id: mockDoc.id },
+      });
       expect(mockR2.delete).toHaveBeenCalledTimes(1);
     });
 
@@ -252,9 +260,9 @@ describe('CvService', () => {
         ...mockDoc,
         userId: 'other-user',
       });
-      await expect(
-        service.getDownloadUrl('doc-id', 'user-id'),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.getDownloadUrl('doc-id', 'user-id')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('throws InternalServerErrorException when storageKey is missing', async () => {
@@ -262,9 +270,9 @@ describe('CvService', () => {
         ...mockDoc,
         storageKey: '',
       });
-      await expect(
-        service.getDownloadUrl('doc-id', 'user-id'),
-      ).rejects.toThrow(InternalServerErrorException);
+      await expect(service.getDownloadUrl('doc-id', 'user-id')).rejects.toThrow(
+        InternalServerErrorException,
+      );
     });
   });
 
