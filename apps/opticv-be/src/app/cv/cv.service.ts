@@ -8,8 +8,8 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { R2Service } from './r2.service';
-import { CvParserService } from './cv-parser.service';
+import { R2Service } from './services/r2.service';
+import { CvParserService } from './services/cv-parser.service';
 import { CvDocumentListItem, UploadCvResponse } from '@opticv/datatypes';
 
 const ALLOWED_MIME_TYPES = [

@@ -2,7 +2,7 @@ import { CanActivate } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CvController } from './cv.controller';
 import { CvService } from './cv.service';
-import { CvExtractionService } from './cv-extraction.service';
+import { CvExtractionService } from './services/cv-extraction.service';
 import { SupabaseGuard } from '../auth/supabase.guard';
 import type { CvDocumentListItem, UploadCvResponse } from '@opticv/datatypes';
 import type { UserModel } from '../../generated/prisma/models.js';
@@ -129,21 +129,25 @@ describe('CvController', () => {
     it('delegates to CvService.deleteCv with id and userId', async () => {
       await controller.deleteCv('doc-id', mockUser);
 
-      expect(mockCvService.deleteCv).toHaveBeenCalledWith('doc-id', mockUser.id);
+      expect(mockCvService.deleteCv).toHaveBeenCalledWith(
+        'doc-id',
+        mockUser.id,
+      );
     });
   });
 
   describe('extractCv', () => {
     it('delegates to CvExtractionService.extractStructuredData and wraps result in data envelope', async () => {
       const structuredData = { contact: { name: 'Jane' } };
-      mockCvExtractionService.extractStructuredData.mockResolvedValueOnce(structuredData);
+      mockCvExtractionService.extractStructuredData.mockResolvedValueOnce(
+        structuredData,
+      );
 
       const result = await controller.extractCv('doc-id', mockUser);
 
-      expect(mockCvExtractionService.extractStructuredData).toHaveBeenCalledWith(
-        'doc-id',
-        mockUser.id,
-      );
+      expect(
+        mockCvExtractionService.extractStructuredData,
+      ).toHaveBeenCalledWith('doc-id', mockUser.id);
       expect(result).toEqual({ data: structuredData });
     });
 

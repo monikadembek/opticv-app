@@ -1,24 +1,22 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import OpenAI from 'openai';
-import type { CvStructuredData } from '@opticv/datatypes';
-import { AiExtractionProvider } from './ai-extraction.provider';
-import { EXTRACTION_SYSTEM_PROMPT } from './extraction-prompt';
 import { CV_EXTRACTION_OPENAI_MODEL } from '../../constants';
+import OpenAI from 'openai';
+import { ConfigService } from '@nestjs/config';
+import { EXTRACTION_SYSTEM_PROMPT } from '../prompts/extract-cv-data.prompt';
+import { CvStructuredData } from '@opticv/datatypes';
 
 @Injectable()
-export class OpenAiExtractionService extends AiExtractionProvider {
+export class OpenAiService {
   private readonly client: OpenAI;
-  private readonly logger = new Logger(OpenAiExtractionService.name);
+  private readonly logger = new Logger(OpenAiService.name);
 
   constructor(private readonly config: ConfigService) {
-    super();
     this.client = new OpenAI({
       apiKey: this.config.get<string>('OPENAI_API_KEY'),
     });
   }
 
-  async extract(text: string): Promise<CvStructuredData> {
+  async extractCvData(text: string): Promise<CvStructuredData> {
     this.logger.log('Calling OpenAI gpt-4o-mini for CV extraction');
 
     const response = await this.client.chat.completions.create({

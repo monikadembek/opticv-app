@@ -4,24 +4,14 @@ import { AuthModule } from '../auth/auth.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { CvController } from './cv.controller';
 import { CvService } from './cv.service';
-import { CvParserService } from './cv-parser.service';
-import { CvExtractionService } from './cv-extraction.service';
-import { R2Service } from './r2.service';
-import { OpenAiExtractionService } from './ai/openai-extraction.service';
-import { AI_EXTRACTION_PROVIDER } from './ai/ai-extraction.token';
+import { CvParserService } from './services/cv-parser.service';
+import { CvExtractionService } from './services/cv-extraction.service';
+import { R2Service } from './services/r2.service';
+import { AiModule } from '../ai/ai.module';
 
 @Module({
-  imports: [AuthModule, PrismaModule, ConfigModule],
+  imports: [AuthModule, PrismaModule, ConfigModule, AiModule],
   controllers: [CvController],
-  providers: [
-    CvService,
-    CvParserService,
-    R2Service,
-    CvExtractionService,
-    {
-      provide: AI_EXTRACTION_PROVIDER,
-      useClass: OpenAiExtractionService,
-    },
-  ],
+  providers: [CvService, CvParserService, R2Service, CvExtractionService],
 })
 export class CvModule {}
