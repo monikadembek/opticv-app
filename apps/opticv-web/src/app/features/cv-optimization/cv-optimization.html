@@ -1,0 +1,14 @@
+<div class="mx-auto max-w-2xl px-4 py-12">
+  <h1 class="mb-8 text-3xl font-bold text-surface-900">CV Optimization</h1>
+
+  <p-stepper [value]="1">
+    <p-step-item [value]="1">
+      <p-step>CV and job description</p-step>
+      <p-step-panel>
+        <ng-template #content let-activateCallback="activateCallback">
+          <app-cv-optimization-step1 [activateCallback]="activateCallback" />
+        </ng-template>
+      </p-step-panel>
+    </p-step-item>
+  </p-stepper>
+</div>
