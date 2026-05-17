@@ -76,13 +76,23 @@ export class CvService {
       try {
         parsedText = await this.cvParser.parse(file.buffer, file.mimetype);
       } catch (parseError) {
-        this.logger.error(`Failed to parse CV document ${doc.id}: ${parseError}`);
+        this.logger.error(
+          `Failed to parse CV document ${doc.id}: ${parseError}`,
+        );
         await this.prisma.cvDocument
           .delete({ where: { id: doc.id } })
-          .catch((e) => this.logger.error(`Failed to clean up DB record ${doc.id} after parse failure: ${e}`));
+          .catch((e) =>
+            this.logger.error(
+              `Failed to clean up DB record ${doc.id} after parse failure: ${e}`,
+            ),
+          );
         await this.r2
           .delete(storageKey)
-          .catch((e) => this.logger.error(`Failed to clean up R2 object after parse failure: ${e}`));
+          .catch((e) =>
+            this.logger.error(
+              `Failed to clean up R2 object after parse failure: ${e}`,
+            ),
+          );
         throw new UnprocessableEntityException(
           'Could not parse the uploaded file. Please ensure it is a valid, non-protected PDF or DOCX.',
         );
@@ -134,10 +144,7 @@ export class CvService {
     });
   }
 
-  async getDownloadUrl(
-    id: string,
-    userId: string,
-  ): Promise<{ url: string }> {
+  async getDownloadUrl(id: string, userId: string): Promise<{ url: string }> {
     const doc = await this.prisma.cvDocument.findUnique({ where: { id } });
     if (!doc) throw new NotFoundException('CV document not found.');
     if (doc.userId !== userId) throw new ForbiddenException();

@@ -1,0 +1,162 @@
+<div class="flex flex-col gap-6 pt-4 pb-4">
+  <form [formGroup]="form" class="flex flex-col gap-6" (ngSubmit)="onSubmit()">
+    <div class="flex flex-col gap-2">
+      <label for="cvDocumentId" class="font-semibold text-surface-900"
+        >Select CV</label
+      >
+      @if (!cvList.error()) {
+      <p-select
+        formControlName="cvDocumentId"
+        id="cvDocumentId"
+        [options]="cvList.value()"
+        optionLabel="fileName"
+        optionValue="id"
+        [placeholder]="cvList.isLoading() ? 'Loading CV list': 'Select a CV'"
+        class="w-full"
+        [invalid]="cvDocumentIdControl.invalid && cvDocumentIdControl.touched"
+        [attr.aria-invalid]="cvDocumentIdControl.invalid && cvDocumentIdControl.touched"
+        aria-describedby="cvDocumentId-error"
+      />
+      @if (cvDocumentIdControl.invalid && cvDocumentIdControl.touched) { @if
+      (cvDocumentIdControl.hasError('required')) {
+      <p id="cvDocumentId-error" class="text-sm text-red-600" role="alert">
+        CV is required.
+      </p>
+      } } } @if(cvList.error()) {
+      <div>
+        <p class="text-sm text-red-600" role="alert">
+          Couldn't get list of your cv's
+        </p>
+        <p-button
+          type="button"
+          label="Reload"
+          (onClick)="reloadCvs()"
+        ></p-button>
+      </div>
+      } @if (!cvList.isLoading() && !cvList.error() && cvList.value().length ===
+      0) {
+      <p class="text-sm text-surface-500">
+        No CVs available. Please upload a CV first.
+      </p>
+      }
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label for="companyName" class="font-semibold text-surface-900"
+        >Company Name</label
+      >
+      <input
+        pInputText
+        id="companyName"
+        formControlName="companyName"
+        type="text"
+        placeholder="Enter company name"
+        class="w-full"
+        [invalid]="companyNameControl.invalid && companyNameControl.touched"
+        [attr.aria-invalid]="companyNameControl.invalid && companyNameControl.touched"
+        aria-describedby="companyName-error"
+      />
+      @if (companyNameControl.invalid && companyNameControl.touched) { @if
+      (companyNameControl.hasError('required')) {
+      <p id="companyName-error" class="text-sm text-red-600" role="alert">
+        Company name is required.
+      </p>
+      } @if (companyNameControl.hasError('maxlength')) {
+      <p id="companyName-error" class="text-sm text-red-600" role="alert">
+        Company name can't be longer than 256 characters.
+      </p>
+      } }
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label for="jobTitle" class="font-semibold text-surface-900"
+        >Job Title</label
+      >
+      <input
+        pInputText
+        id="jobTitle"
+        formControlName="jobTitle"
+        type="text"
+        placeholder="Enter job title"
+        class="w-full"
+        [invalid]="jobTitleControl.invalid && jobTitleControl.touched"
+        [attr.aria-invalid]="jobTitleControl.invalid && jobTitleControl.touched"
+        aria-describedby="jobTitle-error"
+      />
+      @if (jobTitleControl.invalid && jobTitleControl.touched) { @if
+      (jobTitleControl.hasError('required')) {
+      <p id="jobTitle-error" class="text-sm text-red-600" role="alert">
+        Job title is required.
+      </p>
+      } @if (jobTitleControl.hasError('maxlength')) {
+      <p id="jobTitle-error" class="text-sm text-red-600" role="alert">
+        Job title can't be longer than 256 characters.
+      </p>
+      } }
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label for="jobDescription" class="font-semibold text-surface-900"
+        >Job Description</label
+      >
+      <textarea
+        pTextarea
+        id="jobDescription"
+        formControlName="jobDescription"
+        placeholder="Paste the job description here"
+        rows="8"
+        class="w-full"
+        [invalid]="jobDescriptionControl.invalid && jobDescriptionControl.touched"
+        [attr.aria-invalid]="jobDescriptionControl.invalid && jobDescriptionControl.touched"
+        aria-describedby="jobDescription-error"
+      ></textarea>
+      @if (jobDescriptionControl.invalid && jobDescriptionControl.touched) { @if
+      (jobDescriptionControl.hasError('required')) {
+      <p id="jobDescription-error" class="text-sm text-red-600" role="alert">
+        Job description is required.
+      </p>
+      } @if (jobDescriptionControl.hasError('maxlength')) {
+      <p id="jobDescription-error" class="text-sm text-red-600" role="alert">
+        Job description can't be longer than 5000 characters.
+      </p>
+      } }
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label for="notes" class="font-semibold text-surface-900"
+        >Notes
+        <span class="text-surface-400 font-normal">(optional)</span></label
+      >
+      <textarea
+        pTextarea
+        id="notes"
+        formControlName="notes"
+        placeholder="Any additional notes"
+        rows="4"
+        class="w-full"
+        [invalid]="notesControl.invalid && notesControl.touched"
+        [attr.aria-invalid]="notesControl.invalid && notesControl.touched"
+        aria-describedby="notes-error"
+      ></textarea>
+      @if (notesControl.invalid && notesControl.touched) { @if
+      (notesControl.hasError('maxlength')) {
+      <p id="notes-error" class="text-sm text-red-600" role="alert">
+        Notes can't be longer than 1000 characters.
+      </p>
+      } }
+    </div>
+
+    <div class="flex flex-col gap-3">
+      <p-button
+        type="submit"
+        label="Start Optimization Process"
+        [loading]="isSubmitting()"
+        [disabled]="isSubmitting()"
+      />
+
+      @if (submitError()) {
+      <p class="text-sm text-red-600" role="alert">{{ submitError() }}</p>
+      }
+    </div>
+  </form>
+</div>

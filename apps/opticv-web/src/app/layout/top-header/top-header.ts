@@ -1,4 +1,11 @@
-import { Component, effect, inject, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+  input,
+  output,
+} from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
@@ -10,6 +17,7 @@ import { ButtonModule } from 'primeng/button';
   imports: [AvatarModule, MenubarModule, ButtonModule, RouterLink],
   templateUrl: './top-header.html',
   styleUrl: './top-header.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TopHeader {
   private readonly router = inject(Router);
@@ -31,6 +39,10 @@ export class TopHeader {
         {
           label: 'Dashboard',
           route: '/dashboard',
+        },
+        {
+          label: 'CV Optimization',
+          route: '/cv-optimization',
         },
         {
           label: 'Upload CV',
