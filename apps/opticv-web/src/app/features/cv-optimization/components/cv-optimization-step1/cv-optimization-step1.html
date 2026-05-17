@@ -61,7 +61,7 @@
       <p id="companyName-error" class="text-sm text-red-600" role="alert">
         Company name is required.
       </p>
-      } @if (companyNameControl.hasError('maxLength')) {
+      } @if (companyNameControl.hasError('maxlength')) {
       <p id="companyName-error" class="text-sm text-red-600" role="alert">
         Company name can't be longer than 256 characters.
       </p>
@@ -88,7 +88,7 @@
       <p id="jobTitle-error" class="text-sm text-red-600" role="alert">
         Job title is required.
       </p>
-      } @if (jobTitleControl.hasError('maxLength')) {
+      } @if (jobTitleControl.hasError('maxlength')) {
       <p id="jobTitle-error" class="text-sm text-red-600" role="alert">
         Job title can't be longer than 256 characters.
       </p>
@@ -115,7 +115,7 @@
       <p id="jobDescription-error" class="text-sm text-red-600" role="alert">
         Job description is required.
       </p>
-      } @if (jobDescriptionControl.hasError('maxLength')) {
+      } @if (jobDescriptionControl.hasError('maxlength')) {
       <p id="jobDescription-error" class="text-sm text-red-600" role="alert">
         Job description can't be longer than 5000 characters.
       </p>
@@ -139,7 +139,7 @@
         aria-describedby="notes-error"
       ></textarea>
       @if (notesControl.invalid && notesControl.touched) { @if
-      (notesControl.hasError('maxLength')) {
+      (notesControl.hasError('maxlength')) {
       <p id="notes-error" class="text-sm text-red-600" role="alert">
         Notes can't be longer than 1000 characters.
       </p>

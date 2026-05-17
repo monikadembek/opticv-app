@@ -89,7 +89,7 @@ export class CvOptimizationStep1 {
     this.isSubmitting.set(true);
     this.submitError.set(null);
 
-    let payload = {} as CreateJobApplicationPayload;
+    let payload: CreateJobApplicationPayload | null = null;
     const { cvDocumentId, companyName, jobTitle, jobDescription, notes } =
       this.form.getRawValue();
 
@@ -99,9 +99,11 @@ export class CvOptimizationStep1 {
         companyName,
         jobTitle,
         jobDescription,
-        notes: notes || '',
+        notes: notes || undefined,
       };
     }
+
+    if (!payload) return;
 
     this.cvOptimizationApiService.createJobApplication(payload).subscribe({
       next: () => {
