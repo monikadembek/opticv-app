@@ -4,7 +4,7 @@
       <label for="cvDocumentId" class="font-semibold text-surface-900"
         >Select CV</label
       >
-      @if (cvList.value()) {
+      @if (!cvList.error()) {
       <p-select
         formControlName="cvDocumentId"
         id="cvDocumentId"

@@ -89,24 +89,36 @@ export class CvOptimizationStep1 {
     this.isSubmitting.set(true);
     this.submitError.set(null);
 
-    this.cvOptimizationApiService
-      .createJobApplication(this.form.value as CreateJobApplicationPayload)
-      .subscribe({
-        next: () => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Success',
-            detail: 'CV and job description were successfully submited',
-          });
-          this.isSubmitting.set(false);
-          this.activateCallback()?.(2);
-        },
-        error: (err) => {
-          const errorMsg =
-            err?.error?.message ?? 'Submitting CV and job offer failed';
-          this.submitError.set(errorMsg);
-          this.isSubmitting.set(false);
-        },
-      });
+    let payload = {} as CreateJobApplicationPayload;
+    const { cvDocumentId, companyName, jobTitle, jobDescription, notes } =
+      this.form.getRawValue();
+
+    if (cvDocumentId && companyName && jobTitle && jobDescription) {
+      payload = {
+        cvDocumentId,
+        companyName,
+        jobTitle,
+        jobDescription,
+        notes: notes || '',
+      };
+    }
+
+    this.cvOptimizationApiService.createJobApplication(payload).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'CV and job description were successfully submited',
+        });
+        this.isSubmitting.set(false);
+        this.activateCallback()?.(2);
+      },
+      error: (err) => {
+        const errorMsg =
+          err?.error?.message ?? 'Submitting CV and job offer failed';
+        this.submitError.set(errorMsg);
+        this.isSubmitting.set(false);
+      },
+    });
   }
 }
