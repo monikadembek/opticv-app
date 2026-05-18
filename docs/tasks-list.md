@@ -189,13 +189,12 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 17. Refactor Dashboard page (FE)
+### 17. Refactor cv-optimization component (FE)
 
-**status - in progress**
+**status - done**
 
-- rename cv-optimization-step1 component to job-upload
+- rename cv-optimization-step1 component to job-upload component
 - replace stepper primeng component with primeng accordion
-- implement httpResource to get list of user cvs in dashboard
 
 ---
 
@@ -213,6 +212,14 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 - run optimization process from frontend
 - wait for response with runId and use it to leisten to SSE - server sent events
+
+---
+
+### Refactor fetching list of cvs in dashboard (FE)
+
+**status - todo**
+
+- implement httpResource to get list of user cvs in dashboard
 
 ---
 
