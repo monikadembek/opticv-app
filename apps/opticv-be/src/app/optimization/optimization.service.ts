@@ -33,6 +33,10 @@ export class OptimizationService {
       throw new ForbiddenException();
     }
 
+    if (!record.cvDocument) {
+      throw new BadRequestException('CV document is not yet parsed.');
+    }
+
     if (record.cvDocument.parseStatus !== 'COMPLETED') {
       throw new BadRequestException('CV document is not yet parsed.');
     }
@@ -88,7 +92,7 @@ export class OptimizationService {
     return { runId };
   }
 
-  async assertOwnership(jobApplicationId: string, userId: string): Promise<void> {
+  async validateStreamAccess(jobApplicationId: string, userId: string): Promise<void> {
     const record = await this.prisma.jobApplication.findUnique({
       where: { id: jobApplicationId },
       select: { userId: true },

@@ -9,8 +9,9 @@ import { OptimizationEventBus } from './optimization-event-bus.js';
 import type { OptimizationJobPayload } from './optimization.types.js';
 
 const FALLBACK_MODEL = 'gpt-4o-mini';
+const CONCURRENCY = parseInt(process.env['BULLMQ_CONCURRENCY'] ?? '5', 10);
 
-@Processor('optimization')
+@Processor('optimization', { concurrency: CONCURRENCY })
 export class OptimizationProcessor extends WorkerHost {
   private readonly logger = new Logger(OptimizationProcessor.name);
 

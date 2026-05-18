@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Get,
   HttpCode,
@@ -13,10 +14,11 @@ import type { Request, Response } from 'express';
 import { SupabaseGuard } from '../auth/supabase.guard.js';
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import type { UserModel } from '../../generated/prisma/models.js';
+import { PromptType } from '../../generated/prisma/enums.js';
 import { OptimizationService } from './optimization.service.js';
 import { OptimizationEventBus } from './optimization-event-bus.js';
 
-const TOTAL_JOBS = 7;
+const TOTAL_JOBS = Object.values(PromptType).length;
 
 @Controller('optimizations')
 @UseGuards(SupabaseGuard)
@@ -43,7 +45,11 @@ export class OptimizationController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    await this.optimizationService.assertOwnership(jobApplicationId, user.id);
+    if (!runId?.trim()) {
+      throw new BadRequestException('runId query parameter is required.');
+    }
+
+    await this.optimizationService.validateStreamAccess(jobApplicationId, user.id);
 
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
@@ -53,6 +59,8 @@ export class OptimizationController {
     let resolved = 0;
 
     const unsubscribe = this.eventBus.subscribe(runId, (event) => {
+      if (res.writableEnded) return;
+
       res.write(`event: job-complete\ndata: ${JSON.stringify(event)}\n\n`);
       resolved++;
 

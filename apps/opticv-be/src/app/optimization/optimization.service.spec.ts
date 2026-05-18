@@ -70,6 +70,17 @@ describe('OptimizationService', () => {
       );
     });
 
+    it('throws BadRequestException when cvDocument is null', async () => {
+      mockPrisma.jobApplication.findUnique.mockResolvedValue({
+        ...baseJobApplication,
+        cvDocument: null,
+      });
+
+      await expect(service.triggerOptimization('app-1', 'user-1')).rejects.toThrow(
+        new BadRequestException('CV document is not yet parsed.'),
+      );
+    });
+
     it('throws BadRequestException when CV parseStatus is not COMPLETED', async () => {
       mockPrisma.jobApplication.findUnique.mockResolvedValue({
         ...baseJobApplication,
