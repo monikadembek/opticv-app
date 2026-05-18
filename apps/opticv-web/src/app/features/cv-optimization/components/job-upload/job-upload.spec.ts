@@ -3,8 +3,11 @@ import { By } from '@angular/platform-browser';
 import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { MessageService } from 'primeng/api';
-import type { CvDocumentListItem, JobApplicationResponse } from '@opticv/datatypes';
-import { CvOptimizationStep1 } from './cv-optimization-step1';
+import type {
+  CvDocumentListItem,
+  JobApplicationResponse,
+} from '@opticv/datatypes';
+import { JobUpload } from './job-upload';
 import { CvOptimizationApiService } from '../../services/cv-optimization-api.service';
 
 const mockCv: CvDocumentListItem = {
@@ -42,9 +45,9 @@ function makeCvListResource(overrides: {
   };
 }
 
-describe('CvOptimizationStep1', () => {
-  let fixture: ComponentFixture<CvOptimizationStep1>;
-  let component: CvOptimizationStep1;
+describe('JobUpload', () => {
+  let fixture: ComponentFixture<JobUpload>;
+  let component: JobUpload;
   let apiService: {
     cvList: ReturnType<typeof makeCvListResource>;
     reloadCvList: ReturnType<typeof vi.fn>;
@@ -63,14 +66,14 @@ describe('CvOptimizationStep1', () => {
     messageService = { add: vi.fn() };
 
     await TestBed.configureTestingModule({
-      imports: [CvOptimizationStep1],
+      imports: [JobUpload],
       providers: [
         { provide: CvOptimizationApiService, useValue: apiService },
         { provide: MessageService, useValue: messageService },
       ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(CvOptimizationStep1);
+    fixture = TestBed.createComponent(JobUpload);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
@@ -225,11 +228,11 @@ describe('CvOptimizationStep1', () => {
 
     it('should use fallback error message when error has no message', () => {
       fillValidForm();
-      apiService.createJobApplication.mockReturnValue(
-        throwError(() => ({})),
-      );
+      apiService.createJobApplication.mockReturnValue(throwError(() => ({})));
       component.onSubmit();
-      expect(component.submitError()).toBe('Submitting CV and job offer failed');
+      expect(component.submitError()).toBe(
+        'Submitting CV and job offer failed',
+      );
     });
 
     it('should clear submitError before each submission attempt', () => {
@@ -257,8 +260,11 @@ describe('CvOptimizationStep1', () => {
 
   describe('template', () => {
     it('should show a reload button when cvList has an error', () => {
-      apiService.cvList = makeCvListResource({ value: [], error: 'Network error' });
-      fixture = TestBed.createComponent(CvOptimizationStep1);
+      apiService.cvList = makeCvListResource({
+        value: [],
+        error: 'Network error',
+      });
+      fixture = TestBed.createComponent(JobUpload);
       component = fixture.componentInstance;
       fixture.detectChanges();
 
@@ -270,7 +276,7 @@ describe('CvOptimizationStep1', () => {
 
     it('should show "No CVs available" message when cv list is empty and not loading', () => {
       apiService.cvList = makeCvListResource({ value: [] });
-      fixture = TestBed.createComponent(CvOptimizationStep1);
+      fixture = TestBed.createComponent(JobUpload);
       component = fixture.componentInstance;
       fixture.detectChanges();
 

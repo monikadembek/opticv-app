@@ -23,7 +23,7 @@ import {
 import { MessageService } from 'primeng/api';
 
 @Component({
-  selector: 'app-cv-optimization-step1',
+  selector: 'app-job-upload',
   imports: [
     FormsModule,
     ReactiveFormsModule,
@@ -32,10 +32,10 @@ import { MessageService } from 'primeng/api';
     Textarea,
     Button,
   ],
-  templateUrl: './cv-optimization-step1.html',
+  templateUrl: './job-upload.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CvOptimizationStep1 {
+export class JobUpload {
   private readonly cvOptimizationApiService = inject(CvOptimizationApiService);
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);

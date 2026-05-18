@@ -1,6 +1,6 @@
 # Tasks list
 
-### 1. Create project structure
+### 1. Create project structure - setup (FE, BE)
 
 **status: done**
 
@@ -9,7 +9,7 @@
 
 ---
 
-### 2. Implement basic layout in frontend app
+### 2. Implement basic layout in frontend app (FE)
 
 **status: done**
 
@@ -20,7 +20,7 @@
 
 ---
 
-### 3. Supabase passwordless auth with OTP 6 digit
+### 3. Supabase passwordless auth with OTP 6 digit (FE)
 
 **status: done**
 
@@ -32,7 +32,7 @@
 
 ---
 
-### 4. Sending emails with custom SMTP
+### 4. Sending emails with custom SMTP (Supabase, Resend services)
 
 **status: blocked**
 
@@ -44,7 +44,7 @@
 
 ---
 
-### 5. Create database schema
+### 5. Create database schema (BE)
 
 **status: done**
 
@@ -53,7 +53,7 @@
 
 ---
 
-### 6. Handle user creation on the backend
+### 6. Handle user creation on the backend (BE)
 
 **status: done**
 
@@ -89,7 +89,7 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 7. Implement CV file upload
+### 7. Implement CV file upload (FE, BE, Cloudflare)
 
 **Status: done**
 
@@ -100,7 +100,7 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 8. Show list of user uploaded files in dashboard
+### 8. Show list of user uploaded files in dashboard (BE, FE)
 
 **status: done**
 
@@ -112,18 +112,18 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 9. Implement parsing of uploaded user CV file
+### 9. Implement parsing of uploaded user CV file (BE)
 
-**status: todo**
+**status: done**
 
 - parse pdfs and docx files
 - store parsed content in table CvDocument in parsedText field
 
 ---
 
-### 10. CV structured extraction
+### 10. CV structured extraction (BE)
 
-**status: in progress**
+**status: done**
 
 - extract cv data as structured output json from parsed text
 - use some cheap model from Open AI for now, for example GPT-4.0-mini model
@@ -131,7 +131,7 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 11. Prepare prompt templates for CV optimizations
+### 11. Prepare prompt templates for CV optimizations (BE)
 
 **status: done**
 
@@ -140,7 +140,7 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 12. Implement Job Application module on backend
+### 12. Implement Job Application module on backend (BE)
 
 **status: done**
 
@@ -148,7 +148,7 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 13. First step of CV optimization creator
+### 13. First step of CV optimization creator (FE)
 
 **status: done**
 
@@ -158,16 +158,19 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 14. Optimization process on backend - BullMq
+### 14. Optimization process on backend - BullMq (BE)
 
 **status - done**
 
 - implement optimization process on backend
 - add BullMq + Redis
+- add docker compose
+- add EventBus to inform controller when job is finished
+- send SSE to FE
 
 ---
 
-### 15. Trigger single job
+### 15. Trigger single job (BE)
 
 **status: done**
 
@@ -176,9 +179,9 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 16. Usage tracking
+### 16. Usage tracking (BE)
 
-**status: in progress**
+**status: done**
 
 - implement usage logging called inside every AI request
 - implement cos t calculation, store costCents
@@ -186,7 +189,17 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 17. Run cv parsing on frontend
+### 17. Refactor Dashboard page (FE)
+
+**status - in progress**
+
+- rename cv-optimization-step1 component to job-upload
+- replace stepper primeng component with primeng accordion
+- implement httpResource to get list of user cvs in dashboard
+
+---
+
+### 18. Run cv parsing in web app (FE)
 
 **status: todo**
 
@@ -194,18 +207,12 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 18. Trigger optimization process from frontend, wait for runId and listen to SSE
+### 19. Trigger optimization process from web, wait for runId and listen to SSE (FE)
 
 **status: todo**
 
 - run optimization process from frontend
 - wait for response with runId and use it to leisten to SSE - server sent events
-
-### 19. Refactor Dashboard page
-
-**status - todo**
-
-- implement httpResource to get list of user cvs
 
 ---
 
