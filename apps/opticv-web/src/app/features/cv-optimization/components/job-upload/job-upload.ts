@@ -117,11 +117,10 @@ export class JobUpload {
           console.log('submit job description result: ', result);
         }),
         switchMap(() => {
-          return this.cvOptimizationApiService.extractCvData(
-            cvDocumentId as string,
-          );
+          return this.cvOptimizationApiService
+            .extractCvData(cvDocumentId as string)
+            .pipe(retry(2));
         }),
-        retry(2),
       )
       .subscribe({
         next: (extractedData) => {
