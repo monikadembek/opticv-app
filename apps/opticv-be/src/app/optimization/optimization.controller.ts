@@ -12,6 +12,14 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiProduces,
+  ApiProperty,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { SupabaseGuard } from '../auth/supabase.guard.js';
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import type { UserModel } from '../../generated/prisma/models.js';
@@ -22,9 +30,12 @@ import { OptimizationEventBus } from './optimization-event-bus.js';
 const TOTAL_JOBS = Object.values(PromptType).length;
 
 class TriggerSingleJobDto {
+  @ApiProperty({ example: 'run-uuid-123' })
   runId!: string;
 }
 
+@ApiTags('optimizations')
+@ApiBearerAuth()
 @Controller('optimizations')
 @UseGuards(SupabaseGuard)
 export class OptimizationController {
@@ -35,6 +46,10 @@ export class OptimizationController {
 
   @Post('job-applications/:jobApplicationId/run')
   @HttpCode(202)
+  @ApiOperation({ summary: 'Trigger full optimization run for a job application' })
+  @ApiResponse({ status: 202, description: 'Optimization run accepted' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Job application not found' })
   async triggerOptimization(
     @Param('jobApplicationId') jobApplicationId: string,
     @CurrentUser() user: UserModel,
@@ -44,6 +59,11 @@ export class OptimizationController {
 
   @Post('job-applications/:jobApplicationId/run/:promptType')
   @HttpCode(202)
+  @ApiOperation({ summary: 'Trigger a single optimization job within a run' })
+  @ApiResponse({ status: 202, description: 'Job accepted' })
+  @ApiResponse({ status: 400, description: 'Invalid promptType or missing runId' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Job application not found' })
   async triggerSingleJob(
     @Param('jobApplicationId') jobApplicationId: string,
     @Param('promptType') promptType: string,
@@ -67,6 +87,12 @@ export class OptimizationController {
   }
 
   @Get('job-applications/:jobApplicationId/stream')
+  @ApiOperation({ summary: 'Stream optimization progress events (SSE)' })
+  @ApiProduces('text/event-stream')
+  @ApiResponse({ status: 200, description: 'Server-sent events stream' })
+  @ApiResponse({ status: 400, description: 'Missing runId' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Job application not found' })
   async streamOptimization(
     @Param('jobApplicationId') jobApplicationId: string,
     @Query('runId') runId: string,
