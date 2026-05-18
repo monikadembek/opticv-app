@@ -13,6 +13,7 @@ import { environment } from '../../../../environments/environment';
 
 const CV_URL = `${environment.apiUrl}/cv`;
 const JOB_APPS_URL = `${environment.apiUrl}/job-applications`;
+const CV_EXTRACT_URL = (id: string) => `${environment.apiUrl}/cv/${id}/extract`;
 
 const mockCv: CvDocumentListItem = {
   id: 'cv-id-1',
@@ -129,6 +130,51 @@ describe('CvOptimizationApiService', () => {
 
       const req = httpMock.expectOne(JOB_APPS_URL);
       req.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
+
+      expect(errorReceived).toBe(true);
+    });
+  });
+
+  describe('extractCvData', () => {
+    const cvId = 'cv-id-1';
+
+    beforeEach(() => {
+      httpMock.expectOne(CV_URL).flush([]);
+    });
+
+    it('POSTs to /api/cv/:id/extract with an empty body', () => {
+      service.extractCvData(cvId).subscribe();
+
+      const req = httpMock.expectOne(CV_EXTRACT_URL(cvId));
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({});
+      req.flush({ data: {} });
+    });
+
+    it('emits the response and completes on success', () => {
+      const mockResponse = { data: { name: 'John' } };
+      let emitted: unknown = undefined;
+      let completed = false;
+
+      service.extractCvData(cvId).subscribe({
+        next: (v) => (emitted = v),
+        complete: () => (completed = true),
+      });
+
+      httpMock.expectOne(CV_EXTRACT_URL(cvId)).flush(mockResponse);
+
+      expect(emitted).toEqual(mockResponse);
+      expect(completed).toBe(true);
+    });
+
+    it('propagates HTTP errors', () => {
+      let errorReceived = false;
+
+      service.extractCvData(cvId).subscribe({ error: () => (errorReceived = true) });
+
+      httpMock
+        .expectOne(CV_EXTRACT_URL(cvId))
+        .flush('Internal Server Error', { status: 500, statusText: 'Server Error' });
 
       expect(errorReceived).toBe(true);
     });

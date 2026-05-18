@@ -20,7 +20,7 @@ import {
   CvOptimizationApiService,
 } from '../../services/cv-optimization-api.service';
 import { MessageService } from 'primeng/api';
-import { catchError, EMPTY, of, retry, switchMap, tap } from 'rxjs';
+import { catchError, EMPTY, retry, switchMap, tap } from 'rxjs';
 
 @Component({
   selector: 'app-job-upload',
@@ -111,7 +111,7 @@ export class JobUpload {
             err?.error?.message ?? 'Submitting CV and job offer failed';
           this.submitError.set(errorMsg);
           this.isSubmitting.set(false);
-          return of(EMPTY);
+          return EMPTY;
         }),
         tap((result) => {
           console.log('submit job description result: ', result);

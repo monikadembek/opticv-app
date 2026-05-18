@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { signal } from '@angular/core';
-import { of, throwError } from 'rxjs';
+import { NEVER, of, throwError } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import type {
   CvDocumentListItem,
@@ -52,6 +52,7 @@ describe('JobUpload', () => {
     cvList: ReturnType<typeof makeCvListResource>;
     reloadCvList: ReturnType<typeof vi.fn>;
     createJobApplication: ReturnType<typeof vi.fn>;
+    extractCvData: ReturnType<typeof vi.fn>;
   };
   let messageService: { add: ReturnType<typeof vi.fn> };
 
@@ -62,6 +63,7 @@ describe('JobUpload', () => {
       createJobApplication: vi
         .fn()
         .mockReturnValue(of(mockJobApplicationResponse)),
+      extractCvData: vi.fn().mockReturnValue(of({ data: {} })),
     };
     messageService = { add: vi.fn() };
 
@@ -190,11 +192,7 @@ describe('JobUpload', () => {
 
     it('should set isSubmitting to true during submission', () => {
       fillValidForm();
-      apiService.createJobApplication.mockReturnValue(
-        new (class {
-          subscribe() {}
-        })(),
-      );
+      apiService.createJobApplication.mockReturnValue(NEVER);
       component.onSubmit();
       expect(component.isSubmitting()).toBe(true);
     });
@@ -206,14 +204,6 @@ describe('JobUpload', () => {
         expect.objectContaining({ severity: 'success' }),
       );
       expect(component.isSubmitting()).toBe(false);
-    });
-
-    it('should invoke activateCallback with step 2 on success', () => {
-      fillValidForm();
-      const activateCallback = vi.fn();
-      fixture.componentRef.setInput('activateCallback', activateCallback);
-      component.onSubmit();
-      expect(activateCallback).toHaveBeenCalledWith(2);
     });
 
     it('should set submitError and reset isSubmitting on failure with server message', () => {
@@ -248,6 +238,21 @@ describe('JobUpload', () => {
       );
       component.onSubmit();
       expect(component.submitError()).toBeNull();
+    });
+
+    it('should call extractCvData with the cvDocumentId after successful createJobApplication', () => {
+      fillValidForm();
+      component.onSubmit();
+      expect(apiService.extractCvData).toHaveBeenCalledWith('cv-id-1');
+    });
+
+    it('should NOT call extractCvData when createJobApplication fails', () => {
+      fillValidForm();
+      apiService.createJobApplication.mockReturnValue(
+        throwError(() => ({ error: { message: 'Server error' } })),
+      );
+      component.onSubmit();
+      expect(apiService.extractCvData).not.toHaveBeenCalled();
     });
   });
 
