@@ -26,6 +26,10 @@ import { CreateJobApplicationDto } from './dto/create-job-application.dto';
 import { UpdateJobApplicationDto } from './dto/update-job-application.dto';
 import { UpdateAtsScoreDto } from './dto/update-ats-score.dto';
 import { JobApplicationQueryDto } from './dto/job-application-query.dto';
+import {
+  JobApplicationListResponseDto,
+  JobApplicationResponseDto,
+} from './dto/job-application-response.dto';
 
 @ApiTags('job-applications')
 @ApiBearerAuth()
@@ -37,7 +41,7 @@ export class JobApplicationController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a job application' })
-  @ApiResponse({ status: 201, description: 'Job application created' })
+  @ApiResponse({ status: 201, type: JobApplicationResponseDto, description: 'Job application created' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   create(
@@ -49,7 +53,7 @@ export class JobApplicationController {
 
   @Get()
   @ApiOperation({ summary: 'List job applications with pagination' })
-  @ApiResponse({ status: 200, description: 'Paginated list of job applications' })
+  @ApiResponse({ status: 200, type: JobApplicationListResponseDto, description: 'Paginated list of job applications' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   findAll(
     @Query() query: JobApplicationQueryDto,
@@ -60,7 +64,7 @@ export class JobApplicationController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a single job application' })
-  @ApiResponse({ status: 200, description: 'Job application details' })
+  @ApiResponse({ status: 200, type: JobApplicationResponseDto, description: 'Job application details' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Job application not found' })
   findOne(
@@ -73,7 +77,7 @@ export class JobApplicationController {
   @Patch(':id/ats-score')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update ATS score for a job application' })
-  @ApiResponse({ status: 200, description: 'ATS score updated' })
+  @ApiResponse({ status: 200, type: JobApplicationResponseDto, description: 'ATS score updated' })
   @ApiResponse({ status: 400, description: 'Invalid score' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Job application not found' })
@@ -88,7 +92,7 @@ export class JobApplicationController {
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update a job application' })
-  @ApiResponse({ status: 200, description: 'Job application updated' })
+  @ApiResponse({ status: 200, type: JobApplicationResponseDto, description: 'Job application updated' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Job application not found' })

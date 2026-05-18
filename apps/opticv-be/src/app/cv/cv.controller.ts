@@ -30,6 +30,12 @@ import type {
   CvStructuredData,
   UploadCvResponse,
 } from '@opticv/datatypes';
+import {
+  CvDocumentListItemDto,
+  CvDownloadUrlResponseDto,
+  CvExtractResponseDto,
+  UploadCvResponseDto,
+} from './dto/cv-response.dto';
 
 @ApiTags('cv')
 @ApiBearerAuth()
@@ -52,7 +58,7 @@ export class CvController {
       properties: { file: { type: 'string', format: 'binary' } },
     },
   })
-  @ApiResponse({ status: 201, description: 'CV uploaded successfully' })
+  @ApiResponse({ status: 201, type: UploadCvResponseDto, description: 'CV uploaded successfully' })
   @ApiResponse({ status: 400, description: 'Invalid file' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   uploadCv(
@@ -64,7 +70,7 @@ export class CvController {
 
   @Get()
   @ApiOperation({ summary: 'List all CVs for the current user' })
-  @ApiResponse({ status: 200, description: 'List of CV documents' })
+  @ApiResponse({ status: 200, type: [CvDocumentListItemDto], description: 'List of CV documents' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   getUserCvs(@CurrentUser() user: UserModel): Promise<CvDocumentListItem[]> {
     return this.cvService.getUserCvs(user.id);
@@ -72,7 +78,7 @@ export class CvController {
 
   @Get(':id/download')
   @ApiOperation({ summary: 'Get a signed download URL for a CV' })
-  @ApiResponse({ status: 200, description: 'Signed download URL' })
+  @ApiResponse({ status: 200, type: CvDownloadUrlResponseDto, description: 'Signed download URL' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'CV not found' })
   getDownloadUrl(
@@ -98,7 +104,7 @@ export class CvController {
   @Post(':id/extract')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Extract structured data from a CV' })
-  @ApiResponse({ status: 200, description: 'Extracted CV data' })
+  @ApiResponse({ status: 200, type: CvExtractResponseDto, description: 'Extracted CV data' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'CV not found' })
   async extractCv(

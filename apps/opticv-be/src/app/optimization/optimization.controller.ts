@@ -20,6 +20,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { RunIdResponseDto } from './dto/optimization-response.dto.js';
 import { SupabaseGuard } from '../auth/supabase.guard.js';
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import type { UserModel } from '../../generated/prisma/models.js';
@@ -47,7 +48,7 @@ export class OptimizationController {
   @Post('job-applications/:jobApplicationId/run')
   @HttpCode(202)
   @ApiOperation({ summary: 'Trigger full optimization run for a job application' })
-  @ApiResponse({ status: 202, description: 'Optimization run accepted' })
+  @ApiResponse({ status: 202, type: RunIdResponseDto, description: 'Optimization run accepted' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Job application not found' })
   async triggerOptimization(
@@ -60,7 +61,7 @@ export class OptimizationController {
   @Post('job-applications/:jobApplicationId/run/:promptType')
   @HttpCode(202)
   @ApiOperation({ summary: 'Trigger a single optimization job within a run' })
-  @ApiResponse({ status: 202, description: 'Job accepted' })
+  @ApiResponse({ status: 202, type: RunIdResponseDto, description: 'Job accepted' })
   @ApiResponse({ status: 400, description: 'Invalid promptType or missing runId' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Job application not found' })
