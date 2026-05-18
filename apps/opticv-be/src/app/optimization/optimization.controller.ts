@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
   HttpCode,
@@ -20,6 +21,10 @@ import { OptimizationEventBus } from './optimization-event-bus.js';
 
 const TOTAL_JOBS = Object.values(PromptType).length;
 
+class TriggerSingleJobDto {
+  runId!: string;
+}
+
 @Controller('optimizations')
 @UseGuards(SupabaseGuard)
 export class OptimizationController {
@@ -35,6 +40,30 @@ export class OptimizationController {
     @CurrentUser() user: UserModel,
   ): Promise<{ runId: string }> {
     return this.optimizationService.triggerOptimization(jobApplicationId, user.id);
+  }
+
+  @Post('job-applications/:jobApplicationId/run/:promptType')
+  @HttpCode(202)
+  async triggerSingleJob(
+    @Param('jobApplicationId') jobApplicationId: string,
+    @Param('promptType') promptType: string,
+    @Body() body: TriggerSingleJobDto,
+    @CurrentUser() user: UserModel,
+  ): Promise<{ runId: string }> {
+    if (!Object.values(PromptType).includes(promptType as PromptType)) {
+      throw new BadRequestException('Invalid promptType.');
+    }
+
+    if (!body.runId?.trim()) {
+      throw new BadRequestException('runId is required.');
+    }
+
+    return this.optimizationService.triggerSingleJob(
+      jobApplicationId,
+      promptType as PromptType,
+      body.runId.trim(),
+      user.id,
+    );
   }
 
   @Get('job-applications/:jobApplicationId/stream')
