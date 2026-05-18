@@ -160,14 +160,46 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ### 14. Optimization process on backend - BullMq
 
-**status - in progress**
+**status - done**
 
 - implement optimization process on backend
 - add BullMq + Redis
 
 ---
 
-### 15. Refactor Dashboard page
+### 15. Trigger single job
+
+**status: in progress**
+
+- implement single job per promptType triggered manually in case a job fails, because currently all 7 jobs are triggered in one triggerOptimization() call
+
+---
+
+### 16. Usage tracking
+
+**status: todo**
+
+- implement usage logging called inside every AI request
+- implement cos t calculation, store costCents
+- wire up Usage logging: UsageLog table exists in schema but no code writes to it currently, we need to populate it with proper data.
+
+---
+
+### 17. Run cv parsing on frontend
+
+**status: todo**
+
+- After user selects cv and submits job description run cv parsing
+
+---
+
+### 18. Trigger optimization process from frontend, wait for runId and listen to SSE
+
+**status: todo**
+
+- ***
+
+### 19. Refactor Dashboard page
 
 **status - todo**
 

@@ -24,37 +24,12 @@ export class OptimizationService {
     jobApplicationId: string,
     userId: string,
   ): Promise<{ runId: string }> {
-    const record = await this.prisma.jobApplication.findUnique({
-      where: { id: jobApplicationId },
-      include: { cvDocument: true },
-    });
-
-    if (!record || record.userId !== userId) {
-      throw new ForbiddenException();
-    }
-
-    if (!record.cvDocument) {
-      throw new BadRequestException('CV document is not yet parsed.');
-    }
-
-    if (record.cvDocument.parseStatus !== 'COMPLETED') {
-      throw new BadRequestException('CV document is not yet parsed.');
-    }
-
-    if (!record.jobDescription?.trim()) {
-      throw new BadRequestException('Job description is required.');
-    }
+    const { cvText, parsedSections, jobDescription } =
+      await this.loadAndValidateApplication(jobApplicationId, userId);
 
     const runId = randomUUID();
 
-    const payloadBase = {
-      runId,
-      jobApplicationId,
-      userId,
-      cvText: record.cvDocument.parsedText ?? '',
-      parsedSections: record.cvDocument.structuredData ?? {},
-      jobDescription: record.jobDescription,
-    };
+    const payloadBase = { runId, jobApplicationId, userId, cvText, parsedSections, jobDescription };
 
     await Promise.all(
       ALL_PROMPT_TYPES.map((promptType) =>
@@ -92,6 +67,40 @@ export class OptimizationService {
     return { runId };
   }
 
+  async triggerSingleJob(
+    jobApplicationId: string,
+    promptType: PromptType,
+    runId: string,
+    userId: string,
+  ): Promise<{ runId: string }> {
+    const { cvText, parsedSections, jobDescription } =
+      await this.loadAndValidateApplication(jobApplicationId, userId);
+
+    await this.prisma.optimizationResult.upsert({
+      where: {
+        applicationId_promptType: { applicationId: jobApplicationId, promptType },
+      },
+      create: { applicationId: jobApplicationId, promptType, status: 'PENDING' },
+      update: {
+        status: 'PENDING',
+        structuredOutput: Prisma.DbNull,
+        textOutput: null,
+        errorMessage: null,
+        promptVersionId: null,
+        inputTokens: null,
+        outputTokens: null,
+      },
+    });
+
+    await this.queue.add(
+      'optimize',
+      { runId, jobApplicationId, userId, promptType, cvText, parsedSections, jobDescription } satisfies OptimizationJobPayload,
+      { attempts: 2, backoff: { type: 'exponential', delay: 2000 } },
+    );
+
+    return { runId };
+  }
+
   async validateStreamAccess(jobApplicationId: string, userId: string): Promise<void> {
     const record = await this.prisma.jobApplication.findUnique({
       where: { id: jobApplicationId },
@@ -100,5 +109,33 @@ export class OptimizationService {
     if (!record || record.userId !== userId) {
       throw new ForbiddenException();
     }
+  }
+
+  private async loadAndValidateApplication(
+    jobApplicationId: string,
+    userId: string,
+  ): Promise<{ cvText: string; parsedSections: unknown; jobDescription: string }> {
+    const record = await this.prisma.jobApplication.findUnique({
+      where: { id: jobApplicationId },
+      include: { cvDocument: true },
+    });
+
+    if (!record || record.userId !== userId) {
+      throw new ForbiddenException();
+    }
+
+    if (!record.cvDocument || record.cvDocument.parseStatus !== 'COMPLETED') {
+      throw new BadRequestException('CV document is not yet parsed.');
+    }
+
+    if (!record.jobDescription?.trim()) {
+      throw new BadRequestException('Job description is required.');
+    }
+
+    return {
+      cvText: record.cvDocument.parsedText ?? '',
+      parsedSections: record.cvDocument.structuredData ?? {},
+      jobDescription: record.jobDescription,
+    };
   }
 }
