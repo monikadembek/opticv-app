@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class JobApplicationResponseDto {
   @ApiProperty({ example: 'app-uuid-123' })
@@ -48,7 +48,7 @@ export class JobApplicationListItemDto {
   @ApiProperty({ nullable: true, example: 'Acme Corp' })
   companyName!: string | null;
 
-  @ApiPropertyOptional({ nullable: true, example: 82 })
+  @ApiProperty({ nullable: true, example: 82 })
   atsScore!: number | null;
 
   @ApiProperty({ example: '2024-01-15T10:30:00.000Z' })
