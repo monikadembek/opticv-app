@@ -5,6 +5,8 @@ import { OptimizationProcessor } from './optimization.processor.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { OpenAiService } from '../ai/services/openai.service.js';
 import { PromptService } from '../ai/services/prompt.service.js';
+import { CostCalculatorService } from '../ai/services/cost-calculator.service.js';
+import { UsageLogService } from '../ai/services/usage-log.service.js';
 import { OptimizationEventBus } from './optimization-event-bus.js';
 import { PromptType } from '../../generated/prisma/enums.js';
 import { Prisma } from '../../generated/prisma/client.js';
@@ -52,6 +54,14 @@ const mockEventBus = {
   emit: jest.fn(),
 };
 
+const mockCostCalculator = {
+  calculate: jest.fn().mockReturnValue({ toFixed: () => '0.000015' }),
+};
+
+const mockUsageLogService = {
+  log: jest.fn().mockResolvedValue(undefined),
+};
+
 describe('OptimizationProcessor', () => {
   let processor: OptimizationProcessor;
 
@@ -65,6 +75,8 @@ describe('OptimizationProcessor', () => {
         { provide: OpenAiService, useValue: mockOpenAiService },
         { provide: PromptService, useValue: mockPromptService },
         { provide: OptimizationEventBus, useValue: mockEventBus },
+        { provide: CostCalculatorService, useValue: mockCostCalculator },
+        { provide: UsageLogService, useValue: mockUsageLogService },
         { provide: getQueueToken('optimization'), useValue: {} },
       ],
     }).compile();

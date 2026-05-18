@@ -169,15 +169,16 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ### 15. Trigger single job
 
-**status: in progress**
+**status: done**
 
 - implement single job per promptType triggered manually in case a job fails, because currently all 7 jobs are triggered in one triggerOptimization() call
+- add new POST endpoint for that
 
 ---
 
 ### 16. Usage tracking
 
-**status: todo**
+**status: in progress**
 
 - implement usage logging called inside every AI request
 - implement cos t calculation, store costCents
@@ -197,7 +198,8 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 **status: todo**
 
-- ***
+- run optimization process from frontend
+- wait for response with runId and use it to leisten to SSE - server sent events
 
 ### 19. Refactor Dashboard page
 
