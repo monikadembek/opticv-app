@@ -142,7 +142,7 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ### 12. Implement Job Application module on backend
 
-**status: in progress**
+**status: done**
 
 - add CRUD endpoints related to job application
 
@@ -150,14 +150,24 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ### 13. First step of CV optimization creator
 
-**status: todo**
+**status: done**
 
 - add new page /cv-optimization which will hold cv optimization creator
 - add first step of creator where user can select cv and paste job application data
+- run endpoint to save job application
 
 ---
 
-### 14. Refactor Dashboard page
+### 14. Optimization process on backend - BullMq
+
+**status - in progress**
+
+- implement optimization process on backend
+- add BullMq + Redis
+
+---
+
+### 15. Refactor Dashboard page
 
 **status - todo**
 

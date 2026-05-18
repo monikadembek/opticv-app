@@ -12,4 +12,7 @@ export const validationSchema = Joi.object({
   R2_BUCKET_NAME: Joi.string().required(),
   R2_PUBLIC_URL: Joi.string().uri().required(),
   OPENAI_API_KEY: Joi.string().required(),
+  REDIS_HOST: Joi.string().required(),
+  REDIS_PORT: Joi.number().default(6379),
+  BULLMQ_CONCURRENCY: Joi.number().default(5),
 });
