@@ -3,6 +3,7 @@ import { HttpClient, httpResource } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import type {
   CvDocumentListItem,
+  CvStructuredData,
   JobApplicationResponse,
 } from '@opticv/datatypes';
 import { environment } from '../../../../environments/environment';
@@ -38,6 +39,13 @@ export class CvOptimizationApiService {
     return this.http.post<JobApplicationResponse>(
       `${environment.apiUrl}/job-applications`,
       payload,
+    );
+  }
+
+  extractCvData(cvId: string): Observable<{ data: CvStructuredData }> {
+    return this.http.post<{ data: CvStructuredData }>(
+      `${environment.apiUrl}/cv/${cvId}/extract`,
+      {},
     );
   }
 }

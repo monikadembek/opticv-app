@@ -34,9 +34,9 @@ describe('CvOptimization', () => {
     expect(heading.textContent?.trim()).toBe('CV Optimization');
   });
 
-  it('should render the step1 component inside the stepper', () => {
-    const step1 =
-      fixture.nativeElement.querySelector('app-cv-optimization-step1');
-    expect(step1).toBeTruthy();
+  it('should render the job-upload component inside the accordion', () => {
+    const jobUpload =
+      fixture.nativeElement.querySelector('app-job-upload');
+    expect(jobUpload).toBeTruthy();
   });
 });
