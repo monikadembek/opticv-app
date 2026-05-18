@@ -5,6 +5,8 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { OpenAiService } from '../ai/services/openai.service.js';
 import { PromptService } from '../ai/services/prompt.service.js';
+import { CostCalculatorService } from '../ai/services/cost-calculator.service.js';
+import { UsageLogService } from '../ai/services/usage-log.service.js';
 import { OptimizationEventBus } from './optimization-event-bus.js';
 import type { OptimizationJobPayload } from './optimization.types.js';
 
@@ -20,6 +22,8 @@ export class OptimizationProcessor extends WorkerHost {
     private readonly openAiService: OpenAiService,
     private readonly promptService: PromptService,
     private readonly eventBus: OptimizationEventBus,
+    private readonly costCalculator: CostCalculatorService,
+    private readonly usageLogService: UsageLogService,
   ) {
     super();
   }
@@ -80,6 +84,22 @@ export class OptimizationProcessor extends WorkerHost {
           outputTokens: completionTokens,
         },
       });
+
+      try {
+        const costUsd = this.costCalculator.calculate(model, promptTokens, completionTokens);
+        await this.usageLogService.log({
+          userId: job.data.userId,
+          promptType,
+          modelId: model,
+          inputTokens: promptTokens,
+          outputTokens: completionTokens,
+          costUsd,
+        });
+      } catch (err: unknown) {
+        this.logger.error(
+          `UsageLog write failed for ${promptType}: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
 
       this.eventBus.emit(runId, {
         promptType,
