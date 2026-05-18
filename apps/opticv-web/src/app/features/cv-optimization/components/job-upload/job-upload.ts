@@ -20,6 +20,7 @@ import {
   CvOptimizationApiService,
 } from '../../services/cv-optimization-api.service';
 import { MessageService } from 'primeng/api';
+import { catchError, EMPTY, of, retry, switchMap, tap } from 'rxjs';
 
 @Component({
   selector: 'app-job-upload',
@@ -102,21 +103,39 @@ export class JobUpload {
 
     if (!payload) return;
 
-    this.cvOptimizationApiService.createJobApplication(payload).subscribe({
-      next: () => {
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'CV and job description were successfully submited',
-        });
-        this.isSubmitting.set(false);
-      },
-      error: (err) => {
-        const errorMsg =
-          err?.error?.message ?? 'Submitting CV and job offer failed';
-        this.submitError.set(errorMsg);
-        this.isSubmitting.set(false);
-      },
-    });
+    this.cvOptimizationApiService
+      .createJobApplication(payload)
+      .pipe(
+        catchError((err) => {
+          const errorMsg =
+            err?.error?.message ?? 'Submitting CV and job offer failed';
+          this.submitError.set(errorMsg);
+          this.isSubmitting.set(false);
+          return of(EMPTY);
+        }),
+        tap((result) => {
+          console.log('submit job description result: ', result);
+        }),
+        switchMap(() => {
+          return this.cvOptimizationApiService.extractCvData(
+            cvDocumentId as string,
+          );
+        }),
+        retry(2),
+      )
+      .subscribe({
+        next: (extractedData) => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Success',
+            detail: 'CV and job description were successfully submited',
+          });
+          this.isSubmitting.set(false);
+          console.log('extraced data from cv: ', extractedData);
+        },
+        error: (err) => {
+          console.log('error when extracting data from cv: ', err);
+        },
+      });
   }
 }
