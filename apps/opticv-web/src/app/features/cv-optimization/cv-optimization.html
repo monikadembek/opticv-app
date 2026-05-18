@@ -1,14 +1,57 @@
 <div class="mx-auto max-w-2xl px-4 py-12">
   <h1 class="mb-8 text-3xl font-bold text-surface-900">CV Optimization</h1>
-
-  <p-stepper [value]="1">
-    <p-step-item [value]="1">
-      <p-step>CV and job description</p-step>
-      <p-step-panel>
-        <ng-template #content let-activateCallback="activateCallback">
-          <app-job-upload [activateCallback]="activateCallback" />
-        </ng-template>
-      </p-step-panel>
-    </p-step-item>
-  </p-stepper>
+  <p-accordion value="0">
+    <p-accordion-panel value="0">
+      <p-accordion-header>
+        Select CV and paste job description
+      </p-accordion-header>
+      <p-accordion-content>
+        <app-job-upload />
+      </p-accordion-content>
+    </p-accordion-panel>
+    <p-accordion-panel value="1">
+      <p-accordion-header>ATS analysis</p-accordion-header>
+      <p-accordion-content>
+        <p>Coming soon</p>
+        <p class="m-0">ATS match score</p>
+        <p class="m-0">ATS autopsy</p>
+      </p-accordion-content>
+    </p-accordion-panel>
+    <p-accordion-panel value="2">
+      <p-accordion-header>Keyword Gap Analysis</p-accordion-header>
+      <p-accordion-content>
+        <p class="m-0">Displaying missing keywords coming soon</p>
+      </p-accordion-content>
+    </p-accordion-panel>
+    <p-accordion-panel value="3">
+      <p-accordion-header>Rewritten summary</p-accordion-header>
+      <p-accordion-content>
+        <p class="m-0">Comming soon</p>
+      </p-accordion-content>
+    </p-accordion-panel>
+    <p-accordion-panel value="4">
+      <p-accordion-header>Bullet upgrades</p-accordion-header>
+      <p-accordion-content>
+        <p class="m-0">Comming soon</p>
+      </p-accordion-content>
+    </p-accordion-panel>
+    <p-accordion-panel value="5">
+      <p-accordion-header>Cover Letter</p-accordion-header>
+      <p-accordion-content>
+        <p class="m-0">Comming soon</p>
+      </p-accordion-content>
+    </p-accordion-panel>
+    <p-accordion-panel value="6">
+      <p-accordion-header>Interview Prep (10Q&A)</p-accordion-header>
+      <p-accordion-content>
+        <p class="m-0">Comming soon</p>
+      </p-accordion-content>
+    </p-accordion-panel>
+    <p-accordion-panel value="7">
+      <p-accordion-header>LinkedIn Updates</p-accordion-header>
+      <p-accordion-content>
+        <p class="m-0">Comming soon</p>
+      </p-accordion-content>
+    </p-accordion-panel>
+  </p-accordion>
 </div>

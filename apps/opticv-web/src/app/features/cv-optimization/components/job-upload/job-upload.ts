@@ -3,7 +3,6 @@ import {
   Component,
   computed,
   inject,
-  input,
   signal,
 } from '@angular/core';
 import {
@@ -39,8 +38,6 @@ export class JobUpload {
   private readonly cvOptimizationApiService = inject(CvOptimizationApiService);
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
-
-  readonly activateCallback = input<(step: number) => void>();
 
   cvList = this.cvOptimizationApiService.cvList;
   isSubmitting = signal(false);
@@ -113,7 +110,6 @@ export class JobUpload {
           detail: 'CV and job description were successfully submited',
         });
         this.isSubmitting.set(false);
-        this.activateCallback()?.(2);
       },
       error: (err) => {
         const errorMsg =
