@@ -10,9 +10,11 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { timingSafeEqual } from 'crypto';
+import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { WebhookPayloadDto } from './dto/webhook-payload.dto';
 
+@ApiTags('users')
 @Controller('users')
 export class UsersController {
   private readonly logger = new Logger(UsersController.name);
@@ -24,6 +26,22 @@ export class UsersController {
 
   @Post('sync')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Sync user from Supabase webhook' })
+  @ApiHeader({
+    name: 'x-webhook-secret',
+    required: true,
+    description: 'Supabase webhook secret',
+  })
+  @ApiResponse({
+    status: 200,
+    schema: {
+      properties: {
+        received: { type: 'boolean' },
+      },
+    },
+    description: 'User synced successfully',
+  })
+  @ApiResponse({ status: 401, description: 'Invalid webhook secret' })
   async sync(
     @Headers('x-webhook-secret') webhookSecret: string | undefined,
     @Body() body: WebhookPayloadDto,

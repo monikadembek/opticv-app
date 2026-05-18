@@ -200,13 +200,21 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ### 18. Run cv data extraction in web app (FE)
 
-**status: todo**
+**status: done**
 
 - After user selects cv and submits job description call request to extract structured data from selected cv
 
 ---
 
-### 19. Trigger optimization process from web, wait for runId and listen to SSE (FE)
+### 19. Integrate Swagger (BE)
+
+**status - in progress**
+
+- add Swagger to backend app
+
+---
+
+### 20. Trigger optimization process from web, wait for runId and listen to SSE (FE)
 
 **status: todo**
 
@@ -220,14 +228,6 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 **status - todo**
 
 - implement httpResource to get list of user cvs in dashboard
-
----
-
-### Implement Swagger (BE)
-
-**status - todo**
-
-- add Swagger to backend app
 
 ---
 
