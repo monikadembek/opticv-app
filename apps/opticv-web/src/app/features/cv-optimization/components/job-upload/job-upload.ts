@@ -3,7 +3,6 @@ import {
   Component,
   computed,
   inject,
-  input,
   signal,
 } from '@angular/core';
 import {
@@ -23,7 +22,7 @@ import {
 import { MessageService } from 'primeng/api';
 
 @Component({
-  selector: 'app-cv-optimization-step1',
+  selector: 'app-job-upload',
   imports: [
     FormsModule,
     ReactiveFormsModule,
@@ -32,15 +31,13 @@ import { MessageService } from 'primeng/api';
     Textarea,
     Button,
   ],
-  templateUrl: './cv-optimization-step1.html',
+  templateUrl: './job-upload.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CvOptimizationStep1 {
+export class JobUpload {
   private readonly cvOptimizationApiService = inject(CvOptimizationApiService);
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
-
-  readonly activateCallback = input<(step: number) => void>();
 
   cvList = this.cvOptimizationApiService.cvList;
   isSubmitting = signal(false);
@@ -113,7 +110,6 @@ export class CvOptimizationStep1 {
           detail: 'CV and job description were successfully submited',
         });
         this.isSubmitting.set(false);
-        this.activateCallback()?.(2);
       },
       error: (err) => {
         const errorMsg =

@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { StepperModule } from 'primeng/stepper';
-import { CvOptimizationStep1 } from './components/cv-optimization-step1/cv-optimization-step1';
+import { JobUpload } from './components/job-upload/job-upload';
 import { ButtonModule } from 'primeng/button';
+import { AccordionModule } from 'primeng/accordion';
 
 @Component({
   selector: 'app-cv-optimization-page',
-  imports: [CvOptimizationStep1, StepperModule, ButtonModule],
+  imports: [JobUpload, AccordionModule, ButtonModule],
   templateUrl: './cv-optimization.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
