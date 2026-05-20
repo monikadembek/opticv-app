@@ -182,3 +182,61 @@ export type ResumeAutopsyResult = {
   strengths: ResumeAutopsyStrength[];
   summary: string;
 };
+
+export type KeywordGapMatchScoreBreakdown = {
+  requiredMatched: number;
+  requiredTotal: number;
+  preferredMatched: number;
+  preferredTotal: number;
+};
+
+export type KeywordGapMatchedKeyword = {
+  keyword: string;
+  matchType: 'exact' | 'semantic' | 'partial';
+  occurrencesInResume: number;
+  isRequired: boolean;
+};
+
+export type KeywordGapMissingKeyword = {
+  keyword: string;
+  category: string;
+  importance: 'critical' | 'high' | 'medium' | 'low';
+  isRequired: boolean;
+  candidateLikelyHas: boolean;
+  evidenceFromResume: string;
+  recommendation: string;
+  suggestedPlacement:
+    | 'summary'
+    | 'skills'
+    | 'experience_bullet'
+    | 'title'
+    | 'multiple';
+};
+
+export type KeywordGapUnderweightedKeyword = {
+  keyword: string;
+  currentOccurrences: number;
+  recommendedOccurrences: number;
+  suggestedAdditions: string[];
+};
+
+export type KeywordGapFabricationWarning = {
+  keyword: string;
+  reason: string;
+};
+
+export type KeywordGapAcronymIssue = {
+  term: string;
+  issue: string;
+  fix: string;
+};
+
+export type KeywordGapResult = {
+  matchScore: number;
+  matchScoreBreakdown: KeywordGapMatchScoreBreakdown;
+  matchedKeywords: KeywordGapMatchedKeyword[];
+  missingKeywords: KeywordGapMissingKeyword[];
+  underweightedKeywords: KeywordGapUnderweightedKeyword[];
+  fabricationWarnings: KeywordGapFabricationWarning[];
+  acronymIssues: KeywordGapAcronymIssue[];
+};

@@ -66,13 +66,15 @@
         </div>
       </p-accordion-header>
       <p-accordion-content>
-        @if (results().get(PromptType.KEYWORD_GAP); as r) {
-        <pre class="whitespace-pre-wrap text-sm">{{ r.result | json }}</pre>
-        } @else if(results().get(PromptType.KEYWORD_GAP)?.error; as error) {
-        <p class="text-red-700 m-0">{{error}}</p>
-        } @else {
-        <p class="m-0">Coming soon</p>
-        }
+        <app-optimization-result-panel
+          [loading]="isProcessing().get(PromptType.KEYWORD_GAP) ?? false"
+          [error]="results().get(PromptType.KEYWORD_GAP)?.error ?? null"
+          [hasData]="keywordGapResult() !== null"
+        >
+          @if (keywordGapResult(); as result) {
+            <app-keyword-gap [result]="result" />
+          }
+        </app-optimization-result-panel>
       </p-accordion-content>
     </p-accordion-panel>
     <p-accordion-panel value="3">
