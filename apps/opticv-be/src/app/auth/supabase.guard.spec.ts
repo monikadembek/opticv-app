@@ -16,9 +16,10 @@ const mockUsersService = {
   upsertUser: jest.fn().mockResolvedValue(mockUser),
 };
 
-function makeContext(authHeader?: string): ExecutionContext {
+function makeContext(authHeader?: string, queryToken?: string): ExecutionContext {
   const request: Record<string, unknown> = {
     headers: authHeader ? { authorization: authHeader } : {},
+    query: queryToken !== undefined ? { token: queryToken } : {},
   };
   return {
     switchToHttp: () => ({ getRequest: () => request }),
@@ -97,6 +98,54 @@ describe('SupabaseGuard', () => {
     expect(mockUsersService.upsertUser).toHaveBeenCalledWith({
       supabaseId: 'new-sb-id',
       email: 'new@example.com',
+    });
+  });
+
+  describe('query param token (SSE fallback)', () => {
+    it('throws UnauthorizedException when query token is empty string', async () => {
+      await expect(guard.canActivate(makeContext(undefined, ''))).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('throws UnauthorizedException when supabase returns error for query token', async () => {
+      mockSupabase.auth.getUser.mockResolvedValueOnce({
+        data: { user: null },
+        error: new Error('invalid token'),
+      });
+
+      await expect(
+        guard.canActivate(makeContext(undefined, 'bad-query-token')),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('accepts a valid token from query param and populates request.user', async () => {
+      mockSupabase.auth.getUser.mockResolvedValueOnce({
+        data: { user: { id: 'sb-id', email: 'test@example.com' } },
+        error: null,
+      });
+
+      const ctx = makeContext(undefined, 'valid-query-token');
+      const result = await guard.canActivate(ctx);
+
+      expect(mockSupabase.auth.getUser).toHaveBeenCalledWith('valid-query-token');
+      expect(mockUsersService.upsertUser).toHaveBeenCalledWith({
+        supabaseId: 'sb-id',
+        email: 'test@example.com',
+      });
+      expect(ctx.switchToHttp().getRequest()['user']).toEqual(mockUser);
+      expect(result).toBe(true);
+    });
+
+    it('prefers Authorization header over query token when both are present', async () => {
+      mockSupabase.auth.getUser.mockResolvedValueOnce({
+        data: { user: { id: 'sb-id', email: 'test@example.com' } },
+        error: null,
+      });
+
+      await guard.canActivate(makeContext('Bearer header-token', 'query-token'));
+
+      expect(mockSupabase.auth.getUser).toHaveBeenCalledWith('header-token');
     });
   });
 });

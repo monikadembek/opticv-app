@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { JsonPipe } from '@angular/common';
-import { from, mergeMap, switchMap, tap } from 'rxjs';
+import { from, mergeMap, switchMap } from 'rxjs';
 import { JobUpload } from './components/job-upload/job-upload';
 import { AccordionModule } from 'primeng/accordion';
 import { JobApplication, PromptType } from '@opticv/datatypes';
@@ -23,9 +23,6 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CvOptimization {
-  // TODO: run full optimimzation process instead one by one
-  // TODO: retry failed job - run single optimization for prompt type that failed
-
   private readonly cvOptimizationApiService = inject(CvOptimizationApiService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -39,7 +36,6 @@ export class CvOptimization {
 
     from(Object.values(PromptType))
       .pipe(
-        tap((promptType) => console.log('promptType:', promptType)),
         mergeMap(
           (promptType) =>
             this.cvOptimizationApiService

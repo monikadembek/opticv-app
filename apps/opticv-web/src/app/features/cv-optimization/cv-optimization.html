@@ -23,7 +23,7 @@
             >{{ results().get(PromptType.RESUME_AUTOPSY)?.status?.toUpperCase()
             }}</span
           >
-          } @else {
+          } @else if (results().get(PromptType.RESUME_AUTOPSY)) {
           <span class="text-red-700 mr-4"
             >{{ results().get(PromptType.RESUME_AUTOPSY)?.status?.toUpperCase()
             }}</span
@@ -55,7 +55,7 @@
             >{{ results().get(PromptType.KEYWORD_GAP)?.status?.toUpperCase()
             }}</span
           >
-          } @else {
+          } @else if (results().get(PromptType.KEYWORD_GAP)) {
           <span class="text-red-700 mr-4"
             >{{ results().get(PromptType.KEYWORD_GAP)?.status?.toUpperCase()
             }}</span
@@ -87,7 +87,7 @@
             >{{ results().get(PromptType.SUMMARY_REWRITE)?.status?.toUpperCase()
             }}</span
           >
-          } @else {
+          } @else if (results().get(PromptType.SUMMARY_REWRITE)) {
           <span class="text-red-700 mr-4"
             >{{ results().get(PromptType.SUMMARY_REWRITE)?.status?.toUpperCase()
             }}</span
@@ -119,7 +119,7 @@
             >{{ results().get(PromptType.BULLET_UPGRADE)?.status?.toUpperCase()
             }}</span
           >
-          } @else {
+          } @else if (results().get(PromptType.BULLET_UPGRADE)) {
           <span class="text-red-700 mr-4"
             >{{ results().get(PromptType.BULLET_UPGRADE)?.status?.toUpperCase()
             }}</span
@@ -151,7 +151,7 @@
             >{{ results().get(PromptType.COVER_LETTER)?.status?.toUpperCase()
             }}</span
           >
-          } @else {
+          } @else if (results().get(PromptType.COVER_LETTER)) {
           <span class="text-red-700 mr-4"
             >{{ results().get(PromptType.COVER_LETTER)?.status?.toUpperCase()
             }}</span
@@ -183,7 +183,7 @@
             >{{ results().get(PromptType.INTERVIEW_PREP)?.status?.toUpperCase()
             }}</span
           >
-          } @else {
+          } @else if (results().get(PromptType.INTERVIEW_PREP)) {
           <span class="text-red-700 mr-4"
             >{{ results().get(PromptType.INTERVIEW_PREP)?.status?.toUpperCase()
             }}</span
@@ -216,7 +216,7 @@
             results().get(PromptType.LINKEDIN_REWRITE)?.status?.toUpperCase()
             }}</span
           >
-          } @else {
+          } @else if (results().get(PromptType.LINKEDIN_REWRITE)) {
           <span class="text-red-700 mr-4"
             >{{
             results().get(PromptType.LINKEDIN_REWRITE)?.status?.toUpperCase()

@@ -225,6 +225,32 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
+### 21. Display ATS Autopsy results
+
+**status - todo**
+
+- add ats-score component
+- display there results for RESUME_AUTOPSY
+- display for modern nice UX
+
+---
+
+### Run full optimization process instead of running promptTypes one by one
+
+**status: todo**
+
+- use method runFullOptimizationProcess(jobApplicationId: string) from cv-optimization-api.service.ts
+
+---
+
+### Implement functionality to retry failed job
+
+**status: todo**
+
+- run single optimization for prompt type that failed
+
+---
+
 ### Refactor fetching list of cvs in dashboard (FE)
 
 **status - todo**
