@@ -33,21 +33,14 @@ export class KeywordGap {
     return 'green';
   });
 
-  scoreColorClass(): string {
-    const score = this.result().matchScore;
-    if (score <= 49) return 'text-red-500';
-    if (score <= 74) return 'text-amber-500';
-    return 'text-green-500';
-  }
-
-  strokeColor(): string {
+  readonly strokeColor = computed(() => {
     const score = this.result().matchScore;
     if (score <= 49) return '#ef4444';
     if (score <= 74) return '#f59e0b';
     return '#22c55e';
-  }
+  });
 
-  strokeDashoffset(): number {
-    return RING_CIRCUMFERENCE * (1 - this.result().matchScore / 100);
-  }
+  readonly strokeDashoffset = computed(
+    () => RING_CIRCUMFERENCE * (1 - this.result().matchScore / 100),
+  );
 }
