@@ -32,13 +32,15 @@
         </div>
       </p-accordion-header>
       <p-accordion-content>
-        @if (results().get(PromptType.RESUME_AUTOPSY); as r) {
-        <pre class="whitespace-pre-wrap text-sm">{{ r.result | json }}</pre>
-        } @else if(results().get(PromptType.RESUME_AUTOPSY)?.error; as error) {
-        <p class="text-red-700 m-0">{{error}}</p>
-        } @else {
-        <p class="m-0">Coming soon</p>
-        }
+        <app-optimization-result-panel
+          [loading]="isProcessing().get(PromptType.RESUME_AUTOPSY) ?? false"
+          [error]="results().get(PromptType.RESUME_AUTOPSY)?.error ?? null"
+          [hasData]="autopsyResult() !== null"
+        >
+          @if (autopsyResult(); as result) {
+            <app-ats-score [data]="result" />
+          }
+        </app-optimization-result-panel>
       </p-accordion-content>
     </p-accordion-panel>
     <p-accordion-panel value="2">
