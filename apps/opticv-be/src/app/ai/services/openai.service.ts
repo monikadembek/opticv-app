@@ -51,11 +51,22 @@ export class OpenAiService {
     systemPrompt: string,
     userPrompt: string,
     model: string,
-    useJsonFormat: boolean,
+    outputSchema?: { name: string; input_schema: Record<string, unknown> } | null,
   ): Promise<{ content: string; promptTokens: number; completionTokens: number }> {
+    const responseFormat = outputSchema
+      ? ({
+          type: 'json_schema' as const,
+          json_schema: {
+            name: outputSchema.name,
+            schema: outputSchema.input_schema,
+            strict: false,
+          },
+        } as const)
+      : undefined;
+
     const response = await this.client.chat.completions.create({
       model,
-      ...(useJsonFormat && { response_format: { type: 'json_object' } }),
+      ...(responseFormat && { response_format: responseFormat }),
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
