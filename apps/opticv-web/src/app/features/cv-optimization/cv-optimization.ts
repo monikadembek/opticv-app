@@ -8,11 +8,12 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { JsonPipe } from '@angular/common';
-import { from, mergeMap, switchMap } from 'rxjs';
+import { filter, from, mergeMap, switchMap } from 'rxjs';
 import { JobUpload } from './components/job-upload/job-upload';
 import { AccordionModule } from 'primeng/accordion';
 import {
   JobApplication,
+  KeywordGapResult,
   PromptType,
   ResumeAutopsyResult,
 } from '@opticv/datatypes';
@@ -22,6 +23,7 @@ import {
 } from './services/cv-optimization-api.service';
 import { OptimizationResultPanel } from './components/optimization-result-panel/optimization-result-panel';
 import { AtsScore } from './components/ats-score/ats-score';
+import { KeywordGap } from './components/keyword-gap/keyword-gap';
 
 function isResumeAutopsyResult(value: unknown): value is ResumeAutopsyResult {
   if (typeof value !== 'object' || value === null) return false;
@@ -36,6 +38,14 @@ function isResumeAutopsyResult(value: unknown): value is ResumeAutopsyResult {
   );
 }
 
+function isKeywordGapResult(value: unknown): value is KeywordGapResult {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v['matchScore'] === 'number' && Array.isArray(v['missingKeywords'])
+  );
+}
+
 @Component({
   selector: 'app-cv-optimization-page',
   imports: [
@@ -44,6 +54,7 @@ function isResumeAutopsyResult(value: unknown): value is ResumeAutopsyResult {
     JsonPipe,
     OptimizationResultPanel,
     AtsScore,
+    KeywordGap,
   ],
   templateUrl: './cv-optimization.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -61,12 +72,18 @@ export class CvOptimization {
     return isResumeAutopsyResult(r) ? r : null;
   });
 
+  readonly keywordGapResult = computed<KeywordGapResult | null>(() => {
+    const r = this.results().get(PromptType.KEYWORD_GAP)?.result;
+    return isKeywordGapResult(r) ? r : null;
+  });
+
   runOptimization(jobApplication: JobApplication): void {
     this.results.set(new Map());
     this.isProcessing.set(new Map());
 
     from(Object.values(PromptType))
       .pipe(
+        filter((prompt) => prompt === PromptType.KEYWORD_GAP),
         mergeMap(
           (promptType) =>
             this.cvOptimizationApiService

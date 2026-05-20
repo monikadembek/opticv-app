@@ -228,10 +228,30 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ### 21. Display ATS Autopsy results (FE)
 
-**status - in progress**
+**status - done**
 
 - add ats-score component
 - display there results for RESUME_AUTOPSY
+- display with modern nice UX
+
+---
+
+### 22. Display keyword gap analysis results (FE)
+
+**status - done**
+
+- add keyword-gap component
+- display there results for KEYWORD_GAP
+- display with modern nice UX
+
+---
+
+### 23. Display rewritten summary results (FE)
+
+**status - todo**
+
+- add keyword-gap component
+- display there results for SUMMARY_REWRITE
 - display with modern nice UX
 
 ---
