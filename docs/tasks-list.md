@@ -238,7 +238,7 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ### 22. Display keyword gap analysis results (FE)
 
-**status - in progress**
+**status - done**
 
 - add keyword-gap component
 - display there results for KEYWORD_GAP
