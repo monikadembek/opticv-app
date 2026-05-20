@@ -1,0 +1,183 @@
+<div class="space-y-8 py-2">
+
+  <!-- Score rings -->
+  <div class="flex flex-wrap gap-10 justify-center py-4">
+    @for (ring of [{ label: 'Current ATS Score', score: data().overallScore }, { label: 'After Fixes', score: data().predictedScoreAfterFixes }]; track ring.label) {
+      <div class="flex flex-col items-center gap-2">
+        <svg
+          viewBox="0 0 100 100"
+          class="w-32 h-32"
+          [attr.aria-label]="ring.label + ': ' + ring.score + ' out of 100'"
+          role="img"
+        >
+          <circle
+            cx="50" cy="50" r="40"
+            fill="none"
+            stroke="#e5e7eb"
+            stroke-width="10"
+          />
+          <circle
+            cx="50" cy="50" r="40"
+            fill="none"
+            [attr.stroke]="strokeColor(ring.score)"
+            stroke-width="10"
+            stroke-linecap="round"
+            [attr.stroke-dasharray]="ringCircumference"
+            [attr.stroke-dashoffset]="strokeDashoffset(ring.score)"
+            transform="rotate(-90 50 50)"
+          />
+          <text
+            x="50" y="50"
+            text-anchor="middle"
+            dominant-baseline="central"
+            font-size="22"
+            font-weight="700"
+            [attr.fill]="strokeColor(ring.score)"
+          >{{ ring.score }}</text>
+        </svg>
+        <span class="text-sm font-medium text-surface-600">{{ ring.label }}</span>
+      </div>
+    }
+  </div>
+
+  <!-- Top priority callout -->
+  @if (data().topPriority) {
+    <div class="flex items-start gap-3 rounded-lg bg-amber-50 border-l-4 border-amber-400 px-4 py-3">
+      <i class="pi pi-exclamation-triangle text-amber-500 mt-0.5 shrink-0"></i>
+      <p class="m-0 text-sm text-amber-800">
+        <span class="font-bold">Top Priority: </span>{{ data().topPriority }}
+      </p>
+    </div>
+  }
+
+  <!-- Summary -->
+  @if (data().summary) {
+    <div>
+      <h3 class="text-base font-semibold text-surface-800 mb-2">Summary</h3>
+      <p class="m-0 text-sm text-surface-600 leading-relaxed">{{ data().summary }}</p>
+    </div>
+  }
+
+  <!-- Issues -->
+  @if (issuesBySeverity().length > 0) {
+    <div>
+      <h3 class="text-base font-semibold text-surface-800 mb-3">Issues</h3>
+      <div class="space-y-4">
+        @for (group of issuesBySeverity(); track group.severity) {
+          <div>
+            <button
+              type="button"
+              class="flex items-center justify-between w-full px-3 py-2 rounded-lg bg-surface-50 hover:bg-surface-100 transition-colors"
+              [attr.aria-expanded]="!isGroupCollapsed(group.severity)"
+              (click)="toggleGroup(group.severity)"
+            >
+              <div class="flex items-center gap-2">
+                <span
+                  class="text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full"
+                  [class]="group.severity === 'critical' ? 'bg-red-100 text-red-700' :
+                            group.severity === 'high'     ? 'bg-orange-100 text-orange-700' :
+                            group.severity === 'medium'   ? 'bg-amber-100 text-amber-700' :
+                                                            'bg-slate-100 text-slate-600'"
+                >{{ group.severity }}</span>
+                <span class="text-sm text-surface-500">{{ group.issues.length }} {{ group.issues.length === 1 ? 'issue' : 'issues' }}</span>
+              </div>
+              <i
+                class="pi pi-chevron-down text-surface-400 transition-transform duration-200"
+                [style.transform]="isGroupCollapsed(group.severity) ? 'rotate(-90deg)' : 'rotate(0deg)'"
+              ></i>
+            </button>
+
+            @if (!isGroupCollapsed(group.severity)) {
+              <div class="mt-2 space-y-2">
+                @for (issue of group.issues; track issue.id) {
+                  <div class="rounded-lg border border-surface-200 overflow-hidden">
+                    <button
+                      type="button"
+                      class="flex items-start gap-3 w-full text-left px-4 py-3 hover:bg-surface-50 transition-colors"
+                      [attr.aria-expanded]="isIssueExpanded(issue.id)"
+                      (click)="toggleIssue(issue.id)"
+                    >
+                      <div class="flex-1 min-w-0 space-y-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <span
+                            class="text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full shrink-0"
+                            [class]="issue.severity === 'critical' ? 'bg-red-100 text-red-700' :
+                                      issue.severity === 'high'     ? 'bg-orange-100 text-orange-700' :
+                                      issue.severity === 'medium'   ? 'bg-amber-100 text-amber-700' :
+                                                                      'bg-slate-100 text-slate-600'"
+                          >{{ issue.severity }}</span>
+                          <span class="text-xs text-surface-400">{{ issue.category }}</span>
+                        </div>
+                        <p class="m-0 font-semibold text-sm text-surface-800">{{ issue.title }}</p>
+                        @if (!isIssueExpanded(issue.id)) {
+                          <p class="m-0 text-sm text-surface-500 line-clamp-2">{{ issue.fix }}</p>
+                        }
+                      </div>
+                      <i
+                        class="pi pi-chevron-down text-surface-400 shrink-0 mt-1 transition-transform duration-200"
+                        [style.transform]="isIssueExpanded(issue.id) ? 'rotate(180deg)' : 'rotate(0deg)'"
+                      ></i>
+                    </button>
+
+                    @if (isIssueExpanded(issue.id)) {
+                      <div class="px-4 pb-4 space-y-3 border-t border-surface-100">
+                        <p class="m-0 pt-3 text-sm text-surface-600">
+                          <span class="font-medium">Fix: </span>{{ issue.fix }}
+                        </p>
+                        @if (issue.quotedText) {
+                          <blockquote class="m-0 pl-3 border-l-4 border-surface-300 italic text-sm text-surface-500">
+                            "{{ issue.quotedText }}"
+                          </blockquote>
+                        }
+                        <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-surface-600">
+                          @if (issue.location) {
+                            <span class="flex items-center gap-1.5">
+                              <i class="pi pi-map-marker text-surface-400"></i>
+                              {{ issue.location }}
+                            </span>
+                          }
+                        </div>
+                        <p class="m-0 text-sm text-surface-600">
+                          <i class="pi pi-info-circle text-surface-400 mr-1.5"></i>
+                          {{ issue.whyItMatters }}
+                        </p>
+                        <div>
+                          <p class="m-0 text-xs font-medium text-surface-500 mb-1">Impact: {{ issue.estimatedImpact }} / 10</p>
+                          <div class="h-1.5 rounded-full bg-surface-200 overflow-hidden">
+                            <div
+                              class="h-full rounded-full bg-amber-400"
+                              [style.width.%]="issue.estimatedImpact * 10"
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Strengths -->
+  @if (data().strengths.length > 0) {
+    <div>
+      <h3 class="text-base font-semibold text-surface-800 mb-3">Strengths</h3>
+      <ul class="space-y-3 list-none p-0 m-0">
+        @for (strength of data().strengths; track strength.title) {
+          <li class="flex items-start gap-3">
+            <i class="pi pi-check-circle text-green-500 mt-0.5 shrink-0"></i>
+            <div>
+              <p class="m-0 font-semibold text-sm text-surface-800">{{ strength.title }}</p>
+              <p class="m-0 text-sm text-surface-500">{{ strength.detail }}</p>
+            </div>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+</div>

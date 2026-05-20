@@ -149,3 +149,36 @@ export enum PromptType {
   INTERVIEW_PREP = 'INTERVIEW_PREP',
   LINKEDIN_REWRITE = 'LINKEDIN_REWRITE',
 }
+
+export type ResumeAutopsyIssue = {
+  id: string;
+  category:
+    | 'parsing'
+    | 'keywords'
+    | 'structure'
+    | 'content'
+    | 'formatting'
+    | 'length'
+    | 'contact';
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  title: string;
+  quotedText: string;
+  location: string;
+  whyItMatters: string;
+  fix: string;
+  estimatedImpact: number;
+};
+
+export type ResumeAutopsyStrength = {
+  title: string;
+  detail: string;
+};
+
+export type ResumeAutopsyResult = {
+  overallScore: number;
+  predictedScoreAfterFixes: number;
+  topPriority: string;
+  issues: ResumeAutopsyIssue[];
+  strengths: ResumeAutopsyStrength[];
+  summary: string;
+};

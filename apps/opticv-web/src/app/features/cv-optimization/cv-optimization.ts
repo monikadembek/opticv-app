@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
   inject,
   signal,
@@ -10,15 +11,40 @@ import { JsonPipe } from '@angular/common';
 import { from, mergeMap, switchMap } from 'rxjs';
 import { JobUpload } from './components/job-upload/job-upload';
 import { AccordionModule } from 'primeng/accordion';
-import { JobApplication, PromptType } from '@opticv/datatypes';
+import {
+  JobApplication,
+  PromptType,
+  ResumeAutopsyResult,
+} from '@opticv/datatypes';
 import {
   CvOptimizationApiService,
   SseJobCompleteEvent,
 } from './services/cv-optimization-api.service';
+import { OptimizationResultPanel } from './components/optimization-result-panel/optimization-result-panel';
+import { AtsScore } from './components/ats-score/ats-score';
+
+function isResumeAutopsyResult(value: unknown): value is ResumeAutopsyResult {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v['overallScore'] === 'number' &&
+    typeof v['predictedScoreAfterFixes'] === 'number' &&
+    typeof v['topPriority'] === 'string' &&
+    typeof v['summary'] === 'string' &&
+    Array.isArray(v['issues']) &&
+    Array.isArray(v['strengths'])
+  );
+}
 
 @Component({
   selector: 'app-cv-optimization-page',
-  imports: [JobUpload, AccordionModule, JsonPipe],
+  imports: [
+    JobUpload,
+    AccordionModule,
+    JsonPipe,
+    OptimizationResultPanel,
+    AtsScore,
+  ],
   templateUrl: './cv-optimization.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -29,6 +55,11 @@ export class CvOptimization {
   readonly PromptType = PromptType;
   readonly results = signal<Map<PromptType, SseJobCompleteEvent>>(new Map());
   readonly isProcessing = signal<Map<PromptType, boolean>>(new Map());
+
+  readonly autopsyResult = computed<ResumeAutopsyResult | null>(() => {
+    const r = this.results().get(PromptType.RESUME_AUTOPSY)?.result;
+    return isResumeAutopsyResult(r) ? r : null;
+  });
 
   runOptimization(jobApplication: JobApplication): void {
     this.results.set(new Map());

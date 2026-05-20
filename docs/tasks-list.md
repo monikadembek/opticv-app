@@ -221,17 +221,18 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 **status: done**
 
 - run optimization process from frontend
-- wait for response with runId and use it to listen to SSE - server sent events
+- for now run job by job for consecutive propmt types instead of running full optimization at once
+- handle SSE - server sent events
 
 ---
 
-### 21. Display ATS Autopsy results
+### 21. Display ATS Autopsy results (FE)
 
-**status - todo**
+**status - in progress**
 
 - add ats-score component
 - display there results for RESUME_AUTOPSY
-- display for modern nice UX
+- display with modern nice UX
 
 ---
 

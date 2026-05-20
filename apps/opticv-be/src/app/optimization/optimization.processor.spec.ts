@@ -9,7 +9,6 @@ import { CostCalculatorService } from '../ai/services/cost-calculator.service.js
 import { UsageLogService } from '../ai/services/usage-log.service.js';
 import { OptimizationEventBus } from './optimization-event-bus.js';
 import { PromptType } from '../../generated/prisma/enums.js';
-import { Prisma } from '../../generated/prisma/client.js';
 import type { OptimizationJobPayload } from './optimization.types.js';
 import type { Job } from 'bullmq';
 
@@ -32,7 +31,14 @@ const activePrompt = {
   systemPrompt: 'You are a CV reviewer.',
   userPromptTemplate: '{{SHARED_CONTEXT}}',
   modelPreference: 'gpt-4o-mini',
-  outputSchema: null,
+  outputSchema: {
+    name: 'submit_audit',
+    input_schema: {
+      type: 'object',
+      required: ['overallScore'],
+      properties: { overallScore: { type: 'integer' } },
+    },
+  },
 };
 
 const mockPrisma = {
@@ -84,12 +90,12 @@ describe('OptimizationProcessor', () => {
     processor = module.get(OptimizationProcessor);
   });
 
-  it('happy path: sets PROCESSING, calls OpenAI, sets COMPLETED, emits success event', async () => {
+  it('happy path: sets PROCESSING, calls OpenAI with outputSchema, stores structuredOutput, emits success event', async () => {
     mockPrisma.optimizationResult.update.mockResolvedValue({});
     mockPromptService.getActivePrompt.mockResolvedValue(activePrompt);
     mockPromptService.buildUserPrompt.mockReturnValue('built prompt');
     mockOpenAiService.generateCompletion.mockResolvedValue({
-      content: 'Analysis result',
+      content: '{"overallScore":85}',
       promptTokens: 100,
       completionTokens: 50,
     });
@@ -99,36 +105,17 @@ describe('OptimizationProcessor', () => {
     expect(mockPrisma.optimizationResult.update).toHaveBeenCalledWith(
       expect.objectContaining({ data: { status: 'PROCESSING' } }),
     );
-    expect(mockPrisma.optimizationResult.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ status: 'COMPLETED', textOutput: 'Analysis result' }),
-      }),
+    expect(mockOpenAiService.generateCompletion).toHaveBeenCalledWith(
+      activePrompt.systemPrompt,
+      'built prompt',
+      activePrompt.modelPreference,
+      activePrompt.outputSchema,
     );
-    expect(mockEventBus.emit).toHaveBeenCalledWith('run-1', {
-      promptType: PROMPT_TYPE,
-      status: 'completed',
-      result: 'Analysis result',
-    });
-  });
-
-  it('stores structuredOutput and clears textOutput when outputSchema is non-null', async () => {
-    const structuredPrompt = { ...activePrompt, outputSchema: { type: 'object' } };
-    mockPrisma.optimizationResult.update.mockResolvedValue({});
-    mockPromptService.getActivePrompt.mockResolvedValue(structuredPrompt);
-    mockPromptService.buildUserPrompt.mockReturnValue('built prompt');
-    mockOpenAiService.generateCompletion.mockResolvedValue({
-      content: '{"score": 85}',
-      promptTokens: 100,
-      completionTokens: 50,
-    });
-
-    await processor.process(makeJob(basePayload));
-
     expect(mockPrisma.optimizationResult.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
           status: 'COMPLETED',
-          structuredOutput: { score: 85 },
+          structuredOutput: { overallScore: 85 },
           textOutput: null,
         }),
       }),
@@ -136,30 +123,52 @@ describe('OptimizationProcessor', () => {
     expect(mockEventBus.emit).toHaveBeenCalledWith('run-1', {
       promptType: PROMPT_TYPE,
       status: 'completed',
-      result: { score: 85 },
+      result: { overallScore: 85 },
     });
   });
 
-  it('stores textOutput and clears structuredOutput when outputSchema is null', async () => {
+  it('uses fallback model when modelPreference is null', async () => {
+    const promptWithoutModel = { ...activePrompt, modelPreference: null };
     mockPrisma.optimizationResult.update.mockResolvedValue({});
-    mockPromptService.getActivePrompt.mockResolvedValue(activePrompt);
+    mockPromptService.getActivePrompt.mockResolvedValue(promptWithoutModel);
     mockPromptService.buildUserPrompt.mockReturnValue('built prompt');
     mockOpenAiService.generateCompletion.mockResolvedValue({
-      content: 'Plain text result',
+      content: '{"overallScore":70}',
       promptTokens: 80,
       completionTokens: 40,
     });
 
     await processor.process(makeJob(basePayload));
 
+    expect(mockOpenAiService.generateCompletion).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      'gpt-4o-mini',
+      expect.anything(),
+    );
+  });
+
+  it('throws and sets FAILED when outputSchema is null', async () => {
+    const promptWithoutSchema = { ...activePrompt, outputSchema: null };
+    mockPrisma.optimizationResult.update.mockResolvedValue({});
+    mockPromptService.getActivePrompt.mockResolvedValue(promptWithoutSchema);
+    mockPromptService.buildUserPrompt.mockReturnValue('built prompt');
+
+    await expect(processor.process(makeJob(basePayload))).rejects.toThrow(
+      `Prompt version for ${PROMPT_TYPE} has no outputSchema`,
+    );
+
+    expect(mockOpenAiService.generateCompletion).not.toHaveBeenCalled();
     expect(mockPrisma.optimizationResult.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({
-          structuredOutput: Prisma.DbNull,
-          textOutput: 'Plain text result',
-        }),
+        data: expect.objectContaining({ status: 'FAILED' }),
       }),
     );
+    expect(mockEventBus.emit).toHaveBeenCalledWith('run-1', {
+      promptType: PROMPT_TYPE,
+      status: 'failed',
+      error: expect.stringContaining('no outputSchema'),
+    });
   });
 
   it('sets FAILED and emits failure event when no active prompt exists, and re-throws', async () => {

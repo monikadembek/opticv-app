@@ -29,18 +29,28 @@ export class OptimizationProcessor extends WorkerHost {
   }
 
   async process(job: Job<OptimizationJobPayload>): Promise<void> {
-    const { runId, jobApplicationId, promptType, cvText, parsedSections, jobDescription } =
-      job.data;
+    const {
+      runId,
+      jobApplicationId,
+      promptType,
+      cvText,
+      parsedSections,
+      jobDescription,
+    } = job.data;
 
     await this.prisma.optimizationResult.update({
       where: {
-        applicationId_promptType: { applicationId: jobApplicationId, promptType },
+        applicationId_promptType: {
+          applicationId: jobApplicationId,
+          promptType,
+        },
       },
       data: { status: 'PROCESSING' },
     });
 
     try {
-      const promptVersion = await this.promptService.getActivePrompt(promptType);
+      const promptVersion =
+        await this.promptService.getActivePrompt(promptType);
 
       const userPrompt = this.promptService.buildUserPrompt(
         promptVersion.userPromptTemplate,
@@ -55,7 +65,15 @@ export class OptimizationProcessor extends WorkerHost {
         },
       );
 
-      const useJsonFormat = promptVersion.outputSchema !== null;
+      const outputSchema = promptVersion.outputSchema as {
+        name: string;
+        input_schema: Record<string, unknown>;
+      } | null;
+
+      if (!outputSchema) {
+        throw new Error(`Prompt version for ${promptType} has no outputSchema — cannot generate structured output`);
+      }
+
       const model = promptVersion.modelPreference ?? FALLBACK_MODEL;
 
       const { content, promptTokens, completionTokens } =
@@ -63,30 +81,34 @@ export class OptimizationProcessor extends WorkerHost {
           promptVersion.systemPrompt,
           userPrompt,
           model,
-          useJsonFormat,
+          outputSchema,
         );
 
-      const structuredOutput = useJsonFormat
-        ? (JSON.parse(content) as Prisma.InputJsonValue)
-        : null;
-      const textOutput = useJsonFormat ? null : content;
+      const structuredOutput = JSON.parse(content) as Prisma.InputJsonValue;
 
       await this.prisma.optimizationResult.update({
         where: {
-          applicationId_promptType: { applicationId: jobApplicationId, promptType },
+          applicationId_promptType: {
+            applicationId: jobApplicationId,
+            promptType,
+          },
         },
         data: {
           status: 'COMPLETED',
           promptVersionId: promptVersion.id,
-          structuredOutput: structuredOutput ?? Prisma.DbNull,
-          textOutput,
+          structuredOutput,
+          textOutput: null,
           inputTokens: promptTokens,
           outputTokens: completionTokens,
         },
       });
 
       try {
-        const costUsd = this.costCalculator.calculate(model, promptTokens, completionTokens);
+        const costUsd = this.costCalculator.calculate(
+          model,
+          promptTokens,
+          completionTokens,
+        );
         await this.usageLogService.log({
           userId: job.data.userId,
           promptType,
@@ -104,7 +126,7 @@ export class OptimizationProcessor extends WorkerHost {
       this.eventBus.emit(runId, {
         promptType,
         status: 'completed',
-        result: structuredOutput ?? textOutput,
+        result: structuredOutput,
       });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
@@ -112,12 +134,19 @@ export class OptimizationProcessor extends WorkerHost {
 
       await this.prisma.optimizationResult.update({
         where: {
-          applicationId_promptType: { applicationId: jobApplicationId, promptType },
+          applicationId_promptType: {
+            applicationId: jobApplicationId,
+            promptType,
+          },
         },
         data: { status: 'FAILED', errorMessage: message },
       });
 
-      this.eventBus.emit(runId, { promptType, status: 'failed', error: message });
+      this.eventBus.emit(runId, {
+        promptType,
+        status: 'failed',
+        error: message,
+      });
 
       throw err;
     }
