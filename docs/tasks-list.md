@@ -218,7 +218,7 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ### 20. Trigger optimization process from web, wait for runId and listen to SSE (FE)
 
-**status: in progress**
+**status: done**
 
 - run optimization process from frontend
 - wait for response with runId and use it to listen to SSE - server sent events
