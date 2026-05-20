@@ -208,18 +208,46 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ### 19. Integrate Swagger (BE)
 
-**status - in progress**
+**status - done**
 
 - add Swagger to backend app
+- works only in dev environment
+- accessible under http://localhost:3000/swagger
 
 ---
 
 ### 20. Trigger optimization process from web, wait for runId and listen to SSE (FE)
 
-**status: todo**
+**status: done**
 
 - run optimization process from frontend
-- wait for response with runId and use it to leisten to SSE - server sent events
+- wait for response with runId and use it to listen to SSE - server sent events
+
+---
+
+### 21. Display ATS Autopsy results
+
+**status - todo**
+
+- add ats-score component
+- display there results for RESUME_AUTOPSY
+- display for modern nice UX
+
+---
+
+### Run full optimization process instead of running promptTypes one by one
+
+**status: todo**
+
+- use method runFullOptimizationProcess(jobApplicationId: string) from cv-optimization-api.service.ts
+
+---
+
+### Implement functionality to retry failed job
+
+**status: todo**
+
+- run single optimization for prompt type that failed
 
 ---
 

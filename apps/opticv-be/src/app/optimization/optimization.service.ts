@@ -70,9 +70,10 @@ export class OptimizationService {
   async triggerSingleJob(
     jobApplicationId: string,
     promptType: PromptType,
-    runId: string,
+    runId: string | undefined,
     userId: string,
   ): Promise<{ runId: string }> {
+    runId = runId ?? randomUUID();
     const { cvText, parsedSections, jobDescription } =
       await this.loadAndValidateApplication(jobApplicationId, userId);
 

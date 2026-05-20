@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   inject,
+  output,
   signal,
 } from '@angular/core';
 import {
@@ -21,6 +22,7 @@ import {
 } from '../../services/cv-optimization-api.service';
 import { MessageService } from 'primeng/api';
 import { catchError, EMPTY, retry, switchMap, tap } from 'rxjs';
+import { JobApplication, JobApplicationResponse } from '@opticv/datatypes';
 
 @Component({
   selector: 'app-job-upload',
@@ -39,6 +41,9 @@ export class JobUpload {
   private readonly cvOptimizationApiService = inject(CvOptimizationApiService);
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
+
+  jobSubmitted = output<JobApplication>();
+  jobApplication: JobApplicationResponse | null = null;
 
   cvList = this.cvOptimizationApiService.cvList;
   isSubmitting = signal(false);
@@ -72,6 +77,10 @@ export class JobUpload {
 
   get notesControl() {
     return this.form.controls.notes;
+  }
+
+  constructor() {
+    this.reloadCvs();
   }
 
   reloadCvs(): void {
@@ -113,8 +122,9 @@ export class JobUpload {
           this.isSubmitting.set(false);
           return EMPTY;
         }),
-        tap((result) => {
+        tap((result: JobApplicationResponse) => {
           console.log('submit job description result: ', result);
+          this.jobApplication = result;
         }),
         switchMap(() => {
           return this.cvOptimizationApiService
@@ -131,6 +141,9 @@ export class JobUpload {
           });
           this.isSubmitting.set(false);
           console.log('extraced data from cv: ', extractedData);
+          if (this.jobApplication) {
+            this.jobSubmitted.emit(this.jobApplication);
+          }
         },
         error: (err) => {
           console.log('error when extracting data from cv: ', err);

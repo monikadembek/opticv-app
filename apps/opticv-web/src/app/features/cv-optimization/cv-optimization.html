@@ -6,51 +6,234 @@
         Select CV and paste job description
       </p-accordion-header>
       <p-accordion-content>
-        <app-job-upload />
+        <app-job-upload (jobSubmitted)="runOptimization($event)" />
       </p-accordion-content>
     </p-accordion-panel>
     <p-accordion-panel value="1">
-      <p-accordion-header>ATS analysis</p-accordion-header>
+      <p-accordion-header>
+        <div class="flex justify-between w-full">
+          <span>ATS Analysis</span>
+          @if(isProcessing().get(PromptType.RESUME_AUTOPSY)) {
+          <span class="text-amber-600 mr-4">
+            <i class="pi pi-spin pi-spinner mr-2.5"></i>Processing
+          </span>
+          } @else if (results().get(PromptType.RESUME_AUTOPSY) &&
+          results().get(PromptType.RESUME_AUTOPSY)?.status === 'completed') {
+          <span class="text-green-700 mr-4"
+            >{{ results().get(PromptType.RESUME_AUTOPSY)?.status?.toUpperCase()
+            }}</span
+          >
+          } @else if (results().get(PromptType.RESUME_AUTOPSY)) {
+          <span class="text-red-700 mr-4"
+            >{{ results().get(PromptType.RESUME_AUTOPSY)?.status?.toUpperCase()
+            }}</span
+          >
+          }
+        </div>
+      </p-accordion-header>
       <p-accordion-content>
-        <p>Coming soon</p>
-        <p class="m-0">ATS match score</p>
-        <p class="m-0">ATS autopsy</p>
+        @if (results().get(PromptType.RESUME_AUTOPSY); as r) {
+        <pre class="whitespace-pre-wrap text-sm">{{ r.result | json }}</pre>
+        } @else if(results().get(PromptType.RESUME_AUTOPSY)?.error; as error) {
+        <p class="text-red-700 m-0">{{error}}</p>
+        } @else {
+        <p class="m-0">Coming soon</p>
+        }
       </p-accordion-content>
     </p-accordion-panel>
     <p-accordion-panel value="2">
-      <p-accordion-header>Keyword Gap Analysis</p-accordion-header>
+      <p-accordion-header>
+        <div class="flex justify-between w-full">
+          <span>Keyword Gap Analysis</span>
+          @if(isProcessing().get(PromptType.KEYWORD_GAP)) {
+          <span class="text-amber-600 mr-4">
+            <i class="pi pi-spin pi-spinner mr-2.5"></i>Processing
+          </span>
+          } @else if (results().get(PromptType.KEYWORD_GAP) &&
+          results().get(PromptType.KEYWORD_GAP)?.status === 'completed') {
+          <span class="text-green-700 mr-4"
+            >{{ results().get(PromptType.KEYWORD_GAP)?.status?.toUpperCase()
+            }}</span
+          >
+          } @else if (results().get(PromptType.KEYWORD_GAP)) {
+          <span class="text-red-700 mr-4"
+            >{{ results().get(PromptType.KEYWORD_GAP)?.status?.toUpperCase()
+            }}</span
+          >
+          }
+        </div>
+      </p-accordion-header>
       <p-accordion-content>
-        <p class="m-0">Displaying missing keywords coming soon</p>
+        @if (results().get(PromptType.KEYWORD_GAP); as r) {
+        <pre class="whitespace-pre-wrap text-sm">{{ r.result | json }}</pre>
+        } @else if(results().get(PromptType.KEYWORD_GAP)?.error; as error) {
+        <p class="text-red-700 m-0">{{error}}</p>
+        } @else {
+        <p class="m-0">Coming soon</p>
+        }
       </p-accordion-content>
     </p-accordion-panel>
     <p-accordion-panel value="3">
-      <p-accordion-header>Rewritten summary</p-accordion-header>
+      <p-accordion-header>
+        <div class="flex justify-between w-full">
+          <span>Rewritten Summary</span>
+          @if(isProcessing().get(PromptType.SUMMARY_REWRITE)) {
+          <span class="text-amber-600 mr-4">
+            <i class="pi pi-spin pi-spinner mr-2.5"></i>Processing
+          </span>
+          } @else if (results().get(PromptType.SUMMARY_REWRITE) &&
+          results().get(PromptType.SUMMARY_REWRITE)?.status === 'completed') {
+          <span class="text-green-700 mr-4"
+            >{{ results().get(PromptType.SUMMARY_REWRITE)?.status?.toUpperCase()
+            }}</span
+          >
+          } @else if (results().get(PromptType.SUMMARY_REWRITE)) {
+          <span class="text-red-700 mr-4"
+            >{{ results().get(PromptType.SUMMARY_REWRITE)?.status?.toUpperCase()
+            }}</span
+          >
+          }
+        </div>
+      </p-accordion-header>
       <p-accordion-content>
-        <p class="m-0">Comming soon</p>
+        @if (results().get(PromptType.SUMMARY_REWRITE); as r) {
+        <pre class="whitespace-pre-wrap text-sm">{{ r.result | json }}</pre>
+        } @else if(results().get(PromptType.SUMMARY_REWRITE)?.error; as error) {
+        <p class="text-red-700 m-0">{{error}}</p>
+        } @else {
+        <p class="m-0">Coming soon</p>
+        }
       </p-accordion-content>
     </p-accordion-panel>
     <p-accordion-panel value="4">
-      <p-accordion-header>Bullet upgrades</p-accordion-header>
+      <p-accordion-header>
+        <div class="flex justify-between w-full">
+          <span>Bullet Upgrades</span>
+          @if(isProcessing().get(PromptType.BULLET_UPGRADE)) {
+          <span class="text-amber-600 mr-4">
+            <i class="pi pi-spin pi-spinner mr-2.5"></i>Processing
+          </span>
+          } @else if (results().get(PromptType.BULLET_UPGRADE) &&
+          results().get(PromptType.BULLET_UPGRADE)?.status === 'completed') {
+          <span class="text-green-700 mr-4"
+            >{{ results().get(PromptType.BULLET_UPGRADE)?.status?.toUpperCase()
+            }}</span
+          >
+          } @else if (results().get(PromptType.BULLET_UPGRADE)) {
+          <span class="text-red-700 mr-4"
+            >{{ results().get(PromptType.BULLET_UPGRADE)?.status?.toUpperCase()
+            }}</span
+          >
+          }
+        </div>
+      </p-accordion-header>
       <p-accordion-content>
-        <p class="m-0">Comming soon</p>
+        @if (results().get(PromptType.BULLET_UPGRADE); as r) {
+        <pre class="whitespace-pre-wrap text-sm">{{ r.result | json }}</pre>
+        } @else if(results().get(PromptType.BULLET_UPGRADE)?.error; as error) {
+        <p class="text-red-700 m-0">{{error}}</p>
+        } @else {
+        <p class="m-0">Coming soon</p>
+        }
       </p-accordion-content>
     </p-accordion-panel>
     <p-accordion-panel value="5">
-      <p-accordion-header>Cover Letter</p-accordion-header>
+      <p-accordion-header>
+        <div class="flex justify-between w-full">
+          <span>Cover Letter</span>
+          @if(isProcessing().get(PromptType.COVER_LETTER)) {
+          <span class="text-amber-600 mr-4">
+            <i class="pi pi-spin pi-spinner mr-2.5"></i>Processing
+          </span>
+          } @else if (results().get(PromptType.COVER_LETTER) &&
+          results().get(PromptType.COVER_LETTER)?.status === 'completed') {
+          <span class="text-green-700 mr-4"
+            >{{ results().get(PromptType.COVER_LETTER)?.status?.toUpperCase()
+            }}</span
+          >
+          } @else if (results().get(PromptType.COVER_LETTER)) {
+          <span class="text-red-700 mr-4"
+            >{{ results().get(PromptType.COVER_LETTER)?.status?.toUpperCase()
+            }}</span
+          >
+          }
+        </div>
+      </p-accordion-header>
       <p-accordion-content>
-        <p class="m-0">Comming soon</p>
+        @if (results().get(PromptType.COVER_LETTER); as r) {
+        <pre class="whitespace-pre-wrap text-sm">{{ r.result | json }}</pre>
+        } @else if(results().get(PromptType.COVER_LETTER)?.error; as error) {
+        <p class="text-red-700 m-0">{{error}}</p>
+        } @else {
+        <p class="m-0">Coming soon</p>
+        }
       </p-accordion-content>
     </p-accordion-panel>
     <p-accordion-panel value="6">
-      <p-accordion-header>Interview Prep (10Q&A)</p-accordion-header>
+      <p-accordion-header>
+        <div class="flex justify-between w-full">
+          <span>Interview Prep (10Q&A)</span>
+          @if(isProcessing().get(PromptType.INTERVIEW_PREP)) {
+          <span class="text-amber-600 mr-4">
+            <i class="pi pi-spin pi-spinner mr-2.5"></i>Processing
+          </span>
+          } @else if (results().get(PromptType.INTERVIEW_PREP) &&
+          results().get(PromptType.INTERVIEW_PREP)?.status === 'completed') {
+          <span class="text-green-700 mr-4"
+            >{{ results().get(PromptType.INTERVIEW_PREP)?.status?.toUpperCase()
+            }}</span
+          >
+          } @else if (results().get(PromptType.INTERVIEW_PREP)) {
+          <span class="text-red-700 mr-4"
+            >{{ results().get(PromptType.INTERVIEW_PREP)?.status?.toUpperCase()
+            }}</span
+          >
+          }
+        </div>
+      </p-accordion-header>
       <p-accordion-content>
-        <p class="m-0">Comming soon</p>
+        @if (results().get(PromptType.INTERVIEW_PREP); as r) {
+        <pre class="whitespace-pre-wrap text-sm">{{ r.result | json }}</pre>
+        } @else if(results().get(PromptType.INTERVIEW_PREP)?.error; as error) {
+        <p class="text-red-700 m-0">{{error}}</p>
+        } @else {
+        <p class="m-0">Coming soon</p>
+        }
       </p-accordion-content>
     </p-accordion-panel>
     <p-accordion-panel value="7">
-      <p-accordion-header>LinkedIn Updates</p-accordion-header>
+      <p-accordion-header>
+        <div class="flex justify-between w-full">
+          <span>LinkedIn Updates</span>
+          @if(isProcessing().get(PromptType.LINKEDIN_REWRITE)) {
+          <span class="text-amber-600 mr-4">
+            <i class="pi pi-spin pi-spinner mr-2.5"></i>Processing
+          </span>
+          } @else if (results().get(PromptType.LINKEDIN_REWRITE) &&
+          results().get(PromptType.LINKEDIN_REWRITE)?.status === 'completed') {
+          <span class="text-green-700 mr-4"
+            >{{
+            results().get(PromptType.LINKEDIN_REWRITE)?.status?.toUpperCase()
+            }}</span
+          >
+          } @else if (results().get(PromptType.LINKEDIN_REWRITE)) {
+          <span class="text-red-700 mr-4"
+            >{{
+            results().get(PromptType.LINKEDIN_REWRITE)?.status?.toUpperCase()
+            }}</span
+          >
+          }
+        </div>
+      </p-accordion-header>
       <p-accordion-content>
-        <p class="m-0">Comming soon</p>
+        @if (results().get(PromptType.LINKEDIN_REWRITE); as r) {
+        <pre class="whitespace-pre-wrap text-sm">{{ r.result | json }}</pre>
+        } @else if(results().get(PromptType.LINKEDIN_REWRITE)?.error; as error)
+        {
+        <p class="text-red-700 m-0">{{error}}</p>
+        }@else {
+        <p class="m-0">Coming soon</p>
+        }
       </p-accordion-content>
     </p-accordion-panel>
   </p-accordion>

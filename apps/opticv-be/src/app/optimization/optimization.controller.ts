@@ -31,8 +31,8 @@ import { OptimizationEventBus } from './optimization-event-bus.js';
 const TOTAL_JOBS = Object.values(PromptType).length;
 
 class TriggerSingleJobDto {
-  @ApiProperty({ example: 'run-uuid-123' })
-  runId!: string;
+  @ApiProperty({ example: 'run-uuid-123', required: false })
+  runId?: string;
 }
 
 @ApiTags('optimizations')
@@ -75,14 +75,10 @@ export class OptimizationController {
       throw new BadRequestException('Invalid promptType.');
     }
 
-    if (!body.runId?.trim()) {
-      throw new BadRequestException('runId is required.');
-    }
-
     return this.optimizationService.triggerSingleJob(
       jobApplicationId,
       promptType as PromptType,
-      body.runId.trim(),
+      body.runId?.trim(),
       user.id,
     );
   }

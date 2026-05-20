@@ -139,3 +139,13 @@ export type JobApplicationListResponse = {
   data: JobApplicationListItem[];
   total: number;
 };
+
+export enum PromptType {
+  RESUME_AUTOPSY = 'RESUME_AUTOPSY',
+  KEYWORD_GAP = 'KEYWORD_GAP',
+  SUMMARY_REWRITE = 'SUMMARY_REWRITE',
+  BULLET_UPGRADE = 'BULLET_UPGRADE',
+  COVER_LETTER = 'COVER_LETTER',
+  INTERVIEW_PREP = 'INTERVIEW_PREP',
+  LINKEDIN_REWRITE = 'LINKEDIN_REWRITE',
+}

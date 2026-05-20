@@ -21,11 +21,14 @@ export class SupabaseGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<Request>();
     const authHeader = request.headers['authorization'];
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const token =
+      authHeader?.startsWith('Bearer ') ? authHeader.slice(7)
+      : typeof request.query['token'] === 'string' ? request.query['token']
+      : null;
+
+    if (!token) {
       throw new UnauthorizedException();
     }
-
-    const token = authHeader.slice(7);
     const { data, error } = await this.supabase.auth.getUser(token);
 
     if (error || !data.user) {
