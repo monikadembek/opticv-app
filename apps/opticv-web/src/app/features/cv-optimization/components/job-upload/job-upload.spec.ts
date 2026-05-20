@@ -254,6 +254,26 @@ describe('JobUpload', () => {
       component.onSubmit();
       expect(apiService.extractCvData).not.toHaveBeenCalled();
     });
+
+    it('should emit jobSubmitted with the job application after successful extraction', () => {
+      fillValidForm();
+      const emitted: unknown[] = [];
+      component.jobSubmitted.subscribe((v) => emitted.push(v));
+      component.onSubmit();
+      expect(emitted).toHaveLength(1);
+      expect(emitted[0]).toEqual(mockJobApplicationResponse);
+    });
+
+    it('should NOT emit jobSubmitted when createJobApplication fails', () => {
+      fillValidForm();
+      apiService.createJobApplication.mockReturnValue(
+        throwError(() => ({ error: { message: 'Server error' } })),
+      );
+      const emitted: unknown[] = [];
+      component.jobSubmitted.subscribe((v) => emitted.push(v));
+      component.onSubmit();
+      expect(emitted).toHaveLength(0);
+    });
   });
 
   describe('reloadCvs', () => {
