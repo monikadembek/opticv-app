@@ -1,0 +1,136 @@
+<div class="space-y-6 py-2">
+  <!-- Warnings banner -->
+  @if (result().warnings.length > 0) {
+  <p-message severity="warn">
+    <ul class="m-0 pl-4 space-y-1">
+      @for (warning of result().warnings; track warning) {
+      <li class="text-sm">{{ warning }}</li>
+      }
+    </ul>
+  </p-message>
+  }
+
+  <!-- Recommendation note -->
+  <div class="mb-6">
+    <h3 class="text-base font-semibold text-surface-800 mb-3">
+      Recommendation reason
+    </h3>
+    <p class="m-0 text-sm italic text-surface-500">
+      {{ result().recommendationReason }}
+    </p>
+  </div>
+
+  <!-- Variant cards -->
+  <div>
+    <h3 class="text-base font-semibold text-surface-800 mb-3">
+      Choose a Variant
+    </h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      @for (variant of result().variants; track $index) {
+      <div
+        class="rounded-xl border p-5 space-y-3 flex flex-col"
+        [class]="selectedVariantIndex() === $index
+          ? 'border-primary-500 bg-primary-50/40'
+          : 'border-surface-200'"
+        role="article"
+        [attr.aria-label]="variant.hookType + ' variant'"
+      >
+        <!-- Card header -->
+        <div
+          class="flex items-center gap-2 flex-wrap pb-2 border-b border-surface-200"
+        >
+          <span
+            class="text-sm font-semibold uppercase tracking-wide bg-surface-100 text-surface-600 rounded-full px-2 py-0.5"
+          >
+            {{ variant.hookType }}
+          </span>
+          @if ($index === safeIndex()) {
+          <span
+            class="text-sm font-semibold bg-primary-100 text-green-700 rounded-full px-2 py-0.5"
+          >
+            Recommended
+          </span>
+          }
+          <span class="text-xs text-surface-400 ml-auto"
+            >{{ variant.wordCount }} words</span
+          >
+        </div>
+
+        <!-- Strategic angle -->
+        <p class="m-0 text-sm italic text-surface-500">
+          {{ variant.strategicAngle }}
+        </p>
+
+        <!-- Best for -->
+        @if (variant.bestFor) {
+        <p class="m-0 text-xs text-surface-600">
+          <span class="font-semibold uppercase tracking-wide text-surface-400"
+            >Best for:
+          </span>
+          {{ variant.bestFor }}
+        </p>
+        }
+
+        <!-- Keywords incorporated -->
+        @if (variant.keywordsIncorporated?.length) {
+        <div class="mt-5">
+          <p
+            class="m-0 mb-1 text-xs font-semibold uppercase tracking-wide text-surface-400"
+          >
+            Keywords:
+          </p>
+          <div class="flex flex-wrap gap-1">
+            @for (kw of variant.keywordsIncorporated; track kw) {
+            <span class="text-xs text-surface-600 px-2 py-0.5"> {{ kw }} </span>
+            }
+          </div>
+        </div>
+        }
+
+        <!-- Select button -->
+        <div class="mt-auto pt-2">
+          <p-button
+            label="Use this version"
+            variant="outlined"
+            size="small"
+            [style]="{ width: '100%' }"
+            (onClick)="selectVariant($index)"
+          />
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+
+  <!-- Editor section -->
+  <div>
+    <h3 class="text-base font-semibold text-surface-800 mb-3">
+      Edit Cover Letter
+    </h3>
+    <p-editor
+      [ngModel]="editorContent()"
+      (ngModelChange)="editorContent.set($event)"
+      [style]="{ height: '400px' }"
+    />
+  </div>
+
+  <!-- Export buttons -->
+  <div class="flex gap-3">
+    <p-button
+      label="Export to PDF"
+      variant="outlined"
+      severity="secondary"
+      [disabled]="true"
+      pTooltip="Coming soon"
+      tooltipPosition="top"
+    />
+    <p-button
+      label="Export to DOCX"
+      variant="outlined"
+      severity="secondary"
+      [disabled]="true"
+      pTooltip="Coming soon"
+      tooltipPosition="top"
+    />
+  </div>
+</div>

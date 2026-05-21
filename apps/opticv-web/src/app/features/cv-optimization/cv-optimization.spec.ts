@@ -179,6 +179,57 @@ describe('CvOptimization', () => {
       );
       expect(component.bulletUpgradeResult()).toBeNull();
     });
+
+    it('coverLetterResult returns null when no result exists', () => {
+      expect(component.coverLetterResult()).toBeNull();
+    });
+
+    it('coverLetterResult returns typed result when valid CoverLetterResult is stored', () => {
+      const result = {
+        salutation: 'Dear Hiring Manager,',
+        signoff: 'Yours sincerely,',
+        variants: [
+          {
+            hookType: 'achievement' as const,
+            fullLetter: 'My cover letter.',
+            wordCount: 3,
+            strategicAngle: 'Value-led',
+            openingHook: 'I bring unique value.',
+            closingCTA: 'Let us connect.',
+            keywordsIncorporated: [],
+          },
+        ],
+        recommendedVariant: 'achievement' as const,
+        recommendationReason: 'Best fit.',
+        warnings: [],
+      };
+      component.results.set(
+        new Map([[PromptType.COVER_LETTER, { promptType: PromptType.COVER_LETTER, status: 'completed', result }]]),
+      );
+      expect(component.coverLetterResult()).toEqual(result);
+    });
+
+    it('coverLetterResult returns null when stored result has wrong shape', () => {
+      component.results.set(
+        new Map([[PromptType.COVER_LETTER, { promptType: PromptType.COVER_LETTER, status: 'completed', result: { foo: 'bar' } }]]),
+      );
+      expect(component.coverLetterResult()).toBeNull();
+    });
+
+    it('coverLetterResult returns null when variants array is empty', () => {
+      const result = {
+        salutation: 'Dear Hiring Manager,',
+        signoff: 'Yours sincerely,',
+        variants: [],
+        recommendedVariant: 'achievement' as const,
+        recommendationReason: 'Best fit.',
+        warnings: [],
+      };
+      component.results.set(
+        new Map([[PromptType.COVER_LETTER, { promptType: PromptType.COVER_LETTER, status: 'completed', result }]]),
+      );
+      expect(component.coverLetterResult()).toBeNull();
+    });
   });
 
   describe('runOptimization', () => {
