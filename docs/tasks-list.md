@@ -268,13 +268,21 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ### 25. Display cover letter output (FE)
 
-**status - in progress**
+**status - done**
 
 - add cover-letter-editor component
 - display there results for COVER_LETTER
 - display with modern nice UX
 
 ---
+
+### 26. Display interview prep results (FE)
+
+**status - in progress**
+
+- add interview-prep component
+- display there results for INTERVIEW_PREP
+- display with modern nice UX
 
 ### Run full optimization process instead of running promptTypes one by one
 
