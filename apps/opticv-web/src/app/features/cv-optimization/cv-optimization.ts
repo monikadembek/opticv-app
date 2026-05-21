@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { JsonPipe } from '@angular/common';
-import { filter, from, mergeMap, switchMap } from 'rxjs';
+import { from, mergeMap, switchMap } from 'rxjs';
 import { JobUpload } from './components/job-upload/job-upload';
 import { AccordionModule } from 'primeng/accordion';
 import {
@@ -16,6 +16,7 @@ import {
   KeywordGapResult,
   PromptType,
   ResumeAutopsyResult,
+  SummaryRewriteResult,
 } from '@opticv/datatypes';
 import {
   CvOptimizationApiService,
@@ -24,6 +25,7 @@ import {
 import { OptimizationResultPanel } from './components/optimization-result-panel/optimization-result-panel';
 import { AtsScore } from './components/ats-score/ats-score';
 import { KeywordGap } from './components/keyword-gap/keyword-gap';
+import { SummaryRewrite } from './components/summary-rewrite/summary-rewrite';
 
 function isResumeAutopsyResult(value: unknown): value is ResumeAutopsyResult {
   if (typeof value !== 'object' || value === null) return false;
@@ -46,6 +48,16 @@ function isKeywordGapResult(value: unknown): value is KeywordGapResult {
   );
 }
 
+function isSummaryRewriteResult(value: unknown): value is SummaryRewriteResult {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v['originalSummary'] === 'string' &&
+    Array.isArray(v['variants']) &&
+    typeof v['recommendedVariant'] === 'string'
+  );
+}
+
 @Component({
   selector: 'app-cv-optimization-page',
   imports: [
@@ -55,6 +67,7 @@ function isKeywordGapResult(value: unknown): value is KeywordGapResult {
     OptimizationResultPanel,
     AtsScore,
     KeywordGap,
+    SummaryRewrite,
   ],
   templateUrl: './cv-optimization.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -77,13 +90,17 @@ export class CvOptimization {
     return isKeywordGapResult(r) ? r : null;
   });
 
+  readonly summaryRewriteResult = computed<SummaryRewriteResult | null>(() => {
+    const r = this.results().get(PromptType.SUMMARY_REWRITE)?.result;
+    return isSummaryRewriteResult(r) ? r : null;
+  });
+
   runOptimization(jobApplication: JobApplication): void {
     this.results.set(new Map());
     this.isProcessing.set(new Map());
 
     from(Object.values(PromptType))
       .pipe(
-        filter((prompt) => prompt === PromptType.KEYWORD_GAP),
         mergeMap(
           (promptType) =>
             this.cvOptimizationApiService

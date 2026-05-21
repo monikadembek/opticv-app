@@ -92,6 +92,71 @@ describe('CvOptimization', () => {
     expect(jobUpload).toBeTruthy();
   });
 
+  describe('computed signals', () => {
+    it('autopsyResult returns null when no result exists', () => {
+      expect(component.autopsyResult()).toBeNull();
+    });
+
+    it('autopsyResult returns typed result when valid ResumeAutopsyResult is stored', () => {
+      const result = {
+        overallScore: 75,
+        predictedScoreAfterFixes: 90,
+        topPriority: 'Add keywords',
+        summary: 'Decent resume',
+        issues: [],
+        strengths: [],
+      };
+      component.results.set(
+        new Map([[PromptType.RESUME_AUTOPSY, { promptType: PromptType.RESUME_AUTOPSY, status: 'completed', result }]]),
+      );
+      expect(component.autopsyResult()).toEqual(result);
+    });
+
+    it('keywordGapResult returns null when no result exists', () => {
+      expect(component.keywordGapResult()).toBeNull();
+    });
+
+    it('keywordGapResult returns typed result when valid KeywordGapResult is stored', () => {
+      const result = {
+        matchScore: 80,
+        matchScoreBreakdown: { requiredMatched: 3, requiredTotal: 5, preferredMatched: 2, preferredTotal: 4 },
+        matchedKeywords: [],
+        missingKeywords: [],
+        underweightedKeywords: [],
+        fabricationWarnings: [],
+        acronymIssues: [],
+      };
+      component.results.set(
+        new Map([[PromptType.KEYWORD_GAP, { promptType: PromptType.KEYWORD_GAP, status: 'completed', result }]]),
+      );
+      expect(component.keywordGapResult()).toEqual(result);
+    });
+
+    it('summaryRewriteResult returns null when no result exists', () => {
+      expect(component.summaryRewriteResult()).toBeNull();
+    });
+
+    it('summaryRewriteResult returns typed result when valid SummaryRewriteResult is stored', () => {
+      const result = {
+        originalSummary: 'I am a developer',
+        variants: [],
+        recommendedVariant: 'achievement_led' as const,
+        keywordsIncorporated: ['Angular'],
+      };
+      component.results.set(
+        new Map([[PromptType.SUMMARY_REWRITE, { promptType: PromptType.SUMMARY_REWRITE, status: 'completed', result }]]),
+      );
+      expect(component.summaryRewriteResult()).toEqual(result);
+    });
+
+    it('summaryRewriteResult returns null when stored result has wrong shape', () => {
+      component.results.set(
+        new Map([[PromptType.SUMMARY_REWRITE, { promptType: PromptType.SUMMARY_REWRITE, status: 'completed', result: { foo: 'bar' } }]]),
+      );
+      expect(component.summaryRewriteResult()).toBeNull();
+    });
+  });
+
   describe('runOptimization', () => {
     it('resets results before starting a new run', () => {
       apiService.streamOptimizationEvents.mockReturnValue(NEVER);
