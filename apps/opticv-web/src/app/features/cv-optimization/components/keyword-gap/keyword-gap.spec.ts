@@ -68,34 +68,34 @@ describe('KeywordGap', () => {
     fixture.detectChanges();
   });
 
-  it('scoreColorClass returns text-red-500 for score <= 49', () => {
+  it('scoreColor returns red for score <= 49', () => {
     fixture.componentRef.setInput('result', { ...MOCK_RESULT, matchScore: 30 });
     fixture.detectChanges();
-    expect(component.scoreColorClass()).toBe('text-red-500');
+    expect(component.scoreColor()).toBe('red');
 
     fixture.componentRef.setInput('result', { ...MOCK_RESULT, matchScore: 49 });
     fixture.detectChanges();
-    expect(component.scoreColorClass()).toBe('text-red-500');
+    expect(component.scoreColor()).toBe('red');
   });
 
-  it('scoreColorClass returns text-amber-500 for score 50-74', () => {
+  it('scoreColor returns amber for score 50-74', () => {
     fixture.componentRef.setInput('result', { ...MOCK_RESULT, matchScore: 60 });
     fixture.detectChanges();
-    expect(component.scoreColorClass()).toBe('text-amber-500');
+    expect(component.scoreColor()).toBe('amber');
 
     fixture.componentRef.setInput('result', { ...MOCK_RESULT, matchScore: 74 });
     fixture.detectChanges();
-    expect(component.scoreColorClass()).toBe('text-amber-500');
+    expect(component.scoreColor()).toBe('amber');
   });
 
-  it('scoreColorClass returns text-green-500 for score >= 75', () => {
+  it('scoreColor returns green for score >= 75', () => {
     fixture.componentRef.setInput('result', { ...MOCK_RESULT, matchScore: 75 });
     fixture.detectChanges();
-    expect(component.scoreColorClass()).toBe('text-green-500');
+    expect(component.scoreColor()).toBe('green');
 
     fixture.componentRef.setInput('result', { ...MOCK_RESULT, matchScore: 100 });
     fixture.detectChanges();
-    expect(component.scoreColorClass()).toBe('text-green-500');
+    expect(component.scoreColor()).toBe('green');
   });
 
   it('hides matched keywords section when matchedKeywords is empty', () => {

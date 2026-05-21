@@ -240,3 +240,24 @@ export type KeywordGapResult = {
   fabricationWarnings: KeywordGapFabricationWarning[];
   acronymIssues: KeywordGapAcronymIssue[];
 };
+
+export type SummaryRewriteVariantAngle =
+  | 'achievement_led'
+  | 'identity_led'
+  | 'mission_led';
+
+export type SummaryRewriteVariant = {
+  angle: SummaryRewriteVariantAngle;
+  text: string;
+  wordCount: number;
+  strategicNote: string;
+  keywordsUsed: string[];
+};
+
+export type SummaryRewriteResult = {
+  originalSummary: string;
+  variants: SummaryRewriteVariant[];
+  recommendedVariant: SummaryRewriteVariantAngle;
+  recommendationReason?: string;
+  keywordsIncorporated: string[];
+};
