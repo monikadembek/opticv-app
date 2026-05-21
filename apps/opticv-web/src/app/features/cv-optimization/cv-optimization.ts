@@ -12,6 +12,7 @@ import { from, mergeMap, switchMap } from 'rxjs';
 import { JobUpload } from './components/job-upload/job-upload';
 import { AccordionModule } from 'primeng/accordion';
 import {
+  BulletUpgradeResult,
   JobApplication,
   KeywordGapResult,
   PromptType,
@@ -26,6 +27,7 @@ import { OptimizationResultPanel } from './components/optimization-result-panel/
 import { AtsScore } from './components/ats-score/ats-score';
 import { KeywordGap } from './components/keyword-gap/keyword-gap';
 import { SummaryRewrite } from './components/summary-rewrite/summary-rewrite';
+import { BulletRewriter } from './components/bullet-rewriter/bullet-rewriter';
 
 function isResumeAutopsyResult(value: unknown): value is ResumeAutopsyResult {
   if (typeof value !== 'object' || value === null) return false;
@@ -58,6 +60,16 @@ function isSummaryRewriteResult(value: unknown): value is SummaryRewriteResult {
   );
 }
 
+function isBulletUpgradeResult(value: unknown): value is BulletUpgradeResult {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    Array.isArray(v['positions']) &&
+    typeof v['verbDiversityCheck'] === 'object' &&
+    v['verbDiversityCheck'] !== null
+  );
+}
+
 @Component({
   selector: 'app-cv-optimization-page',
   imports: [
@@ -68,6 +80,7 @@ function isSummaryRewriteResult(value: unknown): value is SummaryRewriteResult {
     AtsScore,
     KeywordGap,
     SummaryRewrite,
+    BulletRewriter,
   ],
   templateUrl: './cv-optimization.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -93,6 +106,11 @@ export class CvOptimization {
   readonly summaryRewriteResult = computed<SummaryRewriteResult | null>(() => {
     const r = this.results().get(PromptType.SUMMARY_REWRITE)?.result;
     return isSummaryRewriteResult(r) ? r : null;
+  });
+
+  readonly bulletUpgradeResult = computed<BulletUpgradeResult | null>(() => {
+    const r = this.results().get(PromptType.BULLET_UPGRADE)?.result;
+    return isBulletUpgradeResult(r) ? r : null;
   });
 
   runOptimization(jobApplication: JobApplication): void {
