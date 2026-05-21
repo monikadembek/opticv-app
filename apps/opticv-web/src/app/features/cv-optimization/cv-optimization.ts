@@ -14,6 +14,7 @@ import { AccordionModule } from 'primeng/accordion';
 import {
   BulletUpgradeResult,
   CoverLetterResult,
+  InterviewPrepResult,
   JobApplication,
   KeywordGapResult,
   PromptType,
@@ -30,6 +31,7 @@ import { KeywordGap } from './components/keyword-gap/keyword-gap';
 import { SummaryRewrite } from './components/summary-rewrite/summary-rewrite';
 import { BulletRewriter } from './components/bullet-rewriter/bullet-rewriter';
 import { CoverLetterEditor } from './components/cover-letter-editor/cover-letter-editor';
+import { InterviewPrep } from './components/interview-prep/interview-prep';
 
 function isResumeAutopsyResult(value: unknown): value is ResumeAutopsyResult {
   if (typeof value !== 'object' || value === null) return false;
@@ -83,6 +85,12 @@ function isCoverLetterResult(value: unknown): value is CoverLetterResult {
   );
 }
 
+function isInterviewPrepResult(value: unknown): value is InterviewPrepResult {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return Array.isArray(v['questions']) && Array.isArray(v['preparationTips']);
+}
+
 @Component({
   selector: 'app-cv-optimization-page',
   imports: [
@@ -95,6 +103,7 @@ function isCoverLetterResult(value: unknown): value is CoverLetterResult {
     SummaryRewrite,
     BulletRewriter,
     CoverLetterEditor,
+    InterviewPrep,
   ],
   templateUrl: './cv-optimization.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -130,6 +139,11 @@ export class CvOptimization {
   readonly coverLetterResult = computed<CoverLetterResult | null>(() => {
     const r = this.results().get(PromptType.COVER_LETTER)?.result;
     return isCoverLetterResult(r) ? r : null;
+  });
+
+  readonly interviewPrepResult = computed<InterviewPrepResult | null>(() => {
+    const r = this.results().get(PromptType.INTERVIEW_PREP)?.result;
+    return isInterviewPrepResult(r) ? r : null;
   });
 
   runOptimization(jobApplication: JobApplication): void {

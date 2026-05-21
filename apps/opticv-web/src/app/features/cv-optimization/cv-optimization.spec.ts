@@ -230,6 +230,37 @@ describe('CvOptimization', () => {
       );
       expect(component.coverLetterResult()).toBeNull();
     });
+
+    it('interviewPrepResult returns null when no result exists', () => {
+      expect(component.interviewPrepResult()).toBeNull();
+    });
+
+    it('interviewPrepResult returns typed result when valid InterviewPrepResult is stored', () => {
+      const result = {
+        questions: [],
+        questionsToAskInterviewer: [],
+        stressTestQuestions: [],
+        preparationTips: ['Research the company', 'Practice STAR answers'],
+      };
+      component.results.set(
+        new Map([[PromptType.INTERVIEW_PREP, { promptType: PromptType.INTERVIEW_PREP, status: 'completed', result }]]),
+      );
+      expect(component.interviewPrepResult()).toEqual(result);
+    });
+
+    it('interviewPrepResult returns null when stored result has wrong shape', () => {
+      component.results.set(
+        new Map([[PromptType.INTERVIEW_PREP, { promptType: PromptType.INTERVIEW_PREP, status: 'completed', result: { foo: 'bar' } }]]),
+      );
+      expect(component.interviewPrepResult()).toBeNull();
+    });
+
+    it('interviewPrepResult returns null when preparationTips is missing', () => {
+      component.results.set(
+        new Map([[PromptType.INTERVIEW_PREP, { promptType: PromptType.INTERVIEW_PREP, status: 'completed', result: { questions: [] } }]]),
+      );
+      expect(component.interviewPrepResult()).toBeNull();
+    });
   });
 
   describe('runOptimization', () => {

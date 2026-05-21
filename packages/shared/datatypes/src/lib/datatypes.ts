@@ -325,3 +325,47 @@ export type CoverLetterResult = {
   recommendationReason: string;
   warnings: string[];
 };
+
+export type InterviewPrepFollowUp = {
+  followUpQuestion: string;
+  guidance: string;
+};
+
+export type InterviewPrepQuestion = {
+  question: string;
+  category:
+    | 'behavioral'
+    | 'technical'
+    | 'situational'
+    | 'fit'
+    | 'candidate_specific'
+    | 'leadership'
+    | 'culture';
+  likelihood?: 'very_high' | 'high' | 'medium';
+  whatTheyreAssessing: string;
+  suggestedAnswer: string;
+  answerWordCount: number;
+  answerStructure: 'STAR' | 'narrative' | 'framework' | 'direct';
+  needsUserInput: boolean;
+  placeholdersToFill: string[];
+  followUps: InterviewPrepFollowUp[];
+  trapsToAvoid: string[];
+};
+
+export type InterviewPrepQuestionToAsk = {
+  question: string;
+  rationale: string;
+};
+
+export type InterviewPrepStressTest = {
+  question: string;
+  whyItllComeUp: string;
+  recommendedAnswer: string;
+};
+
+export type InterviewPrepResult = {
+  questions: InterviewPrepQuestion[];
+  questionsToAskInterviewer: InterviewPrepQuestionToAsk[];
+  stressTestQuestions: InterviewPrepStressTest[];
+  preparationTips: string[];
+};
