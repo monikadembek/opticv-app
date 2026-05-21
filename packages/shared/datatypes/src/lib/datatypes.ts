@@ -303,3 +303,25 @@ export type BulletUpgradeResult = {
   overallNotes: string;
   verbDiversityCheck: BulletVerbDiversityCheck;
 };
+
+export type CoverLetterHookType = 'achievement' | 'insight' | 'story';
+
+export type CoverLetterVariant = {
+  hookType: CoverLetterHookType;
+  fullLetter: string;
+  wordCount: number;
+  strategicAngle: string;
+  openingHook: string;
+  closingCTA: string;
+  keywordsIncorporated: string[];
+  bestFor?: string;
+};
+
+export type CoverLetterResult = {
+  salutation: string;
+  signoff: string;
+  variants: CoverLetterVariant[];
+  recommendedVariant: CoverLetterHookType;
+  recommendationReason: string;
+  warnings: string[];
+};

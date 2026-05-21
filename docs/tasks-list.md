@@ -258,10 +258,20 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ### 24. Display bullet upgrade results (FE)
 
-**status - in progress**
+**status - done**
 
 - add bullet-rewriter component
 - display there results for BULLET_UPGRADE
+- display with modern nice UX
+
+---
+
+### 25. Display cover letter output (FE)
+
+**status - in progress**
+
+- add cover-letter-editor component
+- display there results for COVER_LETTER
 - display with modern nice UX
 
 ---

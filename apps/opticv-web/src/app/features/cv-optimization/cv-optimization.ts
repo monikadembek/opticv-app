@@ -13,6 +13,7 @@ import { JobUpload } from './components/job-upload/job-upload';
 import { AccordionModule } from 'primeng/accordion';
 import {
   BulletUpgradeResult,
+  CoverLetterResult,
   JobApplication,
   KeywordGapResult,
   PromptType,
@@ -28,6 +29,7 @@ import { AtsScore } from './components/ats-score/ats-score';
 import { KeywordGap } from './components/keyword-gap/keyword-gap';
 import { SummaryRewrite } from './components/summary-rewrite/summary-rewrite';
 import { BulletRewriter } from './components/bullet-rewriter/bullet-rewriter';
+import { CoverLetterEditor } from './components/cover-letter-editor/cover-letter-editor';
 
 function isResumeAutopsyResult(value: unknown): value is ResumeAutopsyResult {
   if (typeof value !== 'object' || value === null) return false;
@@ -70,6 +72,17 @@ function isBulletUpgradeResult(value: unknown): value is BulletUpgradeResult {
   );
 }
 
+function isCoverLetterResult(value: unknown): value is CoverLetterResult {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    Array.isArray(v['variants']) &&
+    (v['variants'] as unknown[]).length > 0 &&
+    typeof v['recommendedVariant'] === 'string' &&
+    typeof v['salutation'] === 'string'
+  );
+}
+
 @Component({
   selector: 'app-cv-optimization-page',
   imports: [
@@ -81,6 +94,7 @@ function isBulletUpgradeResult(value: unknown): value is BulletUpgradeResult {
     KeywordGap,
     SummaryRewrite,
     BulletRewriter,
+    CoverLetterEditor,
   ],
   templateUrl: './cv-optimization.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -111,6 +125,11 @@ export class CvOptimization {
   readonly bulletUpgradeResult = computed<BulletUpgradeResult | null>(() => {
     const r = this.results().get(PromptType.BULLET_UPGRADE)?.result;
     return isBulletUpgradeResult(r) ? r : null;
+  });
+
+  readonly coverLetterResult = computed<CoverLetterResult | null>(() => {
+    const r = this.results().get(PromptType.COVER_LETTER)?.result;
+    return isCoverLetterResult(r) ? r : null;
   });
 
   runOptimization(jobApplication: JobApplication): void {
