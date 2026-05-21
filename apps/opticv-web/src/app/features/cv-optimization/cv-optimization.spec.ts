@@ -155,6 +155,30 @@ describe('CvOptimization', () => {
       );
       expect(component.summaryRewriteResult()).toBeNull();
     });
+
+    it('bulletUpgradeResult returns null when no result exists', () => {
+      expect(component.bulletUpgradeResult()).toBeNull();
+    });
+
+    it('bulletUpgradeResult returns typed result when valid BulletUpgradeResult is stored', () => {
+      const result = {
+        positions: [],
+        missingBulletSuggestions: [],
+        overallNotes: 'Looks good.',
+        verbDiversityCheck: { uniqueVerbsUsed: 4, totalBullets: 6, diverseEnough: true },
+      };
+      component.results.set(
+        new Map([[PromptType.BULLET_UPGRADE, { promptType: PromptType.BULLET_UPGRADE, status: 'completed', result }]]),
+      );
+      expect(component.bulletUpgradeResult()).toEqual(result);
+    });
+
+    it('bulletUpgradeResult returns null when stored result has wrong shape', () => {
+      component.results.set(
+        new Map([[PromptType.BULLET_UPGRADE, { promptType: PromptType.BULLET_UPGRADE, status: 'completed', result: { foo: 'bar' } }]]),
+      );
+      expect(component.bulletUpgradeResult()).toBeNull();
+    });
   });
 
   describe('runOptimization', () => {

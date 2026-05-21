@@ -261,3 +261,45 @@ export type SummaryRewriteResult = {
   recommendationReason?: string;
   keywordsIncorporated: string[];
 };
+
+export type BulletAction = 'rewrite' | 'recommend_cut' | 'keep_as_is';
+
+export type BulletItem = {
+  originalText: string;
+  action: BulletAction;
+  weakness: string;
+  rewrittenText?: string;
+  rewriteRationale?: string;
+  needsUserInput: boolean;
+  placeholdersToFill: string[];
+  actionVerb: string;
+  keywordsIncorporated: string[];
+  cutReason?: string;
+};
+
+export type BulletUpgradePosition = {
+  company: string;
+  title: string;
+  dates?: string;
+  bullets: BulletItem[];
+};
+
+export type BulletMissingSuggestion = {
+  forPosition: string;
+  suggestedBullet: string;
+  rationale: string;
+  questionToAskUser: string;
+};
+
+export type BulletVerbDiversityCheck = {
+  uniqueVerbsUsed: number;
+  totalBullets: number;
+  diverseEnough: boolean;
+};
+
+export type BulletUpgradeResult = {
+  positions: BulletUpgradePosition[];
+  missingBulletSuggestions: BulletMissingSuggestion[];
+  overallNotes: string;
+  verbDiversityCheck: BulletVerbDiversityCheck;
+};

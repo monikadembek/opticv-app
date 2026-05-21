@@ -248,10 +248,20 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ### 23. Display rewritten summary results (FE)
 
-**status - todo**
+**status - done**
 
 - add keyword-gap component
 - display there results for SUMMARY_REWRITE
+- display with modern nice UX
+
+---
+
+### 24. Display bullet upgrade results (FE)
+
+**status - in progress**
+
+- add bullet-rewriter component
+- display there results for BULLET_UPGRADE
 - display with modern nice UX
 
 ---
