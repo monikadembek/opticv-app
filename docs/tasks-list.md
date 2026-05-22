@@ -278,11 +278,63 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ### 26. Display interview prep results (FE)
 
-**status - in progress**
+**status - done**
 
 - add interview-prep component
 - display there results for INTERVIEW_PREP
 - display with modern nice UX
+
+---
+
+### 27. Add functionality to retry failed optimization for given prompt (FE)
+
+**status: todo**
+
+- Add 'Retry' button to each accordion panel in case optimization fails or if computed signals like autopsyResult and rest of those same type of signals return null, which means we got no data or data has invalid format which won't be passed to respective components to display it in UI.
+- Retry should trigger only single optimization for that given prompt type which failed
+- Retry button should be enabled only when optimization failed or returned result with wrong/missing values and nothing is displayed
+
+---
+
+### 28. Summary rewriten - allow selecting summary and editing
+
+**status: todo**
+
+- allow user to select one of presented summary versions,
+- display it in text editor from PrimeNG, must convert it first to html to display it properly without loosing formatting,
+- add button 'Apply selected version" to save it in db optimization_results for given prompt type in column userEditedOutput.
+
+---
+
+### 29. Fix issue with double salutation displayed in cover letter text editor, only add the salution at the beginning of fullLetter if it is not already included.
+
+**status: todo**
+
+---
+
+### In the dashboard display list of optimization processes performed by given user and then allow to open it in page optimize-cv and display it together with populated form with selected cv and job description data
+
+**status: todo**
+
+---
+
+### Allow user to select and modify output results of optimization process nad apply it or save in db optimization_results for given prompt type in column userEditedOutput
+
+**status: todo**
+
+---
+
+### Export cover letter to pdf or docx
+
+**status: todo**
+
+---
+
+### Export interview prep to docx or pdf
+
+**status: todo**
+
+---
 
 ### Run full optimization process instead of running promptTypes one by one
 
@@ -297,6 +349,14 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 **status: todo**
 
 - run single optimization for prompt type that failed
+
+---
+
+### Rate limiting: Per-user and per-IP, on both API and AI calls. Critical from day one.
+
+---
+
+### Privacy: Resumes contain PII. Encrypt at rest, allow users to delete data, and be explicit in your privacy policy that resumes aren't used to train models. This is a real concern for your users.
 
 ---
 
