@@ -101,6 +101,18 @@ export class CvController {
     return this.cvService.deleteCv(id, user.id);
   }
 
+  @Get(':id/structured-data')
+  @ApiOperation({ summary: 'Get extracted structured data for a CV' })
+  @ApiResponse({ status: 200, type: CvExtractResponseDto, description: 'Structured CV data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'CV not found or extraction not completed' })
+  getStructuredData(
+    @Param('id') id: string,
+    @CurrentUser() user: UserModel,
+  ): Promise<{ data: CvStructuredData }> {
+    return this.cvService.getStructuredData(id, user.id);
+  }
+
   @Post(':id/extract')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Extract structured data from a CV' })

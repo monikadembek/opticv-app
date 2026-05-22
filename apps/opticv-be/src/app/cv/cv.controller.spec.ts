@@ -36,6 +36,7 @@ const mockCvService = {
     .fn()
     .mockResolvedValue({ url: 'https://signed.url/file.pdf' }),
   deleteCv: jest.fn().mockResolvedValue(undefined),
+  getStructuredData: jest.fn().mockResolvedValue({ data: {} }),
 };
 
 const mockCvExtractionService = {
@@ -133,6 +134,33 @@ describe('CvController', () => {
         'doc-id',
         mockUser.id,
       );
+    });
+  });
+
+  describe('getStructuredData', () => {
+    it('delegates to CvService.getStructuredData and returns the result', async () => {
+      const structuredData = { contact: { name: 'Jane' } };
+      mockCvService.getStructuredData = jest
+        .fn()
+        .mockResolvedValueOnce({ data: structuredData });
+
+      const result = await controller.getStructuredData('doc-id', mockUser);
+
+      expect(mockCvService.getStructuredData).toHaveBeenCalledWith(
+        'doc-id',
+        mockUser.id,
+      );
+      expect(result).toEqual({ data: structuredData });
+    });
+
+    it('propagates errors thrown by CvService', async () => {
+      mockCvService.getStructuredData = jest
+        .fn()
+        .mockRejectedValueOnce(new Error('not found'));
+
+      await expect(
+        controller.getStructuredData('doc-id', mockUser),
+      ).rejects.toThrow('not found');
     });
   });
 

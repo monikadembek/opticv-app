@@ -12,6 +12,8 @@ const mockPrisma = {
   },
   optimizationResult: {
     upsert: jest.fn(),
+    findUnique: jest.fn(),
+    update: jest.fn(),
   },
 };
 
@@ -238,6 +240,56 @@ describe('OptimizationService', () => {
       expect(mockQueue.add).toHaveBeenCalledTimes(1);
       const calledWith = mockQueue.add.mock.calls[0][1];
       expect(calledWith.promptType).toBe(PROMPT_TYPE);
+    });
+  });
+
+  describe('saveUserOutput', () => {
+    it('throws ForbiddenException when record is not found', async () => {
+      mockPrisma.optimizationResult.findUnique.mockResolvedValue(null);
+
+      await expect(service.saveUserOutput('result-1', 'edited', 'user-1')).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('throws ForbiddenException when userId does not match', async () => {
+      mockPrisma.optimizationResult.findUnique.mockResolvedValue({
+        id: 'result-1',
+        application: { userId: 'other-user' },
+      });
+
+      await expect(service.saveUserOutput('result-1', 'edited', 'user-1')).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('saves the output and returns userEditedOutput', async () => {
+      mockPrisma.optimizationResult.findUnique.mockResolvedValue({
+        id: 'result-1',
+        application: { userId: 'user-1' },
+      });
+      mockPrisma.optimizationResult.update.mockResolvedValue({ userEditedOutput: 'edited' });
+
+      const result = await service.saveUserOutput('result-1', 'edited', 'user-1');
+
+      expect(result).toEqual({ userEditedOutput: 'edited' });
+      expect(mockPrisma.optimizationResult.update).toHaveBeenCalledWith({
+        where: { id: 'result-1' },
+        data: { userEditedOutput: 'edited' },
+        select: { userEditedOutput: true },
+      });
+    });
+
+    it('allows saving an empty string', async () => {
+      mockPrisma.optimizationResult.findUnique.mockResolvedValue({
+        id: 'result-1',
+        application: { userId: 'user-1' },
+      });
+      mockPrisma.optimizationResult.update.mockResolvedValue({ userEditedOutput: '' });
+
+      const result = await service.saveUserOutput('result-1', '', 'user-1');
+
+      expect(result).toEqual({ userEditedOutput: '' });
     });
   });
 });
