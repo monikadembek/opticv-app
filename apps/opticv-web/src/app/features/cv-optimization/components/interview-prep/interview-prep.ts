@@ -1,19 +1,57 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { PanelModule } from 'primeng/panel';
 import { MessageModule } from 'primeng/message';
+import { Button } from 'primeng/button';
+import { MessageService } from 'primeng/api';
 import type {
   InterviewPrepQuestion,
   InterviewPrepResult,
 } from '@opticv/datatypes';
+import { InterviewPrepExportService } from '../../services/interview-prep-export.service';
 
 @Component({
   selector: 'app-interview-prep',
   templateUrl: './interview-prep.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PanelModule, MessageModule],
+  imports: [PanelModule, MessageModule, Button],
 })
 export class InterviewPrep {
+  private readonly exportService = inject(InterviewPrepExportService);
+  private readonly messageService = inject(MessageService);
+
   readonly result = input.required<InterviewPrepResult>();
+  readonly isBusyPdf = signal(false);
+  readonly isBusyDocx = signal(false);
+
+  async onExportPdf(): Promise<void> {
+    this.isBusyPdf.set(true);
+    try {
+      await this.exportService.exportToPdf(this.result());
+    } catch {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Export failed',
+        detail: 'Could not generate the PDF. Please try again.',
+      });
+    } finally {
+      this.isBusyPdf.set(false);
+    }
+  }
+
+  async onExportDocx(): Promise<void> {
+    this.isBusyDocx.set(true);
+    try {
+      await this.exportService.exportToDocx(this.result());
+    } catch {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Export failed',
+        detail: 'Could not generate the DOCX. Please try again.',
+      });
+    } finally {
+      this.isBusyDocx.set(false);
+    }
+  }
 
   categoryClass(category: InterviewPrepQuestion['category']): string {
     const map: Record<InterviewPrepQuestion['category'], string> = {

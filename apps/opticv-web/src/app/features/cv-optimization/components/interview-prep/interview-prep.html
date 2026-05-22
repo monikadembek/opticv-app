@@ -1,3 +1,22 @@
+<div class="flex gap-2 mb-4">
+  <p-button
+    label="Export to PDF"
+    icon="pi pi-file-pdf"
+    size="small"
+    [loading]="isBusyPdf()"
+    [disabled]="isBusyPdf() || isBusyDocx()"
+    (onClick)="onExportPdf()"
+  />
+  <p-button
+    label="Export to DOCX"
+    icon="pi pi-file-word"
+    size="small"
+    [loading]="isBusyDocx()"
+    [disabled]="isBusyPdf() || isBusyDocx()"
+    (onClick)="onExportDocx()"
+  />
+</div>
+
 <div class="space-y-8">
   <!-- Section 1: Interview Questions -->
   @if (result().questions.length === 0) {
@@ -11,12 +30,12 @@
         <span class="font-semibold text-surface-500 text-sm">Q{{ i + 1 }}</span>
         <span
           class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ categoryClass(q.category) }}"
-          >{{ q.category }}</span
+          >Category: {{ q.category.replace('_', ' ') }}</span
         >
         @if (q.likelihood) {
         <span
           class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ likelihoodClass(q.likelihood) }}"
-          >{{ q.likelihood }}</span
+          >Likelihood: {{ q.likelihood.replace('_', ' ') }}</span
         >
         }
       </div>
