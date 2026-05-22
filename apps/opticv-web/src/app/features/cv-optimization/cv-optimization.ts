@@ -11,6 +11,7 @@ import { JsonPipe } from '@angular/common';
 import { from, mergeMap, switchMap } from 'rxjs';
 import { JobUpload } from './components/job-upload/job-upload';
 import { AccordionModule } from 'primeng/accordion';
+import { ButtonModule } from 'primeng/button';
 import {
   BulletUpgradeResult,
   CoverLetterResult,
@@ -96,6 +97,7 @@ function isInterviewPrepResult(value: unknown): value is InterviewPrepResult {
   imports: [
     JobUpload,
     AccordionModule,
+    ButtonModule,
     JsonPipe,
     OptimizationResultPanel,
     AtsScore,
@@ -115,6 +117,7 @@ export class CvOptimization {
   readonly PromptType = PromptType;
   readonly results = signal<Map<PromptType, SseJobCompleteEvent>>(new Map());
   readonly isProcessing = signal<Map<PromptType, boolean>>(new Map());
+  readonly jobApplicationId = signal<string | null>(null);
 
   readonly autopsyResult = computed<ResumeAutopsyResult | null>(() => {
     const r = this.results().get(PromptType.RESUME_AUTOPSY)?.result;
@@ -146,9 +149,37 @@ export class CvOptimization {
     return isInterviewPrepResult(r) ? r : null;
   });
 
+  readonly retryablePromptTypes = computed<Set<PromptType>>(() => {
+    const retryable = new Set<PromptType>();
+    if (this.jobApplicationId() === null) return retryable;
+
+    const promptResultPairs: Array<[PromptType, unknown]> = [
+      [PromptType.RESUME_AUTOPSY, this.autopsyResult()],
+      [PromptType.KEYWORD_GAP, this.keywordGapResult()],
+      [PromptType.SUMMARY_REWRITE, this.summaryRewriteResult()],
+      [PromptType.BULLET_UPGRADE, this.bulletUpgradeResult()],
+      [PromptType.COVER_LETTER, this.coverLetterResult()],
+      [PromptType.INTERVIEW_PREP, this.interviewPrepResult()],
+    ];
+
+    for (const [promptType, computedResult] of promptResultPairs) {
+      if (this.isProcessing().get(promptType)) continue;
+      const status = this.results().get(promptType)?.status;
+      if (
+        status === 'failed' ||
+        (status === 'completed' && computedResult === null)
+      ) {
+        retryable.add(promptType);
+      }
+    }
+
+    return retryable;
+  });
+
   runOptimization(jobApplication: JobApplication): void {
     this.results.set(new Map());
     this.isProcessing.set(new Map());
+    this.jobApplicationId.set(jobApplication.id);
 
     from(Object.values(PromptType))
       .pipe(
@@ -182,6 +213,41 @@ export class CvOptimization {
           );
         },
         error: (err) => console.error('Optimization stream error', err),
+      });
+  }
+
+  retryOptimization(promptType: PromptType): void {
+    const jobApplicationId = this.jobApplicationId();
+    if (jobApplicationId === null) return;
+
+    this.isProcessing.update((map) => new Map(map).set(promptType, true));
+
+    this.cvOptimizationApiService
+      .runSingleOptimizationProcess(jobApplicationId, promptType)
+      .pipe(
+        switchMap(({ runId }) =>
+          this.cvOptimizationApiService.streamOptimizationEvents(
+            jobApplicationId,
+            runId,
+          ),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (event: SseJobCompleteEvent) => {
+          this.isProcessing.update((map) =>
+            new Map(map).set(promptType, false),
+          );
+          this.results.update((map) =>
+            new Map(map).set(event.promptType, event),
+          );
+        },
+        error: (err) => {
+          console.error('Retry stream error', err);
+          this.isProcessing.update((map) =>
+            new Map(map).set(promptType, false),
+          );
+        },
       });
   }
 }

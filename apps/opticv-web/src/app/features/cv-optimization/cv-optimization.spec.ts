@@ -53,6 +53,7 @@ describe('CvOptimization', () => {
     extractCvData: ReturnType<typeof vi.fn>;
     runSingleOptimizationProcess: ReturnType<typeof vi.fn>;
     streamOptimizationEvents: ReturnType<typeof vi.fn>;
+    retryOptimization: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -63,6 +64,7 @@ describe('CvOptimization', () => {
       extractCvData: vi.fn(),
       runSingleOptimizationProcess: vi.fn().mockReturnValue(of({ runId: 'run-id-1' })),
       streamOptimizationEvents: vi.fn().mockReturnValue(of()),
+      retryOptimization: vi.fn(),
     };
 
     await TestBed.configureTestingModule({
@@ -407,6 +409,123 @@ describe('CvOptimization', () => {
       component.runOptimization(mockJobApplication);
 
       expect(component.results().size).toBe(0);
+    });
+  });
+
+  describe('retryablePromptTypes', () => {
+    it('returns an empty set when jobApplicationId is null', () => {
+      expect(component.retryablePromptTypes().size).toBe(0);
+    });
+
+    it('returns an empty set when no results exist and nothing has failed', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      expect(component.retryablePromptTypes().size).toBe(0);
+    });
+
+    it('includes a prompt type whose SSE event had status failed', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      component.results.set(
+        new Map([
+          [PromptType.KEYWORD_GAP, { promptType: PromptType.KEYWORD_GAP, status: 'failed', error: 'timeout' }],
+        ]),
+      );
+      expect(component.retryablePromptTypes().has(PromptType.KEYWORD_GAP)).toBe(true);
+    });
+
+    it('includes a prompt type that completed but returned an invalid result shape', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      component.results.set(
+        new Map([
+          [PromptType.RESUME_AUTOPSY, { promptType: PromptType.RESUME_AUTOPSY, status: 'completed', result: { bad: 'data' } }],
+        ]),
+      );
+      expect(component.retryablePromptTypes().has(PromptType.RESUME_AUTOPSY)).toBe(true);
+    });
+
+    it('does not include a prompt type that completed with a valid result', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      const validResult = {
+        overallScore: 75,
+        predictedScoreAfterFixes: 90,
+        topPriority: 'Add keywords',
+        summary: 'Decent resume',
+        issues: [],
+        strengths: [],
+      };
+      component.results.set(
+        new Map([
+          [PromptType.RESUME_AUTOPSY, { promptType: PromptType.RESUME_AUTOPSY, status: 'completed', result: validResult }],
+        ]),
+      );
+      expect(component.retryablePromptTypes().has(PromptType.RESUME_AUTOPSY)).toBe(false);
+    });
+
+    it('does not include a prompt type that is currently processing', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      component.results.set(
+        new Map([
+          [PromptType.KEYWORD_GAP, { promptType: PromptType.KEYWORD_GAP, status: 'failed', error: 'timeout' }],
+        ]),
+      );
+      component.isProcessing.set(new Map([[PromptType.KEYWORD_GAP, true]]));
+      expect(component.retryablePromptTypes().has(PromptType.KEYWORD_GAP)).toBe(false);
+    });
+  });
+
+  describe('retryOptimization', () => {
+    it('does nothing when jobApplicationId is null', () => {
+      component.retryOptimization(PromptType.RESUME_AUTOPSY);
+      expect(apiService.runSingleOptimizationProcess).not.toHaveBeenCalled();
+    });
+
+    it('sets isProcessing to true for the retried prompt type immediately', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      apiService.streamOptimizationEvents.mockReturnValue(NEVER);
+
+      component.retryOptimization(PromptType.RESUME_AUTOPSY);
+
+      expect(component.isProcessing().get(PromptType.RESUME_AUTOPSY)).toBe(true);
+    });
+
+    it('calls runSingleOptimizationProcess with the stored jobApplicationId and promptType', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      apiService.streamOptimizationEvents.mockReturnValue(NEVER);
+
+      component.retryOptimization(PromptType.KEYWORD_GAP);
+
+      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
+        mockJobApplication.id,
+        PromptType.KEYWORD_GAP,
+      );
+    });
+
+    it('updates results and clears isProcessing when the retry SSE event arrives', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      const sseSubject = new Subject<SseJobCompleteEvent>();
+      apiService.streamOptimizationEvents.mockReturnValue(sseSubject.asObservable());
+
+      component.retryOptimization(PromptType.RESUME_AUTOPSY);
+
+      const event: SseJobCompleteEvent = {
+        promptType: PromptType.RESUME_AUTOPSY,
+        status: 'completed',
+        result: { overallScore: 88, predictedScoreAfterFixes: 95, topPriority: 'Keywords', summary: 'Good', issues: [], strengths: [] },
+      };
+      sseSubject.next(event);
+
+      expect(component.results().get(PromptType.RESUME_AUTOPSY)).toEqual(event);
+      expect(component.isProcessing().get(PromptType.RESUME_AUTOPSY)).toBe(false);
+    });
+
+    it('clears isProcessing on stream error', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      const sseSubject = new Subject<SseJobCompleteEvent>();
+      apiService.streamOptimizationEvents.mockReturnValue(sseSubject.asObservable());
+
+      component.retryOptimization(PromptType.KEYWORD_GAP);
+      sseSubject.error(new Error('network failure'));
+
+      expect(component.isProcessing().get(PromptType.KEYWORD_GAP)).toBe(false);
     });
   });
 });

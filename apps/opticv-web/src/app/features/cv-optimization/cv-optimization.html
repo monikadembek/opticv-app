@@ -41,6 +41,18 @@
             <app-ats-score [data]="result" />
           }
         </app-optimization-result-panel>
+        @if (retryablePromptTypes().has(PromptType.RESUME_AUTOPSY)) {
+          <div class="mt-4 flex justify-end">
+            <p-button
+              label="Retry"
+              ariaLabel="Retry ATS Analysis"
+              icon="pi pi-refresh"
+              severity="warn"
+              [disabled]="isProcessing().get(PromptType.RESUME_AUTOPSY) ?? false"
+              (onClick)="retryOptimization(PromptType.RESUME_AUTOPSY)"
+            />
+          </div>
+        }
       </p-accordion-content>
     </p-accordion-panel>
     <p-accordion-panel value="2">
@@ -75,6 +87,18 @@
             <app-keyword-gap [result]="result" />
           }
         </app-optimization-result-panel>
+        @if (retryablePromptTypes().has(PromptType.KEYWORD_GAP)) {
+          <div class="mt-4 flex justify-end">
+            <p-button
+              label="Retry"
+              ariaLabel="Retry Keyword Gap Analysis"
+              icon="pi pi-refresh"
+              severity="warn"
+              [disabled]="isProcessing().get(PromptType.KEYWORD_GAP) ?? false"
+              (onClick)="retryOptimization(PromptType.KEYWORD_GAP)"
+            />
+          </div>
+        }
       </p-accordion-content>
     </p-accordion-panel>
     <p-accordion-panel value="3">
@@ -109,6 +133,18 @@
             <app-summary-rewrite [result]="result" />
           }
         </app-optimization-result-panel>
+        @if (retryablePromptTypes().has(PromptType.SUMMARY_REWRITE)) {
+          <div class="mt-4 flex justify-end">
+            <p-button
+              label="Retry"
+              ariaLabel="Retry Rewritten Summary"
+              icon="pi pi-refresh"
+              severity="warn"
+              [disabled]="isProcessing().get(PromptType.SUMMARY_REWRITE) ?? false"
+              (onClick)="retryOptimization(PromptType.SUMMARY_REWRITE)"
+            />
+          </div>
+        }
       </p-accordion-content>
     </p-accordion-panel>
     <p-accordion-panel value="4">
@@ -143,6 +179,18 @@
             <app-bullet-rewriter [result]="result" />
           }
         </app-optimization-result-panel>
+        @if (retryablePromptTypes().has(PromptType.BULLET_UPGRADE)) {
+          <div class="mt-4 flex justify-end">
+            <p-button
+              label="Retry"
+              ariaLabel="Retry Bullet Upgrades"
+              icon="pi pi-refresh"
+              severity="warn"
+              [disabled]="isProcessing().get(PromptType.BULLET_UPGRADE) ?? false"
+              (onClick)="retryOptimization(PromptType.BULLET_UPGRADE)"
+            />
+          </div>
+        }
       </p-accordion-content>
     </p-accordion-panel>
     <p-accordion-panel value="5">
@@ -177,6 +225,18 @@
             <app-cover-letter-editor [result]="result" />
           }
         </app-optimization-result-panel>
+        @if (retryablePromptTypes().has(PromptType.COVER_LETTER)) {
+          <div class="mt-4 flex justify-end">
+            <p-button
+              label="Retry"
+              ariaLabel="Retry Cover Letter"
+              icon="pi pi-refresh"
+              severity="warn"
+              [disabled]="isProcessing().get(PromptType.COVER_LETTER) ?? false"
+              (onClick)="retryOptimization(PromptType.COVER_LETTER)"
+            />
+          </div>
+        }
       </p-accordion-content>
     </p-accordion-panel>
     <p-accordion-panel value="6">
@@ -211,6 +271,18 @@
             <app-interview-prep [result]="result" />
           }
         </app-optimization-result-panel>
+        @if (retryablePromptTypes().has(PromptType.INTERVIEW_PREP)) {
+          <div class="mt-4 flex justify-end">
+            <p-button
+              label="Retry"
+              ariaLabel="Retry Interview Prep"
+              icon="pi pi-refresh"
+              severity="warn"
+              [disabled]="isProcessing().get(PromptType.INTERVIEW_PREP) ?? false"
+              (onClick)="retryOptimization(PromptType.INTERVIEW_PREP)"
+            />
+          </div>
+        }
       </p-accordion-content>
     </p-accordion-panel>
     <p-accordion-panel value="7">
