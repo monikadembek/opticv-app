@@ -45,6 +45,7 @@
           <div class="mt-4 flex justify-end">
             <p-button
               label="Retry"
+              ariaLabel="Retry ATS Analysis"
               icon="pi pi-refresh"
               severity="warn"
               [disabled]="isProcessing().get(PromptType.RESUME_AUTOPSY) ?? false"
@@ -90,6 +91,7 @@
           <div class="mt-4 flex justify-end">
             <p-button
               label="Retry"
+              ariaLabel="Retry Keyword Gap Analysis"
               icon="pi pi-refresh"
               severity="warn"
               [disabled]="isProcessing().get(PromptType.KEYWORD_GAP) ?? false"
@@ -135,6 +137,7 @@
           <div class="mt-4 flex justify-end">
             <p-button
               label="Retry"
+              ariaLabel="Retry Rewritten Summary"
               icon="pi pi-refresh"
               severity="warn"
               [disabled]="isProcessing().get(PromptType.SUMMARY_REWRITE) ?? false"
@@ -180,6 +183,7 @@
           <div class="mt-4 flex justify-end">
             <p-button
               label="Retry"
+              ariaLabel="Retry Bullet Upgrades"
               icon="pi pi-refresh"
               severity="warn"
               [disabled]="isProcessing().get(PromptType.BULLET_UPGRADE) ?? false"
@@ -225,6 +229,7 @@
           <div class="mt-4 flex justify-end">
             <p-button
               label="Retry"
+              ariaLabel="Retry Cover Letter"
               icon="pi pi-refresh"
               severity="warn"
               [disabled]="isProcessing().get(PromptType.COVER_LETTER) ?? false"
@@ -270,6 +275,7 @@
           <div class="mt-4 flex justify-end">
             <p-button
               label="Retry"
+              ariaLabel="Retry Interview Prep"
               icon="pi pi-refresh"
               severity="warn"
               [disabled]="isProcessing().get(PromptType.INTERVIEW_PREP) ?? false"
