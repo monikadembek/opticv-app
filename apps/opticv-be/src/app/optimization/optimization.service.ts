@@ -102,6 +102,29 @@ export class OptimizationService {
     return { runId };
   }
 
+  async saveUserOutput(
+    id: string,
+    userEditedOutput: string,
+    userId: string,
+  ): Promise<{ userEditedOutput: string }> {
+    const record = await this.prisma.optimizationResult.findUnique({
+      where: { id },
+      include: { application: { select: { userId: true } } },
+    });
+
+    if (!record || record.application.userId !== userId) {
+      throw new ForbiddenException();
+    }
+
+    const updated = await this.prisma.optimizationResult.update({
+      where: { id },
+      data: { userEditedOutput },
+      select: { userEditedOutput: true },
+    });
+
+    return { userEditedOutput: updated.userEditedOutput as string };
+  }
+
   async validateStreamAccess(jobApplicationId: string, userId: string): Promise<void> {
     const record = await this.prisma.jobApplication.findUnique({
       where: { id: jobApplicationId },

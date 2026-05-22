@@ -276,6 +276,67 @@ describe('CvService', () => {
     });
   });
 
+  describe('getStructuredData', () => {
+    const mockStructuredDoc = {
+      ...mockDoc,
+      extractionStatus: 'COMPLETED' as const,
+      structuredData: { contact: { name: 'Jane' } },
+    };
+
+    it('returns structured data for a completed extraction', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(mockStructuredDoc);
+
+      const result = await service.getStructuredData('doc-id', 'user-id');
+
+      expect(mockPrisma.cvDocument.findUnique).toHaveBeenCalledWith({
+        where: { id: 'doc-id' },
+        select: { userId: true, extractionStatus: true, structuredData: true },
+      });
+      expect(result).toEqual({ data: mockStructuredDoc.structuredData });
+    });
+
+    it('throws NotFoundException when document does not exist', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(null);
+
+      await expect(
+        service.getStructuredData('missing-id', 'user-id'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws NotFoundException when document belongs to another user', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce({
+        ...mockStructuredDoc,
+        userId: 'other-user',
+      });
+
+      await expect(
+        service.getStructuredData('doc-id', 'user-id'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws NotFoundException when extractionStatus is not COMPLETED', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce({
+        ...mockStructuredDoc,
+        extractionStatus: 'PENDING',
+      });
+
+      await expect(
+        service.getStructuredData('doc-id', 'user-id'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws NotFoundException when structuredData is null', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce({
+        ...mockStructuredDoc,
+        structuredData: null,
+      });
+
+      await expect(
+        service.getStructuredData('doc-id', 'user-id'),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
   describe('deleteCv', () => {
     it('deletes the R2 object and DB record for a document owned by the user', async () => {
       mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(mockDoc);

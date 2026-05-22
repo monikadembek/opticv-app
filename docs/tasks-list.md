@@ -288,7 +288,7 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ### 27. Add functionality to retry failed optimization for given prompt (FE)
 
-**status: todo**
+**status: done**
 
 - Add 'Retry' button to each accordion panel in case optimization fails or if computed signals like autopsyResult and rest of those same type of signals return null, which means we got no data or data has invalid format which won't be passed to respective components to display it in UI.
 - Retry should trigger only single optimization for that given prompt type which failed
@@ -296,7 +296,43 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 28. Summary rewriten - allow selecting summary and editing
+### 28. Add 2 new endpoints to save user edited output and to get cvstructured data (BE)
+
+**status: in progress**
+
+- get structuredData for cv with given id
+  GET /cv/:id/structured-data
+- patch optimization with given id, save data to field userEditedOutout
+  PATCH /optimizations/:id/user-output
+
+---
+
+### 29. Export interview prep output to pdf or docx
+
+**status: todo**
+
+- add buttons "Export to pdf" and "Export to docx"
+- export interview prep output to pdf file
+- export interview prep to docx file
+
+---
+
+### 30. Fix issue with double salutation displayed in cover letter text editor, only add the salution at the beginning of fullLetter if it is not already included.
+
+**status: todo**
+
+---
+
+### 31. Export selected cover letter to pdf or docx
+
+**status: todo**
+
+- export selected cover letter with the eventual user tweaks to pdf file
+- export selected cover letter with the eventual user tweaks to docx file
+
+---
+
+### 33. Summary rewriten - allow selecting summary and editing
 
 **status: todo**
 
@@ -306,7 +342,7 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 29. Fix issue with double salutation displayed in cover letter text editor, only add the salution at the beginning of fullLetter if it is not already included.
+### 34. Keyword gap - allow selecting and adding missing keywords
 
 **status: todo**
 
@@ -324,31 +360,11 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### Export cover letter to pdf or docx
-
-**status: todo**
-
----
-
-### Export interview prep to docx or pdf
-
-**status: todo**
-
----
-
 ### Run full optimization process instead of running promptTypes one by one
 
 **status: todo**
 
 - use method runFullOptimizationProcess(jobApplicationId: string) from cv-optimization-api.service.ts
-
----
-
-### Implement functionality to retry failed job
-
-**status: todo**
-
-- run single optimization for prompt type that failed
 
 ---
 

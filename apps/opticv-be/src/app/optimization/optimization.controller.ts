@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -14,13 +15,15 @@ import {
 import type { Request, Response } from 'express';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiOperation,
   ApiProduces,
   ApiProperty,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { RunIdResponseDto } from './dto/optimization-response.dto.js';
+import { RunIdResponseDto, SaveUserOutputResponseDto } from './dto/optimization-response.dto.js';
+import { SaveUserOutputDto } from './dto/save-user-output.dto.js';
 import { SupabaseGuard } from '../auth/supabase.guard.js';
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import type { UserModel } from '../../generated/prisma/models.js';
@@ -81,6 +84,21 @@ export class OptimizationController {
       body.runId?.trim(),
       user.id,
     );
+  }
+
+  @Patch(':id/user-output')
+  @ApiOperation({ summary: 'Save user-edited output for an optimization result' })
+  @ApiBody({ type: SaveUserOutputDto })
+  @ApiResponse({ status: 200, type: SaveUserOutputResponseDto, description: 'User output saved' })
+  @ApiResponse({ status: 400, description: 'Validation error' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  saveUserOutput(
+    @Param('id') id: string,
+    @Body() body: SaveUserOutputDto,
+    @CurrentUser() user: UserModel,
+  ): Promise<{ userEditedOutput: string }> {
+    return this.optimizationService.saveUserOutput(id, body.userEditedOutput, user.id);
   }
 
   @Get('job-applications/:jobApplicationId/stream')

@@ -10,7 +10,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { R2Service } from './services/r2.service';
 import { CvParserService } from './services/cv-parser.service';
-import { CvDocumentListItem, UploadCvResponse } from '@opticv/datatypes';
+import { CvDocumentListItem, CvStructuredData, UploadCvResponse } from '@opticv/datatypes';
 
 const ALLOWED_MIME_TYPES = [
   'application/pdf',
@@ -155,6 +155,23 @@ export class CvService {
     }
     const url = await this.r2.getPresignedUrl(doc.storageKey, 900);
     return { url };
+  }
+
+  async getStructuredData(cvId: string, userId: string): Promise<{ data: CvStructuredData }> {
+    const doc = await this.prisma.cvDocument.findUnique({
+      where: { id: cvId },
+      select: { userId: true, extractionStatus: true, structuredData: true },
+    });
+
+    if (!doc || doc.userId !== userId) {
+      throw new NotFoundException('CV document not found.');
+    }
+
+    if (doc.extractionStatus !== 'COMPLETED' || doc.structuredData === null) {
+      throw new NotFoundException('Structured data not available.');
+    }
+
+    return { data: doc.structuredData as unknown as CvStructuredData };
   }
 
   async deleteCv(id: string, userId: string): Promise<void> {
