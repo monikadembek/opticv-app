@@ -95,7 +95,7 @@ describe('InterviewPrep', () => {
     });
 
     it('renders likelihood badge when present', () => {
-      expect(fixture.nativeElement.textContent).toContain('very_high');
+      expect(fixture.nativeElement.textContent).toContain('very high');
     });
 
     it('does not render likelihood badge when absent', () => {
@@ -104,7 +104,7 @@ describe('InterviewPrep', () => {
         questions: [{ ...MOCK_RESULT.questions[0], likelihood: undefined }],
       });
       fixture.detectChanges();
-      expect(fixture.nativeElement.textContent).not.toContain('very_high');
+      expect(fixture.nativeElement.textContent).not.toContain('very high');
     });
 
     it('renders "what they\'re assessing" text', () => {
@@ -282,6 +282,78 @@ describe('InterviewPrep', () => {
         expect.objectContaining({ severity: 'error' }),
       );
       expect(fixture.componentInstance.isBusyDocx()).toBe(false);
+    });
+
+    it('disables both buttons while PDF export is in progress', () => {
+      let resolvePdf!: () => void;
+      vi.spyOn(exportService, 'exportToPdf').mockReturnValue(
+        new Promise<void>((resolve) => {
+          resolvePdf = resolve;
+        }),
+      );
+
+      fixture.componentInstance.onExportPdf();
+      fixture.detectChanges();
+
+      const host = fixture.nativeElement as HTMLElement;
+      const buttons = Array.from(host.querySelectorAll<HTMLButtonElement>('button'));
+      const pdfButton = buttons.find((b) => b.textContent?.includes('Export to PDF'))!;
+      const docxButton = buttons.find((b) => b.textContent?.includes('Export to DOCX'))!;
+
+      expect(pdfButton.disabled).toBe(true);
+      expect(docxButton.disabled).toBe(true);
+
+      resolvePdf();
+    });
+
+    it('disables both buttons while DOCX export is in progress', () => {
+      let resolveDocx!: () => void;
+      vi.spyOn(exportService, 'exportToDocx').mockReturnValue(
+        new Promise<void>((resolve) => {
+          resolveDocx = resolve;
+        }),
+      );
+
+      fixture.componentInstance.onExportDocx();
+      fixture.detectChanges();
+
+      const host = fixture.nativeElement as HTMLElement;
+      const buttons = Array.from(host.querySelectorAll<HTMLButtonElement>('button'));
+      const pdfButton = buttons.find((b) => b.textContent?.includes('Export to PDF'))!;
+      const docxButton = buttons.find((b) => b.textContent?.includes('Export to DOCX'))!;
+
+      expect(pdfButton.disabled).toBe(true);
+      expect(docxButton.disabled).toBe(true);
+
+      resolveDocx();
+    });
+
+    it('re-enables both buttons after PDF export completes', async () => {
+      vi.spyOn(exportService, 'exportToPdf').mockResolvedValue(undefined);
+      await fixture.componentInstance.onExportPdf();
+      fixture.detectChanges();
+
+      const host = fixture.nativeElement as HTMLElement;
+      const buttons = Array.from(host.querySelectorAll<HTMLButtonElement>('button'));
+      const pdfButton = buttons.find((b) => b.textContent?.includes('Export to PDF'))!;
+      const docxButton = buttons.find((b) => b.textContent?.includes('Export to DOCX'))!;
+
+      expect(pdfButton.disabled).toBe(false);
+      expect(docxButton.disabled).toBe(false);
+    });
+
+    it('re-enables both buttons after DOCX export completes', async () => {
+      vi.spyOn(exportService, 'exportToDocx').mockResolvedValue(undefined);
+      await fixture.componentInstance.onExportDocx();
+      fixture.detectChanges();
+
+      const host = fixture.nativeElement as HTMLElement;
+      const buttons = Array.from(host.querySelectorAll<HTMLButtonElement>('button'));
+      const pdfButton = buttons.find((b) => b.textContent?.includes('Export to PDF'))!;
+      const docxButton = buttons.find((b) => b.textContent?.includes('Export to DOCX'))!;
+
+      expect(pdfButton.disabled).toBe(false);
+      expect(docxButton.disabled).toBe(false);
     });
   });
 });
