@@ -3,15 +3,17 @@ import {
   Component,
   computed,
   effect,
+  inject,
   input,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { EditorModule } from 'primeng/editor';
 import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
 import { MessageModule } from 'primeng/message';
+import { MessageService } from 'primeng/api';
 import type { CoverLetterResult } from '@opticv/datatypes';
+import { CoverLetterExportService } from '../../services/cover-letter-export.service';
 
 function plainTextToHtml(text: string): string {
   return text
@@ -24,15 +26,12 @@ function plainTextToHtml(text: string): string {
   selector: 'app-cover-letter-editor',
   templateUrl: './cover-letter-editor.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    FormsModule,
-    EditorModule,
-    ButtonModule,
-    TooltipModule,
-    MessageModule,
-  ],
+  imports: [FormsModule, EditorModule, ButtonModule, MessageModule],
 })
 export class CoverLetterEditor {
+  private readonly exportService = inject(CoverLetterExportService);
+  private readonly messageService = inject(MessageService);
+
   readonly result = input.required<CoverLetterResult>();
 
   readonly safeIndex = computed<number>(() => {
@@ -44,6 +43,8 @@ export class CoverLetterEditor {
 
   readonly selectedVariantIndex = signal<number>(0);
   readonly editorContent = signal<string>('');
+  readonly isBusyPdf = signal(false);
+  readonly isBusyDocx = signal(false);
 
   constructor() {
     effect(() => {
@@ -58,11 +59,43 @@ export class CoverLetterEditor {
     this.editorContent.set(this.buildContent(index));
   }
 
+  async onExportPdf(): Promise<void> {
+    this.isBusyPdf.set(true);
+    try {
+      await this.exportService.exportToPdf(this.editorContent());
+    } catch {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Export failed',
+        detail: 'Could not generate the PDF. Please try again.',
+      });
+    } finally {
+      this.isBusyPdf.set(false);
+    }
+  }
+
+  async onExportDocx(): Promise<void> {
+    this.isBusyDocx.set(true);
+    try {
+      await this.exportService.exportToDocx(this.editorContent());
+    } catch {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Export failed',
+        detail: 'Could not generate the DOCX. Please try again.',
+      });
+    } finally {
+      this.isBusyDocx.set(false);
+    }
+  }
+
   private buildContent(index: number): string {
     const { salutation, variants } = this.result();
-    const text = salutation
-      ? `${salutation}\n\n${variants[index].fullLetter}`
-      : variants[index].fullLetter;
+    const fullLetter = variants[index].fullLetter;
+    const text =
+      salutation && !fullLetter.trimStart().startsWith(salutation)
+        ? `${salutation}\n\n${fullLetter}`
+        : fullLetter;
     return plainTextToHtml(text);
   }
 }
