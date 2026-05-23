@@ -72,14 +72,26 @@ export class InterviewPrepExportService {
     for (let i = 0; i < result.questions.length; i++) {
       const q = result.questions[i];
 
-      let headerLine = `Q${i + 1}  ${q.category.replace('_', ' ')}`;
-      if (q.likelihood) headerLine += `  ${q.likelihood.replace('_', ' ')}`;
+      let headerLine = `Q${i + 1}  Category: ${q.category.replace('_', ' ')}`;
+      if (q.likelihood)
+        headerLine += `  Likelihood: ${q.likelihood.replace('_', ' ')}`;
       addWrappedText(headerLine, 10, true, false);
 
-      addWrappedText(q.question, 11, true, false, 2);
-      addWrappedText(`Assessing: ${q.whatTheyreAssessing}`, 10, false, true, 2);
-      addWrappedText(`[${q.answerStructure}]`, 10, false, false);
-      addWrappedText(q.suggestedAnswer, 10, false, false, 2);
+      addWrappedText(q.question, 11, true, false, 10);
+      addWrappedText(
+        `Assessing: ${q.whatTheyreAssessing}`,
+        10,
+        false,
+        true,
+        10,
+      );
+      addWrappedText(
+        `[Answer structure: ${q.answerStructure}]`,
+        10,
+        false,
+        false,
+      );
+      addWrappedText(q.suggestedAnswer, 10, false, false, 10);
 
       if (q.needsUserInput && q.placeholdersToFill.length > 0) {
         addWrappedText(
@@ -87,7 +99,7 @@ export class InterviewPrepExportService {
           9,
           false,
           false,
-          2,
+          10,
         );
       }
 
@@ -96,7 +108,7 @@ export class InterviewPrepExportService {
         for (const trap of q.trapsToAvoid) {
           addWrappedText(`- ${trap}`, 9, false, false);
         }
-        y += 2;
+        y += 10;
       }
 
       if (q.followUps.length > 0) {
@@ -107,7 +119,7 @@ export class InterviewPrepExportService {
         }
       }
 
-      y += 8;
+      y += 20;
     }
 
     // Section 2: Questions to Ask Interviewer
@@ -115,26 +127,30 @@ export class InterviewPrepExportService {
       addSectionTitle('Questions to Ask Interviewer');
       for (let i = 0; i < result.questionsToAskInterviewer.length; i++) {
         const q = result.questionsToAskInterviewer[i];
-        addWrappedText(`${i + 1}. ${q.question}`, 10, true, false, 1);
-        addWrappedText(q.rationale, 10, false, false, 4);
+        addWrappedText(`${i + 1}. ${q.question}`, 10, true, false, 2);
+        addWrappedText(q.rationale, 10, false, false, 6);
       }
+
+      y += 20;
     }
 
     // Section 3: Stress-Test Questions
     if (result.stressTestQuestions.length > 0) {
       addSectionTitle('Stress-Test Questions');
       for (const st of result.stressTestQuestions) {
-        addWrappedText(st.question, 11, true, false, 2);
-        addWrappedText(st.whyItllComeUp, 10, false, true, 2);
-        addWrappedText(st.recommendedAnswer, 10, false, false, 6);
+        addWrappedText(st.question, 11, true, false, 4);
+        addWrappedText(st.whyItllComeUp, 10, false, true, 4);
+        addWrappedText(st.recommendedAnswer, 10, false, false, 10);
       }
+
+      y += 20;
     }
 
     // Section 4: Preparation Tips
     if (result.preparationTips.length > 0) {
       addSectionTitle('Preparation Tips');
       for (const tip of result.preparationTips) {
-        addWrappedText(`• ${tip}`, 10, false, false, 2);
+        addWrappedText(`• ${tip}`, 10, false, false, 4);
       }
     }
 
@@ -216,11 +232,11 @@ export class InterviewPrepExportService {
 
       const headerParts: ConstructorParameters<typeof TextRun>[0][] = [
         { text: `Q${i + 1}  `, bold: true },
-        { text: `Category: ${q.category.replace('_', '')}`, bold: true },
+        { text: `Category: ${q.category.replace('_', ' ')}`, bold: true },
       ];
       if (q.likelihood)
         headerParts.push({
-          text: `  Likelihood: ${q.likelihood.replace('_', '')}`,
+          text: `  Likelihood: ${q.likelihood.replace('_', ' ')}`,
         });
       paragraphs.push(mixed(...headerParts));
 
@@ -229,7 +245,7 @@ export class InterviewPrepExportService {
       paragraphs.push(spacer());
       paragraphs.push(
         mixed(
-          { text: `[${q.answerStructure}]  `, bold: true },
+          { text: `[Answer structure: ${q.answerStructure}]  `, bold: true },
           { text: q.suggestedAnswer },
         ),
       );
