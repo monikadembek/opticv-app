@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { JsonPipe } from '@angular/common';
-import { filter, from, mergeMap, switchMap } from 'rxjs';
+import { from, mergeMap, switchMap } from 'rxjs';
 import { JobUpload } from './components/job-upload/job-upload';
 import { AccordionModule } from 'primeng/accordion';
 import { ButtonModule } from 'primeng/button';
@@ -183,7 +183,6 @@ export class CvOptimization {
 
     from(Object.values(PromptType))
       .pipe(
-        filter((prompt) => prompt === PromptType.COVER_LETTER),
         mergeMap(
           (promptType) =>
             this.cvOptimizationApiService

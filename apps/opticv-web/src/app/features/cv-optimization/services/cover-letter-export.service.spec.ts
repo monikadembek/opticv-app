@@ -100,6 +100,26 @@ describe('CoverLetterExportService (browser)', () => {
       service.exportToPdf('<p>First</p><p>Second</p>'),
     ).resolves.toBeUndefined();
   });
+
+  it('exportToPdf advances y for <br> inside a paragraph', async () => {
+    await service.exportToPdf('<p>Line one<br>Line two</p>');
+    expect(textMock).toHaveBeenCalled();
+    const calls = textMock.mock.calls as Array<[string, number, number]>;
+    const yValues = calls.map((c) => c[2]);
+    expect(new Set(yValues).size).toBeGreaterThan(1);
+  });
+
+  it('exportToDocx produces a TextRun with break:1 for <br> inside a paragraph', async () => {
+    await service.exportToDocx('<p>Line one<br>Line two</p>');
+    const docxModule = await import('docx');
+    // TextRun mock returns its opts object; Paragraph receives the array of those objects.
+    // Packer.toBlob receives the Document which wraps the paragraphs.
+    // The mock TextRun returns opts as-is, so we inspect toBlob call args.
+    const docArg = toBlob.mock.calls[0][0] as { sections: Array<{ children: Array<{ children: unknown[] }> }> };
+    const allChildren = docArg.sections[0].children.flatMap((p) => p.children ?? []);
+    expect(allChildren.some((c) => (c as Record<string, unknown>)['break'] === 1)).toBe(true);
+    void docxModule;
+  });
 });
 
 describe('CoverLetterExportService (server)', () => {

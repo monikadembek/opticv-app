@@ -149,10 +149,18 @@ describe('CoverLetterEditor', () => {
     expect(fixture.nativeElement.textContent).toContain(MOCK_RESULT.recommendationReason);
   });
 
-  it('renders Export to PDF and Export to DOCX buttons', () => {
+  it('renders Export to PDF and Export to DOCX buttons enabled by default', () => {
     const text = fixture.nativeElement.textContent;
     expect(text).toContain('Export to PDF');
     expect(text).toContain('Export to DOCX');
+
+    const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('p-button');
+    const pdfButton = Array.from(buttons).find((b) => b.getAttribute('label') === 'Export to PDF');
+    const docxButton = Array.from(buttons).find((b) => b.getAttribute('label') === 'Export to DOCX');
+    expect(pdfButton?.getAttribute('ng-reflect-disabled')).not.toBe('true');
+    expect(docxButton?.getAttribute('ng-reflect-disabled')).not.toBe('true');
+    expect(pdfButton?.getAttribute('ptoolip')).toBeNull();
+    expect(docxButton?.getAttribute('ptoolip')).toBeNull();
   });
 
   describe('salutation deduplication', () => {
