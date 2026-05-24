@@ -111,7 +111,14 @@
       [ngModel]="editorContent()"
       (ngModelChange)="editorContent.set($event)"
       [style]="{ height: '400px' }"
-    />
+    >
+      <ng-template #header>
+        <span class="ql-formats">
+          <button type="button" class="ql-bold" aria-label="Bold"></button>
+          <button type="button" class="ql-italic" aria-label="Italic"></button>
+        </span>
+      </ng-template>
+    </p-editor>
   </div>
 
   <div class="flex gap-3">
