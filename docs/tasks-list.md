@@ -319,7 +319,7 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ### 30. Export selected cover letter to pdf or docx
 
-**status: todo**
+**status: done**
 
 - Fix issue with double salutation displayed in cover letter text editor, only add the salution at the beginning of fullLetter if it is not already included.
 - export selected cover letter with the eventual user tweaks to pdf file
@@ -327,19 +327,21 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 31. Summary rewriten - allow selecting summary and editing
+### 31. Select and apply optimizations, export optimized cv to pdf and docx
 
 **status: todo**
+
+1. Summary rewriten - allow selecting summary and editing
 
 - allow user to select one of presented summary versions,
-- display it in text editor from PrimeNG, must convert it first to html to display it properly without loosing formatting,
+- display it in textarea so that user can edit it
 - add button 'Apply selected version" to save it in db optimization_results for given prompt type in column userEditedOutput.
 
----
+2. Keyword gap - allow selecting. modifying, adding missing keywords and applying it to cv.
 
-### 32. Keyword gap - allow selecting and adding missing keywords
+3. Bullet upgrades - allow selecting, modifying and applying suggestion to cv.
 
-**status: todo**
+4. Export optimized cv to pdf and docx
 
 ---
 
@@ -352,6 +354,12 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 ### Allow user to select and modify output results of optimization process nad apply it or save in db optimization_results for given prompt type in column userEditedOutput
 
 **status: todo**
+
+---
+
+### Check alternatives to to PrimeNg Text Editor
+
+https://ngx-simple-text-editor.netlify.app/usage.html
 
 ---
 

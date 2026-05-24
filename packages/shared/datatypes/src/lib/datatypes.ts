@@ -369,3 +369,22 @@ export type InterviewPrepResult = {
   stressTestQuestions: InterviewPrepStressTest[];
   preparationTips: string[];
 };
+
+export type OptimizationResultSummary = {
+  id: string;
+  promptType: PromptType;
+  status: string;
+  userEditedOutput: string | null;
+};
+
+export type AppliedBullet = {
+  positionIndex: number;
+  bulletIndex: number;
+  text: string;
+};
+
+export type AppliedEdits = {
+  summary: string | null;
+  keywordsText: string | null;
+  bullets: AppliedBullet[];
+};
