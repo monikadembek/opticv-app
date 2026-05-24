@@ -307,9 +307,9 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 29. Export interview prep output to pdf or docx
+### 29. Export interview prep output to pdf or docx (FE)
 
-**status: todo**
+**status: done**
 
 - add buttons "Export to pdf" and "Export to docx"
 - export interview prep output to pdf file
@@ -317,22 +317,17 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 30. Fix issue with double salutation displayed in cover letter text editor, only add the salution at the beginning of fullLetter if it is not already included.
+### 30. Export selected cover letter to pdf or docx
 
 **status: todo**
 
----
-
-### 31. Export selected cover letter to pdf or docx
-
-**status: todo**
-
+- Fix issue with double salutation displayed in cover letter text editor, only add the salution at the beginning of fullLetter if it is not already included.
 - export selected cover letter with the eventual user tweaks to pdf file
 - export selected cover letter with the eventual user tweaks to docx file
 
 ---
 
-### 33. Summary rewriten - allow selecting summary and editing
+### 31. Summary rewriten - allow selecting summary and editing
 
 **status: todo**
 
@@ -342,7 +337,7 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 34. Keyword gap - allow selecting and adding missing keywords
+### 32. Keyword gap - allow selecting and adding missing keywords
 
 **status: todo**
 

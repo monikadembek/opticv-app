@@ -111,26 +111,30 @@
       [ngModel]="editorContent()"
       (ngModelChange)="editorContent.set($event)"
       [style]="{ height: '400px' }"
-    />
+    >
+      <ng-template #header>
+        <span class="ql-formats">
+          <button type="button" class="ql-bold" aria-label="Bold"></button>
+          <button type="button" class="ql-italic" aria-label="Italic"></button>
+        </span>
+      </ng-template>
+    </p-editor>
   </div>
 
-  <!-- Export buttons -->
   <div class="flex gap-3">
     <p-button
       label="Export to PDF"
-      variant="outlined"
-      severity="secondary"
-      [disabled]="true"
-      pTooltip="Coming soon"
-      tooltipPosition="top"
+      severity="primary"
+      [loading]="isBusyPdf()"
+      [disabled]="isBusyPdf() || isBusyDocx()"
+      (onClick)="onExportPdf()"
     />
     <p-button
       label="Export to DOCX"
-      variant="outlined"
-      severity="secondary"
-      [disabled]="true"
-      pTooltip="Coming soon"
-      tooltipPosition="top"
+      severity="primary"
+      [loading]="isBusyDocx()"
+      [disabled]="isBusyPdf() || isBusyDocx()"
+      (onClick)="onExportDocx()"
     />
   </div>
 </div>
