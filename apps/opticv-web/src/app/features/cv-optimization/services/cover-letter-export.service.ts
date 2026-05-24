@@ -104,19 +104,27 @@ export class CoverLetterExportService {
         doc.setFontSize(fontSize);
         doc.setFont('helvetica', fontStyle(run.bold, run.italic));
 
-        const words = run.text.split(' ');
-        for (let i = 0; i < words.length; i++) {
-          const word = i < words.length - 1 ? words[i] + ' ' : words[i];
-          const wordWidth = doc.getTextWidth(word);
+        const words = run.text.split(/(\s+)/);
+        for (const token of words) {
+          if (!token) continue;
 
-          if (x > marginLeft && x + wordWidth > marginLeft + maxWidth) {
+          const isWhitespace = /^\s+$/.test(token);
+          const tokenWidth = doc.getTextWidth(token);
+
+          if (
+            !isWhitespace &&
+            x > marginLeft &&
+            x + tokenWidth > marginLeft + maxWidth
+          ) {
             y += lineHeight;
             x = marginLeft;
             checkPage();
           }
 
-          doc.text(word, x, y);
-          x += wordWidth;
+          if (!isWhitespace || x > marginLeft) {
+            doc.text(token, x, y);
+          }
+          x += tokenWidth;
         }
       }
 
