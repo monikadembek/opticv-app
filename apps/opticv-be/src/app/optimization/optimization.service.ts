@@ -10,6 +10,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import type { OptimizationJobPayload } from './optimization.types.js';
 import { PromptType } from '../../generated/prisma/enums.js';
+import { OptimizationResultSummary } from '@opticv/datatypes';
 
 const ALL_PROMPT_TYPES = Object.values(PromptType);
 
@@ -154,14 +155,7 @@ export class OptimizationService {
   async getOptimizationResultSummaries(
     jobApplicationId: string,
     userId: string,
-  ): Promise<
-    {
-      id: string;
-      promptType: PromptType;
-      status: string;
-      userEditedOutput: string | null;
-    }[]
-  > {
+  ): Promise<OptimizationResultSummary[]> {
     const application = await this.prisma.jobApplication.findUnique({
       where: { id: jobApplicationId },
       select: { userId: true },
@@ -171,7 +165,7 @@ export class OptimizationService {
       throw new ForbiddenException();
     }
 
-    return this.prisma.optimizationResult.findMany({
+    const results = await this.prisma.optimizationResult.findMany({
       where: { applicationId: jobApplicationId },
       select: {
         id: true,
@@ -180,6 +174,8 @@ export class OptimizationService {
         userEditedOutput: true,
       },
     });
+
+    return results as OptimizationResultSummary[];
   }
 
   async validateStreamAccess(
