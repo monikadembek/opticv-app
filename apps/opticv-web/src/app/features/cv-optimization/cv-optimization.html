@@ -84,7 +84,11 @@
           [hasData]="keywordGapResult() !== null"
         >
           @if (keywordGapResult(); as result) {
-            <app-keyword-gap [result]="result" />
+            <app-keyword-gap
+              [result]="result"
+              [optimizationResultId]="optimizationResultIds().get(PromptType.KEYWORD_GAP) ?? null"
+              (applied)="onKeywordsApplied($event)"
+            />
           }
         </app-optimization-result-panel>
         @if (retryablePromptTypes().has(PromptType.KEYWORD_GAP)) {
@@ -130,7 +134,11 @@
           [hasData]="summaryRewriteResult() !== null"
         >
           @if (summaryRewriteResult(); as result) {
-            <app-summary-rewrite [result]="result" />
+            <app-summary-rewrite
+              [result]="result"
+              [optimizationResultId]="optimizationResultIds().get(PromptType.SUMMARY_REWRITE) ?? null"
+              (applied)="onSummaryApplied($event)"
+            />
           }
         </app-optimization-result-panel>
         @if (retryablePromptTypes().has(PromptType.SUMMARY_REWRITE)) {
@@ -176,7 +184,11 @@
           [hasData]="bulletUpgradeResult() !== null"
         >
           @if (bulletUpgradeResult(); as result) {
-            <app-bullet-rewriter [result]="result" />
+            <app-bullet-rewriter
+              [result]="result"
+              [optimizationResultId]="optimizationResultIds().get(PromptType.BULLET_UPGRADE) ?? null"
+              (bulletApplied)="onBulletApplied($event)"
+            />
           }
         </app-optimization-result-panel>
         @if (retryablePromptTypes().has(PromptType.BULLET_UPGRADE)) {
@@ -321,4 +333,29 @@
       </p-accordion-content>
     </p-accordion-panel>
   </p-accordion>
+
+  @if (jobApplicationId()) {
+    <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-end">
+      <p-button
+        label="Export optimized CV to PDF"
+        icon="pi pi-file-pdf"
+        [loading]="isExportingPdf()"
+        [disabled]="isExportingPdf() || !cvStructuredData()"
+        [pTooltip]="!cvStructuredData() ? 'CV data not ready' : ''"
+        tooltipPosition="top"
+        (onClick)="exportPdf()"
+        ariaLabel="Export optimized CV to PDF"
+      />
+      <p-button
+        label="Export optimized CV to DOCX"
+        icon="pi pi-file-word"
+        [loading]="isExportingDocx()"
+        [disabled]="isExportingDocx() || !cvStructuredData()"
+        [pTooltip]="!cvStructuredData() ? 'CV data not ready' : ''"
+        tooltipPosition="top"
+        (onClick)="exportDocx()"
+        ariaLabel="Export optimized CV to DOCX"
+      />
+    </div>
+  }
 </div>

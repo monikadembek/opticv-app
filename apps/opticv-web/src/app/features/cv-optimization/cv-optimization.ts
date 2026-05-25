@@ -8,15 +8,21 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { JsonPipe } from '@angular/common';
-import { from, mergeMap, switchMap } from 'rxjs';
-import { JobUpload } from './components/job-upload/job-upload';
+import { filter, from, mergeMap, switchMap } from 'rxjs';
+import {
+  JobSubmittedData,
+  JobUpload,
+} from './components/job-upload/job-upload';
 import { AccordionModule } from 'primeng/accordion';
 import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
 import {
+  AppliedBullet,
+  AppliedEdits,
   BulletUpgradeResult,
   CoverLetterResult,
+  CvStructuredData,
   InterviewPrepResult,
-  JobApplication,
   KeywordGapResult,
   PromptType,
   ResumeAutopsyResult,
@@ -26,6 +32,7 @@ import {
   CvOptimizationApiService,
   SseJobCompleteEvent,
 } from './services/cv-optimization-api.service';
+import { CvExportService } from './services/cv-export.service';
 import { OptimizationResultPanel } from './components/optimization-result-panel/optimization-result-panel';
 import { AtsScore } from './components/ats-score/ats-score';
 import { KeywordGap } from './components/keyword-gap/keyword-gap';
@@ -92,12 +99,19 @@ function isInterviewPrepResult(value: unknown): value is InterviewPrepResult {
   return Array.isArray(v['questions']) && Array.isArray(v['preparationTips']);
 }
 
+const ActivePrompts = [
+  PromptType.KEYWORD_GAP,
+  PromptType.SUMMARY_REWRITE,
+  PromptType.BULLET_UPGRADE,
+];
+
 @Component({
   selector: 'app-cv-optimization-page',
   imports: [
     JobUpload,
     AccordionModule,
     ButtonModule,
+    TooltipModule,
     JsonPipe,
     OptimizationResultPanel,
     AtsScore,
@@ -112,12 +126,22 @@ function isInterviewPrepResult(value: unknown): value is InterviewPrepResult {
 })
 export class CvOptimization {
   private readonly cvOptimizationApiService = inject(CvOptimizationApiService);
+  private readonly cvExportService = inject(CvExportService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly PromptType = PromptType;
   readonly results = signal<Map<PromptType, SseJobCompleteEvent>>(new Map());
   readonly isProcessing = signal<Map<PromptType, boolean>>(new Map());
   readonly jobApplicationId = signal<string | null>(null);
+  readonly cvStructuredData = signal<CvStructuredData | null>(null);
+  readonly optimizationResultIds = signal<Map<PromptType, string>>(new Map());
+  readonly appliedEdits = signal<AppliedEdits>({
+    summary: null,
+    keywordsText: null,
+    bullets: [],
+  });
+  readonly isExportingPdf = signal(false);
+  readonly isExportingDocx = signal(false);
 
   readonly autopsyResult = computed<ResumeAutopsyResult | null>(() => {
     const r = this.results().get(PromptType.RESUME_AUTOPSY)?.result;
@@ -176,13 +200,21 @@ export class CvOptimization {
     return retryable;
   });
 
-  runOptimization(jobApplication: JobApplication): void {
+  runOptimization({ jobApplication, extractedData }: JobSubmittedData): void {
     this.results.set(new Map());
     this.isProcessing.set(new Map());
+    this.optimizationResultIds.set(new Map());
+    this.appliedEdits.set({ summary: null, keywordsText: null, bullets: [] });
     this.jobApplicationId.set(jobApplication.id);
+    this.cvStructuredData.set(extractedData);
+
+    let completedCount = 0;
+    // const totalJobs = Object.values(PromptType).length;
+    const totalJobs = ActivePrompts.length;
 
     from(Object.values(PromptType))
       .pipe(
+        filter((prompt) => ActivePrompts.includes(prompt)),
         mergeMap(
           (promptType) =>
             this.cvOptimizationApiService
@@ -211,6 +243,10 @@ export class CvOptimization {
           this.results.update((map) =>
             new Map(map).set(event.promptType, event),
           );
+          completedCount++;
+          if (completedCount === totalJobs) {
+            this.loadOptimizationResultIds(jobApplication.id);
+          }
         },
         error: (err) => console.error('Optimization stream error', err),
       });
@@ -241,6 +277,7 @@ export class CvOptimization {
           this.results.update((map) =>
             new Map(map).set(event.promptType, event),
           );
+          this.loadOptimizationResultIds(jobApplicationId);
         },
         error: (err) => {
           console.error('Retry stream error', err);
@@ -248,6 +285,65 @@ export class CvOptimization {
             new Map(map).set(promptType, false),
           );
         },
+      });
+  }
+
+  onSummaryApplied(text: string): void {
+    this.appliedEdits.update((e) => ({ ...e, summary: text }));
+    console.log('summary applied: ', this.appliedEdits());
+  }
+
+  onKeywordsApplied(text: string): void {
+    this.appliedEdits.update((e) => ({ ...e, keywordsText: text }));
+    console.log('summary applied: ', this.appliedEdits());
+  }
+
+  onBulletApplied(bullet: AppliedBullet): void {
+    this.appliedEdits.update((e) => {
+      const existing = e.bullets.filter(
+        (b) =>
+          !(
+            b.positionIndex === bullet.positionIndex &&
+            b.bulletIndex === bullet.bulletIndex
+          ),
+      );
+      return { ...e, bullets: [...existing, bullet] };
+    });
+    console.log('summary applied: ', this.appliedEdits());
+  }
+
+  exportPdf(): void {
+    const cv = this.cvStructuredData();
+    if (!cv) return;
+    this.isExportingPdf.set(true);
+    this.cvExportService.exportToPdf(cv, this.appliedEdits()).finally(() => {
+      this.isExportingPdf.set(false);
+    });
+  }
+
+  exportDocx(): void {
+    const cv = this.cvStructuredData();
+    if (!cv) return;
+    this.isExportingDocx.set(true);
+    this.cvExportService.exportToDocx(cv, this.appliedEdits()).finally(() => {
+      this.isExportingDocx.set(false);
+    });
+  }
+
+  private loadOptimizationResultIds(jobApplicationId: string): void {
+    this.cvOptimizationApiService
+      .getOptimizationResults(jobApplicationId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (results) => {
+          const map = new Map<PromptType, string>();
+          for (const r of results) {
+            map.set(r.promptType as PromptType, r.id);
+          }
+          this.optimizationResultIds.set(map);
+        },
+        error: (err) =>
+          console.error('Failed to load optimization result IDs', err),
       });
   }
 }

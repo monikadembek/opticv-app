@@ -22,7 +22,16 @@ import {
 } from '../../services/cv-optimization-api.service';
 import { MessageService } from 'primeng/api';
 import { catchError, EMPTY, retry, switchMap, tap } from 'rxjs';
-import { JobApplication, JobApplicationResponse } from '@opticv/datatypes';
+import {
+  CvStructuredData,
+  JobApplication,
+  JobApplicationResponse,
+} from '@opticv/datatypes';
+
+export interface JobSubmittedData {
+  jobApplication: JobApplication;
+  extractedData: CvStructuredData;
+}
 
 @Component({
   selector: 'app-job-upload',
@@ -42,7 +51,7 @@ export class JobUpload {
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
 
-  jobSubmitted = output<JobApplication>();
+  jobSubmitted = output<JobSubmittedData>();
   jobApplication: JobApplicationResponse | null = null;
 
   cvList = this.cvOptimizationApiService.cvList;
@@ -142,7 +151,10 @@ export class JobUpload {
           this.isSubmitting.set(false);
           console.log('extraced data from cv: ', extractedData);
           if (this.jobApplication) {
-            this.jobSubmitted.emit(this.jobApplication);
+            this.jobSubmitted.emit({
+              jobApplication: this.jobApplication,
+              extractedData: extractedData.data,
+            });
           }
         },
         error: (err) => {
