@@ -347,7 +347,7 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ### 32. Create CV templates
 
-**status: in progress**
+**status: done**
 
 - prepare 3 cv templates, based on the provided images;
 - allow user to select one of the 3 templates before triggering the export to file,
@@ -356,7 +356,17 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 33. Keyword Gap - select, modify and apply optimizations
+### 33. Rate limiting: Per-user and per-IP, on both API and AI calls. Critical from day one.
+
+**status: todo**
+
+- implement per-user rate limiting
+- implement per-IP rate limiting
+- critical before deploy
+
+---
+
+### 34. Keyword Gap - select, modify and apply optimizations
 
 **status: todo**
 
@@ -364,11 +374,17 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 34. Bullet upgrades - select, modify and apply optimizations
+### 35. Bullet upgrades - select, modify and apply optimizations
 
 **status: todo**
 
 - allow selecting, modifying and applying suggestions to cv.
+
+---
+
+### Fix issue with selecting template card with keyboard
+
+**status: todo**
 
 ---
 
@@ -395,10 +411,6 @@ https://ngx-simple-text-editor.netlify.app/usage.html
 **status: todo**
 
 - use method runFullOptimizationProcess(jobApplicationId: string) from cv-optimization-api.service.ts
-
----
-
-### Rate limiting: Per-user and per-IP, on both API and AI calls. Critical from day one.
 
 ---
 
