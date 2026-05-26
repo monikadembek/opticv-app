@@ -3,6 +3,7 @@ import { signal } from '@angular/core';
 import { NEVER, Subject, of } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import type { CvDocumentListItem, CvStructuredData, JobApplication } from '@opticv/datatypes';
+import type { CvTemplateId } from './cv-templates';
 import { PromptType } from '@opticv/datatypes';
 import type { JobSubmittedData } from './components/job-upload/job-upload';
 import { CvOptimization } from './cv-optimization';
@@ -51,7 +52,7 @@ const mockJobSubmittedData: JobSubmittedData = {
   extractedData: mockCvStructuredData,
 };
 
-const ALL_PROMPT_TYPES = Object.values(PromptType);
+
 
 function makeCvListResource() {
   return {
@@ -301,18 +302,14 @@ describe('CvOptimization', () => {
       expect(component.results().size).toBe(0);
     });
 
-    it('calls runSingleOptimizationProcess for every PromptType', () => {
+    it('calls runSingleOptimizationProcess for each active PromptType', () => {
       component.runOptimization(mockJobSubmittedData);
 
-      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledTimes(
-        ALL_PROMPT_TYPES.length,
+      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledTimes(1);
+      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
+        mockJobApplication.id,
+        PromptType.SUMMARY_REWRITE,
       );
-      for (const promptType of ALL_PROMPT_TYPES) {
-        expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
-          mockJobApplication.id,
-          promptType,
-        );
-      }
     });
 
     it('calls streamOptimizationEvents with the jobApplicationId and runId from runSingle', () => {
@@ -333,7 +330,7 @@ describe('CvOptimization', () => {
 
       component.runOptimization(mockJobSubmittedData);
 
-      expect(component.isProcessing().get(PromptType.RESUME_AUTOPSY)).toBe(true);
+      expect(component.isProcessing().get(PromptType.SUMMARY_REWRITE)).toBe(true);
     });
 
     it('updates results and clears isProcessing on a completed SSE event', () => {
@@ -376,40 +373,21 @@ describe('CvOptimization', () => {
       expect(component.isProcessing().get(PromptType.KEYWORD_GAP)).toBe(false);
     });
 
-    it('accumulates results for multiple prompt types independently', () => {
-      const subjects = new Map<PromptType, Subject<SseJobCompleteEvent>>();
-      apiService.streamOptimizationEvents.mockImplementation(() => {
-        const s = new Subject<SseJobCompleteEvent>();
-        // store the last created subject so we can push to it per promptType
-        subjects.set(
-          apiService.runSingleOptimizationProcess.mock.lastCall?.[1],
-          s,
-        );
-        return s.asObservable();
-      });
+    it('stores the result from the active prompt SSE event', () => {
+      const sseSubject = new Subject<SseJobCompleteEvent>();
+      apiService.streamOptimizationEvents.mockReturnValue(sseSubject.asObservable());
 
       component.runOptimization(mockJobSubmittedData);
 
-      const autopsyEvent: SseJobCompleteEvent = {
-        promptType: PromptType.RESUME_AUTOPSY,
+      const summaryEvent: SseJobCompleteEvent = {
+        promptType: PromptType.SUMMARY_REWRITE,
         status: 'completed',
-        result: { ats: 80 },
-      };
-      const keywordEvent: SseJobCompleteEvent = {
-        promptType: PromptType.KEYWORD_GAP,
-        status: 'completed',
-        result: { gap: ['TypeScript'] },
+        result: { originalSummary: 'Old summary', variants: [], keywordsIncorporated: [] },
       };
 
-      subjects.get(PromptType.RESUME_AUTOPSY)?.next(autopsyEvent);
-      subjects.get(PromptType.KEYWORD_GAP)?.next(keywordEvent);
+      sseSubject.next(summaryEvent);
 
-      expect(component.results().get(PromptType.RESUME_AUTOPSY)).toEqual(
-        autopsyEvent,
-      );
-      expect(component.results().get(PromptType.KEYWORD_GAP)).toEqual(
-        keywordEvent,
-      );
+      expect(component.results().get(PromptType.SUMMARY_REWRITE)).toEqual(summaryEvent);
     });
 
     it('a second call to runOptimization discards results from the first', () => {
@@ -487,6 +465,93 @@ describe('CvOptimization', () => {
       );
       component.isProcessing.set(new Map([[PromptType.KEYWORD_GAP, true]]));
       expect(component.retryablePromptTypes().has(PromptType.KEYWORD_GAP)).toBe(false);
+    });
+  });
+
+  describe('selectedTemplate', () => {
+    it('defaults to ats', () => {
+      expect(component.selectedTemplate()).toBe('ats' satisfies CvTemplateId);
+    });
+
+    it('can be set to modern', () => {
+      component.selectedTemplate.set('modern');
+      expect(component.selectedTemplate()).toBe('modern');
+    });
+
+    it('can be set to executive', () => {
+      component.selectedTemplate.set('executive');
+      expect(component.selectedTemplate()).toBe('executive');
+    });
+  });
+
+  describe('isProcessingAny', () => {
+    it('returns false when no active prompts are processing', () => {
+      expect(component.isProcessingAny()).toBe(false);
+    });
+
+    it('returns true when at least one active prompt is processing', () => {
+      component.isProcessing.set(new Map([[PromptType.SUMMARY_REWRITE, true]]));
+      expect(component.isProcessingAny()).toBe(true);
+    });
+
+    it('returns false when only a non-active prompt type is processing', () => {
+      component.isProcessing.set(new Map([[PromptType.RESUME_AUTOPSY, true]]));
+      expect(component.isProcessingAny()).toBe(false);
+    });
+
+    it('returns false when all active prompts finish processing', () => {
+      component.isProcessing.set(new Map([
+        [PromptType.KEYWORD_GAP, false],
+        [PromptType.SUMMARY_REWRITE, false],
+        [PromptType.BULLET_UPGRADE, false],
+      ]));
+      expect(component.isProcessingAny()).toBe(false);
+    });
+  });
+
+  describe('canExportCv', () => {
+    it('returns false when no CV data is available', () => {
+      expect(component.canExportCv()).toBe(false);
+    });
+
+    it('returns false when CV data exists but no selection has been made', () => {
+      component.cvStructuredData.set(mockCvStructuredData);
+      expect(component.canExportCv()).toBe(false);
+    });
+
+    it('returns true when a summary angle is selected and not processing', () => {
+      component.cvStructuredData.set(mockCvStructuredData);
+      component.selections.set({
+        selectedSummaryAngle: 'achievement_led',
+        customSummaryText: null,
+        selectedBullets: [],
+        selectedKeywords: [],
+      });
+      expect(component.canExportCv()).toBe(true);
+    });
+
+    it('returns false when a selection is made but an active prompt is still processing', () => {
+      component.cvStructuredData.set(mockCvStructuredData);
+      component.selections.set({
+        selectedSummaryAngle: 'achievement_led',
+        customSummaryText: null,
+        selectedBullets: [],
+        selectedKeywords: [],
+      });
+      component.isProcessing.set(new Map([[PromptType.SUMMARY_REWRITE, true]]));
+      expect(component.canExportCv()).toBe(false);
+    });
+
+    it('returns true once processing finishes and a selection exists', () => {
+      component.cvStructuredData.set(mockCvStructuredData);
+      component.selections.set({
+        selectedSummaryAngle: 'achievement_led',
+        customSummaryText: null,
+        selectedBullets: [],
+        selectedKeywords: [],
+      });
+      component.isProcessing.set(new Map([[PromptType.SUMMARY_REWRITE, false]]));
+      expect(component.canExportCv()).toBe(true);
     });
   });
 

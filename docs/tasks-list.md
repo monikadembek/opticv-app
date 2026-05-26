@@ -329,7 +329,7 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ### 31. Select and apply optimizations, export optimized cv to pdf and docx
 
-**status: todo**
+**status: done - partially**
 
 1. Summary rewriten - allow selecting summary and editing
 
@@ -337,11 +337,54 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 - display it in textarea so that user can edit it
 - add button 'Apply selected version" to save it in db optimization_results for given prompt type in column userEditedOutput.
 
-2. Keyword gap - allow selecting. modifying, adding missing keywords and applying it to cv.
+2. Keyword gap - allow selecting, modifying, adding missing keywords and applying it to cv -> moved to separate task
 
-3. Bullet upgrades - allow selecting, modifying and applying suggestion to cv.
+3. Bullet upgrades - allow selecting, modifying and applying suggestion to cv -> moved to separate task
 
 4. Export optimized cv to pdf and docx
+
+---
+
+### 32. Create CV templates
+
+**status: done**
+
+- prepare 3 cv templates, based on the provided images;
+- allow user to select one of the 3 templates before triggering the export to file,
+- by default template number 1 should be selected and used for the exported cv in pdf and docx,
+- the exported cv should reflect the visual style of the selected template.
+
+---
+
+### 33. Rate limiting: Per-user and per-IP, on both API and AI calls. Critical from day one.
+
+**status: todo**
+
+- implement per-user rate limiting
+- implement per-IP rate limiting
+- critical before deploy
+
+---
+
+### 34. Keyword Gap - select, modify and apply optimizations
+
+**status: todo**
+
+- allow selecting, modifying, adding missing keywords and applying it to cv.
+
+---
+
+### 35. Bullet upgrades - select, modify and apply optimizations
+
+**status: todo**
+
+- allow selecting, modifying and applying suggestions to cv.
+
+---
+
+### Fix issue with selecting template card with keyboard
+
+**status: todo**
 
 ---
 
@@ -368,10 +411,6 @@ https://ngx-simple-text-editor.netlify.app/usage.html
 **status: todo**
 
 - use method runFullOptimizationProcess(jobApplicationId: string) from cv-optimization-api.service.ts
-
----
-
-### Rate limiting: Per-user and per-IP, on both API and AI calls. Critical from day one.
 
 ---
 

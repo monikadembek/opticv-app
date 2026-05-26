@@ -72,8 +72,8 @@ describe('SummaryRewrite', () => {
   });
 
   it('renders all three variant cards', () => {
-    const articles = fixture.nativeElement.querySelectorAll('[role="article"]');
-    expect(articles.length).toBe(3);
+    const cards = fixture.nativeElement.querySelectorAll('[role="button"]');
+    expect(cards.length).toBe(3);
   });
 
   it('renders human-readable angle labels', () => {
@@ -84,12 +84,12 @@ describe('SummaryRewrite', () => {
   });
 
   it('shows "Recommended" badge only on the recommended variant card', () => {
-    const articles: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('[role="article"]');
-    const recommendedCard = Array.from(articles).find(el =>
-      el.getAttribute('aria-label') === 'Achievement-led variant',
+    const cards: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('[role="button"]');
+    const recommendedCard = Array.from(cards).find(el =>
+      el.getAttribute('aria-label') === 'Select Achievement-led variant',
     );
-    const otherCard = Array.from(articles).find(el =>
-      el.getAttribute('aria-label') === 'Identity-led variant',
+    const otherCard = Array.from(cards).find(el =>
+      el.getAttribute('aria-label') === 'Select Identity-led variant',
     );
 
     expect(recommendedCard?.textContent).toContain('Recommended');
@@ -115,9 +115,9 @@ describe('SummaryRewrite', () => {
   });
 
   it('hides keywords used section for a variant with no keywords', () => {
-    const articles: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('[role="article"]');
-    const missionCard = Array.from(articles).find(el =>
-      el.getAttribute('aria-label') === 'Mission-led variant',
+    const cards: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('[role="button"]');
+    const missionCard = Array.from(cards).find(el =>
+      el.getAttribute('aria-label') === 'Select Mission-led variant',
     );
     expect(missionCard?.textContent).not.toContain('Keywords used');
   });
@@ -142,5 +142,36 @@ describe('SummaryRewrite', () => {
     fixture.componentRef.setInput('result', { ...MOCK_RESULT, keywordsIncorporated: [] });
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).not.toContain('All Keywords Incorporated');
+  });
+
+  it('does not throw when a variant has undefined keywordsUsed (API omits the field)', () => {
+    const resultWithMissingKeywords = {
+      ...MOCK_RESULT,
+      variants: [
+        { ...MOCK_RESULT.variants[0], keywordsUsed: undefined as unknown as string[] },
+        ...MOCK_RESULT.variants.slice(1),
+      ],
+    };
+    expect(() => {
+      fixture.componentRef.setInput('result', resultWithMissingKeywords);
+      fixture.detectChanges();
+    }).not.toThrow();
+  });
+
+  it('hides the keywords-used section for a variant with undefined keywordsUsed', () => {
+    const resultWithMissingKeywords = {
+      ...MOCK_RESULT,
+      variants: [
+        { ...MOCK_RESULT.variants[0], keywordsUsed: undefined as unknown as string[] },
+        ...MOCK_RESULT.variants.slice(1),
+      ],
+    };
+    fixture.componentRef.setInput('result', resultWithMissingKeywords);
+    fixture.detectChanges();
+    const cards: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('[role="button"]');
+    const achievementCard = Array.from(cards).find((el) =>
+      el.getAttribute('aria-label')?.includes('Achievement-led'),
+    );
+    expect(achievementCard?.textContent).not.toContain('Keywords used');
   });
 });

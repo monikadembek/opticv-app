@@ -1,0 +1,89 @@
+<div class="flex flex-wrap gap-3 mb-4">
+  @for (template of templates; track template.id) {
+  <div
+    #templateCard
+    role="radio"
+    [attr.aria-checked]="selected() === template.id"
+    [attr.aria-label]="template.name + ': ' + template.description"
+    [attr.data-template-id]="template.id"
+    [tabindex]="selected() === template.id ? 0 : -1"
+    class="relative flex flex-col gap-2 p-3 rounded-lg cursor-pointer transition-all w-44 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    [class]="selected() === template.id ? 'border-2 border-primary bg-primary-50' : 'border border-surface-200 hover:border-surface-400'"
+    (click)="select(template.id)"
+    (keydown)="onKeydown($event, template.id)"
+  >
+    <!-- Thumbnail -->
+    <div
+      class="w-full rounded overflow-hidden"
+      style="height: 40px"
+      aria-hidden="true"
+    >
+      <div
+        class="w-full"
+        style="height: 8px"
+        [style.background]="template.accentColor"
+      ></div>
+      <div class="w-full bg-surface-50" style="height: 32px; padding: 4px 6px">
+        <div
+          class="rounded"
+          style="height: 4px; width: 60%; margin-bottom: 3px"
+          [style.background]="template.accentColor + '33'"
+        ></div>
+        <div
+          class="bg-surface-200 rounded"
+          style="height: 3px; width: 80%; margin-bottom: 2px"
+        ></div>
+        <div
+          class="bg-surface-200 rounded"
+          style="height: 3px; width: 70%"
+        ></div>
+      </div>
+    </div>
+
+    <!-- Name + description -->
+    <div>
+      <p class="text-sm font-semibold text-surface-800 m-0 leading-tight">
+        {{ template.name }}
+      </p>
+      <p class="text-xs text-surface-400 m-0 mt-0.5 leading-snug">
+        {{ template.description }}
+      </p>
+    </div>
+
+    <!-- Selected checkmark -->
+    @if (selected() === template.id) {
+    <span class="absolute top-7 right-3 text-primary" aria-hidden="true">
+      <i class="pi pi-check-circle text-sm"></i>
+    </span>
+    }
+
+    <!-- Preview button -->
+    <p-button
+      label="Preview"
+      size="small"
+      variant="outlined"
+      severity="success"
+      icon="pi pi-eye"
+      class="mt-4"
+      [attr.aria-label]="'Preview ' + template.name + ' template'"
+      (onClick)="openPreview(template.id, $event)"
+    />
+  </div>
+  }
+</div>
+
+<p-dialog
+  [header]="templateName(previewTemplateId()) + ' — Preview'"
+  [visible]="previewVisible()"
+  (visibleChange)="$event ? null : closePreview()"
+  [modal]="true"
+  [draggable]="false"
+  [maximizable]="true"
+  [style]="{ width: '840px' }"
+  [contentStyle]="{ padding: '0', overflowY: 'auto', maxHeight: '80vh' }"
+>
+  <app-cv-template-preview
+    [cv]="mergedCv()"
+    [templateId]="previewTemplateId()"
+  />
+</p-dialog>
