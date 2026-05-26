@@ -109,11 +109,27 @@
     }
   </div>
 
-  <!-- Selected indicator -->
+  <!-- Selected variant editor -->
   @if (selectedAngle()) {
-  <div class="mt-4 mb-4 flex items-center gap-2 text-sm text-green-700">
-    <i class="pi pi-check-circle"></i>
-    <span>{{ angleLabels[selectedAngle()!] }} variant selected — will be applied to your exported CV.</span>
+  <div class="space-y-2">
+    <div class="flex items-center gap-2 text-sm text-green-700">
+      <i class="pi pi-check-circle"></i>
+      <span>{{ angleLabels[selectedAngle()!] }} variant selected — edit below if needed.</span>
+    </div>
+    <textarea
+      pTextarea
+      rows="5"
+      class="w-full text-sm"
+      [ngModel]="editableText()"
+      (ngModelChange)="onTextChange($event)"
+      [autoResize]="true"
+      aria-label="Edit selected summary"
+    ></textarea>
+    @if (isModified()) {
+    <p class="m-0 text-xs text-surface-400 italic">
+      Modified from original variant.
+    </p>
+    }
   </div>
   }
 

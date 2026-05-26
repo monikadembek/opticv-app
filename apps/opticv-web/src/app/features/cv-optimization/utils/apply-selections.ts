@@ -16,11 +16,15 @@ export function applySelectionsToCV(
   const clone: CvStructuredData = structuredClone(cv);
 
   if (selections.selectedSummaryAngle && summaryResult) {
-    const variant = summaryResult.variants.find(
-      (v) => v.angle === selections.selectedSummaryAngle,
-    );
-    if (variant) {
-      clone.summary = variant.text;
+    if (selections.customSummaryText !== null) {
+      clone.summary = selections.customSummaryText;
+    } else {
+      const variant = summaryResult.variants.find(
+        (v) => v.angle === selections.selectedSummaryAngle,
+      );
+      if (variant) {
+        clone.summary = variant.text;
+      }
     }
   }
 

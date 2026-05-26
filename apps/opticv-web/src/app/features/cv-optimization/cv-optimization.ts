@@ -102,11 +102,7 @@ function isInterviewPrepResult(value: unknown): value is InterviewPrepResult {
   return Array.isArray(v['questions']) && Array.isArray(v['preparationTips']);
 }
 
-const ActivePrompts = [
-  PromptType.KEYWORD_GAP,
-  PromptType.SUMMARY_REWRITE,
-  PromptType.BULLET_UPGRADE,
-];
+const ActivePrompts = [PromptType.SUMMARY_REWRITE];
 
 @Component({
   selector: 'app-cv-optimization-page',
@@ -140,6 +136,7 @@ export class CvOptimization {
   readonly optimizationResultIds = signal<Map<PromptType, string>>(new Map());
   readonly selections = signal<UserSelections>({
     selectedSummaryAngle: null,
+    customSummaryText: null,
     selectedBullets: [],
     selectedKeywords: [],
   });
@@ -236,6 +233,7 @@ export class CvOptimization {
     this.optimizationResultIds.set(new Map());
     this.selections.set({
       selectedSummaryAngle: null,
+      customSummaryText: null,
       selectedBullets: [],
       selectedKeywords: [],
     });
@@ -324,7 +322,15 @@ export class CvOptimization {
 
   onAngleSelected(angle: SummaryRewriteVariantAngle): void {
     console.log('onSelectedAngle: ', angle);
-    this.selections.update((s) => ({ ...s, selectedSummaryAngle: angle }));
+    this.selections.update((s) => ({
+      ...s,
+      selectedSummaryAngle: angle,
+      customSummaryText: null,
+    }));
+  }
+
+  onSummaryTextEdited(text: string | null): void {
+    this.selections.update((s) => ({ ...s, customSummaryText: text }));
   }
 
   onBulletToggled(key: BulletSelectionKey): void {

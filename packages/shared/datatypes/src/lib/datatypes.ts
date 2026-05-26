@@ -385,6 +385,7 @@ export type BulletSelectionKey = {
 
 export type UserSelections = {
   selectedSummaryAngle: SummaryRewriteVariantAngle | null;
+  customSummaryText: string | null;
   selectedBullets: BulletSelectionKey[];
   selectedKeywords: string[];
 };
