@@ -201,6 +201,22 @@
           </div>
         }
 
+        @if (cv()!.projects.length > 0) {
+          <div style="border-left: 3px solid #e63946; padding-left: 10px; margin-bottom: 6px;">
+            <span style="font-size: 13px; font-weight: bold; color: #e63946;">Projects</span>
+          </div>
+          <div style="margin-bottom: 16px;">
+            @for (proj of cv()!.projects; track proj.name) {
+              <div style="margin-bottom: 8px; padding-left: 14px; position: relative;">
+                <span style="position: absolute; left: 0; top: 1px; color: #e63946; font-size: 13px;">•</span>
+                <div style="font-weight: bold;">{{ proj.name }}</div>
+                @if (proj.description) { <div style="line-height: 1.5;">{{ proj.description }}</div> }
+                @if (proj.technologies.length > 0) { <div style="font-style: italic; color: #555; font-size: 10px;">{{ proj.technologies.join(', ') }}</div> }
+              </div>
+            }
+          </div>
+        }
+
         @if (cv()!.languages.length > 0) {
           <div style="border-left: 3px solid #e63946; padding-left: 10px; margin-bottom: 6px;">
             <span style="font-size: 13px; font-weight: bold; color: #e63946;">Languages</span>
@@ -283,6 +299,19 @@
           <div style="margin-bottom: 16px;">
             @for (cert of cv()!.certifications; track cert.name) {
               <div style="line-height: 1.6;">• {{ cert.name }}@if (cert.issuer) { · {{ cert.issuer }} }@if (cert.date) { · {{ cert.date }} }</div>
+            }
+          </div>
+        }
+
+        @if (cv()!.projects.length > 0) {
+          <div style="background: #f3e8ff; color: #7b2d8b; font-weight: bold; font-size: 13px; padding: 5px 10px; margin-bottom: 8px;">Projects</div>
+          <div style="margin-bottom: 16px;">
+            @for (proj of cv()!.projects; track proj.name) {
+              <div style="margin-bottom: 8px; border-left: 3px solid #e9d5ff; padding-left: 12px; background: #faf5ff; padding-top: 4px; padding-bottom: 4px; padding-right: 8px;">
+                <div style="font-weight: bold;">{{ proj.name }}</div>
+                @if (proj.description) { <div style="line-height: 1.5;">{{ proj.description }}</div> }
+                @if (proj.technologies.length > 0) { <div style="font-style: italic; color: #7b2d8b; font-size: 10px;">{{ proj.technologies.join(', ') }}</div> }
+              </div>
             }
           </div>
         }

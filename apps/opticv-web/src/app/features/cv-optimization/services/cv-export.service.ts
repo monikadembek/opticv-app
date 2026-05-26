@@ -15,6 +15,9 @@ interface PdfStyleProfile {
   nameAlign: 'left' | 'center';
   headingStyle: 'underline' | 'leftBar' | 'filledBand';
   skillsStyle: 'chips' | 'comma';
+  chipsStyle: 'outlined' | 'filled';
+  entryCardStyle: boolean;
+  accentBullet: boolean;
   nameFont: string;
   nameStyle: 'normal' | 'bold' | 'italic' | 'bolditalic';
   headingFont: string;
@@ -46,7 +49,8 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
     accentR: 42, accentG: 157, accentB: 143,
     nameSize: 20, headingSize: 12, bodySize: 10, contactSize: 9,
     contactAlign: 'left', nameAlign: 'left',
-    headingStyle: 'underline', skillsStyle: 'chips',
+    headingStyle: 'underline', skillsStyle: 'chips', chipsStyle: 'outlined',
+    entryCardStyle: false, accentBullet: false,
     nameFont: 'helvetica', nameStyle: 'bold',
     headingFont: 'helvetica',
     bodyFont: 'helvetica', bodyStyle: 'normal',
@@ -56,7 +60,8 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
     accentR: 230, accentG: 57, accentB: 70,
     nameSize: 20, headingSize: 12, bodySize: 10, contactSize: 9,
     contactAlign: 'right-block', nameAlign: 'left',
-    headingStyle: 'leftBar', skillsStyle: 'chips',
+    headingStyle: 'leftBar', skillsStyle: 'chips', chipsStyle: 'outlined',
+    entryCardStyle: false, accentBullet: true,
     nameFont: 'helvetica', nameStyle: 'bold',
     headingFont: 'helvetica',
     bodyFont: 'helvetica', bodyStyle: 'normal',
@@ -66,7 +71,8 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
     accentR: 123, accentG: 45, accentB: 139,
     nameSize: 20, headingSize: 12, bodySize: 10, contactSize: 9,
     contactAlign: 'left', nameAlign: 'center',
-    headingStyle: 'filledBand', skillsStyle: 'chips',
+    headingStyle: 'filledBand', skillsStyle: 'chips', chipsStyle: 'filled',
+    entryCardStyle: true, accentBullet: false,
     nameFont: 'helvetica', nameStyle: 'bold',
     headingFont: 'helvetica',
     bodyFont: 'helvetica', bodyStyle: 'normal',
@@ -255,7 +261,7 @@ export class CvExportService {
         doc.setDrawColor(profile.accentR, profile.accentG, profile.accentB);
         doc.setLineWidth(0.5);
 
-        if (templateId === 'executive') {
+        if (profile.chipsStyle === 'filled') {
           doc.setFillColor(profile.accentR, profile.accentG, profile.accentB);
           doc.roundedRect(
             x,
@@ -397,8 +403,7 @@ export class CvExportService {
       for (const exp of cv.experience) {
         checkPage(20);
 
-        if (templateId === 'executive') {
-          // Card: subtle left border
+        if (profile.entryCardStyle) {
           doc.setDrawColor(233, 213, 255);
           doc.setLineWidth(2.5);
           doc.line(marginLeft - 4, y - 10, marginLeft - 4, y + 4);
@@ -430,9 +435,8 @@ export class CvExportService {
           setBlack();
         }
 
-        const usedAccentBullet = templateId === 'modern';
         for (const bullet of exp.bullets) {
-          addBullet(bullet, usedAccentBullet);
+          addBullet(bullet, profile.accentBullet);
         }
         y += 6;
       }
@@ -444,7 +448,7 @@ export class CvExportService {
       for (const edu of cv.education) {
         checkPage(16);
 
-        if (templateId === 'executive') {
+        if (profile.entryCardStyle) {
           doc.setDrawColor(233, 213, 255);
           doc.setLineWidth(2.5);
           doc.line(marginLeft - 4, y - 10, marginLeft - 4, y + 4);

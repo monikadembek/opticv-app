@@ -1,9 +1,11 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   input,
   model,
   signal,
+  viewChildren,
 } from '@angular/core';
 import type { CvStructuredData } from '@opticv/datatypes';
 import { ButtonModule } from 'primeng/button';
@@ -29,6 +31,8 @@ export class CvTemplateSelector {
 
   readonly previewTemplateId = signal<CvTemplateId | null>(null);
   readonly previewVisible = signal(false);
+
+  private templateCards = viewChildren<ElementRef<HTMLElement>>('templateCard');
 
   select(id: CvTemplateId): void {
     this.selected.set(id);
@@ -69,9 +73,9 @@ export class CvTemplateSelector {
   }
 
   private focusCard(id: CvTemplateId): void {
-    const el = document.querySelector<HTMLElement>(
-      `[data-template-id="${id}"]`,
+    const card = this.templateCards().find(
+      (ref) => ref.nativeElement.dataset['templateId'] === id,
     );
-    el?.focus();
+    card?.nativeElement.focus();
   }
 }

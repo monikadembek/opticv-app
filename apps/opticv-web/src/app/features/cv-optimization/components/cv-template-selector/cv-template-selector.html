@@ -1,6 +1,7 @@
 <div class="flex flex-wrap gap-3 mb-4">
   @for (template of templates; track template.id) {
   <div
+    #templateCard
     role="radio"
     [attr.aria-checked]="selected() === template.id"
     [attr.aria-label]="template.name + ': ' + template.description"
