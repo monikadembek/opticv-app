@@ -329,7 +329,7 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ### 31. Select and apply optimizations, export optimized cv to pdf and docx
 
-**status: todo**
+**status: done - partially**
 
 1. Summary rewriten - allow selecting summary and editing
 
@@ -337,11 +337,38 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 - display it in textarea so that user can edit it
 - add button 'Apply selected version" to save it in db optimization_results for given prompt type in column userEditedOutput.
 
-2. Keyword gap - allow selecting. modifying, adding missing keywords and applying it to cv.
+2. Keyword gap - allow selecting, modifying, adding missing keywords and applying it to cv -> moved to separate task
 
-3. Bullet upgrades - allow selecting, modifying and applying suggestion to cv.
+3. Bullet upgrades - allow selecting, modifying and applying suggestion to cv -> moved to separate task
 
 4. Export optimized cv to pdf and docx
+
+---
+
+### 32. Create CV templates
+
+**status: in progress**
+
+- prepare 3 cv templates, based on the provided images;
+- allow user to select one of the 3 templates before triggering the export to file,
+- by default template number 1 should be selected and used for the exported cv in pdf and docx,
+- the exported cv should reflect the visual style of the selected template.
+
+---
+
+### 33. Keyword Gap - select, modify and apply optimizations
+
+**status: todo**
+
+- allow selecting, modifying, adding missing keywords and applying it to cv.
+
+---
+
+### 34. Bullet upgrades - select, modify and apply optimizations
+
+**status: todo**
+
+- allow selecting, modifying and applying suggestions to cv.
 
 ---
 
