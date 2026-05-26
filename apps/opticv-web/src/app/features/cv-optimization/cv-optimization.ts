@@ -3,7 +3,6 @@ import {
   Component,
   computed,
   DestroyRef,
-  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -102,7 +101,11 @@ function isInterviewPrepResult(value: unknown): value is InterviewPrepResult {
   return Array.isArray(v['questions']) && Array.isArray(v['preparationTips']);
 }
 
-const ActivePrompts = [PromptType.SUMMARY_REWRITE];
+const ActivePrompts = [
+  PromptType.KEYWORD_GAP,
+  PromptType.SUMMARY_REWRITE,
+  PromptType.BULLET_UPGRADE,
+];
 
 @Component({
   selector: 'app-cv-optimization-page',
@@ -133,7 +136,6 @@ export class CvOptimization {
   readonly isProcessing = signal<Map<PromptType, boolean>>(new Map());
   readonly jobApplicationId = signal<string | null>(null);
   readonly cvStructuredData = signal<CvStructuredData | null>(null);
-  readonly optimizationResultIds = signal<Map<PromptType, string>>(new Map());
   readonly selections = signal<UserSelections>({
     selectedSummaryAngle: null,
     customSummaryText: null,
@@ -222,15 +224,9 @@ export class CvOptimization {
     return retryable;
   });
 
-  constructor() {
-    effect(() => {
-      console.log('mergedCv(): ', this.mergedCv());
-    });
-  }
   runOptimization({ jobApplication, extractedData }: JobSubmittedData): void {
     this.results.set(new Map());
     this.isProcessing.set(new Map());
-    this.optimizationResultIds.set(new Map());
     this.selections.set({
       selectedSummaryAngle: null,
       customSummaryText: null,
@@ -239,10 +235,6 @@ export class CvOptimization {
     });
     this.jobApplicationId.set(jobApplication.id);
     this.cvStructuredData.set(extractedData);
-
-    let completedCount = 0;
-    // const totalJobs = Object.values(PromptType).length;
-    const totalJobs = ActivePrompts.length;
 
     from(Object.values(PromptType))
       .pipe(
@@ -275,10 +267,6 @@ export class CvOptimization {
           this.results.update((map) =>
             new Map(map).set(event.promptType, event),
           );
-          completedCount++;
-          if (completedCount === totalJobs) {
-            this.loadOptimizationResultIds(jobApplication.id);
-          }
         },
         error: (err) => console.error('Optimization stream error', err),
       });
@@ -309,7 +297,6 @@ export class CvOptimization {
           this.results.update((map) =>
             new Map(map).set(event.promptType, event),
           );
-          this.loadOptimizationResultIds(jobApplicationId);
         },
         error: (err) => {
           console.error('Retry stream error', err);
@@ -321,7 +308,6 @@ export class CvOptimization {
   }
 
   onAngleSelected(angle: SummaryRewriteVariantAngle): void {
-    console.log('onSelectedAngle: ', angle);
     this.selections.update((s) => ({
       ...s,
       selectedSummaryAngle: angle,
@@ -334,7 +320,6 @@ export class CvOptimization {
   }
 
   onBulletToggled(key: BulletSelectionKey): void {
-    console.log('onBulletToggled: ', key);
     this.selections.update((s) => {
       const exists = s.selectedBullets.some(
         (b) =>
@@ -357,7 +342,6 @@ export class CvOptimization {
   }
 
   onKeywordToggled(keyword: string): void {
-    console.log('onKeywordSelected: ', keyword);
     this.selections.update((s) => {
       const selectedKeywords = s.selectedKeywords.includes(keyword)
         ? s.selectedKeywords.filter((k) => k !== keyword)
@@ -382,22 +366,5 @@ export class CvOptimization {
     this.cvExportService.exportToDocx(cv).finally(() => {
       this.isExportingDocx.set(false);
     });
-  }
-
-  private loadOptimizationResultIds(jobApplicationId: string): void {
-    this.cvOptimizationApiService
-      .getOptimizationResults(jobApplicationId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (results) => {
-          const map = new Map<PromptType, string>();
-          for (const r of results) {
-            map.set(r.promptType as PromptType, r.id);
-          }
-          this.optimizationResultIds.set(map);
-        },
-        error: (err) =>
-          console.error('Failed to load optimization result IDs', err),
-      });
   }
 }
