@@ -338,8 +338,16 @@
   @if (jobApplicationId()) {
   <div class="border-t border-surface-200 pt-6 mt-6">
     <h3 class="text-base font-semibold text-surface-800 mb-3">Export CV</h3>
+
+    <p class="text-sm font-semibold text-surface-600 mb-2">Choose Template</p>
+    <p class="text-sm text-surface-600 mb-2">All Templates are ATS optimized</p>
+    <app-cv-template-selector
+      [(selected)]="selectedTemplate"
+      [mergedCv]="mergedCv()"
+    />
+
     @if (canExportCv()) {
-    <div class="flex flex-wrap gap-3">
+    <div class="flex flex-wrap gap-3 mt-2">
       <p-button
         label="Export CV as PDF"
         icon="pi pi-file-pdf"
@@ -360,8 +368,9 @@
       />
     </div>
     } @else {
-    <p class="text-sm text-surface-400 m-0">
-      Select at least one change above to export a modified CV.
+    <p class="text-sm text-surface-400 m-0 mt-2">
+      Run optimization process and select at least one change above to export a
+      modified CV.
     </p>
     }
   </div>

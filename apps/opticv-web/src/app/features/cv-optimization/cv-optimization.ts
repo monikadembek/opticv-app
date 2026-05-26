@@ -41,6 +41,8 @@ import { SummaryRewrite } from './components/summary-rewrite/summary-rewrite';
 import { BulletRewriter } from './components/bullet-rewriter/bullet-rewriter';
 import { CoverLetterEditor } from './components/cover-letter-editor/cover-letter-editor';
 import { InterviewPrep } from './components/interview-prep/interview-prep';
+import { CvTemplateId } from './cv-templates';
+import { CvTemplateSelector } from './components/cv-template-selector/cv-template-selector';
 import { applySelectionsToCV } from './utils/apply-selections';
 
 function isResumeAutopsyResult(value: unknown): value is ResumeAutopsyResult {
@@ -101,11 +103,7 @@ function isInterviewPrepResult(value: unknown): value is InterviewPrepResult {
   return Array.isArray(v['questions']) && Array.isArray(v['preparationTips']);
 }
 
-const ActivePrompts = [
-  PromptType.KEYWORD_GAP,
-  PromptType.SUMMARY_REWRITE,
-  PromptType.BULLET_UPGRADE,
-];
+const ActivePrompts = [PromptType.SUMMARY_REWRITE];
 
 @Component({
   selector: 'app-cv-optimization-page',
@@ -122,6 +120,7 @@ const ActivePrompts = [
     BulletRewriter,
     CoverLetterEditor,
     InterviewPrep,
+    CvTemplateSelector,
   ],
   templateUrl: './cv-optimization.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -144,6 +143,7 @@ export class CvOptimization {
   });
   readonly isExportingPdf = signal(false);
   readonly isExportingDocx = signal(false);
+  readonly selectedTemplate = signal<CvTemplateId>('ats');
 
   readonly autopsyResult = computed<ResumeAutopsyResult | null>(() => {
     const r = this.results().get(PromptType.RESUME_AUTOPSY)?.result;
@@ -187,9 +187,14 @@ export class CvOptimization {
     );
   });
 
+  readonly isProcessingAny = computed(() =>
+    ActivePrompts.some((p) => this.isProcessing().get(p) === true),
+  );
+
   readonly canExportCv = computed(() => {
     const s = this.selections();
     return (
+      !this.isProcessingAny() &&
       this.mergedCv() !== null &&
       (s.selectedSummaryAngle !== null ||
         s.selectedBullets.length > 0 ||
@@ -354,17 +359,21 @@ export class CvOptimization {
     const cv = this.mergedCv();
     if (!cv) return;
     this.isExportingPdf.set(true);
-    this.cvExportService.exportToPdf(cv).finally(() => {
-      this.isExportingPdf.set(false);
-    });
+    this.cvExportService
+      .exportToPdf(cv, this.selectedTemplate())
+      .finally(() => {
+        this.isExportingPdf.set(false);
+      });
   }
 
   exportCvAsDocx(): void {
     const cv = this.mergedCv();
     if (!cv) return;
     this.isExportingDocx.set(true);
-    this.cvExportService.exportToDocx(cv).finally(() => {
-      this.isExportingDocx.set(false);
-    });
+    this.cvExportService
+      .exportToDocx(cv, this.selectedTemplate())
+      .finally(() => {
+        this.isExportingDocx.set(false);
+      });
   }
 }
