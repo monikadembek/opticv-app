@@ -109,36 +109,11 @@
     }
   </div>
 
-  <!-- Edit & Apply -->
+  <!-- Selected indicator -->
   @if (selectedAngle()) {
-  <div class="mt-8 mb-8">
-    <h3 class="text-base font-semibold text-surface-800 m-0 mb-4">
-      Edit selected version
-    </h3>
-    <textarea
-      class="w-full p-3 min-h-32 mb-2"
-      pTextarea
-      [value]="editedText()"
-      (input)="editedText.set($any($event.target).value)"
-      aria-label="Edit selected summary variant"
-      rows="6"
-    ></textarea>
-
-    <div class="flex items-center gap-3 flex-wrap">
-      <p-button
-        type="button"
-        label="Apply selected version"
-        size="small"
-        [disabled]="isSaving()"
-        [loading]="isSaving()"
-        (click)="applySelected()"
-        aria-label="Apply selected summary version"
-      />
-
-      @if (saveErrorMsg()) {
-      <span class="text-sm text-red-600">{{ saveErrorMsg() }}</span>
-      }
-    </div>
+  <div class="mt-4 mb-4 flex items-center gap-2 text-sm text-green-700">
+    <i class="pi pi-check-circle"></i>
+    <span>{{ angleLabels[selectedAngle()!] }} variant selected — will be applied to your exported CV.</span>
   </div>
   }
 

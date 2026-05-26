@@ -377,14 +377,14 @@ export type OptimizationResultSummary = {
   userEditedOutput: string | null;
 };
 
-export type AppliedBullet = {
-  positionIndex: number;
-  bulletIndex: number;
-  text: string;
+export type BulletSelectionKey = {
+  company: string;
+  title: string;
+  originalText: string;
 };
 
-export type AppliedEdits = {
-  summary: string | null;
-  keywordsText: string | null;
-  bullets: AppliedBullet[];
+export type UserSelections = {
+  selectedSummaryAngle: SummaryRewriteVariantAngle | null;
+  selectedBullets: BulletSelectionKey[];
+  selectedKeywords: string[];
 };

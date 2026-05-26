@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   DestroyRef,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -17,8 +18,7 @@ import { AccordionModule } from 'primeng/accordion';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import {
-  AppliedBullet,
-  AppliedEdits,
+  BulletSelectionKey,
   BulletUpgradeResult,
   CoverLetterResult,
   CvStructuredData,
@@ -27,6 +27,8 @@ import {
   PromptType,
   ResumeAutopsyResult,
   SummaryRewriteResult,
+  SummaryRewriteVariantAngle,
+  UserSelections,
 } from '@opticv/datatypes';
 import {
   CvOptimizationApiService,
@@ -40,6 +42,7 @@ import { SummaryRewrite } from './components/summary-rewrite/summary-rewrite';
 import { BulletRewriter } from './components/bullet-rewriter/bullet-rewriter';
 import { CoverLetterEditor } from './components/cover-letter-editor/cover-letter-editor';
 import { InterviewPrep } from './components/interview-prep/interview-prep';
+import { applySelectionsToCV } from './utils/apply-selections';
 
 function isResumeAutopsyResult(value: unknown): value is ResumeAutopsyResult {
   if (typeof value !== 'object' || value === null) return false;
@@ -135,10 +138,10 @@ export class CvOptimization {
   readonly jobApplicationId = signal<string | null>(null);
   readonly cvStructuredData = signal<CvStructuredData | null>(null);
   readonly optimizationResultIds = signal<Map<PromptType, string>>(new Map());
-  readonly appliedEdits = signal<AppliedEdits>({
-    summary: null,
-    keywordsText: null,
-    bullets: [],
+  readonly selections = signal<UserSelections>({
+    selectedSummaryAngle: null,
+    selectedBullets: [],
+    selectedKeywords: [],
   });
   readonly isExportingPdf = signal(false);
   readonly isExportingDocx = signal(false);
@@ -173,6 +176,28 @@ export class CvOptimization {
     return isInterviewPrepResult(r) ? r : null;
   });
 
+  readonly mergedCv = computed<CvStructuredData | null>(() => {
+    const cv = this.cvStructuredData();
+    if (!cv) return null;
+    return applySelectionsToCV(
+      cv,
+      this.selections(),
+      this.summaryRewriteResult(),
+      this.bulletUpgradeResult(),
+      this.keywordGapResult(),
+    );
+  });
+
+  readonly canExportCv = computed(() => {
+    const s = this.selections();
+    return (
+      this.mergedCv() !== null &&
+      (s.selectedSummaryAngle !== null ||
+        s.selectedBullets.length > 0 ||
+        s.selectedKeywords.length > 0)
+    );
+  });
+
   readonly retryablePromptTypes = computed<Set<PromptType>>(() => {
     const retryable = new Set<PromptType>();
     if (this.jobApplicationId() === null) return retryable;
@@ -200,11 +225,20 @@ export class CvOptimization {
     return retryable;
   });
 
+  constructor() {
+    effect(() => {
+      console.log('mergedCv(): ', this.mergedCv());
+    });
+  }
   runOptimization({ jobApplication, extractedData }: JobSubmittedData): void {
     this.results.set(new Map());
     this.isProcessing.set(new Map());
     this.optimizationResultIds.set(new Map());
-    this.appliedEdits.set({ summary: null, keywordsText: null, bullets: [] });
+    this.selections.set({
+      selectedSummaryAngle: null,
+      selectedBullets: [],
+      selectedKeywords: [],
+    });
     this.jobApplicationId.set(jobApplication.id);
     this.cvStructuredData.set(extractedData);
 
@@ -288,44 +322,58 @@ export class CvOptimization {
       });
   }
 
-  onSummaryApplied(text: string): void {
-    this.appliedEdits.update((e) => ({ ...e, summary: text }));
-    console.log('summary applied: ', this.appliedEdits());
+  onAngleSelected(angle: SummaryRewriteVariantAngle): void {
+    console.log('onSelectedAngle: ', angle);
+    this.selections.update((s) => ({ ...s, selectedSummaryAngle: angle }));
   }
 
-  onKeywordsApplied(text: string): void {
-    this.appliedEdits.update((e) => ({ ...e, keywordsText: text }));
-    console.log('summary applied: ', this.appliedEdits());
-  }
-
-  onBulletApplied(bullet: AppliedBullet): void {
-    this.appliedEdits.update((e) => {
-      const existing = e.bullets.filter(
+  onBulletToggled(key: BulletSelectionKey): void {
+    console.log('onBulletToggled: ', key);
+    this.selections.update((s) => {
+      const exists = s.selectedBullets.some(
         (b) =>
-          !(
-            b.positionIndex === bullet.positionIndex &&
-            b.bulletIndex === bullet.bulletIndex
-          ),
+          b.company === key.company &&
+          b.title === key.title &&
+          b.originalText === key.originalText,
       );
-      return { ...e, bullets: [...existing, bullet] };
+      const selectedBullets = exists
+        ? s.selectedBullets.filter(
+            (b) =>
+              !(
+                b.company === key.company &&
+                b.title === key.title &&
+                b.originalText === key.originalText
+              ),
+          )
+        : [...s.selectedBullets, key];
+      return { ...s, selectedBullets };
     });
-    console.log('summary applied: ', this.appliedEdits());
   }
 
-  exportPdf(): void {
-    const cv = this.cvStructuredData();
+  onKeywordToggled(keyword: string): void {
+    console.log('onKeywordSelected: ', keyword);
+    this.selections.update((s) => {
+      const selectedKeywords = s.selectedKeywords.includes(keyword)
+        ? s.selectedKeywords.filter((k) => k !== keyword)
+        : [...s.selectedKeywords, keyword];
+      return { ...s, selectedKeywords };
+    });
+  }
+
+  exportCvAsPdf(): void {
+    const cv = this.mergedCv();
     if (!cv) return;
     this.isExportingPdf.set(true);
-    this.cvExportService.exportToPdf(cv, this.appliedEdits()).finally(() => {
+    this.cvExportService.exportToPdf(cv).finally(() => {
       this.isExportingPdf.set(false);
     });
   }
 
-  exportDocx(): void {
-    const cv = this.cvStructuredData();
+  exportCvAsDocx(): void {
+    const cv = this.mergedCv();
     if (!cv) return;
     this.isExportingDocx.set(true);
-    this.cvExportService.exportToDocx(cv, this.appliedEdits()).finally(() => {
+    this.cvExportService.exportToDocx(cv).finally(() => {
       this.isExportingDocx.set(false);
     });
   }

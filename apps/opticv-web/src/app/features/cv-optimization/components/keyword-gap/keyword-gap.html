@@ -89,13 +89,13 @@
           @for (item of missingLikelyHas(); track item.keyword) {
           <li
             class="flex flex-col gap-1 rounded-lg border px-4 py-3 transition-colors"
-            [class]="selectedKeywords().has(item.keyword) ? 'border-primary-400 bg-primary-50/40' : 'border-surface-200'"
+            [class]="isSelected(item.keyword) ? 'border-primary-400 bg-primary-50/40' : 'border-surface-200'"
           >
             <div class="flex items-center gap-2 flex-wrap">
               <input
                 type="checkbox"
                 [id]="'kw-' + item.keyword"
-                [checked]="selectedKeywords().has(item.keyword)"
+                [checked]="isSelected(item.keyword)"
                 (change)="toggleKeyword(item.keyword)"
                 class="accent-primary-500"
                 [attr.aria-label]="'Select keyword ' + item.keyword"
@@ -153,13 +153,13 @@
           @for (item of missingGenuinelyLacks(); track item.keyword) {
           <li
             class="flex flex-col gap-1 rounded-lg border px-4 py-3 transition-colors"
-            [class]="selectedKeywords().has(item.keyword) ? 'border-primary-400 bg-primary-50/40' : 'border-surface-200'"
+            [class]="isSelected(item.keyword) ? 'border-primary-400 bg-primary-50/40' : 'border-surface-200'"
           >
             <div class="flex items-center gap-2 flex-wrap">
               <input
                 type="checkbox"
                 [id]="'kw-lacks-' + item.keyword"
-                [checked]="selectedKeywords().has(item.keyword)"
+                [checked]="isSelected(item.keyword)"
                 (change)="toggleKeyword(item.keyword)"
                 class="accent-primary-500"
                 [attr.aria-label]="'Select keyword ' + item.keyword"
@@ -205,36 +205,12 @@
       }
     </div>
 
-    <!-- Edit & Apply -->
-    @if (hasSelection()) {
-    <div class="mt-4">
-      <h4 class="text-sm font-semibold text-surface-800 m-0 mb-2">
-        Edit keywords to incorporate in Optimized CV
-      </h4>
-      <textarea
-        class="w-full min-h-24 mb-2"
-        pTextarea
-        [value]="editedText()"
-        (input)="onTextareaInput($any($event.target).value)"
-        aria-label="Edit keywords to incorporate into CV"
-        rows="4"
-      ></textarea>
-      <div class="flex items-center gap-3 flex-wrap">
-        <p-button
-          type="button"
-          label="Apply keywords"
-          size="small"
-          [loading]="!hasSelection() || isSaving()"
-          [disabled]="!hasSelection() || isSaving()"
-          (click)="applyKeywords()"
-          aria-label="Apply selected keywords"
-        />
-
-        @if (saveErrorMsg()) {
-        <span class="text-sm text-red-600">{{ saveErrorMsg() }}</span>
-        }
-      </div>
-    </div>
+    @if (selectedKeywords().length > 0) {
+    <p class="mt-3 text-sm text-green-700 flex items-center gap-1.5">
+      <i class="pi pi-check-circle"></i>
+      {{ selectedKeywords().length }} keyword(s) selected — will be added to
+      your exported CV.
+    </p>
     }
   </div>
   }
@@ -255,11 +231,23 @@
         class="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-surface-200"
       >
         @switch (item.matchType) { @case ('exact') {
-        <i class="pi pi-check-circle text-green-500 shrink-0"></i>
+        <i
+          class="pi pi-check-circle text-green-500 shrink-0"
+          pTooltip="Exact match type"
+          tooltipPosition="top"
+        ></i>
         } @case ('partial') {
-        <i class="pi pi-circle text-yellow-500 shrink-0"></i>
+        <i
+          class="pi pi-circle text-yellow-500 shrink-0"
+          pTooltip="Partial match type"
+          tooltipPosition="top"
+        ></i>
         } @default {
-        <i class="pi pi-minus-circle text-teal-500 shrink-0"></i>
+        <i
+          class="pi pi-minus-circle text-teal-500 shrink-0"
+          pTooltip="Different semantic from matched keyword"
+          tooltipPosition="top"
+        ></i>
         } } @if (item.isRequired) {
         <span
           class="text-xs bg-blue-100 text-blue-700 rounded px-1.5 py-0.5 shrink-0"

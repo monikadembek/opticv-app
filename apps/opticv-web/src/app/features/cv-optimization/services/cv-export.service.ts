@@ -1,16 +1,16 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import type { AppliedEdits, CvStructuredData } from '@opticv/datatypes';
+import type { CvStructuredData } from '@opticv/datatypes';
 
 @Injectable({ providedIn: 'root' })
 export class CvExportService {
   private readonly platformId = inject(PLATFORM_ID);
 
-  async exportToPdf(cv: CvStructuredData, edits: AppliedEdits): Promise<void> {
+  async exportToPdf(cv: CvStructuredData): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) return;
 
     const { jsPDF } = await import('jspdf');
-    const merged = this.mergeCv(cv, edits);
+    const merged = cv;
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
 
     const marginLeft = 56;
@@ -199,13 +199,13 @@ export class CvExportService {
     doc.save('optimized-cv.pdf');
   }
 
-  async exportToDocx(cv: CvStructuredData, edits: AppliedEdits): Promise<void> {
+  async exportToDocx(cv: CvStructuredData): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) return;
 
     const { Document, HeadingLevel, Packer, Paragraph, TextRun } =
       await import('docx');
     type Para = InstanceType<typeof Paragraph>;
-    const merged = this.mergeCv(cv, edits);
+    const merged = cv;
     const children: Para[] = [];
 
     const heading = (text: string): Para =>
@@ -353,34 +353,4 @@ export class CvExportService {
     URL.revokeObjectURL(url);
   }
 
-  private mergeCv(cv: CvStructuredData, edits: AppliedEdits): CvStructuredData {
-    const summary = edits.summary ?? cv.summary;
-
-    const skills = [...cv.skills];
-    if (edits.keywordsText) {
-      const newKeywords = edits.keywordsText
-        .split(/[\n,]/)
-        .map((k) => k.trim())
-        .filter(Boolean);
-      const existing = new Set(skills.map((s) => s.toLowerCase()));
-      for (const kw of newKeywords) {
-        if (!existing.has(kw.toLowerCase())) {
-          skills.push(kw);
-          existing.add(kw.toLowerCase());
-        }
-      }
-    }
-
-    const experience = cv.experience.map((exp, pi) => {
-      const bullets = exp.bullets.map((b, bi) => {
-        const applied = edits.bullets.find(
-          (ab) => ab.positionIndex === pi && ab.bulletIndex === bi,
-        );
-        return applied ? applied.text : b;
-      });
-      return { ...exp, bullets };
-    });
-
-    return { ...cv, summary, skills, experience };
-  }
 }
