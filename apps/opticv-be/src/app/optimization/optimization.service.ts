@@ -10,6 +10,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import type { OptimizationJobPayload } from './optimization.types.js';
 import { PromptType } from '../../generated/prisma/enums.js';
+import { OptimizationResultSummary } from '@opticv/datatypes';
 
 const ALL_PROMPT_TYPES = Object.values(PromptType);
 
@@ -29,7 +30,14 @@ export class OptimizationService {
 
     const runId = randomUUID();
 
-    const payloadBase = { runId, jobApplicationId, userId, cvText, parsedSections, jobDescription };
+    const payloadBase = {
+      runId,
+      jobApplicationId,
+      userId,
+      cvText,
+      parsedSections,
+      jobDescription,
+    };
 
     await Promise.all(
       ALL_PROMPT_TYPES.map((promptType) =>
@@ -40,7 +48,11 @@ export class OptimizationService {
               promptType,
             },
           },
-          create: { applicationId: jobApplicationId, promptType, status: 'PENDING' },
+          create: {
+            applicationId: jobApplicationId,
+            promptType,
+            status: 'PENDING',
+          },
           update: {
             status: 'PENDING',
             structuredOutput: Prisma.DbNull,
@@ -79,9 +91,16 @@ export class OptimizationService {
 
     await this.prisma.optimizationResult.upsert({
       where: {
-        applicationId_promptType: { applicationId: jobApplicationId, promptType },
+        applicationId_promptType: {
+          applicationId: jobApplicationId,
+          promptType,
+        },
       },
-      create: { applicationId: jobApplicationId, promptType, status: 'PENDING' },
+      create: {
+        applicationId: jobApplicationId,
+        promptType,
+        status: 'PENDING',
+      },
       update: {
         status: 'PENDING',
         structuredOutput: Prisma.DbNull,
@@ -95,7 +114,15 @@ export class OptimizationService {
 
     await this.queue.add(
       'optimize',
-      { runId, jobApplicationId, userId, promptType, cvText, parsedSections, jobDescription } satisfies OptimizationJobPayload,
+      {
+        runId,
+        jobApplicationId,
+        userId,
+        promptType,
+        cvText,
+        parsedSections,
+        jobDescription,
+      } satisfies OptimizationJobPayload,
       { attempts: 2, backoff: { type: 'exponential', delay: 2000 } },
     );
 
@@ -125,7 +152,36 @@ export class OptimizationService {
     return { userEditedOutput: updated.userEditedOutput as string };
   }
 
-  async validateStreamAccess(jobApplicationId: string, userId: string): Promise<void> {
+  async getOptimizationResultSummaries(
+    jobApplicationId: string,
+    userId: string,
+  ): Promise<OptimizationResultSummary[]> {
+    const application = await this.prisma.jobApplication.findUnique({
+      where: { id: jobApplicationId },
+      select: { userId: true },
+    });
+
+    if (!application || application.userId !== userId) {
+      throw new ForbiddenException();
+    }
+
+    const results = await this.prisma.optimizationResult.findMany({
+      where: { applicationId: jobApplicationId },
+      select: {
+        id: true,
+        promptType: true,
+        status: true,
+        userEditedOutput: true,
+      },
+    });
+
+    return results as OptimizationResultSummary[];
+  }
+
+  async validateStreamAccess(
+    jobApplicationId: string,
+    userId: string,
+  ): Promise<void> {
     const record = await this.prisma.jobApplication.findUnique({
       where: { id: jobApplicationId },
       select: { userId: true },
@@ -138,7 +194,11 @@ export class OptimizationService {
   private async loadAndValidateApplication(
     jobApplicationId: string,
     userId: string,
-  ): Promise<{ cvText: string; parsedSections: unknown; jobDescription: string }> {
+  ): Promise<{
+    cvText: string;
+    parsedSections: unknown;
+    jobDescription: string;
+  }> {
     const record = await this.prisma.jobApplication.findUnique({
       where: { id: jobApplicationId },
       include: { cvDocument: true },

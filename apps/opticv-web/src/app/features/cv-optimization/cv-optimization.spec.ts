@@ -2,8 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { NEVER, Subject, of } from 'rxjs';
 import { MessageService } from 'primeng/api';
-import type { CvDocumentListItem, JobApplication } from '@opticv/datatypes';
+import type { CvDocumentListItem, CvStructuredData, JobApplication } from '@opticv/datatypes';
 import { PromptType } from '@opticv/datatypes';
+import type { JobSubmittedData } from './components/job-upload/job-upload';
 import { CvOptimization } from './cv-optimization';
 import {
   CvOptimizationApiService,
@@ -31,6 +32,23 @@ const mockJobApplication: JobApplication = {
   notes: null,
   createdAt: new Date('2024-01-01').toISOString(),
   updatedAt: new Date('2024-01-01').toISOString(),
+};
+
+const mockCvStructuredData: CvStructuredData = {
+  contact: { name: 'Test User', email: 'test@example.com', phone: null, location: null, linkedin: null, website: null },
+  summary: null,
+  experience: [],
+  education: [],
+  skills: [],
+  certifications: [],
+  projects: [],
+  languages: [],
+  other: null,
+};
+
+const mockJobSubmittedData: JobSubmittedData = {
+  jobApplication: mockJobApplication,
+  extractedData: mockCvStructuredData,
 };
 
 const ALL_PROMPT_TYPES = Object.values(PromptType);
@@ -278,13 +296,13 @@ describe('CvOptimization', () => {
         ]),
       );
 
-      component.runOptimization(mockJobApplication);
+      component.runOptimization(mockJobSubmittedData);
 
       expect(component.results().size).toBe(0);
     });
 
     it('calls runSingleOptimizationProcess for every PromptType', () => {
-      component.runOptimization(mockJobApplication);
+      component.runOptimization(mockJobSubmittedData);
 
       expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledTimes(
         ALL_PROMPT_TYPES.length,
@@ -302,7 +320,7 @@ describe('CvOptimization', () => {
         of({ runId: 'run-abc' }),
       );
 
-      component.runOptimization(mockJobApplication);
+      component.runOptimization(mockJobSubmittedData);
 
       expect(apiService.streamOptimizationEvents).toHaveBeenCalledWith(
         mockJobApplication.id,
@@ -313,7 +331,7 @@ describe('CvOptimization', () => {
     it('sets isProcessing to true for a prompt type as soon as its stream opens', () => {
       apiService.streamOptimizationEvents.mockReturnValue(NEVER);
 
-      component.runOptimization(mockJobApplication);
+      component.runOptimization(mockJobSubmittedData);
 
       expect(component.isProcessing().get(PromptType.RESUME_AUTOPSY)).toBe(true);
     });
@@ -324,7 +342,7 @@ describe('CvOptimization', () => {
         sseSubject.asObservable(),
       );
 
-      component.runOptimization(mockJobApplication);
+      component.runOptimization(mockJobSubmittedData);
 
       const event: SseJobCompleteEvent = {
         promptType: PromptType.RESUME_AUTOPSY,
@@ -344,7 +362,7 @@ describe('CvOptimization', () => {
         sseSubject.asObservable(),
       );
 
-      component.runOptimization(mockJobApplication);
+      component.runOptimization(mockJobSubmittedData);
 
       const failedEvent: SseJobCompleteEvent = {
         promptType: PromptType.KEYWORD_GAP,
@@ -370,7 +388,7 @@ describe('CvOptimization', () => {
         return s.asObservable();
       });
 
-      component.runOptimization(mockJobApplication);
+      component.runOptimization(mockJobSubmittedData);
 
       const autopsyEvent: SseJobCompleteEvent = {
         promptType: PromptType.RESUME_AUTOPSY,
@@ -397,7 +415,7 @@ describe('CvOptimization', () => {
     it('a second call to runOptimization discards results from the first', () => {
       apiService.streamOptimizationEvents.mockReturnValue(NEVER);
 
-      component.runOptimization(mockJobApplication);
+      component.runOptimization(mockJobSubmittedData);
       // Manually poke in a result that should be cleared on re-run
       component.results.update((m) =>
         new Map(m).set(PromptType.RESUME_AUTOPSY, {
@@ -406,7 +424,7 @@ describe('CvOptimization', () => {
         }),
       );
 
-      component.runOptimization(mockJobApplication);
+      component.runOptimization(mockJobSubmittedData);
 
       expect(component.results().size).toBe(0);
     });

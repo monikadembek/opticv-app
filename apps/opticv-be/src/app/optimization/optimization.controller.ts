@@ -22,7 +22,11 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { RunIdResponseDto, SaveUserOutputResponseDto } from './dto/optimization-response.dto.js';
+import {
+  RunIdResponseDto,
+  SaveUserOutputResponseDto,
+} from './dto/optimization-response.dto.js';
+import { OptimizationResultSummaryDto } from './dto/optimization-result-summary.dto.js';
 import { SaveUserOutputDto } from './dto/save-user-output.dto.js';
 import { SupabaseGuard } from '../auth/supabase.guard.js';
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
@@ -50,22 +54,38 @@ export class OptimizationController {
 
   @Post('job-applications/:jobApplicationId/run')
   @HttpCode(202)
-  @ApiOperation({ summary: 'Trigger full optimization run for a job application' })
-  @ApiResponse({ status: 202, type: RunIdResponseDto, description: 'Optimization run accepted' })
+  @ApiOperation({
+    summary: 'Trigger full optimization run for a job application',
+  })
+  @ApiResponse({
+    status: 202,
+    type: RunIdResponseDto,
+    description: 'Optimization run accepted',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Job application not found' })
   async triggerOptimization(
     @Param('jobApplicationId') jobApplicationId: string,
     @CurrentUser() user: UserModel,
   ): Promise<{ runId: string }> {
-    return this.optimizationService.triggerOptimization(jobApplicationId, user.id);
+    return this.optimizationService.triggerOptimization(
+      jobApplicationId,
+      user.id,
+    );
   }
 
   @Post('job-applications/:jobApplicationId/run/:promptType')
   @HttpCode(202)
   @ApiOperation({ summary: 'Trigger a single optimization job within a run' })
-  @ApiResponse({ status: 202, type: RunIdResponseDto, description: 'Job accepted' })
-  @ApiResponse({ status: 400, description: 'Invalid promptType or missing runId' })
+  @ApiResponse({
+    status: 202,
+    type: RunIdResponseDto,
+    description: 'Job accepted',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid promptType or missing runId',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Job application not found' })
   async triggerSingleJob(
@@ -87,9 +107,15 @@ export class OptimizationController {
   }
 
   @Patch(':id/user-output')
-  @ApiOperation({ summary: 'Save user-edited output for an optimization result' })
+  @ApiOperation({
+    summary: 'Save user-edited output for an optimization result',
+  })
   @ApiBody({ type: SaveUserOutputDto })
-  @ApiResponse({ status: 200, type: SaveUserOutputResponseDto, description: 'User output saved' })
+  @ApiResponse({
+    status: 200,
+    type: SaveUserOutputResponseDto,
+    description: 'User output saved',
+  })
   @ApiResponse({ status: 400, description: 'Validation error' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
@@ -98,7 +124,28 @@ export class OptimizationController {
     @Body() body: SaveUserOutputDto,
     @CurrentUser() user: UserModel,
   ): Promise<{ userEditedOutput: string }> {
-    return this.optimizationService.saveUserOutput(id, body.userEditedOutput, user.id);
+    return this.optimizationService.saveUserOutput(
+      id,
+      body.userEditedOutput,
+      user.id,
+    );
+  }
+
+  @Get('job-applications/:jobApplicationId/results')
+  @ApiOperation({
+    summary: 'Get optimization result summaries for a job application',
+  })
+  @ApiResponse({ status: 200, type: [OptimizationResultSummaryDto] })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  getOptimizationResultSummaries(
+    @Param('jobApplicationId') jobApplicationId: string,
+    @CurrentUser() user: UserModel,
+  ): Promise<OptimizationResultSummaryDto[]> {
+    return this.optimizationService.getOptimizationResultSummaries(
+      jobApplicationId,
+      user.id,
+    );
   }
 
   @Get('job-applications/:jobApplicationId/stream')
@@ -119,7 +166,10 @@ export class OptimizationController {
       throw new BadRequestException('runId query parameter is required.');
     }
 
-    await this.optimizationService.validateStreamAccess(jobApplicationId, user.id);
+    await this.optimizationService.validateStreamAccess(
+      jobApplicationId,
+      user.id,
+    );
 
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
@@ -135,8 +185,13 @@ export class OptimizationController {
       resolved++;
 
       if (resolved === TOTAL_JOBS) {
-        const completePayload = { runId, completedAt: new Date().toISOString() };
-        res.write(`event: run-complete\ndata: ${JSON.stringify(completePayload)}\n\n`);
+        const completePayload = {
+          runId,
+          completedAt: new Date().toISOString(),
+        };
+        res.write(
+          `event: run-complete\ndata: ${JSON.stringify(completePayload)}\n\n`,
+        );
         unsubscribe();
         res.end();
       }

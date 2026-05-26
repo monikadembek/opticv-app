@@ -3,18 +3,24 @@ import {
   Component,
   computed,
   input,
+  output,
 } from '@angular/core';
 import type { KeywordGapResult } from '@opticv/datatypes';
+import { TooltipModule } from 'primeng/tooltip';
 
 const RING_CIRCUMFERENCE = 2 * Math.PI * 40;
 
 @Component({
+  imports: [TooltipModule],
   selector: 'app-keyword-gap',
   templateUrl: './keyword-gap.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class KeywordGap {
   readonly result = input.required<KeywordGapResult>();
+  readonly selectedKeywords = input<string[]>([]);
+
+  readonly keywordToggled = output<string>();
 
   readonly ringCircumference = RING_CIRCUMFERENCE;
 
@@ -43,4 +49,12 @@ export class KeywordGap {
   readonly strokeDashoffset = computed(
     () => RING_CIRCUMFERENCE * (1 - this.result().matchScore / 100),
   );
+
+  isSelected(keyword: string): boolean {
+    return this.selectedKeywords().includes(keyword);
+  }
+
+  toggleKeyword(keyword: string): void {
+    this.keywordToggled.emit(keyword);
+  }
 }

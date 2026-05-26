@@ -1,6 +1,6 @@
 <div class="mx-auto max-w-2xl px-4 py-12">
   <h1 class="mb-8 text-3xl font-bold text-surface-900">CV Optimization</h1>
-  <p-accordion value="0">
+  <p-accordion [value]="['0']" [multiple]="true">
     <p-accordion-panel value="0">
       <p-accordion-header>
         Select CV and paste job description
@@ -38,20 +38,20 @@
           [hasData]="autopsyResult() !== null"
         >
           @if (autopsyResult(); as result) {
-            <app-ats-score [data]="result" />
+          <app-ats-score [data]="result" />
           }
         </app-optimization-result-panel>
         @if (retryablePromptTypes().has(PromptType.RESUME_AUTOPSY)) {
-          <div class="mt-4 flex justify-end">
-            <p-button
-              label="Retry"
-              ariaLabel="Retry ATS Analysis"
-              icon="pi pi-refresh"
-              severity="warn"
-              [disabled]="isProcessing().get(PromptType.RESUME_AUTOPSY) ?? false"
-              (onClick)="retryOptimization(PromptType.RESUME_AUTOPSY)"
-            />
-          </div>
+        <div class="mt-4 flex justify-end">
+          <p-button
+            label="Retry"
+            ariaLabel="Retry ATS Analysis"
+            icon="pi pi-refresh"
+            severity="warn"
+            [disabled]="isProcessing().get(PromptType.RESUME_AUTOPSY) ?? false"
+            (onClick)="retryOptimization(PromptType.RESUME_AUTOPSY)"
+          />
+        </div>
         }
       </p-accordion-content>
     </p-accordion-panel>
@@ -84,20 +84,24 @@
           [hasData]="keywordGapResult() !== null"
         >
           @if (keywordGapResult(); as result) {
-            <app-keyword-gap [result]="result" />
+          <app-keyword-gap
+            [result]="result"
+            [selectedKeywords]="selections().selectedKeywords"
+            (keywordToggled)="onKeywordToggled($event)"
+          />
           }
         </app-optimization-result-panel>
         @if (retryablePromptTypes().has(PromptType.KEYWORD_GAP)) {
-          <div class="mt-4 flex justify-end">
-            <p-button
-              label="Retry"
-              ariaLabel="Retry Keyword Gap Analysis"
-              icon="pi pi-refresh"
-              severity="warn"
-              [disabled]="isProcessing().get(PromptType.KEYWORD_GAP) ?? false"
-              (onClick)="retryOptimization(PromptType.KEYWORD_GAP)"
-            />
-          </div>
+        <div class="mt-4 flex justify-end">
+          <p-button
+            label="Retry"
+            ariaLabel="Retry Keyword Gap Analysis"
+            icon="pi pi-refresh"
+            severity="warn"
+            [disabled]="isProcessing().get(PromptType.KEYWORD_GAP) ?? false"
+            (onClick)="retryOptimization(PromptType.KEYWORD_GAP)"
+          />
+        </div>
         }
       </p-accordion-content>
     </p-accordion-panel>
@@ -130,20 +134,25 @@
           [hasData]="summaryRewriteResult() !== null"
         >
           @if (summaryRewriteResult(); as result) {
-            <app-summary-rewrite [result]="result" />
+          <app-summary-rewrite
+            [result]="result"
+            [selectedAngle]="selections().selectedSummaryAngle"
+            (angleSelected)="onAngleSelected($event)"
+            (summaryTextEdited)="onSummaryTextEdited($event)"
+          />
           }
         </app-optimization-result-panel>
         @if (retryablePromptTypes().has(PromptType.SUMMARY_REWRITE)) {
-          <div class="mt-4 flex justify-end">
-            <p-button
-              label="Retry"
-              ariaLabel="Retry Rewritten Summary"
-              icon="pi pi-refresh"
-              severity="warn"
-              [disabled]="isProcessing().get(PromptType.SUMMARY_REWRITE) ?? false"
-              (onClick)="retryOptimization(PromptType.SUMMARY_REWRITE)"
-            />
-          </div>
+        <div class="mt-4 flex justify-end">
+          <p-button
+            label="Retry"
+            ariaLabel="Retry Rewritten Summary"
+            icon="pi pi-refresh"
+            severity="warn"
+            [disabled]="isProcessing().get(PromptType.SUMMARY_REWRITE) ?? false"
+            (onClick)="retryOptimization(PromptType.SUMMARY_REWRITE)"
+          />
+        </div>
         }
       </p-accordion-content>
     </p-accordion-panel>
@@ -176,20 +185,24 @@
           [hasData]="bulletUpgradeResult() !== null"
         >
           @if (bulletUpgradeResult(); as result) {
-            <app-bullet-rewriter [result]="result" />
+          <app-bullet-rewriter
+            [result]="result"
+            [selectedBullets]="selections().selectedBullets"
+            (bulletToggled)="onBulletToggled($event)"
+          />
           }
         </app-optimization-result-panel>
         @if (retryablePromptTypes().has(PromptType.BULLET_UPGRADE)) {
-          <div class="mt-4 flex justify-end">
-            <p-button
-              label="Retry"
-              ariaLabel="Retry Bullet Upgrades"
-              icon="pi pi-refresh"
-              severity="warn"
-              [disabled]="isProcessing().get(PromptType.BULLET_UPGRADE) ?? false"
-              (onClick)="retryOptimization(PromptType.BULLET_UPGRADE)"
-            />
-          </div>
+        <div class="mt-4 flex justify-end">
+          <p-button
+            label="Retry"
+            ariaLabel="Retry Bullet Upgrades"
+            icon="pi pi-refresh"
+            severity="warn"
+            [disabled]="isProcessing().get(PromptType.BULLET_UPGRADE) ?? false"
+            (onClick)="retryOptimization(PromptType.BULLET_UPGRADE)"
+          />
+        </div>
         }
       </p-accordion-content>
     </p-accordion-panel>
@@ -222,20 +235,20 @@
           [hasData]="coverLetterResult() !== null"
         >
           @if (coverLetterResult(); as result) {
-            <app-cover-letter-editor [result]="result" />
+          <app-cover-letter-editor [result]="result" />
           }
         </app-optimization-result-panel>
         @if (retryablePromptTypes().has(PromptType.COVER_LETTER)) {
-          <div class="mt-4 flex justify-end">
-            <p-button
-              label="Retry"
-              ariaLabel="Retry Cover Letter"
-              icon="pi pi-refresh"
-              severity="warn"
-              [disabled]="isProcessing().get(PromptType.COVER_LETTER) ?? false"
-              (onClick)="retryOptimization(PromptType.COVER_LETTER)"
-            />
-          </div>
+        <div class="mt-4 flex justify-end">
+          <p-button
+            label="Retry"
+            ariaLabel="Retry Cover Letter"
+            icon="pi pi-refresh"
+            severity="warn"
+            [disabled]="isProcessing().get(PromptType.COVER_LETTER) ?? false"
+            (onClick)="retryOptimization(PromptType.COVER_LETTER)"
+          />
+        </div>
         }
       </p-accordion-content>
     </p-accordion-panel>
@@ -268,20 +281,20 @@
           [hasData]="interviewPrepResult() !== null"
         >
           @if (interviewPrepResult(); as result) {
-            <app-interview-prep [result]="result" />
+          <app-interview-prep [result]="result" />
           }
         </app-optimization-result-panel>
         @if (retryablePromptTypes().has(PromptType.INTERVIEW_PREP)) {
-          <div class="mt-4 flex justify-end">
-            <p-button
-              label="Retry"
-              ariaLabel="Retry Interview Prep"
-              icon="pi pi-refresh"
-              severity="warn"
-              [disabled]="isProcessing().get(PromptType.INTERVIEW_PREP) ?? false"
-              (onClick)="retryOptimization(PromptType.INTERVIEW_PREP)"
-            />
-          </div>
+        <div class="mt-4 flex justify-end">
+          <p-button
+            label="Retry"
+            ariaLabel="Retry Interview Prep"
+            icon="pi pi-refresh"
+            severity="warn"
+            [disabled]="isProcessing().get(PromptType.INTERVIEW_PREP) ?? false"
+            (onClick)="retryOptimization(PromptType.INTERVIEW_PREP)"
+          />
+        </div>
         }
       </p-accordion-content>
     </p-accordion-panel>
@@ -321,4 +334,36 @@
       </p-accordion-content>
     </p-accordion-panel>
   </p-accordion>
+
+  @if (jobApplicationId()) {
+  <div class="border-t border-surface-200 pt-6 mt-6">
+    <h3 class="text-base font-semibold text-surface-800 mb-3">Export CV</h3>
+    @if (canExportCv()) {
+    <div class="flex flex-wrap gap-3">
+      <p-button
+        label="Export CV as PDF"
+        icon="pi pi-file-pdf"
+        size="small"
+        [loading]="isExportingPdf()"
+        [disabled]="isExportingPdf()"
+        (onClick)="exportCvAsPdf()"
+        ariaLabel="Export optimized CV to PDF"
+      />
+      <p-button
+        label="Export CV as DOCX"
+        icon="pi pi-file-word"
+        size="small"
+        [loading]="isExportingDocx()"
+        [disabled]="isExportingDocx()"
+        (onClick)="exportCvAsDocx()"
+        ariaLabel="Export optimized CV to DOCX"
+      />
+    </div>
+    } @else {
+    <p class="text-sm text-surface-400 m-0">
+      Select at least one change above to export a modified CV.
+    </p>
+    }
+  </div>
+  }
 </div>

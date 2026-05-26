@@ -15,22 +15,49 @@
     }
   </div>
 
+  <!-- Recommendation Reason -->
+  @if (result().recommendationReason; as reason) {
+  <div class="rounded-lg bg-surface-50 border border-surface-200 p-4">
+    <p
+      class="m-0 text-xs font-semibold uppercase tracking-wide text-surface-400 mb-1"
+    >
+      Why the recommended variant?
+    </p>
+    <p class="m-0 text-sm text-surface-700">{{ reason }}</p>
+  </div>
+  }
+
   <!-- Variant Cards -->
   <div class="space-y-4">
     <h3 class="text-base font-semibold text-surface-800">Rewritten Variants</h3>
     @for (variant of result().variants; track variant.angle) {
     <div
-      class="rounded-xl border p-5 space-y-3"
-      [class]="variant.angle === result().recommendedVariant
-          ? 'border-primary-500 bg-primary-50/40'
-          : 'border-surface-200'"
-      role="article"
-      [attr.aria-label]="angleLabels[variant.angle] + ' variant'"
+      class="rounded-xl border p-5 space-y-3 cursor-pointer transition-colors"
+      [class]="selectedAngle() === variant.angle
+          ? 'border-green-500 border-2'
+          : 'border-surface-200 hover:border-surface-500'"
+      role="button"
+      [attr.aria-pressed]="selectedAngle() === variant.angle"
+      [attr.aria-label]="'Select ' + angleLabels[variant.angle] + ' variant'"
+      (click)="selectVariant(variant.angle)"
+      (keydown.enter)="selectVariant(variant.angle)"
+      (keydown.space)="selectVariant(variant.angle)"
+      tabindex="0"
     >
       <!-- Card Header -->
       <div
         class="flex items-center gap-2 flex-wrap pb-1 border-b-gray-400 border-b border-b-solid"
       >
+        <input
+          type="radio"
+          [name]="'summary-variant'"
+          [value]="variant.angle"
+          [checked]="selectedAngle() === variant.angle"
+          [attr.aria-label]="'Select ' + angleLabels[variant.angle]"
+          class="accent-primary-500"
+          (click)="$event.stopPropagation()"
+          (change)="selectVariant(variant.angle)"
+        />
         <span
           class="text-sm font-semibold uppercase tracking-wide bg-surface-100 text-surface-600 rounded-full px-2 py-0.5"
         >
@@ -82,15 +109,27 @@
     }
   </div>
 
-  <!-- Recommendation Reason -->
-  @if (result().recommendationReason; as reason) {
-  <div class="rounded-lg bg-surface-50 border border-surface-200 p-4">
-    <p
-      class="m-0 text-xs font-semibold uppercase tracking-wide text-surface-400 mb-1"
-    >
-      Why the recommended variant?
+  <!-- Selected variant editor -->
+  @if (selectedAngle()) {
+  <div class="space-y-2">
+    <div class="flex items-center gap-2 text-sm text-green-700">
+      <i class="pi pi-check-circle"></i>
+      <span>{{ angleLabels[selectedAngle()!] }} variant selected — edit below if needed.</span>
+    </div>
+    <textarea
+      pTextarea
+      rows="5"
+      class="w-full text-sm"
+      [ngModel]="editableText()"
+      (ngModelChange)="onTextChange($event)"
+      [autoResize]="true"
+      aria-label="Edit selected summary"
+    ></textarea>
+    @if (isModified()) {
+    <p class="m-0 text-xs text-surface-400 italic">
+      Modified from original variant.
     </p>
-    <p class="m-0 text-sm text-surface-700">{{ reason }}</p>
+    }
   </div>
   }
 

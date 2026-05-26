@@ -369,3 +369,23 @@ export type InterviewPrepResult = {
   stressTestQuestions: InterviewPrepStressTest[];
   preparationTips: string[];
 };
+
+export type OptimizationResultSummary = {
+  id: string;
+  promptType: PromptType;
+  status: string;
+  userEditedOutput: string | null;
+};
+
+export type BulletSelectionKey = {
+  company: string;
+  title: string;
+  originalText: string;
+};
+
+export type UserSelections = {
+  selectedSummaryAngle: SummaryRewriteVariantAngle | null;
+  customSummaryText: string | null;
+  selectedBullets: BulletSelectionKey[];
+  selectedKeywords: string[];
+};

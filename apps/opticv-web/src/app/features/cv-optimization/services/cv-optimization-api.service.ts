@@ -6,6 +6,7 @@ import type {
   CvDocumentListItem,
   CvStructuredData,
   JobApplicationResponse,
+  OptimizationResultSummary,
 } from '@opticv/datatypes';
 import { PromptType } from '@opticv/datatypes';
 import { environment } from '../../../../environments/environment';
@@ -77,6 +78,24 @@ export class CvOptimizationApiService {
     return this.http.post<{ runId: string }>(
       `${environment.apiUrl}/optimizations/job-applications/${jobApplicationId}/run/${promptType}`,
       {},
+    );
+  }
+
+  getOptimizationResults(
+    jobApplicationId: string,
+  ): Observable<OptimizationResultSummary[]> {
+    return this.http.get<OptimizationResultSummary[]>(
+      `${environment.apiUrl}/optimizations/job-applications/${jobApplicationId}/results`,
+    );
+  }
+
+  saveUserOutput(
+    optimizationResultId: string,
+    userEditedOutput: string,
+  ): Observable<{ userEditedOutput: string }> {
+    return this.http.patch<{ userEditedOutput: string }>(
+      `${environment.apiUrl}/optimizations/${optimizationResultId}/user-output`,
+      { userEditedOutput },
     );
   }
 

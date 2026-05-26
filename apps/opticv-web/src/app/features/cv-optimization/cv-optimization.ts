@@ -8,24 +8,32 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { JsonPipe } from '@angular/common';
-import { from, mergeMap, switchMap } from 'rxjs';
-import { JobUpload } from './components/job-upload/job-upload';
+import { filter, from, mergeMap, switchMap } from 'rxjs';
+import {
+  JobSubmittedData,
+  JobUpload,
+} from './components/job-upload/job-upload';
 import { AccordionModule } from 'primeng/accordion';
 import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
 import {
+  BulletSelectionKey,
   BulletUpgradeResult,
   CoverLetterResult,
+  CvStructuredData,
   InterviewPrepResult,
-  JobApplication,
   KeywordGapResult,
   PromptType,
   ResumeAutopsyResult,
   SummaryRewriteResult,
+  SummaryRewriteVariantAngle,
+  UserSelections,
 } from '@opticv/datatypes';
 import {
   CvOptimizationApiService,
   SseJobCompleteEvent,
 } from './services/cv-optimization-api.service';
+import { CvExportService } from './services/cv-export.service';
 import { OptimizationResultPanel } from './components/optimization-result-panel/optimization-result-panel';
 import { AtsScore } from './components/ats-score/ats-score';
 import { KeywordGap } from './components/keyword-gap/keyword-gap';
@@ -33,6 +41,7 @@ import { SummaryRewrite } from './components/summary-rewrite/summary-rewrite';
 import { BulletRewriter } from './components/bullet-rewriter/bullet-rewriter';
 import { CoverLetterEditor } from './components/cover-letter-editor/cover-letter-editor';
 import { InterviewPrep } from './components/interview-prep/interview-prep';
+import { applySelectionsToCV } from './utils/apply-selections';
 
 function isResumeAutopsyResult(value: unknown): value is ResumeAutopsyResult {
   if (typeof value !== 'object' || value === null) return false;
@@ -92,12 +101,19 @@ function isInterviewPrepResult(value: unknown): value is InterviewPrepResult {
   return Array.isArray(v['questions']) && Array.isArray(v['preparationTips']);
 }
 
+const ActivePrompts = [
+  PromptType.KEYWORD_GAP,
+  PromptType.SUMMARY_REWRITE,
+  PromptType.BULLET_UPGRADE,
+];
+
 @Component({
   selector: 'app-cv-optimization-page',
   imports: [
     JobUpload,
     AccordionModule,
     ButtonModule,
+    TooltipModule,
     JsonPipe,
     OptimizationResultPanel,
     AtsScore,
@@ -112,12 +128,22 @@ function isInterviewPrepResult(value: unknown): value is InterviewPrepResult {
 })
 export class CvOptimization {
   private readonly cvOptimizationApiService = inject(CvOptimizationApiService);
+  private readonly cvExportService = inject(CvExportService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly PromptType = PromptType;
   readonly results = signal<Map<PromptType, SseJobCompleteEvent>>(new Map());
   readonly isProcessing = signal<Map<PromptType, boolean>>(new Map());
   readonly jobApplicationId = signal<string | null>(null);
+  readonly cvStructuredData = signal<CvStructuredData | null>(null);
+  readonly selections = signal<UserSelections>({
+    selectedSummaryAngle: null,
+    customSummaryText: null,
+    selectedBullets: [],
+    selectedKeywords: [],
+  });
+  readonly isExportingPdf = signal(false);
+  readonly isExportingDocx = signal(false);
 
   readonly autopsyResult = computed<ResumeAutopsyResult | null>(() => {
     const r = this.results().get(PromptType.RESUME_AUTOPSY)?.result;
@@ -149,6 +175,28 @@ export class CvOptimization {
     return isInterviewPrepResult(r) ? r : null;
   });
 
+  readonly mergedCv = computed<CvStructuredData | null>(() => {
+    const cv = this.cvStructuredData();
+    if (!cv) return null;
+    return applySelectionsToCV(
+      cv,
+      this.selections(),
+      this.summaryRewriteResult(),
+      this.bulletUpgradeResult(),
+      this.keywordGapResult(),
+    );
+  });
+
+  readonly canExportCv = computed(() => {
+    const s = this.selections();
+    return (
+      this.mergedCv() !== null &&
+      (s.selectedSummaryAngle !== null ||
+        s.selectedBullets.length > 0 ||
+        s.selectedKeywords.length > 0)
+    );
+  });
+
   readonly retryablePromptTypes = computed<Set<PromptType>>(() => {
     const retryable = new Set<PromptType>();
     if (this.jobApplicationId() === null) return retryable;
@@ -176,13 +224,21 @@ export class CvOptimization {
     return retryable;
   });
 
-  runOptimization(jobApplication: JobApplication): void {
+  runOptimization({ jobApplication, extractedData }: JobSubmittedData): void {
     this.results.set(new Map());
     this.isProcessing.set(new Map());
+    this.selections.set({
+      selectedSummaryAngle: null,
+      customSummaryText: null,
+      selectedBullets: [],
+      selectedKeywords: [],
+    });
     this.jobApplicationId.set(jobApplication.id);
+    this.cvStructuredData.set(extractedData);
 
     from(Object.values(PromptType))
       .pipe(
+        filter((prompt) => ActivePrompts.includes(prompt)),
         mergeMap(
           (promptType) =>
             this.cvOptimizationApiService
@@ -249,5 +305,66 @@ export class CvOptimization {
           );
         },
       });
+  }
+
+  onAngleSelected(angle: SummaryRewriteVariantAngle): void {
+    this.selections.update((s) => ({
+      ...s,
+      selectedSummaryAngle: angle,
+      customSummaryText: null,
+    }));
+  }
+
+  onSummaryTextEdited(text: string | null): void {
+    this.selections.update((s) => ({ ...s, customSummaryText: text }));
+  }
+
+  onBulletToggled(key: BulletSelectionKey): void {
+    this.selections.update((s) => {
+      const exists = s.selectedBullets.some(
+        (b) =>
+          b.company === key.company &&
+          b.title === key.title &&
+          b.originalText === key.originalText,
+      );
+      const selectedBullets = exists
+        ? s.selectedBullets.filter(
+            (b) =>
+              !(
+                b.company === key.company &&
+                b.title === key.title &&
+                b.originalText === key.originalText
+              ),
+          )
+        : [...s.selectedBullets, key];
+      return { ...s, selectedBullets };
+    });
+  }
+
+  onKeywordToggled(keyword: string): void {
+    this.selections.update((s) => {
+      const selectedKeywords = s.selectedKeywords.includes(keyword)
+        ? s.selectedKeywords.filter((k) => k !== keyword)
+        : [...s.selectedKeywords, keyword];
+      return { ...s, selectedKeywords };
+    });
+  }
+
+  exportCvAsPdf(): void {
+    const cv = this.mergedCv();
+    if (!cv) return;
+    this.isExportingPdf.set(true);
+    this.cvExportService.exportToPdf(cv).finally(() => {
+      this.isExportingPdf.set(false);
+    });
+  }
+
+  exportCvAsDocx(): void {
+    const cv = this.mergedCv();
+    if (!cv) return;
+    this.isExportingDocx.set(true);
+    this.cvExportService.exportToDocx(cv).finally(() => {
+      this.isExportingDocx.set(false);
+    });
   }
 }
