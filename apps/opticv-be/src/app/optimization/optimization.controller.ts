@@ -12,6 +12,8 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
+import { AiThrottlerGuard } from '../throttler/ai-throttler.guard.js';
 import type { Request, Response } from 'express';
 import {
   ApiBearerAuth,
@@ -54,6 +56,7 @@ export class OptimizationController {
 
   @Post('job-applications/:jobApplicationId/run')
   @HttpCode(202)
+  @UseGuards(AiThrottlerGuard)
   @ApiOperation({
     summary: 'Trigger full optimization run for a job application',
   })
@@ -76,6 +79,7 @@ export class OptimizationController {
 
   @Post('job-applications/:jobApplicationId/run/:promptType')
   @HttpCode(202)
+  @UseGuards(AiThrottlerGuard)
   @ApiOperation({ summary: 'Trigger a single optimization job within a run' })
   @ApiResponse({
     status: 202,
@@ -149,6 +153,7 @@ export class OptimizationController {
   }
 
   @Get('job-applications/:jobApplicationId/stream')
+  @SkipThrottle({ 'api-ip': true, 'api-user': true })
   @ApiOperation({ summary: 'Stream optimization progress events (SSE)' })
   @ApiProduces('text/event-stream')
   @ApiResponse({ status: 200, description: 'Server-sent events stream' })

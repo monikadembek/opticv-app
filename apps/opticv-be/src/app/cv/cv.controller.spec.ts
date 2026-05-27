@@ -4,6 +4,7 @@ import { CvController } from './cv.controller';
 import { CvService } from './cv.service';
 import { CvExtractionService } from './services/cv-extraction.service';
 import { SupabaseGuard } from '../auth/supabase.guard';
+import { AiThrottlerGuard } from '../throttler/ai-throttler.guard';
 import type { CvDocumentListItem, UploadCvResponse } from '@opticv/datatypes';
 import type { UserModel } from '../../generated/prisma/models.js';
 
@@ -80,6 +81,8 @@ describe('CvController', () => {
       ],
     })
       .overrideGuard(SupabaseGuard)
+      .useValue(allowAllGuard)
+      .overrideGuard(AiThrottlerGuard)
       .useValue(allowAllGuard)
       .compile();
 

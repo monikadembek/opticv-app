@@ -4,6 +4,7 @@ import { OptimizationController } from './optimization.controller';
 import { OptimizationService } from './optimization.service';
 import { OptimizationEventBus } from './optimization-event-bus';
 import { SupabaseGuard } from '../auth/supabase.guard';
+import { AiThrottlerGuard } from '../throttler/ai-throttler.guard';
 import type { UserModel } from '../../generated/prisma/models';
 import { PromptType } from '../../generated/prisma/enums';
 
@@ -39,6 +40,8 @@ describe('OptimizationController', () => {
       ],
     })
       .overrideGuard(SupabaseGuard)
+      .useValue(allowAllGuard)
+      .overrideGuard(AiThrottlerGuard)
       .useValue(allowAllGuard)
       .compile();
 

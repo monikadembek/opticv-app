@@ -366,7 +366,23 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 34. Keyword Gap - select, modify and apply optimizations
+### 34. Implement proper CORS handling
+
+**status: todo**
+
+- allow only frontend app origin
+
+---
+
+### 35. Implement logging to db
+
+**status: todo**
+
+- imeplement saving backend logs to database
+
+---
+
+### 36. Keyword Gap - select, modify and apply optimizations
 
 **status: todo**
 
@@ -374,7 +390,7 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 35. Bullet upgrades - select, modify and apply optimizations
+### 37. Bullet upgrades - select, modify and apply optimizations
 
 **status: todo**
 
