@@ -6,8 +6,7 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 import { CvExtractionService } from './cv-extraction.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { AiExtractionProvider } from './ai/ai-extraction.provider';
-import { AI_EXTRACTION_PROVIDER } from './ai/ai-extraction.token';
+import { OpenAiService } from '../../ai/services/openai.service';
 import type { CvStructuredData } from '@opticv/datatypes';
 
 const mockStructuredData: CvStructuredData = {
@@ -45,8 +44,8 @@ const mockPrisma = {
   },
 };
 
-const mockAiProvider = {
-  extract: jest.fn().mockResolvedValue(mockStructuredData),
+const mockOpenAiService = {
+  extractCvData: jest.fn().mockResolvedValue(mockStructuredData),
 };
 
 describe('CvExtractionService', () => {
@@ -58,8 +57,7 @@ describe('CvExtractionService', () => {
       providers: [
         CvExtractionService,
         { provide: PrismaService, useValue: mockPrisma },
-        { provide: AI_EXTRACTION_PROVIDER, useValue: mockAiProvider },
-        { provide: AiExtractionProvider, useValue: mockAiProvider },
+        { provide: OpenAiService, useValue: mockOpenAiService },
       ],
     }).compile();
 
@@ -95,16 +93,16 @@ describe('CvExtractionService', () => {
 
       const result = await service.extractStructuredData('cv-id', 'user-id');
 
-      expect(mockAiProvider.extract).not.toHaveBeenCalled();
+      expect(mockOpenAiService.extractCvData).not.toHaveBeenCalled();
       expect(result).toEqual(mockStructuredData);
     });
 
-    it('calls AI provider and saves result when extraction is needed', async () => {
+    it('calls AI service and saves result when extraction is needed', async () => {
       mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(makeDoc());
 
       const result = await service.extractStructuredData('cv-id', 'user-id');
 
-      expect(mockAiProvider.extract).toHaveBeenCalledWith(
+      expect(mockOpenAiService.extractCvData).toHaveBeenCalledWith(
         'John Doe, Software Engineer...',
       );
       expect(mockPrisma.cvDocument.update).toHaveBeenCalledWith({
@@ -173,9 +171,11 @@ describe('CvExtractionService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('sets extractionStatus to FAILED and throws BadGatewayException when AI provider fails', async () => {
+    it('sets extractionStatus to FAILED and throws BadGatewayException when AI service fails', async () => {
       mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(makeDoc());
-      mockAiProvider.extract.mockRejectedValueOnce(new Error('OpenAI timeout'));
+      mockOpenAiService.extractCvData.mockRejectedValueOnce(
+        new Error('OpenAI timeout'),
+      );
 
       await expect(
         service.extractStructuredData('cv-id', 'user-id'),

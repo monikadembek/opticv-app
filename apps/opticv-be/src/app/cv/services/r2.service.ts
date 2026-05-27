@@ -20,14 +20,14 @@ export class R2Service {
   private readonly logger = new Logger(R2Service.name);
 
   constructor(private readonly config: ConfigService) {
-    this.bucket = this.config.getOrThrow<string>('R2_BUCKET_NAME');
+    this.bucket = this.config.getOrThrow<string>('r2.bucketName');
 
     this.client = new S3Client({
-      endpoint: this.config.getOrThrow<string>('R2_PUBLIC_URL'),
+      endpoint: this.config.getOrThrow<string>('r2.publicUrl'),
       region: 'auto',
       credentials: {
-        accessKeyId: this.config.getOrThrow<string>('R2_ACCESS_KEY_ID'),
-        secretAccessKey: this.config.getOrThrow<string>('R2_SECRET_ACCESS_KEY'),
+        accessKeyId: this.config.getOrThrow<string>('r2.accessKeyId'),
+        secretAccessKey: this.config.getOrThrow<string>('r2.secretAccessKey'),
       },
     });
   }

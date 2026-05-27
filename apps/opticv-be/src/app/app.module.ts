@@ -28,8 +28,8 @@ import { ApiThrottlerGuard } from './throttler/api-throttler.guard';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         connection: {
-          host: config.get<string>('REDIS_HOST'),
-          port: config.get<number>('REDIS_PORT'),
+          host: config.get<string>('redis.host'),
+          port: config.get<number>('redis.port'),
         },
       }),
     }),
@@ -37,8 +37,8 @@ import { ApiThrottlerGuard } from './throttler/api-throttler.guard';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         storage: new ThrottlerStorageRedisService({
-          host: config.get<string>('REDIS_HOST'),
-          port: config.get<number>('REDIS_PORT'),
+          host: config.get<string>('redis.host'),
+          port: config.get<number>('redis.port'),
         }),
         throttlers: [
           {

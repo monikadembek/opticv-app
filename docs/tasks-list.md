@@ -356,17 +356,42 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 33. Rate limiting: Per-user and per-IP, on both API and AI calls. Critical from day one.
+### 33. Rate limiting: Per-user and per-IP, on both API and AI calls. Critical from day one. (BE, FE)
 
-**status: todo**
+**status: done**
 
-- implement per-user rate limiting
-- implement per-IP rate limiting
+- implement per-user rate limiting (BE)
+- implement per-IP rate limiting (BE)
+- handle 429 too many requests error on frontend (FE)
 - critical before deploy
 
 ---
 
-### 34. Implement proper CORS handling
+### 34. Refactoring on backend - config service updates
+
+**status: done**
+
+The existing services use the flat uppercase key syntax (e.g. configService.get('SUPABASE_URL')), not the nested dot-path syntax (e.g. configService.get('supabase.url')). This is actually a deliberate NestJS ConfigModule behaviour — when you load env files, both styles work:
+
+- configService.get('SUPABASE_URL') → reads directly from the env file ✅
+- configService.get('supabase.url') → reads from the configuration() factory object ✅
+
+The configuration.ts update is still correct and valuable because:
+
+1. It documents all env vars in one typed place
+2. It enables dot-path access (configService.get('openai.apiKey')) for future refactoring
+3. It keeps the file in sync with validation.ts — no silent gaps
+
+Why this matters: configuration.ts is the typed factory that maps raw env vars into the structured object injected via NestJS ConfigService. If a property isn't here, you can't access it through configService.get('supabaseUrl') — you'd have to fall back to process.env.SUPABASE_URL directly, which bypasses the config abstraction entirely.
+
+The pattern should be: validate in validation.ts → map in configuration.ts → consume via ConfigService. Right now only the throttler vars follow this pattern consistently.
+
+- update configuration.ts to add all the missing properties, grouping related ones (supabase, r2, redis, bullmq)
+- update the use of configService.get() to use the properties from configuration.ts instead of raw env variables, which are taken from .env files and that skips the validation
+
+---
+
+### 35. Implement proper CORS handling
 
 **status: todo**
 
@@ -374,7 +399,7 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 35. Implement logging to db
+### 36. Implement logging to db
 
 **status: todo**
 
@@ -382,7 +407,7 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 36. Keyword Gap - select, modify and apply optimizations
+### 37. Keyword Gap - select, modify and apply optimizations
 
 **status: todo**
 
@@ -390,7 +415,7 @@ Use the Supabase webhook as the primary creation path, and add a lightweight ups
 
 ---
 
-### 37. Bullet upgrades - select, modify and apply optimizations
+### 38. Bullet upgrades - select, modify and apply optimizations
 
 **status: todo**
 

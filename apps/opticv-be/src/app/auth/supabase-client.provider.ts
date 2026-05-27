@@ -8,8 +8,8 @@ export const SupabaseClientProvider: Provider = {
   provide: SUPABASE_CLIENT,
   inject: [ConfigService],
   useFactory: (configService: ConfigService): SupabaseClient => {
-    const url = configService.getOrThrow<string>('SUPABASE_URL');
-    const key = configService.getOrThrow<string>('SUPABASE_PUBLISHABLE_KEY');
+    const url = configService.getOrThrow<string>('supabase.url');
+    const key = configService.getOrThrow<string>('supabase.publishableKey');
     return createClient(url, key, { auth: { persistSession: false } });
   },
 };
