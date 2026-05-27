@@ -9,6 +9,7 @@ import { AppModule } from './app/app.module';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ThrottlerExceptionFilter } from './app/throttler/throttler-exception.filter';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -28,6 +29,7 @@ async function bootstrap() {
     SwaggerModule.setup('swagger', app, document);
   }
 
+  app.use(helmet());
   app.setGlobalPrefix(globalPrefix);
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
