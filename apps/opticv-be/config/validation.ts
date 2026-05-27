@@ -15,6 +15,7 @@ export const validationSchema = Joi.object({
   REDIS_HOST: Joi.string().required(),
   REDIS_PORT: Joi.number().default(6379),
   BULLMQ_CONCURRENCY: Joi.number().default(5),
+  FRONTEND_URL: Joi.string().uri().required(),
   THROTTLER_API_IP_TTL: Joi.number().default(900),
   THROTTLER_API_IP_LIMIT: Joi.number().default(300),
   THROTTLER_API_USER_TTL: Joi.number().default(900),
