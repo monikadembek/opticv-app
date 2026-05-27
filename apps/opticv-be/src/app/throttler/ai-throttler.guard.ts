@@ -21,9 +21,10 @@ export class AiThrottlerGuard extends ThrottlerGuard {
     }
 
     if (name === 'ai-user') {
+      if (!expressReq.user?.id) return true;
       return super.handleRequest({
         ...requestProps,
-        getTracker: async () => expressReq.user?.id ?? '127.0.0.1',
+        getTracker: async () => expressReq.user!.id,
       });
     }
 

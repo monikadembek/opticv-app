@@ -43,23 +43,23 @@ import { ApiThrottlerGuard } from './throttler/api-throttler.guard';
         throttlers: [
           {
             name: 'api-ip',
-            ttl: config.get<number>('throttler.apiIpTtl')!,
-            limit: config.get<number>('throttler.apiIpLimit')!,
+            ttl: config.get<number>('throttler.apiIpTtl') ?? 900,
+            limit: config.get<number>('throttler.apiIpLimit') ?? 300,
           },
           {
             name: 'api-user',
-            ttl: config.get<number>('throttler.apiUserTtl')!,
-            limit: config.get<number>('throttler.apiUserLimit')!,
+            ttl: config.get<number>('throttler.apiUserTtl') ?? 900,
+            limit: config.get<number>('throttler.apiUserLimit') ?? 100,
           },
           {
             name: 'ai-ip',
-            ttl: config.get<number>('throttler.aiIpTtl')!,
-            limit: config.get<number>('throttler.aiIpLimit')!,
+            ttl: config.get<number>('throttler.aiIpTtl') ?? 3600,
+            limit: config.get<number>('throttler.aiIpLimit') ?? 50,
           },
           {
             name: 'ai-user',
-            ttl: config.get<number>('throttler.aiUserTtl')!,
-            limit: config.get<number>('throttler.aiUserLimit')!,
+            ttl: config.get<number>('throttler.aiUserTtl') ?? 3600,
+            limit: config.get<number>('throttler.aiUserLimit') ?? 10,
           },
         ],
       }),
