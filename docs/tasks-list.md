@@ -393,21 +393,29 @@ The pattern should be: validate in validation.ts → map in configuration.ts →
 
 ### 35. Implement proper CORS handling
 
-**status: todo**
+**status: done**
 
 - allow only frontend app origin
 
 ---
 
-### 36. Implement logging to db
+### 36. Add Helmet middleware library for better security
 
 **status: todo**
 
-- imeplement saving backend logs to database
+- use helmet to improve security
 
 ---
 
-### 37. Keyword Gap - select, modify and apply optimizations
+### 37. Implement logging to db
+
+**status: todo**
+
+- implement saving backend logs to database
+
+---
+
+### 38. Keyword Gap - select, modify and apply optimizations
 
 **status: todo**
 
@@ -415,7 +423,7 @@ The pattern should be: validate in validation.ts → map in configuration.ts →
 
 ---
 
-### 38. Bullet upgrades - select, modify and apply optimizations
+### 39. Bullet upgrades - select, modify and apply optimizations
 
 **status: todo**
 

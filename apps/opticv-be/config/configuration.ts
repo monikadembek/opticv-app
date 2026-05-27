@@ -23,6 +23,7 @@ export const configuration = () => ({
   bullmq: {
     concurrency: parseInt(process.env.BULLMQ_CONCURRENCY || '5', 10),
   },
+  frontendUrl: process.env.FRONTEND_URL,
   throttler: {
     apiIpTtl: parseInt(process.env.THROTTLER_API_IP_TTL || '900', 10),
     apiIpLimit: parseInt(process.env.THROTTLER_API_IP_LIMIT || '300', 10),

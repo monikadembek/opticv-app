@@ -32,7 +32,7 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalFilters(new ThrottlerExceptionFilter());
-  app.enableCors();
+  app.enableCors({ origin: configService.get<string>('frontendUrl') });
   await app.listen(port);
   Logger.log(
     `🚀 Environment: ${env} - App is running on: http://localhost:${port}/${globalPrefix}`,
