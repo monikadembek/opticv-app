@@ -47,7 +47,7 @@ export class UsersController {
     @Body() body: WebhookPayloadDto,
   ): Promise<{ received: boolean }> {
     const expected = this.configService.getOrThrow<string>(
-      'SUPABASE_WEBHOOK_SECRET',
+      'supabase.webhookSecret',
     );
 
     const isValid =

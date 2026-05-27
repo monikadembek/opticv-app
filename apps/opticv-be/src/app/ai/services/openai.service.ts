@@ -12,7 +12,7 @@ export class OpenAiService {
 
   constructor(private readonly config: ConfigService) {
     this.client = new OpenAI({
-      apiKey: this.config.get<string>('OPENAI_API_KEY'),
+      apiKey: this.config.get<string>('openai.apiKey'),
     });
   }
 

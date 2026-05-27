@@ -28,10 +28,10 @@ jest.mock('@aws-sdk/s3-request-presigner', () => ({
 const mockConfig = {
   getOrThrow: jest.fn((key: string) => {
     const values: Record<string, string> = {
-      R2_BUCKET_NAME: 'test-bucket',
-      R2_PUBLIC_URL: 'https://r2.example.com',
-      R2_ACCESS_KEY_ID: 'access-key',
-      R2_SECRET_ACCESS_KEY: 'secret-key',
+      'r2.bucketName': 'test-bucket',
+      'r2.publicUrl': 'https://r2.example.com',
+      'r2.accessKeyId': 'access-key',
+      'r2.secretAccessKey': 'secret-key',
     };
     return values[key];
   }),

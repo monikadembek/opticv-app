@@ -1,6 +1,28 @@
 export const configuration = () => ({
   nodeEnv: process.env.NODE_ENV,
   port: parseInt(process.env.PORT || '3000', 10),
+  supabase: {
+    url: process.env.SUPABASE_URL,
+    publishableKey: process.env.SUPABASE_PUBLISHABLE_KEY,
+    webhookSecret: process.env.SUPABASE_WEBHOOK_SECRET,
+  },
+  r2: {
+    accountId: process.env.R2_ACCOUNT_ID,
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    bucketName: process.env.R2_BUCKET_NAME,
+    publicUrl: process.env.R2_PUBLIC_URL,
+  },
+  openai: {
+    apiKey: process.env.OPENAI_API_KEY,
+  },
+  redis: {
+    host: process.env.REDIS_HOST,
+    port: parseInt(process.env.REDIS_PORT || '6379', 10),
+  },
+  bullmq: {
+    concurrency: parseInt(process.env.BULLMQ_CONCURRENCY || '5', 10),
+  },
   throttler: {
     apiIpTtl: parseInt(process.env.THROTTLER_API_IP_TTL || '900', 10),
     apiIpLimit: parseInt(process.env.THROTTLER_API_IP_LIMIT || '300', 10),
