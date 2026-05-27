@@ -8,6 +8,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ThrottlerExceptionFilter } from './app/throttler/throttler-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -30,6 +31,7 @@ async function bootstrap() {
   app.setGlobalPrefix(globalPrefix);
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  app.useGlobalFilters(new ThrottlerExceptionFilter());
   app.enableCors();
   await app.listen(port);
   Logger.log(

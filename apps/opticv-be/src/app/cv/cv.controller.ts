@@ -10,6 +10,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { AiThrottlerGuard } from '../throttler/ai-throttler.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import {
@@ -115,6 +116,7 @@ export class CvController {
 
   @Post(':id/extract')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(AiThrottlerGuard)
   @ApiOperation({ summary: 'Extract structured data from a CV' })
   @ApiResponse({ status: 200, type: CvExtractResponseDto, description: 'Extracted CV data' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
