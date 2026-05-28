@@ -19,6 +19,7 @@ export const configuration = () => ({
   redis: {
     host: process.env.REDIS_HOST,
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
+    tls: process.env.REDIS_TLS === 'true',
   },
   bullmq: {
     concurrency: parseInt(process.env.BULLMQ_CONCURRENCY || '5', 10),
