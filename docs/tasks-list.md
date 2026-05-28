@@ -401,15 +401,25 @@ The pattern should be: validate in validation.ts → map in configuration.ts →
 
 ### 36. Add Helmet middleware library for better security
 
-**status: todo**
+**status: done**
 
 - use helmet to improve security
 
 ---
 
+### 37. Deploy to staging environment - Render
+
+**status: in progress**
+
+Create .env file for staging environment.
+Create account on Upstash for Redis.
+Deploy frontend and backend apps Render free account for staging.
+
+---
+
 ### 37. Implement logging to db
 
-**status: todo**
+**status: in progress**
 
 - implement saving backend logs to database
 
