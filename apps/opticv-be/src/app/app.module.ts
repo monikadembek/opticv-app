@@ -30,6 +30,7 @@ import { ApiThrottlerGuard } from './throttler/api-throttler.guard';
         connection: {
           host: config.get<string>('redis.host'),
           port: config.get<number>('redis.port'),
+          tls: config.get<boolean>('redis.tls') ? {} : undefined,
         },
       }),
     }),
@@ -39,6 +40,7 @@ import { ApiThrottlerGuard } from './throttler/api-throttler.guard';
         storage: new ThrottlerStorageRedisService({
           host: config.get<string>('redis.host'),
           port: config.get<number>('redis.port'),
+          tls: config.get<boolean>('redis.tls') ? {} : undefined,
         }),
         throttlers: [
           {
