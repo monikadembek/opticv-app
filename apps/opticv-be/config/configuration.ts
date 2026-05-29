@@ -5,6 +5,7 @@ export const configuration = () => ({
     url: process.env.SUPABASE_URL,
     publishableKey: process.env.SUPABASE_PUBLISHABLE_KEY,
     webhookSecret: process.env.SUPABASE_WEBHOOK_SECRET,
+    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
   },
   r2: {
     accountId: process.env.R2_ACCOUNT_ID,

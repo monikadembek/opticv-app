@@ -1,0 +1,27 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import type { SubscriptionTier, SubscriptionStatus } from '@opticv/datatypes';
+
+class SubscriptionDto {
+  @ApiProperty({ enum: ['FREE', 'PRO', 'PRO_ANNUAL', 'SPRINT'] })
+  tier!: SubscriptionTier;
+
+  @ApiProperty({ enum: ['ACTIVE', 'CANCELED', 'PAST_DUE', 'TRIALING'] })
+  status!: SubscriptionStatus;
+}
+
+export class UserProfileDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty()
+  email!: string;
+
+  @ApiPropertyOptional({ nullable: true })
+  displayName!: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  avatarUrl!: string | null;
+
+  @ApiPropertyOptional({ type: SubscriptionDto, nullable: true })
+  subscription!: SubscriptionDto | null;
+}

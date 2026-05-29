@@ -70,6 +70,21 @@ export type User = {
   updatedAt: Date | string;
 };
 
+export type SubscriptionTier = 'FREE' | 'PRO' | 'PRO_ANNUAL' | 'SPRINT';
+
+export type SubscriptionStatus = 'ACTIVE' | 'CANCELED' | 'PAST_DUE' | 'TRIALING';
+
+export type UserProfile = {
+  id: string;
+  email: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  subscription: {
+    tier: SubscriptionTier;
+    status: SubscriptionStatus;
+  } | null;
+};
+
 export type CvDocument = {
   id: string;
   userId: string;
