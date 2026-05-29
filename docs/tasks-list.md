@@ -424,7 +424,7 @@ The pattern should be: validate in validation.ts → map in configuration.ts →
 
 ### 38. Delete user account (BE & FE)
 
-**status: todo**
+**status: done**
 
 Backend:
 
@@ -438,7 +438,7 @@ Frontend:
 
 ---
 
-### 38. Keyword Gap - select, modify and apply optimizations
+### 39. Keyword Gap - select, modify and apply optimizations
 
 **status: todo**
 
@@ -446,7 +446,7 @@ Frontend:
 
 ---
 
-### 39. Bullet upgrades - select, modify and apply optimizations
+### 40. Bullet upgrades - select, modify and apply optimizations
 
 **status: todo**
 
@@ -454,7 +454,15 @@ Frontend:
 
 ---
 
-### 40. Create landing page
+### 41. Bug - after account is deleted all items in menu stay visible
+
+**status: todo**
+
+When user deletes its account, gets logged out, but account is already deleted so supabase logout returns error, we are redirected to login page but all item in top menu are visible, even the ones which should be visible only to logged in users.
+
+---
+
+### 42. Create landing page
 
 **status: todo**
 
