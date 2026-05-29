@@ -34,12 +34,15 @@
 
 ### 4. Sending emails with custom SMTP (Supabase, Resend services)
 
-**status: blocked**
+**status: done**
 
 - must be implemented bc Supabase has limit of sending only 2 email per hour
   https://supabase.com/docs/guides/auth/auth-smtp
-- use Resend service - 3000 email/month, 100 emails/day in free tier
-- Resend needs url of the application, so app must be deployed first
+- add option to send custom SMTP email in Supabase, needs passing data from Resend
+- create free Resend account - 3000 email/month, 100 emails/day in free tier, 1 domain
+- add domain in Resend: auth.opticv.net
+- add necessary dns records to the created subdomain
+- Resend settings - integrate with Supabase
 - https://resend.com/docs/send-with-supabase-smtp
 
 ---
@@ -409,19 +412,21 @@ The pattern should be: validate in validation.ts → map in configuration.ts →
 
 ### 37. Deploy to staging environment - Render
 
-**status: in progress**
+**status: done**
 
-Create .env file for staging environment.
-Create account on Upstash for Redis.
-Deploy frontend and backend apps Render free account for staging.
+- Create .env file for staging environment.
+- Create account on Upstash to use Redis, bc Redis from Docker can be used only in local environment.
+- Deploy frontend and backend apps to Render free account which will be used as staging environment.
+  frontend url: https://opticv-app-web.onrender.com/
+  backend url: https://opticv-app.onrender.com/
 
 ---
 
-### 37. Implement logging to db
+### 38. Delete user account
 
-**status: in progress**
+**status: todo**
 
-- implement saving backend logs to database
+- add user settings page where we display user data: email, current subscription tier, option to delete account
 
 ---
 
@@ -441,9 +446,25 @@ Deploy frontend and backend apps Render free account for staging.
 
 ---
 
+### 40. Create landing page
+
+**status: todo**
+
+- build landing page in Astro
+
+---
+
 ### Fix issue with selecting template card with keyboard
 
 **status: todo**
+
+---
+
+### Implement logging to db/file
+
+**status: todo**
+
+- implement saving backend logs to database or saving logs to file with Winston?
 
 ---
 
