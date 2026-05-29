@@ -12,9 +12,9 @@
   </p>
   } @else if (userProfile.hasValue()) {
   <section class="mb-8 flex items-center gap-4" aria-label="Profile">
-    @if (userProfile.value().avatarUrl) {
+    @if (userProfile.value()?.avatarUrl) {
     <p-avatar
-      [image]="userProfile.value().avatarUrl ?? undefined"
+      [image]="userProfile.value()?.avatarUrl ?? undefined"
       shape="circle"
       size="xlarge"
     />
@@ -27,8 +27,12 @@
     />
     }
     <div>
-      <p class="text-lg font-medium">{{ userProfile.value().displayName }}</p>
-      <p class="text-sm text-gray-500">{{ userProfile.value().email }}</p>
+      <p class="text-lg font-medium">
+        {{ userProfile.value()?.displayName ?? userProfile.value()?.email }}
+      </p>
+      @if(userProfile.value()?.displayName) {
+      <p class="text-sm text-gray-500">{{ userProfile.value()?.email }}</p>
+      }
     </div>
   </section>
 
@@ -42,12 +46,12 @@
       <span
         class="rounded-full bg-emerald-100 px-3 py-1 text-sm font-medium text-emerald-800"
       >
-        {{ userProfile.value().subscription?.tier ?? 'FREE' }}
+        {{ userProfile.value()?.subscription?.tier ?? 'FREE' }}
       </span>
       <span
         class="rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700"
       >
-        {{ userProfile.value().subscription?.status ?? 'ACTIVE' }}
+        {{ userProfile.value()?.subscription?.status ?? 'ACTIVE' }}
       </span>
     </div>
   </section>

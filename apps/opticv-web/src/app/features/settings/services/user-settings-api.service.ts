@@ -8,11 +8,11 @@ import { environment } from '../../../../environments/environment';
 export class UserSettingsApiService {
   private readonly http = inject(HttpClient);
 
-  #userProfile = httpResource<UserProfile>(
+  #userProfile = httpResource<UserProfile | null>(
     () => ({
       url: `${environment.apiUrl}/users/me`,
     }),
-    { defaultValue: {} as UserProfile },
+    { defaultValue: null },
   );
 
   userProfile = this.#userProfile.asReadonly();

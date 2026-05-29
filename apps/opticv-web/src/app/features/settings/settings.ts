@@ -73,7 +73,8 @@ export class Settings {
     });
   }
 
-  getAvatarLabel(profile: UserProfile): string {
+  getAvatarLabel(profile: UserProfile | null): string {
+    if (!profile) return 'U';
     const source = profile.displayName ?? profile.email;
     return source.charAt(0).toUpperCase();
   }
