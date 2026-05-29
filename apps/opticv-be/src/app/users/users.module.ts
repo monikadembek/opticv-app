@@ -4,11 +4,13 @@ import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { StorageModule } from '../storage/storage.module';
+import { SupabaseClientProvider } from '../auth/supabase-client.provider';
+import { SupabaseGuard } from '../auth/supabase.guard';
 
 @Module({
   imports: [PrismaModule, StorageModule, ConfigModule],
   controllers: [UsersController],
-  providers: [UsersService],
+  providers: [UsersService, SupabaseClientProvider, SupabaseGuard],
   exports: [UsersService],
 })
 export class UsersModule {}
