@@ -24,6 +24,7 @@ describe('CvDropzone', () => {
   let component: CvDropzone;
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [CvDropzone],
       providers: [{ provide: PLATFORM_ID, useValue: 'browser' }],

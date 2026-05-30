@@ -57,6 +57,7 @@ describe('JobUpload', () => {
   let messageService: { add: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     apiService = {
       cvList: makeCvListResource({}),
       reloadCvList: vi.fn(),
@@ -261,7 +262,7 @@ describe('JobUpload', () => {
       component.jobSubmitted.subscribe((v) => emitted.push(v));
       component.onSubmit();
       expect(emitted).toHaveLength(1);
-      expect(emitted[0]).toEqual(mockJobApplicationResponse);
+      expect(emitted[0]).toEqual({ jobApplication: mockJobApplicationResponse, extractedData: {} });
     });
 
     it('should NOT emit jobSubmitted when createJobApplication fails', () => {

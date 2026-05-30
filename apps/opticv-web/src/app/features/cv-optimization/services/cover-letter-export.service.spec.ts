@@ -46,6 +46,7 @@ describe('CoverLetterExportService (browser)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     toBlob.mockResolvedValue(new Blob(['docx']));
+    TestBed.resetTestingModule();
 
     TestBed.configureTestingModule({
       providers: [{ provide: PLATFORM_ID, useValue: 'browser' }],
@@ -126,6 +127,7 @@ describe('CoverLetterExportService (server)', () => {
   let service: CoverLetterExportService;
 
   beforeEach(() => {
+    TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [{ provide: PLATFORM_ID, useValue: 'server' }],
     });

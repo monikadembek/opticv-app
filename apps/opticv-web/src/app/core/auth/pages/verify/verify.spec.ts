@@ -29,6 +29,7 @@ describe('Verify', () => {
   let supabaseMock: ReturnType<typeof createSupabaseMock>;
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     supabaseMock = createSupabaseMock();
 
     await TestBed.configureTestingModule({

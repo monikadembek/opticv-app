@@ -41,6 +41,7 @@ describe('AtsScore', () => {
   let component: AtsScore;
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [AtsScore],
     }).compileComponents();

@@ -26,6 +26,7 @@ describe('Login', () => {
   let messageServiceMock: ReturnType<typeof createMessageServiceMock>;
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     supabaseMock = createSupabaseMock();
     messageServiceMock = createMessageServiceMock();
 

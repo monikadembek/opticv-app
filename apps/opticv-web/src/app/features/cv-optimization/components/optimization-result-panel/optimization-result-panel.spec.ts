@@ -5,6 +5,7 @@ describe('OptimizationResultPanel', () => {
   let fixture: ComponentFixture<OptimizationResultPanel>;
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [OptimizationResultPanel],
     }).compileComponents();

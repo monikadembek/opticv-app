@@ -5,16 +5,12 @@ import { Supabase } from './supabase';
 
 // --- Supabase client mock setup ---
 
-let authStateCallback: ((event: string, session: unknown) => void) | null =
-  null;
-
 const mockAuth = {
   signInWithOtp: vi.fn(),
   verifyOtp: vi.fn(),
   signOut: vi.fn(),
   getSession: vi.fn(),
   onAuthStateChange: vi.fn((cb: (event: string, session: unknown) => void) => {
-    authStateCallback = cb;
     return { data: { subscription: { unsubscribe: vi.fn() } } };
   }),
 };
@@ -25,9 +21,12 @@ vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => mockSupabaseClient),
 }));
 
-// Helper to fire auth state changes
+// Fire auth state changes using the most recently registered callback
 function fireAuthStateChange(event: string, session: unknown) {
-  authStateCallback?.(event, session);
+  const calls = mockAuth.onAuthStateChange.mock.calls;
+  if (calls.length === 0) return;
+  const lastCallback = calls[calls.length - 1][0] as (event: string, session: unknown) => void;
+  lastCallback(event, session);
 }
 
 // --- Tests ---
@@ -35,7 +34,7 @@ function fireAuthStateChange(event: string, session: unknown) {
 describe('Supabase service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    authStateCallback = null;
+    TestBed.resetTestingModule();
   });
 
   // ── Construction ────────────────────────────────────────────────────────────
@@ -175,13 +174,10 @@ describe('Supabase service', () => {
     const mockUser = { id: 'user-1', email: 'user@example.com' };
     const mockSession = { user: mockUser, access_token: 'token-abc' };
 
-    beforeEach(() =>
+    it('sets session and user on INITIAL_SESSION with a session', () => {
       TestBed.configureTestingModule({
         providers: [{ provide: PLATFORM_ID, useValue: 'browser' }],
-      }),
-    );
-
-    it('sets session and user on INITIAL_SESSION with a session', () => {
+      });
       const service = TestBed.inject(Supabase);
 
       fireAuthStateChange('INITIAL_SESSION', mockSession);
@@ -192,6 +188,9 @@ describe('Supabase service', () => {
     });
 
     it('clears user on INITIAL_SESSION when session is null', () => {
+      TestBed.configureTestingModule({
+        providers: [{ provide: PLATFORM_ID, useValue: 'browser' }],
+      });
       const service = TestBed.inject(Supabase);
 
       fireAuthStateChange('INITIAL_SESSION', null);
@@ -201,6 +200,9 @@ describe('Supabase service', () => {
     });
 
     it('sets session and user on SIGNED_IN', () => {
+      TestBed.configureTestingModule({
+        providers: [{ provide: PLATFORM_ID, useValue: 'browser' }],
+      });
       const service = TestBed.inject(Supabase);
 
       fireAuthStateChange('SIGNED_IN', mockSession);
@@ -211,6 +213,9 @@ describe('Supabase service', () => {
     });
 
     it('clears session and user on SIGNED_OUT', () => {
+      TestBed.configureTestingModule({
+        providers: [{ provide: PLATFORM_ID, useValue: 'browser' }],
+      });
       const service = TestBed.inject(Supabase);
 
       // First sign in
@@ -225,6 +230,9 @@ describe('Supabase service', () => {
     });
 
     it('clears pendingEmail on SIGNED_IN', () => {
+      TestBed.configureTestingModule({
+        providers: [{ provide: PLATFORM_ID, useValue: 'browser' }],
+      });
       const service = TestBed.inject(Supabase);
       service.setPendingEmail('waiting@example.com');
 
@@ -234,6 +242,9 @@ describe('Supabase service', () => {
     });
 
     it('ignores unknown auth events without changing state', () => {
+      TestBed.configureTestingModule({
+        providers: [{ provide: PLATFORM_ID, useValue: 'browser' }],
+      });
       const service = TestBed.inject(Supabase);
 
       fireAuthStateChange('TOKEN_REFRESHED', mockSession);

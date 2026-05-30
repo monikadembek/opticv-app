@@ -8,7 +8,7 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { R2Service } from './services/r2.service';
+import { R2Service } from '../storage/r2.service';
 import { CvParserService } from './services/cv-parser.service';
 import { CvDocumentListItem, CvStructuredData, UploadCvResponse } from '@opticv/datatypes';
 

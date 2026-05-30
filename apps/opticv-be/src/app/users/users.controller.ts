@@ -1,18 +1,25 @@
 import {
   Body,
   Controller,
+  Delete,
+  Get,
   Headers,
   HttpCode,
   HttpStatus,
   Logger,
   Post,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { timingSafeEqual } from 'crypto';
 import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { WebhookPayloadDto } from './dto/webhook-payload.dto';
+import { UserProfileDto } from './dto/user-profile.dto';
+import { SupabaseGuard } from '../auth/supabase.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { UserModel } from '../../generated/prisma/models.js';
 
 @ApiTags('users')
 @Controller('users')
@@ -70,5 +77,28 @@ export class UsersController {
     this.logger.log('New user created: ', upsertUser.id);
 
     return { received: true };
+  }
+
+  @Get('me')
+  @UseGuards(SupabaseGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get current user profile' })
+  @ApiResponse({ status: 200, type: UserProfileDto, description: 'User profile' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async getProfile(@CurrentUser() user: UserModel): Promise<UserProfileDto> {
+    return this.usersService.getProfile(user.supabaseId);
+  }
+
+  @Delete('me')
+  @UseGuards(SupabaseGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete current user account' })
+  @ApiResponse({ status: 204, description: 'Account deleted' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  @ApiResponse({ status: 500, description: 'Failed to delete account' })
+  async deleteAccount(@CurrentUser() user: UserModel): Promise<void> {
+    await this.usersService.deleteAccount(user.supabaseId);
   }
 }

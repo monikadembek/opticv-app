@@ -7,14 +7,23 @@ import { provideHttpClient } from '@angular/common/http';
 import type { UploadCvResponse } from '@opticv/datatypes';
 
 import { CvUploadApiService } from './cv-upload-api.service';
+import { UserSettingsApiService } from '../../../features/settings/services/user-settings-api.service';
+import { environment } from '../../../../environments/environment';
+
+const API = environment.apiUrl;
 
 describe('CvUploadApiService', () => {
   let service: CvUploadApiService;
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
+    TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: UserSettingsApiService, useValue: {} },
+      ],
     });
     service = TestBed.inject(CvUploadApiService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -45,7 +54,7 @@ describe('CvUploadApiService', () => {
 
       service.uploadCv(mockFile).subscribe();
 
-      const req = httpMock.expectOne('/api/cv/upload');
+      const req = httpMock.expectOne(`${API}/cv/upload`);
       expect(req.request.method).toBe('POST');
       req.flush(mockResponse);
     });
@@ -57,7 +66,7 @@ describe('CvUploadApiService', () => {
 
       service.uploadCv(mockFile).subscribe();
 
-      const req = httpMock.expectOne('/api/cv/upload');
+      const req = httpMock.expectOne(`${API}/cv/upload`);
       const body = req.request.body as FormData;
       expect(body.get('file')).toBe(mockFile);
       req.flush({});
@@ -80,7 +89,7 @@ describe('CvUploadApiService', () => {
 
       service.uploadCv(mockFile).subscribe((res) => (result = res));
 
-      const req = httpMock.expectOne('/api/cv/upload');
+      const req = httpMock.expectOne(`${API}/cv/upload`);
       req.flush(mockResponse);
 
       expect(result).toEqual(mockResponse);
@@ -96,7 +105,7 @@ describe('CvUploadApiService', () => {
         error: () => (errorReceived = true),
       });
 
-      const req = httpMock.expectOne('/api/cv/upload');
+      const req = httpMock.expectOne(`${API}/cv/upload`);
       req.flush('Upload failed', { status: 500, statusText: 'Server Error' });
 
       expect(errorReceived).toBe(true);
