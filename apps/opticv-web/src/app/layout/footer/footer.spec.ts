@@ -7,6 +7,7 @@ describe('Footer', () => {
   let fixture: ComponentFixture<Footer>;
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [Footer],
     }).compileComponents();

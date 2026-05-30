@@ -22,6 +22,7 @@ describe('authInterceptor', () => {
     TestBed.runInInjectionContext(() => authInterceptor(req, next));
 
   beforeEach(() => {
+    TestBed.resetTestingModule();
     mockCurrentSession = signal<Session | null>(null);
     mockSupabase = {
       get currentSession(): Signal<Session | null> {

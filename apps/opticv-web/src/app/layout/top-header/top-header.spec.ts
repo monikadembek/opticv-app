@@ -25,6 +25,7 @@ describe('TopHeader', () => {
   let router: Router;
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [TopHeader],
       providers: [provideRouter([])],
@@ -52,11 +53,13 @@ describe('TopHeader', () => {
     it('should add Dashboard and Upload CV items when logged in', () => {
       fixture.componentRef.setInput('isLoggedIn', true);
       fixture.detectChanges();
-      expect(component.items).toHaveLength(3);
+      expect(component.items).toHaveLength(4);
       expect(component.items![1].label).toBe('Dashboard');
       expect(component.items![1]['route']).toBe('/dashboard');
-      expect(component.items![2].label).toBe('Upload CV');
-      expect(component.items![2]['route']).toBe('/upload-cv');
+      expect(component.items![2].label).toBe('CV Optimization');
+      expect(component.items![2]['route']).toBe('/cv-optimization');
+      expect(component.items![3].label).toBe('Upload CV');
+      expect(component.items![3]['route']).toBe('/upload-cv');
     });
   });
 

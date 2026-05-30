@@ -24,6 +24,7 @@ describe('UploadCv', () => {
   let messageService: { add: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     cvUploadApiService = { uploadCv: vi.fn() };
     messageService = { add: vi.fn() };
 

@@ -58,6 +58,7 @@ describe('KeywordGap', () => {
   let component: KeywordGap;
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [KeywordGap],
     }).compileComponents();

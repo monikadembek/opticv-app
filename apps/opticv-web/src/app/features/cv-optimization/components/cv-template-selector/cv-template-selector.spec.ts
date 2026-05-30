@@ -7,6 +7,7 @@ describe('CvTemplateSelector', () => {
   let component: CvTemplateSelector;
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [CvTemplateSelector],
       providers: [MessageService],

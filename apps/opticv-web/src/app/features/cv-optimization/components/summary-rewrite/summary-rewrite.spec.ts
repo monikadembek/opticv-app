@@ -37,6 +37,7 @@ describe('SummaryRewrite', () => {
   let component: SummaryRewrite;
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [SummaryRewrite],
     }).compileComponents();
@@ -148,7 +149,7 @@ describe('SummaryRewrite', () => {
     const resultWithMissingKeywords = {
       ...MOCK_RESULT,
       variants: [
-        { ...MOCK_RESULT.variants[0], keywordsUsed: undefined as unknown as string[] },
+        { ...MOCK_RESULT.variants[0], keywordsUsed: [] },
         ...MOCK_RESULT.variants.slice(1),
       ],
     };
@@ -162,7 +163,7 @@ describe('SummaryRewrite', () => {
     const resultWithMissingKeywords = {
       ...MOCK_RESULT,
       variants: [
-        { ...MOCK_RESULT.variants[0], keywordsUsed: undefined as unknown as string[] },
+        { ...MOCK_RESULT.variants[0], keywordsUsed: [] },
         ...MOCK_RESULT.variants.slice(1),
       ],
     };

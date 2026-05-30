@@ -76,6 +76,7 @@ describe('CvOptimization', () => {
   };
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     apiService = {
       cvList: makeCvListResource(),
       reloadCvList: vi.fn(),

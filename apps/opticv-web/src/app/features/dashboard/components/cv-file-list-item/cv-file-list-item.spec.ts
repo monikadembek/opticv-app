@@ -18,6 +18,7 @@ describe('CvFileListItem', () => {
   let component: CvFileListItem;
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [CvFileListItem],
     }).compileComponents();

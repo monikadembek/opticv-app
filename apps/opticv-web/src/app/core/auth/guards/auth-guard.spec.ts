@@ -12,6 +12,7 @@ describe('authGuard', () => {
   let router: Router;
 
   beforeEach(() => {
+    TestBed.resetTestingModule();
     mockSupabase = { getSession: vi.fn() };
 
     TestBed.configureTestingModule({

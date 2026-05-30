@@ -69,6 +69,7 @@ describe('InterviewPrep', () => {
   let fixture: ComponentFixture<InterviewPrep>;
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [InterviewPrep],
       providers: [MessageService],

@@ -6,6 +6,9 @@ import {
 import { provideHttpClient } from '@angular/common/http';
 import type { CvDocumentListItem } from '@opticv/datatypes';
 import { CvApiService } from './cv-api.service';
+import { environment } from '../../../../environments/environment';
+
+const API = environment.apiUrl;
 
 const mockFile: CvDocumentListItem = {
   id: 'doc-id',
@@ -22,6 +25,7 @@ describe('CvApiService', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
+    TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });
@@ -43,7 +47,7 @@ describe('CvApiService', () => {
 
       service.getUserCvs().subscribe((res) => (result = res));
 
-      const req = httpMock.expectOne('/api/cv');
+      const req = httpMock.expectOne(`${API}/cv`);
       expect(req.request.method).toBe('GET');
       req.flush([mockFile]);
 
@@ -55,7 +59,7 @@ describe('CvApiService', () => {
 
       service.getUserCvs().subscribe({ error: () => (errorReceived = true) });
 
-      const req = httpMock.expectOne('/api/cv');
+      const req = httpMock.expectOne(`${API}/cv`);
       req.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
 
       expect(errorReceived).toBe(true);
@@ -68,7 +72,7 @@ describe('CvApiService', () => {
 
       service.downloadCv('doc-id').subscribe((res) => (result = res));
 
-      const req = httpMock.expectOne('/api/cv/doc-id/download');
+      const req = httpMock.expectOne(`${API}/cv/doc-id/download`);
       expect(req.request.method).toBe('GET');
       req.flush({ url: 'https://signed.url/file.pdf' });
 
@@ -82,7 +86,7 @@ describe('CvApiService', () => {
         .downloadCv('doc-id')
         .subscribe({ error: () => (errorReceived = true) });
 
-      const req = httpMock.expectOne('/api/cv/doc-id/download');
+      const req = httpMock.expectOne(`${API}/cv/doc-id/download`);
       req.flush('Not Found', { status: 404, statusText: 'Not Found' });
 
       expect(errorReceived).toBe(true);
@@ -95,7 +99,7 @@ describe('CvApiService', () => {
 
       service.deleteCv('doc-id').subscribe({ complete: () => (completed = true) });
 
-      const req = httpMock.expectOne('/api/cv/doc-id');
+      const req = httpMock.expectOne(`${API}/cv/doc-id`);
       expect(req.request.method).toBe('DELETE');
       req.flush(null, { status: 204, statusText: 'No Content' });
 
@@ -107,7 +111,7 @@ describe('CvApiService', () => {
 
       service.deleteCv('doc-id').subscribe({ error: () => (errorReceived = true) });
 
-      const req = httpMock.expectOne('/api/cv/doc-id');
+      const req = httpMock.expectOne(`${API}/cv/doc-id`);
       req.flush('Forbidden', { status: 403, statusText: 'Forbidden' });
 
       expect(errorReceived).toBe(true);

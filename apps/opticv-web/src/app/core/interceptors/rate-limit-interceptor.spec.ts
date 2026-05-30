@@ -26,6 +26,7 @@ describe('rateLimitInterceptor', () => {
   let messageService: MessageService;
 
   beforeEach(() => {
+    TestBed.resetTestingModule();
     TestBed.configureTestingModule({ providers: [MessageService] });
     messageService = TestBed.inject(MessageService);
     vi.spyOn(messageService, 'add');

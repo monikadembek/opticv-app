@@ -27,6 +27,7 @@ describe('Dashboard', () => {
   let messageService: { add: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     cvApiService = {
       getUserCvs: vi.fn().mockReturnValue(of([mockFile])),
       downloadCv: vi.fn().mockReturnValue(of({ url: 'https://signed.url' })),

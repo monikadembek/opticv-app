@@ -8,6 +8,7 @@ describe('Home', () => {
   let router: Router;
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [Home],
     }).compileComponents();

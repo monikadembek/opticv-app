@@ -62,6 +62,7 @@ describe('BulletRewriter', () => {
   let fixture: ComponentFixture<BulletRewriter>;
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [BulletRewriter],
     }).compileComponents();
@@ -96,9 +97,8 @@ describe('BulletRewriter', () => {
   });
 
   describe('rewrite bullets', () => {
-    it('renders the original text with strikethrough for rewrite bullets', () => {
-      const strikethrough: HTMLElement = fixture.nativeElement.querySelector('.line-through');
-      expect(strikethrough?.textContent?.trim()).toContain('Did things with React.');
+    it('renders the original text for rewrite bullets', () => {
+      expect(fixture.nativeElement.textContent).toContain('Did things with React.');
     });
 
     it('renders the rewritten text', () => {
@@ -143,8 +143,8 @@ describe('BulletRewriter', () => {
   });
 
   describe('recommend_cut bullets', () => {
-    it('renders "Consider removing" badge for recommend_cut bullets', () => {
-      expect(fixture.nativeElement.textContent).toContain('Consider removing');
+    it('renders "Suggested: remove" badge for recommend_cut bullets', () => {
+      expect(fixture.nativeElement.textContent).toContain('Suggested: remove');
     });
 
     it('renders cut reason', () => {

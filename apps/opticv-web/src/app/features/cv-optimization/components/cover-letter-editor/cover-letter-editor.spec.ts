@@ -75,6 +75,7 @@ describe('CoverLetterEditor', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    TestBed.resetTestingModule();
 
     await TestBed.configureTestingModule({
       imports: [CoverLetterEditor],
