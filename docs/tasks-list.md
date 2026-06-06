@@ -464,9 +464,23 @@ When user deletes its account, gets logged out, but account is already deleted s
 
 ### 42. Create landing page
 
-**status: todo**
+**status: done**
+
+**time: 30.05.2026 - 06.06.2026**
 
 - build landing page in Astro
+
+---
+
+### 43. Improve UI
+
+**status: todo**
+**time:**
+
+- add logo
+- in login and verify pages add proper descriptions
+- adjust top menu nav to reflect the styles used on landing page
+- make footer similar to the one on landing page
 
 ---
 
