@@ -474,13 +474,13 @@ When user deletes its account, gets logged out, but account is already deleted s
 
 ### 43. Improve UI
 
-**status: todo**
-**time:**
+**status: Done**
+**time: 7.06-09.06**
 
 - add logo
-- in login and verify pages add proper descriptions
 - adjust top menu nav to reflect the styles used on landing page
 - make footer similar to the one on landing page
+- divide cv-optimization page into 4 sections with headers
 
 ---
 
