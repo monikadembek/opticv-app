@@ -1,13 +1,12 @@
 .icon {
   width: 24px;
   height: 24px;
-  fill: var(--white);
+  /* fill: var(text-neutral-600); */
 }
 
 .main-footer {
   display: flex;
   align-items: center;
-  background-color: var(--p-emerald-700);
 }
 
 .footer-container {

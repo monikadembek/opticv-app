@@ -123,6 +123,7 @@ const ActivePrompts = [PromptType.SUMMARY_REWRITE];
     CvTemplateSelector,
   ],
   templateUrl: './cv-optimization.html',
+  styleUrl: './cv-optimization.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CvOptimization {

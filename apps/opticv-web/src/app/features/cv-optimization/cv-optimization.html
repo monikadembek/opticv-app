@@ -1,5 +1,12 @@
-<div class="mx-auto max-w-2xl px-4 py-12">
+<div class="mx-auto max-w-4xl px-4 py-12">
   <h1 class="mb-8 text-3xl font-bold text-surface-900">CV Optimization</h1>
+
+  <h2 class="section-heading">Resume and job description</h2>
+  <p class="mb-6">
+    Select CV and paste information about job offer that you want to apply for.
+    This will allow to analyze your resume and optimize it against that specific
+    job offer.
+  </p>
   <p-accordion [value]="['0']" [multiple]="true">
     <p-accordion-panel value="0">
       <p-accordion-header>
@@ -9,6 +16,14 @@
         <app-job-upload (jobSubmitted)="runOptimization($event)" />
       </p-accordion-content>
     </p-accordion-panel>
+  </p-accordion>
+
+  <h2 class="section-heading">Resume analysis and improvements</h2>
+  <p class="mb-6">
+    Based on the provided job offer your resume is analyzed. You get a detailed
+    analysis and suggestions for specific improvements.
+  </p>
+  <p-accordion [value]="['0']" [multiple]="true">
     <p-accordion-panel value="1">
       <p-accordion-header>
         <div class="flex justify-between w-full">
@@ -206,6 +221,14 @@
         }
       </p-accordion-content>
     </p-accordion-panel>
+  </p-accordion>
+
+  <h2 class="section-heading">Additional materials</h2>
+  <p class="mb-6">
+    Based on the provided cv and job offer you also get a tailored cover letter
+    and a set of information that will allow you to prepare for the interview.
+  </p>
+  <p-accordion [value]="['0']" [multiple]="true">
     <p-accordion-panel value="5">
       <p-accordion-header>
         <div class="flex justify-between w-full">
@@ -336,18 +359,18 @@
   </p-accordion>
 
   @if (jobApplicationId()) {
-  <div class="border-t border-surface-200 pt-6 mt-6">
-    <h3 class="text-base font-semibold text-surface-800 mb-3">Export CV</h3>
-
-    <p class="text-sm font-semibold text-surface-600 mb-2">Choose Template</p>
-    <p class="text-sm text-surface-600 mb-2">All Templates are ATS optimized</p>
+  <div>
+    <h2 class="section-heading">Export CV</h2>
+    <p class="text-surface-600 mb-8">
+      Choose Template. All Templates are ATS optimized.
+    </p>
     <app-cv-template-selector
       [(selected)]="selectedTemplate"
       [mergedCv]="mergedCv()"
     />
 
     @if (canExportCv()) {
-    <div class="flex flex-wrap gap-3 mt-2">
+    <div class="flex flex-wrap gap-3 mt-10">
       <p-button
         label="Export CV as PDF"
         icon="pi pi-file-pdf"

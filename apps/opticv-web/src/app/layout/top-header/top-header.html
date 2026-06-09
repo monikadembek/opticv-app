@@ -2,15 +2,21 @@
   <div class="header-container">
     <p-menubar [model]="items" class="top-menubar">
       <ng-template #start>
-        <div>
-          <a routerLink="/" class="logo">Opti CV</a>
-        </div>
+        <a routerLink="/" class="header__logo">
+          <img
+            src="/images/opticv-logo-icon.svg"
+            alt="OptiCV logo"
+            width="40"
+            height="48"
+          />
+          <span>OptiCV</span>
+        </a>
       </ng-template>
       <ng-template #item let-item let-root="root">
         <a
           [routerLink]="item.route"
           routerLinkActive="active"
-          class="p-menubar-item-link"
+          class="p-menubar-item-link header__menu-link"
         >
           {{ item.label }}
         </a>

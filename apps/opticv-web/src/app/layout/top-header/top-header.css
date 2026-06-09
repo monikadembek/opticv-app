@@ -1,13 +1,35 @@
+:host {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: block;
+  width: 100%;
+}
+
+@keyframes fadeInShadow {
+  from {
+    box-shadow: none;
+  }
+  to {
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  :host {
+    animation: fadeInShadow linear both;
+    animation-timeline: scroll();
+    animation-range: 0 20rem;
+  }
+}
+
 .header {
-  position: fixed;
+  width: 100%;
+  height: 5.5rem;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 100vw;
-  height: 80px;
-  background: var(--white);
-  border-bottom: 1px solid var(--color-green-light);
-  z-index: 101;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
 }
 
 .header-container {
@@ -33,59 +55,70 @@
   }
 }
 
-::ng-deep .p-menubar-start {
-  margin-right: auto;
-}
-
 p-menubar {
   width: 100%;
 }
 
-.header ::ng-deep .p-menubar.top-menubar {
-  background: var(--white);
+::ng-deep .p-menubar-start {
+  margin-right: auto;
 }
 
 ::ng-deep .p-menubar.top-menubar {
   padding: 0 !important;
   border: none;
+  background: transparent;
 }
 
 ::ng-deep .top-menubar .p-menubar-end {
   margin-left: 0 !important;
 }
 
-.logo {
-  font-size: 1.8rem;
-  color: var(--primary-color);
-  font-family: Lato, sans-serif;
-  font-weight: 900;
-  transition: all 0.3s;
+/* Remove grey background from all menu item states */
+::ng-deep .top-menubar .p-menubar-item-content {
+  background: transparent !important;
+  border-radius: 0 !important;
 }
 
-.logo:hover {
+::ng-deep .top-menubar .p-menubar-item:hover > .p-menubar-item-content,
+::ng-deep .top-menubar .p-menubar-item:focus-within > .p-menubar-item-content,
+::ng-deep .top-menubar .p-menubar-item-active > .p-menubar-item-content,
+::ng-deep .top-menubar .p-menubar-item.p-focus > .p-menubar-item-content {
+  background: transparent !important;
+}
+
+.header__logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--color-primary);
+  white-space: nowrap;
+  text-decoration: none;
+  padding: 0.75rem 0;
+  transition: color 0.3s;
+}
+
+.header__logo:hover {
   color: var(--color-green-light);
 }
 
-::ng-deep .p-menubar {
-  background: var(--white);
+.header__menu-link {
+  font-weight: 400;
+  color: #404040;
+  padding: 1rem 1.5rem;
+  transition: color 0.3s;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
 }
 
-::ng-deep .p-menubar-mobile .p-menubar-root-list {
-  z-index: 200;
+.header__menu-link:hover,
+.header__menu-link:focus {
+  color: var(--color-primary) !important;
 }
 
-/* Basic container positioning */
-.user-menu-container {
-  position: relative;
-}
-
-/* Basic styling for menu visibility */
-::ng-deep .p-menu {
-  display: block !important;
-  min-width: 200px;
-}
-
-/* Remove any transform that might interfere with positioning */
-::ng-deep .p-menu-overlay {
-  transform: none !important;
+.header__menu-link.active {
+  color: var(--color-primary) !important;
 }
