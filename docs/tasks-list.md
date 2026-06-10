@@ -440,8 +440,8 @@ Frontend:
 
 ### 39. Stored Optimizations - display list, dispplay selected optimization, delete single optimization
 
-**status: in progess**
-**time: 09.06.2026 -**
+**status: done**
+**time: 09.06.2026 - 10.06.2026**
 
 - in dashboard display list of previous optimizations, divide uploaded cvs and executed optimizationas into 2 separate tabs
 - add button to delete optimization - cascade delete job application data and cv optimization data
@@ -449,20 +449,21 @@ Frontend:
 
 ---
 
-### 40. Keyword Gap - select, modify and apply optimizations
+### 40. Bullet upgrades - select, modify and apply optimizations
+
+**status: in progress**
+**time: 10.06.2026 - **
+
+- allow selecting, modifying and applying suggestions to cv.
+
+---
+
+### 41. Keyword Gap - select, modify and apply optimizations
 
 **status: todo**
 **time:**
 
 - allow selecting, modifying, adding missing keywords and applying it to cv.
-
----
-
-### 41. Bullet upgrades - select, modify and apply optimizations
-
-**status: todo**
-
-- allow selecting, modifying and applying suggestions to cv.
 
 ---
 
