@@ -1,33 +1,17 @@
 <div class="container mx-auto p-6">
-  <h1 class="text-2xl font-bold mb-6">My CVs</h1>
-
-  <p-confirmDialog />
-
-  @if (isLoading()) {
-  <div class="flex justify-center items-center py-16">
-    <p-progress-spinner />
-  </div>
-  } @else if (error()) {
-  <div class="flex flex-col items-center gap-4 py-16 text-center">
-    <span class="text-red-500">{{ error() }}</span>
-    <p-button label="Retry" icon="pi pi-refresh" (onClick)="loadFiles()" />
-  </div>
-  } @else if (cvFiles().length === 0) {
-  <div class="flex flex-col items-center gap-4 py-16 text-center">
-    <span class="text-surface-500 text-lg"
-      >You haven't uploaded any CVs yet.</span
-    >
-    <p-button
-      label="Upload your first CV"
-      icon="pi pi-upload"
-      routerLink="/upload-cv"
-    />
-  </div>
-  } @else {
-  <app-cv-file-list
-    [files]="cvFiles()"
-    (download)="onDownload($event)"
-    (delete)="onDelete($event)"
-  />
-  }
+  <h1 class="text-2xl font-bold mb-6">Dashboard</h1>
+  <p-tabs value="0">
+    <p-tablist>
+      <p-tab value="0">My CVs</p-tab>
+      <p-tab value="1">My Optimizations</p-tab>
+    </p-tablist>
+    <p-tabpanels>
+      <p-tabpanel value="0">
+        <app-cv-file-list />
+      </p-tabpanel>
+      <p-tabpanel value="1">
+        <app-optimization-list />
+      </p-tabpanel>
+    </p-tabpanels>
+  </p-tabs>
 </div>

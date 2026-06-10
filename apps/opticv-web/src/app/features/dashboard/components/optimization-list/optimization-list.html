@@ -1,0 +1,69 @@
+<p-confirmDialog />
+
+@if (isLoading()) {
+<div class="flex justify-center items-center py-16">
+  <p-progress-spinner />
+</div>
+} @else if (error()) {
+<div class="flex flex-col items-center gap-4 py-16 text-center">
+  <span class="text-red-500">{{ error() }}</span>
+  <p-button
+    label="Retry"
+    icon="pi pi-refresh"
+    (onClick)="loadOptimizations()"
+  />
+</div>
+} @else if (items().length === 0) {
+<div class="flex flex-col items-center gap-4 py-16 text-center">
+  <span class="text-surface-500 text-lg"
+    >You haven't run any CV optimizations yet.</span
+  >
+  <p-button
+    label="Run your first optimization"
+    icon="pi pi-bolt"
+    routerLink="/cv-optimization"
+  />
+</div>
+} @else {
+<div class="flex flex-col gap-4">
+  @for (item of items(); track item.id) {
+  <div
+    class="border border-surface-200 rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+  >
+    <div class="flex flex-col gap-1 min-w-0">
+      <span class="font-semibold text-surface-900">
+        Position: {{ item.jobTitle ?? 'Untitled position' }}<br />
+        @if (item.companyName) {
+        <span class="font-normal text-surface-500">
+          Company: {{ item.companyName }}</span
+        >
+        }
+      </span>
+      <span class="text-sm text-surface-500 truncate"
+        >CV File: {{ item.cvDocument.fileName }}</span
+      >
+      <span class="text-xs text-surface-400"
+        >Created: {{ item.createdAt | date: 'MMM d, yyyy' }}</span
+      >
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+      <p-button
+        label="Open"
+        icon="pi pi-external-link"
+        size="small"
+        (onClick)="onOpen(item)"
+        ariaLabel="Open optimization for {{ item.jobTitle ?? 'this position' }}"
+      />
+      <p-button
+        icon="pi pi-trash"
+        size="small"
+        severity="danger"
+        [text]="true"
+        (onClick)="onDelete(item)"
+        ariaLabel="Delete optimization for {{ item.jobTitle ?? 'this position' }}"
+      />
+    </div>
+  </div>
+  }
+</div>
+}

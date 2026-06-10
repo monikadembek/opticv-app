@@ -18,6 +18,7 @@ import { Supabase } from '../../../core/auth/services/supabase';
 const CV_URL = `${environment.apiUrl}/cv`;
 const JOB_APPS_URL = `${environment.apiUrl}/job-applications`;
 const CV_EXTRACT_URL = (id: string) => `${environment.apiUrl}/cv/${id}/extract`;
+const CV_STRUCTURED_DATA_URL = (id: string) => `${environment.apiUrl}/cv/${id}/structured-data`;
 const RUN_FULL_URL = (jobAppId: string) =>
   `${environment.apiUrl}/optimizations/job-applications/${jobAppId}/run`;
 const RUN_SINGLE_URL = (jobAppId: string, promptType: string) =>
@@ -194,6 +195,50 @@ describe('CvOptimizationApiService', () => {
       httpMock
         .expectOne(CV_EXTRACT_URL(cvId))
         .flush('Internal Server Error', { status: 500, statusText: 'Server Error' });
+
+      expect(errorReceived).toBe(true);
+    });
+  });
+
+  describe('getStructuredData', () => {
+    const cvId = 'cv-id-1';
+
+    beforeEach(() => {
+      httpMock.expectOne(CV_URL).flush([]);
+    });
+
+    it('GETs /cv/:id/structured-data', () => {
+      service.getStructuredData(cvId).subscribe();
+
+      const req = httpMock.expectOne(CV_STRUCTURED_DATA_URL(cvId));
+      expect(req.request.method).toBe('GET');
+      req.flush({ data: {} });
+    });
+
+    it('emits the response and completes on success', () => {
+      const mockResponse = { data: { contact: { name: 'Jane' } } };
+      let emitted: unknown;
+      let completed = false;
+
+      service.getStructuredData(cvId).subscribe({
+        next: (v) => (emitted = v),
+        complete: () => (completed = true),
+      });
+
+      httpMock.expectOne(CV_STRUCTURED_DATA_URL(cvId)).flush(mockResponse);
+
+      expect(emitted).toEqual(mockResponse);
+      expect(completed).toBe(true);
+    });
+
+    it('propagates HTTP errors', () => {
+      let errorReceived = false;
+
+      service.getStructuredData(cvId).subscribe({ error: () => (errorReceived = true) });
+
+      httpMock
+        .expectOne(CV_STRUCTURED_DATA_URL(cvId))
+        .flush('Not Found', { status: 404, statusText: 'Not Found' });
 
       expect(errorReceived).toBe(true);
     });

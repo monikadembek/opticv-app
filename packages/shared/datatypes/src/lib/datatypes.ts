@@ -148,7 +148,13 @@ export type JobApplicationListItem = Pick<
   | 'atsScore'
   | 'createdAt'
   | 'updatedAt'
->;
+> & {
+  cvDocument: { id: string; fileName: string };
+};
+
+export type JobApplicationWithCv = JobApplication & {
+  cvDocument: { id: string; fileName: string };
+};
 
 export type JobApplicationListResponse = {
   data: JobApplicationListItem[];
@@ -390,6 +396,7 @@ export type OptimizationResultSummary = {
   promptType: PromptType;
   status: string;
   userEditedOutput: string | null;
+  structuredOutput: unknown | null;
 };
 
 export type BulletSelectionKey = {

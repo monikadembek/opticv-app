@@ -62,6 +62,12 @@ export class CvOptimizationApiService {
     );
   }
 
+  getStructuredData(cvId: string): Observable<{ data: CvStructuredData }> {
+    return this.http.get<{ data: CvStructuredData }>(
+      `${environment.apiUrl}/cv/${cvId}/structured-data`,
+    );
+  }
+
   runFullOptimizationProcess(
     jobApplicationId: string,
   ): Observable<{ runId: string }> {

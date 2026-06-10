@@ -32,6 +32,14 @@ export const appRoutes: Route[] = [
     canActivate: [authGuard],
   },
   {
+    path: 'cv-optimization/:jobApplicationId',
+    loadComponent: () =>
+      import('./features/cv-optimization/cv-optimization').then(
+        (m) => m.CvOptimization,
+      ),
+    canActivate: [authGuard],
+  },
+  {
     path: 'cv-optimization',
     loadComponent: () =>
       import('./features/cv-optimization/cv-optimization').then(

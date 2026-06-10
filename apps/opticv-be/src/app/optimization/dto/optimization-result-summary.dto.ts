@@ -13,4 +13,7 @@ export class OptimizationResultSummaryDto {
 
   @ApiProperty({ example: 'My edited output...', nullable: true })
   userEditedOutput!: string | null;
+
+  @ApiProperty({ nullable: true })
+  structuredOutput!: unknown | null;
 }

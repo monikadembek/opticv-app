@@ -1,9 +1,33 @@
+@if (isCvsLoading()) {
+<div class="flex justify-center items-center py-16">
+  <p-progress-spinner />
+</div>
+} @else if (cvsError()) {
+<div class="flex flex-col items-center gap-4 py-16 text-center">
+  <span class="text-red-500">{{ cvsError() }}</span>
+  <p-button label="Retry" icon="pi pi-refresh" (onClick)="loadFiles()" />
+</div>
+} @else if (cvFiles().length === 0) {
+<div class="flex flex-col items-center gap-4 py-16 text-center">
+  <span class="text-surface-500 text-lg"
+    >You haven't uploaded any CVs yet.</span
+  >
+  <p-button
+    label="Upload your first CV"
+    icon="pi pi-upload"
+    routerLink="/upload-cv"
+  />
+</div>
+} @else {
 <div class="flex flex-col gap-3">
-  @for (file of files(); track file.id) {
+  @for (file of cvFiles(); track file.id) {
   <app-cv-file-list-item
     [file]="file"
-    (download)="download.emit($event)"
-    (delete)="delete.emit($event)"
+    (download)="downloadCv($event)"
+    (delete)="deleteCv($event)"
   />
   }
 </div>
+}
+
+<p-confirmDialog />
