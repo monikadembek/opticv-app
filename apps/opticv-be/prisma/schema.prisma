@@ -130,7 +130,7 @@ model JobApplication {
   userId         String
   user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   cvDocumentId   String
-  cvDocument     CvDocument @relation(fields: [cvDocumentId], references: [id])
+  cvDocument     CvDocument @relation(fields: [cvDocumentId], references: [id], onDelete: Cascade)
 
   jobTitle       String?
   companyName    String?
