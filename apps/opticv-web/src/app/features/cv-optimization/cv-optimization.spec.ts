@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { NEVER, Subject, of } from 'rxjs';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { NEVER, Subject, of, throwError } from 'rxjs';
 import { MessageService } from 'primeng/api';
-import type { CvDocumentListItem, CvStructuredData, JobApplication } from '@opticv/datatypes';
+import type { CvDocumentListItem, CvStructuredData, JobApplication, JobApplicationWithCv, OptimizationResultSummary } from '@opticv/datatypes';
 import type { CvTemplateId } from './cv-templates';
 import { PromptType } from '@opticv/datatypes';
 import type { JobSubmittedData } from './components/job-upload/job-upload';
@@ -11,6 +12,8 @@ import {
   CvOptimizationApiService,
   SseJobCompleteEvent,
 } from './services/cv-optimization-api.service';
+import { JobApplicationApiService } from '../../core/services/job-application-api.service';
+import { CvApiService } from '../dashboard/services/cv-api.service';
 
 const mockCv: CvDocumentListItem = {
   id: 'cv-id-1',
@@ -52,7 +55,20 @@ const mockJobSubmittedData: JobSubmittedData = {
   extractedData: mockCvStructuredData,
 };
 
+const mockJobApplicationWithCv: JobApplicationWithCv = {
+  ...mockJobApplication,
+  cvDocument: { id: 'cv-id-1', fileName: 'my-cv.pdf' },
+};
 
+function makeActivatedRoute(jobApplicationId: string | null = null) {
+  return {
+    snapshot: {
+      paramMap: convertToParamMap(
+        jobApplicationId ? { jobApplicationId } : {},
+      ),
+    },
+  };
+}
 
 function makeCvListResource() {
   return {
@@ -70,27 +86,58 @@ describe('CvOptimization', () => {
     reloadCvList: ReturnType<typeof vi.fn>;
     createJobApplication: ReturnType<typeof vi.fn>;
     extractCvData: ReturnType<typeof vi.fn>;
+    getStructuredData: ReturnType<typeof vi.fn>;
+    getOptimizationResults: ReturnType<typeof vi.fn>;
     runSingleOptimizationProcess: ReturnType<typeof vi.fn>;
     streamOptimizationEvents: ReturnType<typeof vi.fn>;
     retryOptimization: ReturnType<typeof vi.fn>;
   };
+  let jobApplicationApiService: {
+    getJobApplication: ReturnType<typeof vi.fn>;
+  };
+  let cvApiService: {
+    downloadCv: ReturnType<typeof vi.fn>;
+  };
 
-  beforeEach(async () => {
+  interface CreateComponentOptions {
+    jobApplicationId?: string | null;
+    getOptimizationResults?: ReturnType<typeof vi.fn>;
+    getStructuredData?: ReturnType<typeof vi.fn>;
+  }
+
+  async function createComponent(options: CreateComponentOptions = {}) {
+    const {
+      jobApplicationId = null,
+      getOptimizationResults = vi.fn().mockReturnValue(of([])),
+      getStructuredData = vi.fn().mockReturnValue(of({ data: mockCvStructuredData })),
+    } = options;
+
     TestBed.resetTestingModule();
     apiService = {
       cvList: makeCvListResource(),
       reloadCvList: vi.fn(),
       createJobApplication: vi.fn(),
       extractCvData: vi.fn(),
+      getStructuredData,
+      getOptimizationResults,
       runSingleOptimizationProcess: vi.fn().mockReturnValue(of({ runId: 'run-id-1' })),
       streamOptimizationEvents: vi.fn().mockReturnValue(of()),
       retryOptimization: vi.fn(),
+    };
+    jobApplicationApiService = {
+      getJobApplication: vi.fn().mockReturnValue(of(mockJobApplicationWithCv)),
+    };
+    cvApiService = {
+      downloadCv: vi.fn().mockReturnValue(of({ url: 'https://signed.url' })),
     };
 
     await TestBed.configureTestingModule({
       imports: [CvOptimization],
       providers: [
         { provide: CvOptimizationApiService, useValue: apiService },
+        { provide: JobApplicationApiService, useValue: jobApplicationApiService },
+        { provide: CvApiService, useValue: cvApiService },
+        { provide: ActivatedRoute, useValue: makeActivatedRoute(jobApplicationId) },
         MessageService,
       ],
     }).compileComponents();
@@ -98,6 +145,10 @@ describe('CvOptimization', () => {
     fixture = TestBed.createComponent(CvOptimization);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  }
+
+  beforeEach(async () => {
+    await createComponent();
   });
 
   it('should create', () => {
@@ -306,10 +357,18 @@ describe('CvOptimization', () => {
     it('calls runSingleOptimizationProcess for each active PromptType', () => {
       component.runOptimization(mockJobSubmittedData);
 
-      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledTimes(1);
+      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledTimes(3);
       expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
         mockJobApplication.id,
-        PromptType.SUMMARY_REWRITE,
+        PromptType.KEYWORD_GAP,
+      );
+      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
+        mockJobApplication.id,
+        PromptType.RESUME_AUTOPSY,
+      );
+      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
+        mockJobApplication.id,
+        PromptType.BULLET_UPGRADE,
       );
     });
 
@@ -331,7 +390,9 @@ describe('CvOptimization', () => {
 
       component.runOptimization(mockJobSubmittedData);
 
-      expect(component.isProcessing().get(PromptType.SUMMARY_REWRITE)).toBe(true);
+      expect(component.isProcessing().get(PromptType.KEYWORD_GAP)).toBe(true);
+      expect(component.isProcessing().get(PromptType.RESUME_AUTOPSY)).toBe(true);
+      expect(component.isProcessing().get(PromptType.BULLET_UPGRADE)).toBe(true);
     });
 
     it('updates results and clears isProcessing on a completed SSE event', () => {
@@ -374,21 +435,21 @@ describe('CvOptimization', () => {
       expect(component.isProcessing().get(PromptType.KEYWORD_GAP)).toBe(false);
     });
 
-    it('stores the result from the active prompt SSE event', () => {
+    it('stores the result from an active prompt SSE event', () => {
       const sseSubject = new Subject<SseJobCompleteEvent>();
       apiService.streamOptimizationEvents.mockReturnValue(sseSubject.asObservable());
 
       component.runOptimization(mockJobSubmittedData);
 
-      const summaryEvent: SseJobCompleteEvent = {
-        promptType: PromptType.SUMMARY_REWRITE,
+      const bulletEvent: SseJobCompleteEvent = {
+        promptType: PromptType.BULLET_UPGRADE,
         status: 'completed',
-        result: { originalSummary: 'Old summary', variants: [], keywordsIncorporated: [] },
+        result: { positions: [], missingBulletSuggestions: [], overallNotes: '', verbDiversityCheck: {} },
       };
 
-      sseSubject.next(summaryEvent);
+      sseSubject.next(bulletEvent);
 
-      expect(component.results().get(PromptType.SUMMARY_REWRITE)).toEqual(summaryEvent);
+      expect(component.results().get(PromptType.BULLET_UPGRADE)).toEqual(bulletEvent);
     });
 
     it('a second call to runOptimization discards results from the first', () => {
@@ -491,19 +552,19 @@ describe('CvOptimization', () => {
     });
 
     it('returns true when at least one active prompt is processing', () => {
-      component.isProcessing.set(new Map([[PromptType.SUMMARY_REWRITE, true]]));
+      component.isProcessing.set(new Map([[PromptType.KEYWORD_GAP, true]]));
       expect(component.isProcessingAny()).toBe(true);
     });
 
     it('returns false when only a non-active prompt type is processing', () => {
-      component.isProcessing.set(new Map([[PromptType.RESUME_AUTOPSY, true]]));
+      component.isProcessing.set(new Map([[PromptType.SUMMARY_REWRITE, true]]));
       expect(component.isProcessingAny()).toBe(false);
     });
 
     it('returns false when all active prompts finish processing', () => {
       component.isProcessing.set(new Map([
         [PromptType.KEYWORD_GAP, false],
-        [PromptType.SUMMARY_REWRITE, false],
+        [PromptType.RESUME_AUTOPSY, false],
         [PromptType.BULLET_UPGRADE, false],
       ]));
       expect(component.isProcessingAny()).toBe(false);
@@ -539,7 +600,7 @@ describe('CvOptimization', () => {
         selectedBullets: [],
         selectedKeywords: [],
       });
-      component.isProcessing.set(new Map([[PromptType.SUMMARY_REWRITE, true]]));
+      component.isProcessing.set(new Map([[PromptType.KEYWORD_GAP, true]]));
       expect(component.canExportCv()).toBe(false);
     });
 
@@ -551,8 +612,21 @@ describe('CvOptimization', () => {
         selectedBullets: [],
         selectedKeywords: [],
       });
-      component.isProcessing.set(new Map([[PromptType.SUMMARY_REWRITE, false]]));
+      component.isProcessing.set(new Map([[PromptType.KEYWORD_GAP, false]]));
       expect(component.canExportCv()).toBe(true);
+    });
+
+    it('returns true in stored mode when CV data is available and not processing', () => {
+      component.cvStructuredData.set(mockCvStructuredData);
+      component.isStoredMode.set(true);
+      expect(component.canExportCv()).toBe(true);
+    });
+
+    it('returns false in stored mode when an active prompt is still processing', () => {
+      component.cvStructuredData.set(mockCvStructuredData);
+      component.isStoredMode.set(true);
+      component.isProcessing.set(new Map([[PromptType.RESUME_AUTOPSY, true]]));
+      expect(component.canExportCv()).toBe(false);
     });
   });
 
@@ -610,6 +684,175 @@ describe('CvOptimization', () => {
       sseSubject.error(new Error('network failure'));
 
       expect(component.isProcessing().get(PromptType.KEYWORD_GAP)).toBe(false);
+    });
+  });
+
+  describe('isStoredMode', () => {
+    it('defaults to false when no jobApplicationId route param is present', () => {
+      expect(component.isStoredMode()).toBe(false);
+    });
+
+    it('is true when a jobApplicationId route param is present', async () => {
+      await createComponent({ jobApplicationId: 'job-app-id-1' });
+      expect(component.isStoredMode()).toBe(true);
+    });
+  });
+
+  describe('loadStoredOptimization (ngOnInit with jobApplicationId)', () => {
+    const completedResult: OptimizationResultSummary = {
+      id: 'res-1',
+      promptType: PromptType.RESUME_AUTOPSY,
+      status: 'COMPLETED',
+      userEditedOutput: null,
+      structuredOutput: {
+        overallScore: 80,
+        predictedScoreAfterFixes: 90,
+        topPriority: 'Keywords',
+        summary: 'Good',
+        issues: [],
+        strengths: [],
+      },
+    };
+
+    it('sets jobApplicationId and jobApplication from the fetched record', async () => {
+      await createComponent({ jobApplicationId: 'job-app-id-1' });
+
+      expect(component.jobApplicationId()).toBe('job-app-id-1');
+      expect(component.jobApplication()).toEqual(mockJobApplicationWithCv);
+    });
+
+    it('populates results map with COMPLETED entries that have structuredOutput', async () => {
+      await createComponent({
+        jobApplicationId: 'job-app-id-1',
+        getOptimizationResults: vi.fn().mockReturnValue(of([completedResult])),
+      });
+
+      expect(component.results().has(PromptType.RESUME_AUTOPSY)).toBe(true);
+      expect(component.results().get(PromptType.RESUME_AUTOPSY)?.result).toEqual(
+        completedResult.structuredOutput,
+      );
+    });
+
+    it('skips results that are not COMPLETED', async () => {
+      const pendingResult: OptimizationResultSummary = {
+        ...completedResult,
+        status: 'PENDING',
+        structuredOutput: null,
+      };
+      await createComponent({
+        jobApplicationId: 'job-app-id-1',
+        getOptimizationResults: vi.fn().mockReturnValue(of([pendingResult])),
+      });
+
+      expect(component.results().has(PromptType.RESUME_AUTOPSY)).toBe(false);
+    });
+
+    it('skips COMPLETED results with null structuredOutput', async () => {
+      const noOutputResult: OptimizationResultSummary = {
+        ...completedResult,
+        structuredOutput: null,
+      };
+      await createComponent({
+        jobApplicationId: 'job-app-id-1',
+        getOptimizationResults: vi.fn().mockReturnValue(of([noOutputResult])),
+      });
+
+      expect(component.results().has(PromptType.RESUME_AUTOPSY)).toBe(false);
+    });
+
+    it('calls getStructuredData with the cvDocumentId from the job application', async () => {
+      await createComponent({ jobApplicationId: 'job-app-id-1' });
+
+      expect(apiService.getStructuredData).toHaveBeenCalledWith(
+        mockJobApplicationWithCv.cvDocumentId,
+      );
+    });
+
+    it('sets cvStructuredData from getStructuredData response', async () => {
+      await createComponent({ jobApplicationId: 'job-app-id-1' });
+
+      expect(component.cvStructuredData()).toEqual(mockCvStructuredData);
+    });
+
+    it('sets loadError when the API call fails', async () => {
+      await createComponent({
+        jobApplicationId: 'job-app-id-1',
+        getOptimizationResults: vi.fn().mockReturnValue(
+          throwError(() => ({ error: { message: 'Server error' } })),
+        ),
+      });
+
+      expect(component.loadError()).toBe('Server error');
+    });
+
+    it('uses fallback message when error has no message', async () => {
+      await createComponent({
+        jobApplicationId: 'job-app-id-1',
+        getOptimizationResults: vi.fn().mockReturnValue(throwError(() => ({}))),
+      });
+
+      expect(component.loadError()).toBe('Failed to load optimization. Please try again.');
+    });
+  });
+
+  describe('hasPartialStoredResults', () => {
+    it('returns false when not in stored mode', () => {
+      expect(component.hasPartialStoredResults()).toBe(false);
+    });
+
+    it('returns true in stored mode when at least one active prompt has no result', () => {
+      component.isStoredMode.set(true);
+      component.results.set(new Map([[PromptType.KEYWORD_GAP, { promptType: PromptType.KEYWORD_GAP, status: 'completed' }]]));
+      expect(component.hasPartialStoredResults()).toBe(true);
+    });
+
+    it('returns false in stored mode when all active prompts have results', () => {
+      component.isStoredMode.set(true);
+      component.results.set(new Map([
+        [PromptType.KEYWORD_GAP, { promptType: PromptType.KEYWORD_GAP, status: 'completed' }],
+        [PromptType.RESUME_AUTOPSY, { promptType: PromptType.RESUME_AUTOPSY, status: 'completed' }],
+        [PromptType.BULLET_UPGRADE, { promptType: PromptType.BULLET_UPGRADE, status: 'completed' }],
+      ]));
+      expect(component.hasPartialStoredResults()).toBe(false);
+    });
+  });
+
+  describe('openOriginalCv', () => {
+    it('calls downloadCv with the cvDocument id from the job application', () => {
+      component.jobApplication.set(mockJobApplicationWithCv);
+      const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+      component.openOriginalCv();
+
+      expect(cvApiService.downloadCv).toHaveBeenCalledWith(
+        mockJobApplicationWithCv.cvDocument!.id,
+      );
+      openSpy.mockRestore();
+    });
+
+    it('opens the signed URL in a new tab', () => {
+      component.jobApplication.set(mockJobApplicationWithCv);
+      const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+      component.openOriginalCv();
+
+      expect(openSpy).toHaveBeenCalledWith('https://signed.url', '_blank');
+      openSpy.mockRestore();
+    });
+
+    it('does nothing when jobApplication has no cvDocument', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      component.jobApplication.set({ ...mockJobApplicationWithCv, cvDocument: null as any });
+
+      expect(() => component.openOriginalCv()).not.toThrow();
+      expect(cvApiService.downloadCv).not.toHaveBeenCalled();
+    });
+
+    it('does nothing when jobApplication is null', () => {
+      component.jobApplication.set(null);
+
+      expect(() => component.openOriginalCv()).not.toThrow();
+      expect(cvApiService.downloadCv).not.toHaveBeenCalled();
     });
   });
 });

@@ -28,9 +28,7 @@ describe('Footer', () => {
   });
 
   it('should display copyright text', () => {
-    expect(fixture.nativeElement.textContent).toContain(
-      '2026 Opti CV. All rights reserved.',
-    );
+    expect(fixture.nativeElement.textContent).toContain('2026 OptiCV.');
   });
 
   it('should render a Facebook link', () => {
