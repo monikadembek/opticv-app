@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   inject,
   OnInit,
   signal,
@@ -13,6 +14,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import type { JobApplicationListItem } from '@opticv/datatypes';
 import { JobApplicationApiService } from '../../../../core/services/job-application-api.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-optimization-list',
@@ -32,6 +34,7 @@ export class OptimizationList implements OnInit {
   private readonly router = inject(Router);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly items = signal<JobApplicationListItem[]>([]);
   readonly isLoading = signal(false);
@@ -44,18 +47,22 @@ export class OptimizationList implements OnInit {
   loadOptimizations(): void {
     this.isLoading.set(true);
     this.error.set(null);
-    this.jobApplicationApiService.getJobApplications().subscribe({
-      next: ({ data }) => {
-        this.items.set(data);
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        this.error.set(
-          err?.error?.message ?? 'Failed to load optimizations. Please try again.',
-        );
-        this.isLoading.set(false);
-      },
-    });
+    this.jobApplicationApiService
+      .getJobApplications()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ data }) => {
+          this.items.set(data);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          this.error.set(
+            err?.error?.message ??
+              'Failed to load optimizations. Please try again.',
+          );
+          this.isLoading.set(false);
+        },
+      });
   }
 
   onOpen(item: JobApplicationListItem): void {
@@ -70,25 +77,29 @@ export class OptimizationList implements OnInit {
       icon: 'pi pi-exclamation-triangle',
       acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
-        this.jobApplicationApiService.deleteJobApplication(item.id).subscribe({
-          next: () => {
-            this.items.update((list) => list.filter((i) => i.id !== item.id));
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Deleted',
-              detail: 'Optimization deleted successfully.',
-            });
-          },
-          error: (err) => {
-            const message =
-              err?.error?.message ?? 'Failed to delete optimization. Please try again.';
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Delete failed',
-              detail: message,
-            });
-          },
-        });
+        this.jobApplicationApiService
+          .deleteJobApplication(item.id)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: () => {
+              this.items.update((list) => list.filter((i) => i.id !== item.id));
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Deleted',
+                detail: 'Optimization deleted successfully.',
+              });
+            },
+            error: (err) => {
+              const message =
+                err?.error?.message ??
+                'Failed to delete optimization. Please try again.';
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Delete failed',
+                detail: message,
+              });
+            },
+          });
       },
     });
   }

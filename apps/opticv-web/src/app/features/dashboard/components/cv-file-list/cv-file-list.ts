@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   inject,
   OnInit,
   PLATFORM_ID,
@@ -15,6 +16,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-cv-file-list',
@@ -33,6 +35,7 @@ export class CvFileList implements OnInit {
   private readonly confirmationService = inject(ConfirmationService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly messageService = inject(MessageService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly cvFiles = signal<CvDocumentListItem[]>([]);
   readonly isCvsLoading = signal(false);
@@ -45,18 +48,21 @@ export class CvFileList implements OnInit {
   loadFiles(): void {
     this.isCvsLoading.set(true);
     this.cvsError.set(null);
-    this.cvApiService.getUserCvs().subscribe({
-      next: (files) => {
-        this.cvFiles.set(files);
-        this.isCvsLoading.set(false);
-      },
-      error: (err) => {
-        this.cvsError.set(
-          err?.error?.message ?? 'Failed to load files. Please try again.',
-        );
-        this.isCvsLoading.set(false);
-      },
-    });
+    this.cvApiService
+      .getUserCvs()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (files) => {
+          this.cvFiles.set(files);
+          this.isCvsLoading.set(false);
+        },
+        error: (err) => {
+          this.cvsError.set(
+            err?.error?.message ?? 'Failed to load files. Please try again.',
+          );
+          this.isCvsLoading.set(false);
+        },
+      });
   }
 
   downloadCv(file: CvDocumentListItem): void {
@@ -85,25 +91,30 @@ export class CvFileList implements OnInit {
       icon: 'pi pi-exclamation-triangle',
       acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
-        this.cvApiService.deleteCv(file.id).subscribe({
-          next: () => {
-            this.cvFiles.update((list) => list.filter((f) => f.id !== file.id));
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Success',
-              detail: 'CV file deleted successfully.',
-            });
-          },
-          error: (err) => {
-            const message =
-              err?.error?.message ?? 'Deleting CV failed. Please try again.';
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Delete failed',
-              detail: message,
-            });
-          },
-        });
+        this.cvApiService
+          .deleteCv(file.id)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: () => {
+              this.cvFiles.update((list) =>
+                list.filter((f) => f.id !== file.id),
+              );
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Success',
+                detail: 'CV file deleted successfully.',
+              });
+            },
+            error: (err) => {
+              const message =
+                err?.error?.message ?? 'Deleting CV failed. Please try again.';
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Delete failed',
+                detail: message,
+              });
+            },
+          });
       },
     });
   }

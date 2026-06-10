@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { ConfirmationService } from 'primeng/api';
 import { TabsModule } from 'primeng/tabs';
 import { CvFileList } from './components/cv-file-list/cv-file-list';
 import { OptimizationList } from './components/optimization-list/optimization-list';
@@ -10,6 +9,6 @@ import { OptimizationList } from './components/optimization-list/optimization-li
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [ConfirmationService],
+  providers: [],
 })
 export class Dashboard {}
