@@ -438,27 +438,31 @@ Frontend:
 
 ---
 
-### 39. Keyword Gap - select, modify and apply optimizations
+### 39. Stored Optimizations - display list, dispplay selected optimization, delete single optimization
+
+**status: in progess**
+**time: 09.06.2026 -**
+
+- in dashboard display list of previous optimizations, divide uploaded cvs and executed optimizationas into 2 separate tabs
+- add button to delete optimization - cascade delete job application data and cv optimization data
+- display selected previous optimization in new route cv-optimization/:id - displays optimization suggestions, read-only job application data with link to cv and buttons to export optimized cv
+
+---
+
+### 40. Keyword Gap - select, modify and apply optimizations
 
 **status: todo**
+**time:**
 
 - allow selecting, modifying, adding missing keywords and applying it to cv.
 
 ---
 
-### 40. Bullet upgrades - select, modify and apply optimizations
+### 41. Bullet upgrades - select, modify and apply optimizations
 
 **status: todo**
 
 - allow selecting, modifying and applying suggestions to cv.
-
----
-
-### 41. Bug - after account is deleted all items in menu stay visible
-
-**status: todo**
-
-When user deletes its account, gets logged out, but account is already deleted so supabase logout returns error, we are redirected to login page but all item in top menu are visible, even the ones which should be visible only to logged in users.
 
 ---
 
@@ -484,7 +488,15 @@ When user deletes its account, gets logged out, but account is already deleted s
 
 ---
 
-### Fix issue with selecting template card with keyboard
+### Bug - after account is deleted all items in menu stay visible
+
+**status: todo**
+
+When user deletes its account, gets logged out, but account is already deleted so supabase logout returns error, we are redirected to login page but all item in top menu are visible, even the ones which should be visible only to logged in users.
+
+---
+
+### Bug - Fix issue with selecting template card with keyboard
 
 **status: todo**
 

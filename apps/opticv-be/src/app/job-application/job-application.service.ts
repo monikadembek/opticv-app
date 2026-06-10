@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import type { JobApplicationListResponse, JobApplicationResponse } from '@opticv/datatypes';
+import type { JobApplicationListResponse, JobApplicationResponse, JobApplicationWithCv } from '@opticv/datatypes';
 import type { CreateJobApplicationDto } from './dto/create-job-application.dto';
 import type { UpdateJobApplicationDto } from './dto/update-job-application.dto';
 import type { UpdateAtsScoreDto } from './dto/update-ats-score.dto';
@@ -42,6 +42,7 @@ export class JobApplicationService {
           atsScore: true,
           createdAt: true,
           updatedAt: true,
+          cvDocument: { select: { id: true, fileName: true } },
         },
         ...paginationArgs,
       }),
@@ -50,12 +51,15 @@ export class JobApplicationService {
     return { data, total };
   }
 
-  async findOne(id: string, userId: string): Promise<JobApplicationResponse> {
-    const record = await this.prisma.jobApplication.findUnique({ where: { id } });
+  async findOne(id: string, userId: string): Promise<JobApplicationWithCv> {
+    const record = await this.prisma.jobApplication.findUnique({
+      where: { id },
+      include: { cvDocument: { select: { id: true, fileName: true } } },
+    });
     if (!record || record.userId !== userId) {
       throw new NotFoundException('Job application not found.');
     }
-    return record;
+    return record as JobApplicationWithCv;
   }
 
   async update(id: string, dto: UpdateJobApplicationDto, userId: string): Promise<JobApplicationResponse> {

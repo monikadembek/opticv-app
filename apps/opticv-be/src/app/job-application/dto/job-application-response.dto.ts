@@ -1,5 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+class CvDocumentSummaryDto {
+  @ApiProperty({ example: 'cv-uuid-789' })
+  id!: string;
+
+  @ApiProperty({ example: 'my-resume.pdf' })
+  fileName!: string;
+}
+
 export class JobApplicationResponseDto {
   @ApiProperty({ example: 'app-uuid-123' })
   id!: string;
@@ -30,6 +38,9 @@ export class JobApplicationResponseDto {
 
   @ApiProperty({ example: '2024-01-20T14:00:00.000Z' })
   updatedAt!: string;
+
+  @ApiProperty({ type: () => CvDocumentSummaryDto })
+  cvDocument!: CvDocumentSummaryDto;
 }
 
 export class JobApplicationListItemDto {
@@ -56,6 +67,9 @@ export class JobApplicationListItemDto {
 
   @ApiProperty({ example: '2024-01-20T14:00:00.000Z' })
   updatedAt!: string;
+
+  @ApiProperty({ type: () => CvDocumentSummaryDto })
+  cvDocument!: CvDocumentSummaryDto;
 }
 
 export class JobApplicationListResponseDto {

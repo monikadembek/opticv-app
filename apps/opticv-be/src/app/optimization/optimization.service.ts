@@ -172,6 +172,7 @@ export class OptimizationService {
         promptType: true,
         status: true,
         userEditedOutput: true,
+        structuredOutput: true,
       },
     });
 

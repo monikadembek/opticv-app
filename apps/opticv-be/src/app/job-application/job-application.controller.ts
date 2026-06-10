@@ -20,7 +20,7 @@ import {
 import { SupabaseGuard } from '../auth/supabase.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { UserModel } from '../../generated/prisma/models.js';
-import type { JobApplicationListResponse, JobApplicationResponse } from '@opticv/datatypes';
+import type { JobApplicationListResponse, JobApplicationResponse, JobApplicationWithCv } from '@opticv/datatypes';
 import { JobApplicationService } from './job-application.service';
 import { CreateJobApplicationDto } from './dto/create-job-application.dto';
 import { UpdateJobApplicationDto } from './dto/update-job-application.dto';
@@ -70,7 +70,7 @@ export class JobApplicationController {
   findOne(
     @Param('id') id: string,
     @CurrentUser() user: UserModel,
-  ): Promise<JobApplicationResponse> {
+  ): Promise<JobApplicationWithCv> {
     return this.jobApplicationService.findOne(id, user.id);
   }
 
