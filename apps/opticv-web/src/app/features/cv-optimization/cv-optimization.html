@@ -1,6 +1,17 @@
 <div class="mx-auto max-w-4xl px-4 py-12">
   <h1 class="mb-8 text-3xl font-bold text-surface-900">CV Optimization</h1>
 
+  @if (loadError()) {
+  <div class="flex flex-col items-center gap-4 py-16 text-center">
+    <span class="text-red-500">{{ loadError() }}</span>
+    <p-button
+      label="Back to Dashboard"
+      icon="pi pi-arrow-left"
+      routerLink="/dashboard"
+      ariaLabel="Back to Dashboard"
+    />
+  </div>
+  } @else { @if (!isStoredMode()) {
   <h2 class="section-heading">Resume and job description</h2>
   <p class="mb-6">
     Select CV and paste information about job offer that you want to apply for.
@@ -17,6 +28,47 @@
       </p-accordion-content>
     </p-accordion-panel>
   </p-accordion>
+  } @if (isStoredMode() && jobApplication()) {
+  <div class="mb-8">
+    <h2 class="section-heading">Job Application</h2>
+    @if (jobApplication()!.cvDocument.fileName) {
+    <button
+      type="button"
+      class="text-sm text-primary-600 hover:text-primary-800 hover:underline mb-4 flex items-center gap-1 cursor-pointer bg-transparent border-none p-0"
+      (click)="openOriginalCv()"
+      [attr.aria-label]="'Open ' + jobApplication()!.cvDocument.fileName"
+    >
+      <i class="pi pi-file"></i>{{ jobApplication()!.cvDocument.fileName }}
+    </button>
+    }
+    <div class="flex flex-col gap-2 mb-4">
+      @if (jobApplication()!.jobTitle) {
+      <p class="text-lg font-semibold text-surface-900 m-0">
+        {{ jobApplication()!.jobTitle }}
+      </p>
+      } @if (jobApplication()!.companyName) {
+      <p class="text-surface-600 m-0">{{ jobApplication()!.companyName }}</p>
+      }
+    </div>
+    <details class="group">
+      <summary
+        class="cursor-pointer text-sm text-primary-600 hover:text-primary-800 select-none"
+      >
+        View job description
+      </summary>
+      <p class="mt-3 text-sm text-surface-700 whitespace-pre-wrap">
+        {{ jobApplication()!.jobDescription }}
+      </p>
+    </details>
+  </div>
+  } @if (hasPartialStoredResults()) {
+  <div
+    class="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800 text-sm"
+  >
+    <i class="pi pi-info-circle mr-2"></i>
+    Some optimization results are unavailable for this stored optimization.
+  </div>
+  }
 
   <h2 class="section-heading">Resume analysis and improvements</h2>
   <p class="mb-6">
@@ -390,12 +442,12 @@
         ariaLabel="Export optimized CV to DOCX"
       />
     </div>
-    } @else {
+    } @else if (!isStoredMode()) {
     <p class="text-sm text-surface-400 m-0 mt-2">
       Run optimization process and select at least one change above to export a
       modified CV.
     </p>
     }
   </div>
-  }
+  } }
 </div>

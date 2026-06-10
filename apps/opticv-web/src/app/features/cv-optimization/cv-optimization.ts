@@ -4,11 +4,13 @@ import {
   computed,
   DestroyRef,
   inject,
+  OnInit,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { JsonPipe } from '@angular/common';
-import { filter, from, mergeMap, switchMap } from 'rxjs';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { filter, forkJoin, from, mergeMap, switchMap } from 'rxjs';
 import {
   JobSubmittedData,
   JobUpload,
@@ -22,6 +24,7 @@ import {
   CoverLetterResult,
   CvStructuredData,
   InterviewPrepResult,
+  JobApplicationWithCv,
   KeywordGapResult,
   PromptType,
   ResumeAutopsyResult,
@@ -34,6 +37,7 @@ import {
   SseJobCompleteEvent,
 } from './services/cv-optimization-api.service';
 import { CvExportService } from './services/cv-export.service';
+import { CvApiService } from '../dashboard/services/cv-api.service';
 import { OptimizationResultPanel } from './components/optimization-result-panel/optimization-result-panel';
 import { AtsScore } from './components/ats-score/ats-score';
 import { KeywordGap } from './components/keyword-gap/keyword-gap';
@@ -44,6 +48,7 @@ import { InterviewPrep } from './components/interview-prep/interview-prep';
 import { CvTemplateId } from './cv-templates';
 import { CvTemplateSelector } from './components/cv-template-selector/cv-template-selector';
 import { applySelectionsToCV } from './utils/apply-selections';
+import { JobApplicationApiService } from '../../core/services/job-application-api.service';
 
 function isResumeAutopsyResult(value: unknown): value is ResumeAutopsyResult {
   if (typeof value !== 'object' || value === null) return false;
@@ -103,7 +108,11 @@ function isInterviewPrepResult(value: unknown): value is InterviewPrepResult {
   return Array.isArray(v['questions']) && Array.isArray(v['preparationTips']);
 }
 
-const ActivePrompts = [PromptType.SUMMARY_REWRITE];
+const ActivePrompts = [
+  PromptType.KEYWORD_GAP,
+  PromptType.RESUME_AUTOPSY,
+  PromptType.BULLET_UPGRADE,
+];
 
 @Component({
   selector: 'app-cv-optimization-page',
@@ -113,6 +122,7 @@ const ActivePrompts = [PromptType.SUMMARY_REWRITE];
     ButtonModule,
     TooltipModule,
     JsonPipe,
+    RouterLink,
     OptimizationResultPanel,
     AtsScore,
     KeywordGap,
@@ -126,9 +136,12 @@ const ActivePrompts = [PromptType.SUMMARY_REWRITE];
   styleUrl: './cv-optimization.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CvOptimization {
+export class CvOptimization implements OnInit {
   private readonly cvOptimizationApiService = inject(CvOptimizationApiService);
   private readonly cvExportService = inject(CvExportService);
+  private readonly cvApiService = inject(CvApiService);
+  private readonly jobApplicationApiService = inject(JobApplicationApiService);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly PromptType = PromptType;
@@ -145,6 +158,9 @@ export class CvOptimization {
   readonly isExportingPdf = signal(false);
   readonly isExportingDocx = signal(false);
   readonly selectedTemplate = signal<CvTemplateId>('ats');
+  readonly isStoredMode = signal(false);
+  readonly loadError = signal<string | null>(null);
+  readonly jobApplication = signal<JobApplicationWithCv | null>(null);
 
   readonly autopsyResult = computed<ResumeAutopsyResult | null>(() => {
     const r = this.results().get(PromptType.RESUME_AUTOPSY)?.result;
@@ -193,14 +209,16 @@ export class CvOptimization {
   );
 
   readonly canExportCv = computed(() => {
-    const s = this.selections();
-    return (
-      !this.isProcessingAny() &&
-      this.mergedCv() !== null &&
-      (s.selectedSummaryAngle !== null ||
+    if (!this.isProcessingAny() && this.mergedCv() !== null) {
+      if (this.isStoredMode()) return true;
+      const s = this.selections();
+      return (
+        s.selectedSummaryAngle !== null ||
         s.selectedBullets.length > 0 ||
-        s.selectedKeywords.length > 0)
-    );
+        s.selectedKeywords.length > 0
+      );
+    }
+    return false;
   });
 
   readonly retryablePromptTypes = computed<Set<PromptType>>(() => {
@@ -229,6 +247,59 @@ export class CvOptimization {
 
     return retryable;
   });
+
+  readonly hasPartialStoredResults = computed(() => {
+    if (!this.isStoredMode()) return false;
+    return ActivePrompts.some((p) => !this.results().has(p));
+  });
+
+  ngOnInit(): void {
+    const jobApplicationId = this.route.snapshot.paramMap.get('jobApplicationId');
+    if (jobApplicationId) {
+      this.isStoredMode.set(true);
+      this.loadStoredOptimization(jobApplicationId);
+    }
+  }
+
+  private loadStoredOptimization(id: string): void {
+    forkJoin({
+      jobApplication: this.jobApplicationApiService.getJobApplication(id),
+      results: this.cvOptimizationApiService.getOptimizationResults(id),
+    })
+      .pipe(
+        switchMap(({ jobApplication, results }) => {
+          this.jobApplicationId.set(id);
+          this.jobApplication.set(jobApplication);
+
+          const resultMap = new Map<PromptType, SseJobCompleteEvent>();
+          for (const r of results) {
+            if (r.status === 'COMPLETED' && r.structuredOutput != null) {
+              resultMap.set(r.promptType, {
+                promptType: r.promptType,
+                status: 'completed',
+                result: r.structuredOutput,
+              });
+            }
+          }
+          this.results.set(resultMap);
+
+          return this.cvOptimizationApiService.getStructuredData(
+            jobApplication.cvDocumentId,
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: ({ data }) => {
+          this.cvStructuredData.set(data);
+        },
+        error: (err) => {
+          const message =
+            err?.error?.message ?? 'Failed to load optimization. Please try again.';
+          this.loadError.set(message);
+        },
+      });
+  }
 
   runOptimization({ jobApplication, extractedData }: JobSubmittedData): void {
     this.results.set(new Map());
@@ -354,6 +425,15 @@ export class CvOptimization {
         : [...s.selectedKeywords, keyword];
       return { ...s, selectedKeywords };
     });
+  }
+
+  openOriginalCv(): void {
+    const cvId = this.jobApplication()?.cvDocument?.id;
+    if (!cvId) return;
+    this.cvApiService
+      .downloadCv(cvId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(({ url }) => window.open(url, '_blank'));
   }
 
   exportCvAsPdf(): void {
