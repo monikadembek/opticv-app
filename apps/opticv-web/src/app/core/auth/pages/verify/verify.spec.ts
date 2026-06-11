@@ -64,7 +64,7 @@ describe('Verify', () => {
   it('should render the OTP verification heading', () => {
     fixture.detectChanges();
     const h1 = fixture.nativeElement.querySelector('h1');
-    expect(h1.textContent.trim()).toBe('OTP Verification Code');
+    expect(h1.textContent.trim()).toBe('Check your email');
   });
 
   it('should render the submit button', () => {

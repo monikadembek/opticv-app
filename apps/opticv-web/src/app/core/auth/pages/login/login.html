@@ -1,57 +1,85 @@
-<div class="container">
-  <div class="w-100 p-6 text-center border border-gray-300 rounded-md">
-    <h1 class="text-xl font-bold mb-10">Sign in to the app</h1>
-    <form
-      #loginForm="ngForm"
-      (ngSubmit)="onSubmit(loginForm)"
-      class="flex flex-col gap-5 justify-center w-full sm:w-56 m-auto"
-    >
-      <div class="flex flex-col gap-1">
-        <p-floatlabel>
-          <input
-            pInputText
-            type="email"
-            id="email"
-            name="email"
-            [(ngModel)]="email"
-            #emailInput="ngModel"
-            required
-            email
-            [invalid]="emailInput.invalid && emailInput.dirty"
-            class="mb-2"
-          />
-          <label for="email">Email address</label>
-        </p-floatlabel>
-        @if (emailInput.invalid && (emailInput.touched || loginForm.submitted))
-        { @if (emailInput.hasError('required')) {
-        <p-message severity="error" size="small" variant="simple"
-          >Email is required.</p-message
-        >
-        } @if (emailInput.hasError('email')) {
-        <p-message severity="error" size="small" variant="simple"
-          >Please enter a valid email.</p-message
-        >
-        } }
-      </div>
-      <button
-        pButton
-        severity="success"
-        type="submit"
-        [loading]="isSubmitting()"
-        [disabled]="loginForm.invalid || loginForm.untouched"
-      >
-        <span pButtonLabel>Sign in</span>
-      </button>
-    </form>
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="brand-logo">OptiCV</span>
+    </div>
 
-    @if(errorMessage()) {
-    <p-message
-      severity="error"
-      size="small"
-      variant="simple"
-      class="m-auto mt-8 text-center flex justify-center"
-      >{{errorMessage()}}</p-message
-    >
-    }
+    <div class="auth-content">
+      <div class="auth-header">
+        <h1 class="auth-title">Welcome back</h1>
+        <p class="auth-subtitle">
+          Enter your email and we'll send you a one-time 6-digit sign-in code —
+          no password needed.
+        </p>
+      </div>
+
+      <form
+        #loginForm="ngForm"
+        (ngSubmit)="onSubmit(loginForm)"
+        class="auth-form"
+      >
+        <div class="field-wrapper">
+          <p-floatlabel>
+            <input
+              pInputText
+              type="email"
+              id="email"
+              name="email"
+              [(ngModel)]="email"
+              #emailInput="ngModel"
+              required
+              email
+              [invalid]="emailInput.invalid && emailInput.dirty"
+              class="auth-input"
+            />
+            <label for="email">Email address</label>
+          </p-floatlabel>
+          @if (emailInput.invalid && (emailInput.touched ||
+          loginForm.submitted)) { @if (emailInput.hasError('required')) {
+          <p-message severity="error" size="small" variant="simple"
+            >Email is required.</p-message
+          >
+          } @if (emailInput.hasError('email')) {
+          <p-message severity="error" size="small" variant="simple"
+            >Please enter a valid email address.</p-message
+          >
+          } }
+        </div>
+
+        <button
+          pButton
+          severity="success"
+          type="submit"
+          [loading]="isSubmitting()"
+          [disabled]="loginForm.invalid || loginForm.untouched"
+          class="auth-submit-btn"
+        >
+          <span pButtonLabel>Send sign-in code</span>
+        </button>
+      </form>
+
+      @if (errorMessage()) {
+      <p-message
+        severity="error"
+        size="small"
+        variant="simple"
+        class="auth-error"
+      >
+        {{ errorMessage() }}
+      </p-message>
+      }
+
+      <p class="auth-note">
+        <span class="pi pi-lock auth-note-icon"></span>
+        Secure, passwordless sign-in via email
+      </p>
+    </div>
   </div>
+
+  <p class="auth-footer-link">
+    New here?
+    <a href="https://opticv.net" target="_blank" rel="noopener"
+      >Learn about OptiCV</a
+    >
+  </p>
 </div>

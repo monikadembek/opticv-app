@@ -11,11 +11,11 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { InputOtpModule } from 'primeng/inputotp';
 import { MessageModule } from 'primeng/message';
 import { ButtonModule } from 'primeng/button';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-verify',
-  imports: [InputOtpModule, FormsModule, ButtonModule, MessageModule],
+  imports: [InputOtpModule, FormsModule, ButtonModule, MessageModule, RouterLink],
   templateUrl: './verify.html',
   styleUrl: './verify.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
