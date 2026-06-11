@@ -8,10 +8,10 @@ import type {
   BulletSelectionKey,
   BulletUpgradeResult,
 } from '@opticv/datatypes';
-
-type MissingBulletKey = { forPosition: string; suggestedBullet: string };
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
+
+type MissingBulletKey = { forPosition: string; suggestedBullet: string };
 
 @Component({
   imports: [ButtonModule, TextareaModule],

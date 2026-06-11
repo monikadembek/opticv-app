@@ -164,7 +164,7 @@
               [checked]="isRemovedBullet(position.company, position.title, bullet.originalText)"
               (change)="removedBulletToggled.emit({ company: position.company, title: position.title, originalText: bullet.originalText })"
               class="accent-primary-500 mt-0.5 shrink-0"
-              [attr.aria-label]="'Remove bullet at ' + position.title + ' — ' + position.company"
+              [attr.aria-label]="'Remove bullet at ' + position.title + ' — ' + position.company + ': ' + bullet.originalText"
             />
             <div class="space-y-1 flex-1">
               <div class="flex items-center gap-2 flex-wrap">
