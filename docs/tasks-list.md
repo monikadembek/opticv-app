@@ -460,12 +460,13 @@ Frontend:
 
 ### 41. Bullet upgrades - add missing bullets suggestions and remove recommended_cut bullets
 
-**status: in progress**
-**time: 11.06.2026 - **
+**status: done**
+**time: 11.06.2026**
 
 - allow selecting suggested missing bullets and applying it to optimized cv;
 - allow inline editing the suggested missing bullets and applying the edited version to optimized cv;
 - allow selecting the recommended_cut bullets and removing them from optimized cv
+- persist changes to bullets state on backend
 
 ---
 
@@ -491,22 +492,22 @@ Frontend:
 
 ---
 
-### 44. Keyword Gap - select, modify and apply optimizations
-
-**status: todo**
-**time:**
-
-- allow selecting, modifying, adding missing keywords and applying it to cv.
-
----
-
-### Homepage - content change
+### 44. Homepage - content change
 
 **status: todo**
 **time:**
 
 - change texts on homepage, use some content from landing page;
 - display the 3 step process of using OptiCV app
+
+---
+
+### 45. Keyword Gap - select, modify and apply optimizations
+
+**status: todo**
+**time:**
+
+- allow selecting, modifying, adding missing keywords and applying it to cv.
 
 ---
 
