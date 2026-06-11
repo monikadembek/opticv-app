@@ -255,7 +255,14 @@
           <app-bullet-rewriter
             [result]="result"
             [selectedBullets]="selections().selectedBullets"
+            [bulletEdits]="bulletEdits()"
+            [activeBulletEditKey]="activeBulletEditKey()"
+            [editedBulletText]="editedBulletText()"
             (bulletToggled)="onBulletToggled($event)"
+            (editStarted)="onBulletEditStarted($event)"
+            (editSaved)="onBulletEditSaved($event)"
+            (editCancelled)="onBulletEditCancelled()"
+            (editTextChanged)="onBulletEditTextChanged($event)"
           />
           }
         </app-optimization-result-panel>

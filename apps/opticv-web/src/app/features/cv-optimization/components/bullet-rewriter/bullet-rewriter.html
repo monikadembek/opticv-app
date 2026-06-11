@@ -43,10 +43,53 @@
               [attr.aria-label]="'Select AI rewrite for bullet at ' + position.title + ' — ' + position.company"
             />
             <div class="space-y-2 flex-1">
-              <p class="text-sm text-surface-800">
-                <span class="font-semibold">Rewritten version:</span><br />
-                {{ bullet.rewrittenText }}
+              <div class="flex items-center gap-2">
+                <span class="font-semibold text-sm">Rewritten version:</span>
+                @if (isEdited(position.company, position.title, bullet.originalText)) {
+                <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 font-medium">Edited</span>
+                }
+                @if (!isEditing(position.company, position.title, bullet.originalText)) {
+                <button
+                  type="button"
+                  class="ml-auto inline-flex items-center justify-center rounded p-1 text-surface-400 hover:text-surface-700 hover:bg-surface-100 transition-colors"
+                  (click)="editStarted.emit(bulletKey(position.company, position.title, bullet.originalText)); $event.preventDefault()"
+                  aria-label="Edit rewritten bullet"
+                >
+                  <i class="pi pi-pencil text-xs"></i>
+                </button>
+                }
+              </div>
+              @if (isEditing(position.company, position.title, bullet.originalText)) {
+              <div class="space-y-2">
+                <textarea
+                  pTextarea
+                  [autoResize]="true"
+                  [value]="editedBulletText()"
+                  (input)="editTextChanged.emit($any($event.target).value)"
+                  class="w-full text-sm"
+                  rows="3"
+                  aria-label="Edit rewritten bullet text"
+                ></textarea>
+                <div class="flex gap-2">
+                  <p-button
+                    label="Save"
+                    size="small"
+                    (onClick)="editSaved.emit({ key: bulletKey(position.company, position.title, bullet.originalText), text: editedBulletText() })"
+                  />
+                  <p-button
+                    label="Cancel"
+                    size="small"
+                    severity="secondary"
+                    [text]="true"
+                    (onClick)="editCancelled.emit()"
+                  />
+                </div>
+              </div>
+              } @else {
+              <p class="text-sm text-surface-800 m-0">
+                {{ getDisplayText(position.company, position.title, bullet.originalText, bullet.rewrittenText) }}
               </p>
+              }
               <p class="text-sm text-surface-400">
                 <span class="font-semibold">Original version:</span> <br />
                 {{ bullet.originalText }}
