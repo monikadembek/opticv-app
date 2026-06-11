@@ -231,4 +231,127 @@ describe('BulletRewriter', () => {
       expect(fixture.nativeElement.textContent).toContain('8');
     });
   });
+
+  describe('inline editing', () => {
+    const REWRITE_BULLET = MOCK_RESULT.positions[0].bullets[0];
+    const company = MOCK_RESULT.positions[0].company;
+    const title = MOCK_RESULT.positions[0].title;
+    const key = `${company}|${title}|${REWRITE_BULLET.originalText}`;
+
+    it('renders the edit button for a rewrite bullet with rewrittenText', () => {
+      const btn = fixture.nativeElement.querySelector('[aria-label="Edit rewritten bullet"]');
+      expect(btn).toBeTruthy();
+    });
+
+    it('does not render the edit button when rewrittenText is absent', () => {
+      fixture.componentRef.setInput('result', {
+        ...MOCK_RESULT,
+        positions: [
+          {
+            ...MOCK_RESULT.positions[0],
+            bullets: [{ ...REWRITE_BULLET, rewrittenText: undefined }],
+          },
+        ],
+      });
+      fixture.detectChanges();
+      const btn = fixture.nativeElement.querySelector('[aria-label="Edit rewritten bullet"]');
+      expect(btn).toBeNull();
+    });
+
+    it('emits editStarted with the bullet key when the edit button is clicked', () => {
+      const emitted: string[] = [];
+      fixture.componentInstance.editStarted.subscribe((k: string) => emitted.push(k));
+      const btn: HTMLElement = fixture.nativeElement.querySelector('[aria-label="Edit rewritten bullet"]');
+      btn.click();
+      expect(emitted).toEqual([key]);
+    });
+
+    it('shows the textarea and hides the display paragraph when activeBulletEditKey matches', () => {
+      fixture.componentRef.setInput('activeBulletEditKey', key);
+      fixture.detectChanges();
+      const textarea = fixture.nativeElement.querySelector('textarea[aria-label="Edit rewritten bullet text"]');
+      expect(textarea).toBeTruthy();
+    });
+
+    it('does not show the textarea when activeBulletEditKey does not match', () => {
+      fixture.componentRef.setInput('activeBulletEditKey', null);
+      fixture.detectChanges();
+      const textarea = fixture.nativeElement.querySelector('textarea[aria-label="Edit rewritten bullet text"]');
+      expect(textarea).toBeNull();
+    });
+
+    it('textarea value reflects editedBulletText input', () => {
+      fixture.componentRef.setInput('activeBulletEditKey', key);
+      fixture.componentRef.setInput('editedBulletText', 'My custom bullet text');
+      fixture.detectChanges();
+      const textarea: HTMLTextAreaElement = fixture.nativeElement.querySelector('textarea[aria-label="Edit rewritten bullet text"]');
+      expect(textarea.value).toBe('My custom bullet text');
+    });
+
+    it('emits editSaved with key and current editedBulletText when Save is clicked', () => {
+      fixture.componentRef.setInput('activeBulletEditKey', key);
+      fixture.componentRef.setInput('editedBulletText', 'Saved text');
+      fixture.detectChanges();
+      const emitted: { key: string; text: string }[] = [];
+      fixture.componentInstance.editSaved.subscribe((e: { key: string; text: string }) => emitted.push(e));
+      const pButtons: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('p-button');
+      const savePBtn = Array.from(pButtons).find((b) => b.getAttribute('label') === 'Save');
+      const saveBtn = savePBtn?.querySelector('button') ?? savePBtn;
+      saveBtn?.click();
+      fixture.detectChanges();
+      expect(emitted[0]).toEqual({ key, text: 'Saved text' });
+    });
+
+    it('emits editCancelled when Cancel is clicked', () => {
+      fixture.componentRef.setInput('activeBulletEditKey', key);
+      fixture.detectChanges();
+      let cancelled = false;
+      fixture.componentInstance.editCancelled.subscribe(() => (cancelled = true));
+      const pButtons: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('p-button');
+      const cancelPBtn = Array.from(pButtons).find((b) => b.getAttribute('label') === 'Cancel');
+      const cancelBtn = cancelPBtn?.querySelector('button') ?? cancelPBtn;
+      cancelBtn?.click();
+      fixture.detectChanges();
+      expect(cancelled).toBe(true);
+    });
+
+    it('emits editTextChanged on textarea input event', () => {
+      fixture.componentRef.setInput('activeBulletEditKey', key);
+      fixture.detectChanges();
+      const emitted: string[] = [];
+      fixture.componentInstance.editTextChanged.subscribe((t: string) => emitted.push(t));
+      const textarea: HTMLTextAreaElement = fixture.nativeElement.querySelector('textarea[aria-label="Edit rewritten bullet text"]');
+      textarea.value = 'new text';
+      textarea.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      expect(emitted).toEqual(['new text']);
+    });
+
+    it('shows the Edited badge when bulletEdits contains an entry for the bullet', () => {
+      const edits = new Map([[key, 'Edited text']]);
+      fixture.componentRef.setInput('bulletEdits', edits);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain('Edited');
+    });
+
+    it('does not show the Edited badge when bulletEdits has no entry for the bullet', () => {
+      fixture.componentRef.setInput('bulletEdits', new Map());
+      fixture.detectChanges();
+      const badges: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('.bg-blue-100');
+      expect(badges.length).toBe(0);
+    });
+
+    it('getDisplayText returns edited text when key is in bulletEdits', () => {
+      const edits = new Map([[key, 'Custom edited text']]);
+      fixture.componentRef.setInput('bulletEdits', edits);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain('Custom edited text');
+    });
+
+    it('getDisplayText returns AI rewrittenText when key is not in bulletEdits', () => {
+      fixture.componentRef.setInput('bulletEdits', new Map());
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain(REWRITE_BULLET.rewrittenText);
+    });
+  });
 });

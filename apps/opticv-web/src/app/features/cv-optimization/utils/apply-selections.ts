@@ -12,6 +12,7 @@ export function applySelectionsToCV(
   summaryResult: SummaryRewriteResult | null,
   bulletResult: BulletUpgradeResult | null,
   keywordResult: KeywordGapResult | null,
+  bulletEdits: Map<string, string> = new Map(),
 ): CvStructuredData {
   const clone: CvStructuredData = structuredClone(cv);
 
@@ -48,8 +49,9 @@ export function applySelectionsToCV(
         (b) => b.trim() === key.originalText.trim(),
       );
       if (bulletIndex !== -1) {
+        const editKey = `${key.company}|${key.title}|${key.originalText}`;
         clone.experience[expIndex].bullets[bulletIndex] =
-          bulletItem.rewrittenText;
+          bulletEdits.get(editKey) ?? bulletItem.rewrittenText;
       }
     }
   }

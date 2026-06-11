@@ -10,7 +10,16 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { JsonPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { filter, forkJoin, from, mergeMap, switchMap } from 'rxjs';
+import {
+  debounceTime,
+  filter,
+  forkJoin,
+  from,
+  mergeMap,
+  Subject,
+  switchMap,
+} from 'rxjs';
+import { MessageService } from 'primeng/api';
 import {
   JobSubmittedData,
   JobUpload,
@@ -19,8 +28,10 @@ import { AccordionModule } from 'primeng/accordion';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import {
+  BulletEditKey,
   BulletSelectionKey,
   BulletUpgradeResult,
+  BulletUserState,
   CoverLetterResult,
   CvStructuredData,
   InterviewPrepResult,
@@ -109,9 +120,12 @@ function isInterviewPrepResult(value: unknown): value is InterviewPrepResult {
 }
 
 const ActivePrompts = [
-  PromptType.KEYWORD_GAP,
   PromptType.RESUME_AUTOPSY,
+  PromptType.KEYWORD_GAP,
   PromptType.BULLET_UPGRADE,
+  PromptType.SUMMARY_REWRITE,
+  PromptType.COVER_LETTER,
+  PromptType.INTERVIEW_PREP,
 ];
 
 @Component({
@@ -141,8 +155,10 @@ export class CvOptimization implements OnInit {
   private readonly cvExportService = inject(CvExportService);
   private readonly cvApiService = inject(CvApiService);
   private readonly jobApplicationApiService = inject(JobApplicationApiService);
+  private readonly messageService = inject(MessageService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly persistSubject = new Subject<void>();
 
   readonly PromptType = PromptType;
   readonly results = signal<Map<PromptType, SseJobCompleteEvent>>(new Map());
@@ -161,6 +177,10 @@ export class CvOptimization implements OnInit {
   readonly isStoredMode = signal(false);
   readonly loadError = signal<string | null>(null);
   readonly jobApplication = signal<JobApplicationWithCv | null>(null);
+  readonly bulletEdits = signal<Map<string, string>>(new Map());
+  readonly bulletUpgradeResultId = signal<string | null>(null);
+  readonly activeBulletEditKey = signal<string | null>(null);
+  readonly editedBulletText = signal<string>('');
 
   readonly autopsyResult = computed<ResumeAutopsyResult | null>(() => {
     const r = this.results().get(PromptType.RESUME_AUTOPSY)?.result;
@@ -201,6 +221,7 @@ export class CvOptimization implements OnInit {
       this.summaryRewriteResult(),
       this.bulletUpgradeResult(),
       this.keywordGapResult(),
+      this.bulletEdits(),
     );
   });
 
@@ -254,7 +275,12 @@ export class CvOptimization implements OnInit {
   });
 
   ngOnInit(): void {
-    const jobApplicationId = this.route.snapshot.paramMap.get('jobApplicationId');
+    this.persistSubject
+      .pipe(debounceTime(500), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.persistBulletState());
+
+    const jobApplicationId =
+      this.route.snapshot.paramMap.get('jobApplicationId');
     if (jobApplicationId) {
       this.isStoredMode.set(true);
       this.loadStoredOptimization(jobApplicationId);
@@ -280,6 +306,32 @@ export class CvOptimization implements OnInit {
                 result: r.structuredOutput,
               });
             }
+            if (r.promptType === PromptType.BULLET_UPGRADE) {
+              this.bulletUpgradeResultId.set(r.id);
+              if (r.userEditedOutput != null) {
+                try {
+                  const state = JSON.parse(
+                    r.userEditedOutput,
+                  ) as BulletUserState;
+                  const editsMap = new Map<string, string>();
+                  for (const e of state.edits) {
+                    editsMap.set(
+                      `${e.company}|${e.title}|${e.originalText}`,
+                      e.editedText,
+                    );
+                  }
+                  this.bulletEdits.set(editsMap);
+                  this.selections.update((s) => ({
+                    ...s,
+                    selectedBullets: state.selectedBullets,
+                  }));
+                } catch {
+                  console.warn(
+                    'Could not parse bullet user state from stored optimization',
+                  );
+                }
+              }
+            }
           }
           this.results.set(resultMap);
 
@@ -295,7 +347,8 @@ export class CvOptimization implements OnInit {
         },
         error: (err) => {
           const message =
-            err?.error?.message ?? 'Failed to load optimization. Please try again.';
+            err?.error?.message ??
+            'Failed to load optimization. Please try again.';
           this.loadError.set(message);
         },
       });
@@ -310,6 +363,10 @@ export class CvOptimization implements OnInit {
       selectedBullets: [],
       selectedKeywords: [],
     });
+    this.bulletEdits.set(new Map());
+    this.bulletUpgradeResultId.set(null);
+    this.activeBulletEditKey.set(null);
+    this.editedBulletText.set('');
     this.jobApplicationId.set(jobApplication.id);
     this.cvStructuredData.set(extractedData);
 
@@ -416,6 +473,7 @@ export class CvOptimization implements OnInit {
         : [...s.selectedBullets, key];
       return { ...s, selectedBullets };
     });
+    this.persistSubject.next();
   }
 
   onKeywordToggled(keyword: string): void {
@@ -425,6 +483,110 @@ export class CvOptimization implements OnInit {
         : [...s.selectedKeywords, keyword];
       return { ...s, selectedKeywords };
     });
+  }
+
+  onBulletEditStarted(key: string): void {
+    this.activeBulletEditKey.set(key);
+    const existing = this.bulletEdits().get(key);
+    if (existing !== undefined) {
+      this.editedBulletText.set(existing);
+      return;
+    }
+    const [company, title, originalText] = key.split('|');
+    const bulletResult = this.bulletUpgradeResult();
+    const position = bulletResult?.positions.find(
+      (p) => p.company === company && p.title === title,
+    );
+    const bulletItem = position?.bullets.find(
+      (b) => b.originalText === originalText,
+    );
+    this.editedBulletText.set(bulletItem?.rewrittenText ?? '');
+  }
+
+  onBulletEditTextChanged(text: string): void {
+    this.editedBulletText.set(text);
+  }
+
+  onBulletEditCancelled(): void {
+    this.activeBulletEditKey.set(null);
+    this.editedBulletText.set('');
+  }
+
+  onBulletEditSaved(event: { key: string; text: string }): void {
+    const trimmed = event.text.trim();
+    this.bulletEdits.update((map) => {
+      const next = new Map(map);
+      if (trimmed === '') {
+        next.delete(event.key);
+      } else {
+        next.set(event.key, trimmed);
+      }
+      return next;
+    });
+    this.activeBulletEditKey.set(null);
+    this.editedBulletText.set('');
+    this.persistBulletState();
+  }
+
+  private persistBulletState(): void {
+    const jobApplicationId = this.jobApplicationId();
+    if (jobApplicationId === null) return;
+
+    const buildAndSave = (resultId: string) => {
+      const editsMap = this.bulletEdits();
+      const edits: Array<BulletEditKey & { editedText: string }> = [];
+      for (const [key, editedText] of editsMap) {
+        const parts = key.split('|');
+        const company = parts[0];
+        const title = parts[1];
+        const originalText = parts.slice(2).join('|');
+        edits.push({ company, title, originalText, editedText });
+      }
+      const state: BulletUserState = {
+        edits,
+        selectedBullets: this.selections().selectedBullets,
+      };
+      this.cvOptimizationApiService
+        .saveUserOutput(resultId, JSON.stringify(state))
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Could not save changes',
+              detail: 'Your edits are still applied locally.',
+            });
+          },
+        });
+    };
+
+    const knownId = this.bulletUpgradeResultId();
+    if (knownId !== null) {
+      buildAndSave(knownId);
+      return;
+    }
+
+    this.cvOptimizationApiService
+      .getOptimizationResults(jobApplicationId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (results) => {
+          const bulletResult = results.find(
+            (r) => r.promptType === PromptType.BULLET_UPGRADE,
+          );
+          if (bulletResult) {
+            this.bulletUpgradeResultId.set(bulletResult.id);
+            buildAndSave(bulletResult.id);
+          }
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Could not save changes',
+            detail: 'Your edits are still applied locally.',
+          });
+        },
+      });
   }
 
   openOriginalCv(): void {
@@ -437,6 +599,7 @@ export class CvOptimization implements OnInit {
   }
 
   exportCvAsPdf(): void {
+    this.onBulletEditCancelled();
     const cv = this.mergedCv();
     if (!cv) return;
     this.isExportingPdf.set(true);
@@ -448,6 +611,7 @@ export class CvOptimization implements OnInit {
   }
 
   exportCvAsDocx(): void {
+    this.onBulletEditCancelled();
     const cv = this.mergedCv();
     if (!cv) return;
     this.isExportingDocx.set(true);

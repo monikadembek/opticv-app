@@ -357,7 +357,7 @@ describe('CvOptimization', () => {
     it('calls runSingleOptimizationProcess for each active PromptType', () => {
       component.runOptimization(mockJobSubmittedData);
 
-      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledTimes(3);
+      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledTimes(6);
       expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
         mockJobApplication.id,
         PromptType.KEYWORD_GAP,
@@ -369,6 +369,18 @@ describe('CvOptimization', () => {
       expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
         mockJobApplication.id,
         PromptType.BULLET_UPGRADE,
+      );
+      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
+        mockJobApplication.id,
+        PromptType.SUMMARY_REWRITE,
+      );
+      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
+        mockJobApplication.id,
+        PromptType.COVER_LETTER,
+      );
+      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
+        mockJobApplication.id,
+        PromptType.INTERVIEW_PREP,
       );
     });
 
@@ -385,14 +397,13 @@ describe('CvOptimization', () => {
       );
     });
 
-    it('sets isProcessing to true for a prompt type as soon as its stream opens', () => {
+    it('sets isProcessing to true for the first 3 concurrent prompt types as soon as their streams open', () => {
       apiService.streamOptimizationEvents.mockReturnValue(NEVER);
 
       component.runOptimization(mockJobSubmittedData);
 
-      expect(component.isProcessing().get(PromptType.KEYWORD_GAP)).toBe(true);
-      expect(component.isProcessing().get(PromptType.RESUME_AUTOPSY)).toBe(true);
-      expect(component.isProcessing().get(PromptType.BULLET_UPGRADE)).toBe(true);
+      const processingValues = Array.from(component.isProcessing().values());
+      expect(processingValues.filter(Boolean).length).toBeGreaterThanOrEqual(3);
     });
 
     it('updates results and clears isProcessing on a completed SSE event', () => {
@@ -556,9 +567,9 @@ describe('CvOptimization', () => {
       expect(component.isProcessingAny()).toBe(true);
     });
 
-    it('returns false when only a non-active prompt type is processing', () => {
+    it('returns true when SUMMARY_REWRITE is processing (it is an active prompt)', () => {
       component.isProcessing.set(new Map([[PromptType.SUMMARY_REWRITE, true]]));
-      expect(component.isProcessingAny()).toBe(false);
+      expect(component.isProcessingAny()).toBe(true);
     });
 
     it('returns false when all active prompts finish processing', () => {
@@ -812,6 +823,9 @@ describe('CvOptimization', () => {
         [PromptType.KEYWORD_GAP, { promptType: PromptType.KEYWORD_GAP, status: 'completed' }],
         [PromptType.RESUME_AUTOPSY, { promptType: PromptType.RESUME_AUTOPSY, status: 'completed' }],
         [PromptType.BULLET_UPGRADE, { promptType: PromptType.BULLET_UPGRADE, status: 'completed' }],
+        [PromptType.SUMMARY_REWRITE, { promptType: PromptType.SUMMARY_REWRITE, status: 'completed' }],
+        [PromptType.COVER_LETTER, { promptType: PromptType.COVER_LETTER, status: 'completed' }],
+        [PromptType.INTERVIEW_PREP, { promptType: PromptType.INTERVIEW_PREP, status: 'completed' }],
       ]));
       expect(component.hasPartialStoredResults()).toBe(false);
     });

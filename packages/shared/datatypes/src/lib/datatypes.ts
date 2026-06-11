@@ -411,3 +411,14 @@ export type UserSelections = {
   selectedBullets: BulletSelectionKey[];
   selectedKeywords: string[];
 };
+
+export type BulletEditKey = {
+  company: string;
+  title: string;
+  originalText: string;
+};
+
+export type BulletUserState = {
+  edits: Array<BulletEditKey & { editedText: string }>;
+  selectedBullets: BulletSelectionKey[];
+};

@@ -449,21 +449,23 @@ Frontend:
 
 ---
 
-### 40. Bullet upgrades - select, modify and apply optimizations
+### 40. Bullet upgrades - allow editing bullets and apply it to optimized cv
 
 **status: in progress**
 **time: 10.06.2026 - **
 
-- allow selecting, modifying and applying suggestions to cv.
+- allow inline editing the suggested rewrite (BulletAction 'rewrite') and applying the edited version to cv;
 
 ---
 
-### 41. Keyword Gap - select, modify and apply optimizations
+### 41. Bullet upgrades - missing bullets suggestions and recommended_cut
 
 **status: todo**
-**time:**
+**time: **
 
-- allow selecting, modifying, adding missing keywords and applying it to cv.
+- allow selecting suggested missing bullets and applying it to optimized cv;
+- allow inline editing the suggested missing bullets and applying the edited version to optimized cv;
+- allow selecting the recommended_cut bullets and removing them from optimized cv
 
 ---
 
@@ -486,6 +488,25 @@ Frontend:
 - adjust top menu nav to reflect the styles used on landing page
 - make footer similar to the one on landing page
 - divide cv-optimization page into 4 sections with headers
+
+---
+
+### 44. Keyword Gap - select, modify and apply optimizations
+
+**status: todo**
+**time:**
+
+- allow selecting, modifying, adding missing keywords and applying it to cv.
+
+---
+
+### Homepage - content change
+
+**status: todo**
+**time:**
+
+- change texts on homepage, use some content from landing page;
+- display the 3 step process of using OptiCV app
 
 ---
 
