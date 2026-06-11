@@ -10,7 +10,6 @@ import { ToastModule } from 'primeng/toast';
 import { ButtonModule } from 'primeng/button';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { InputTextModule } from 'primeng/inputtext';
-import { MessageService } from 'primeng/api';
 import { Supabase } from '../../services/supabase';
 import { Router } from '@angular/router';
 
@@ -29,7 +28,6 @@ import { Router } from '@angular/router';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Login {
-  private readonly messageService = inject(MessageService);
   private readonly supabase = inject(Supabase);
   private readonly router = inject(Router);
 
@@ -46,12 +44,6 @@ export class Login {
       const { data, error } = await this.supabase.signInWithOtp(email);
       if (!error) {
         console.log('data', data);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Login',
-          detail: 'Check your email for the OTP code',
-          life: 3000,
-        });
         this.supabase.setPendingEmail(email);
         this.router.navigate(['/verify']);
       }

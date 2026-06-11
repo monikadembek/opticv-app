@@ -492,7 +492,18 @@ Frontend:
 
 ---
 
-### 44. Homepage - content change
+### 44. Login and Verify pages - improve UI/UX
+
+**status: done**
+**time: 11.06.2026**
+
+- improve UI and UX on login and verify pages - add necessary descriptions,
+- match visual design of landing page,
+- in Supabase change time expration of OTP code to 900s (15min)
+
+---
+
+### 45. Homepage - content change
 
 **status: todo**
 **time:**
@@ -502,7 +513,7 @@ Frontend:
 
 ---
 
-### 45. Keyword Gap - select, modify and apply optimizations
+### 46. Keyword Gap - select, modify and apply optimizations
 
 **status: todo**
 **time:**

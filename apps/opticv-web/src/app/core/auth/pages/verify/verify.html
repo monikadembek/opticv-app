@@ -1,47 +1,70 @@
-<div class="container">
-  <div class="w-100 p-6 text-center border border-gray-300 rounded-md">
-    <h1 class="text-xl font-bold mb-10">OTP Verification Code</h1>
-    <form
-      #otpForm="ngForm"
-      (ngSubmit)="onSubmit(otpForm)"
-      class="flex flex-col gap-5"
-    >
-      <div
-        class="flex flex-col gap-4 justify-center items-center w-full sm:w-56 m-auto"
-      >
-        <p-inputotp
-          #otpModel="ngModel"
-          [(ngModel)]="code"
-          [invalid]="otpModel.invalid && (otpModel.touched || otpForm.submitted)"
-          name="code"
-          required
-          [length]="6"
-          [integerOnly]="true"
-          class="mb-2"
-        />
-        @if (otpModel.invalid && otpModel.dirty) {
-        <p-message severity="error" size="small" variant="simple"
-          >Passcode is required.</p-message
-        >
-        }
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="brand-logo">OptiCV</span>
+    </div>
+
+    <div class="auth-content">
+      <div class="auth-header">
+        <div class="verify-icon">
+          <span class="pi pi-envelope"></span>
+        </div>
+        <h1 class="auth-title">Check your email</h1>
+        <p class="auth-subtitle">
+          We've sent a 6-digit code to your email address. Enter it below to
+          sign in.
+        </p>
       </div>
-      <button
-        pButton
-        severity="success"
-        type="submit"
-        [loading]="isSubmitting()"
+
+      <form #otpForm="ngForm" (ngSubmit)="onSubmit(otpForm)" class="auth-form">
+        <div class="otp-wrapper">
+          <p-inputotp
+            #otpModel="ngModel"
+            [(ngModel)]="code"
+            [invalid]="otpModel.invalid && (otpModel.touched || otpForm.submitted)"
+            name="code"
+            required
+            [length]="6"
+            [integerOnly]="true"
+          />
+          @if (otpModel.invalid && otpModel.dirty) {
+          <p-message severity="error" size="small" variant="simple">
+            Please enter the 6-digit code.
+          </p-message>
+          }
+        </div>
+
+        <button
+          pButton
+          severity="success"
+          type="submit"
+          [loading]="isSubmitting()"
+          [disabled]="otpModel.invalid || !code"
+          class="auth-submit-btn"
+        >
+          <span pButtonLabel>Verify and sign in</span>
+        </button>
+      </form>
+
+      @if (errorMessage()) {
+      <p-message
+        severity="error"
+        size="small"
+        variant="simple"
+        class="auth-error"
       >
-        <span pButtonLabel>Submit</span>
-      </button>
-    </form>
-    @if(errorMessage()) {
-    <p-message
-      severity="error"
-      size="small"
-      variant="simple"
-      class="m-auto mt-8 text-center flex justify-center"
-      >{{errorMessage()}}</p-message
-    >
-    }
+        {{ errorMessage() }}
+      </p-message>
+      }
+
+      <p class="auth-note">
+        <span class="pi pi-clock auth-note-icon"></span>
+        Code expires in 15 minutes. Check your spam folder if you don't see it.
+      </p>
+    </div>
   </div>
+
+  <p class="auth-footer-link">
+    Wrong email? <a routerLink="/login">Go back</a>
+  </p>
 </div>
