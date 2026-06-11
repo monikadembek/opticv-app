@@ -258,11 +258,18 @@
             [bulletEdits]="bulletEdits()"
             [activeBulletEditKey]="activeBulletEditKey()"
             [editedBulletText]="editedBulletText()"
+            [selectedMissingBullets]="selectedMissingBullets()"
+            [missingBulletEdits]="missingBulletEdits()"
+            [removedBullets]="removedBullets()"
             (bulletToggled)="onBulletToggled($event)"
             (editStarted)="onBulletEditStarted($event)"
             (editSaved)="onBulletEditSaved($event)"
             (editCancelled)="onBulletEditCancelled()"
             (editTextChanged)="onBulletEditTextChanged($event)"
+            (missingBulletToggled)="onMissingBulletToggled($event)"
+            (missingBulletEditStarted)="onMissingBulletEditStarted($event)"
+            (missingBulletEditSaved)="onMissingBulletEditSaved($event)"
+            (removedBulletToggled)="onRemovedBulletToggled($event)"
           />
           }
         </app-optimization-result-panel>

@@ -181,6 +181,9 @@ export class CvOptimization implements OnInit {
   readonly bulletUpgradeResultId = signal<string | null>(null);
   readonly activeBulletEditKey = signal<string | null>(null);
   readonly editedBulletText = signal<string>('');
+  readonly selectedMissingBullets = signal<Array<{ forPosition: string; suggestedBullet: string }>>([]);
+  readonly missingBulletEdits = signal<Map<string, string>>(new Map());
+  readonly removedBullets = signal<BulletSelectionKey[]>([]);
 
   readonly autopsyResult = computed<ResumeAutopsyResult | null>(() => {
     const r = this.results().get(PromptType.RESUME_AUTOPSY)?.result;
@@ -222,6 +225,9 @@ export class CvOptimization implements OnInit {
       this.bulletUpgradeResult(),
       this.keywordGapResult(),
       this.bulletEdits(),
+      this.removedBullets(),
+      this.selectedMissingBullets(),
+      this.missingBulletEdits(),
     );
   });
 
@@ -236,7 +242,9 @@ export class CvOptimization implements OnInit {
       return (
         s.selectedSummaryAngle !== null ||
         s.selectedBullets.length > 0 ||
-        s.selectedKeywords.length > 0
+        s.selectedKeywords.length > 0 ||
+        this.selectedMissingBullets().length > 0 ||
+        this.removedBullets().length > 0
       );
     }
     return false;
@@ -325,6 +333,20 @@ export class CvOptimization implements OnInit {
                     ...s,
                     selectedBullets: state.selectedBullets,
                   }));
+                  this.selectedMissingBullets.set(
+                    (state.selectedMissingBullets ?? []).map((s) => ({
+                      forPosition: s.forPosition,
+                      suggestedBullet: s.suggestedBullet,
+                    })),
+                  );
+                  const missingEditsMap = new Map<string, string>();
+                  for (const s of state.selectedMissingBullets ?? []) {
+                    if (s.editedText !== undefined) {
+                      missingEditsMap.set(`${s.forPosition}|${s.suggestedBullet}`, s.editedText);
+                    }
+                  }
+                  this.missingBulletEdits.set(missingEditsMap);
+                  this.removedBullets.set(state.removedBullets ?? []);
                 } catch {
                   console.warn(
                     'Could not parse bullet user state from stored optimization',
@@ -367,6 +389,9 @@ export class CvOptimization implements OnInit {
     this.bulletUpgradeResultId.set(null);
     this.activeBulletEditKey.set(null);
     this.editedBulletText.set('');
+    this.selectedMissingBullets.set([]);
+    this.missingBulletEdits.set(new Map());
+    this.removedBullets.set([]);
     this.jobApplicationId.set(jobApplication.id);
     this.cvStructuredData.set(extractedData);
 
@@ -528,6 +553,74 @@ export class CvOptimization implements OnInit {
     this.persistBulletState();
   }
 
+  onMissingBulletToggled(key: { forPosition: string; suggestedBullet: string }): void {
+    this.selectedMissingBullets.update((list) => {
+      const exists = list.some(
+        (s) => s.forPosition === key.forPosition && s.suggestedBullet === key.suggestedBullet,
+      );
+      return exists
+        ? list.filter(
+            (s) => !(s.forPosition === key.forPosition && s.suggestedBullet === key.suggestedBullet),
+          )
+        : [...list, key];
+    });
+    this.persistSubject.next();
+  }
+
+  onMissingBulletEditStarted(key: string): void {
+    this.activeBulletEditKey.set(key);
+    const existing = this.missingBulletEdits().get(key);
+    if (existing !== undefined) {
+      this.editedBulletText.set(existing);
+      return;
+    }
+    const separatorIdx = key.indexOf('|');
+    const forPosition = key.slice(0, separatorIdx);
+    const suggestedBullet = key.slice(separatorIdx + 1);
+    const suggestion = this.bulletUpgradeResult()?.missingBulletSuggestions.find(
+      (s) => s.forPosition === forPosition && s.suggestedBullet === suggestedBullet,
+    );
+    this.editedBulletText.set(suggestion?.suggestedBullet ?? '');
+  }
+
+  onMissingBulletEditSaved(event: { key: string; text: string }): void {
+    const trimmed = event.text.trim();
+    this.missingBulletEdits.update((map) => {
+      const next = new Map(map);
+      if (trimmed === '') {
+        next.delete(event.key);
+      } else {
+        next.set(event.key, trimmed);
+      }
+      return next;
+    });
+    this.activeBulletEditKey.set(null);
+    this.editedBulletText.set('');
+    this.persistBulletState();
+  }
+
+  onRemovedBulletToggled(key: BulletSelectionKey): void {
+    this.removedBullets.update((list) => {
+      const exists = list.some(
+        (b) =>
+          b.company === key.company &&
+          b.title === key.title &&
+          b.originalText === key.originalText,
+      );
+      return exists
+        ? list.filter(
+            (b) =>
+              !(
+                b.company === key.company &&
+                b.title === key.title &&
+                b.originalText === key.originalText
+              ),
+          )
+        : [...list, key];
+    });
+    this.persistSubject.next();
+  }
+
   private persistBulletState(): void {
     const jobApplicationId = this.jobApplicationId();
     if (jobApplicationId === null) return;
@@ -542,9 +635,16 @@ export class CvOptimization implements OnInit {
         const originalText = parts.slice(2).join('|');
         edits.push({ company, title, originalText, editedText });
       }
+      const selectedMissingBullets = this.selectedMissingBullets().map((s) => {
+        const key = `${s.forPosition}|${s.suggestedBullet}`;
+        const editedText = this.missingBulletEdits().get(key);
+        return editedText !== undefined ? { ...s, editedText } : s;
+      });
       const state: BulletUserState = {
         edits,
         selectedBullets: this.selections().selectedBullets,
+        selectedMissingBullets,
+        removedBullets: this.removedBullets(),
       };
       this.cvOptimizationApiService
         .saveUserOutput(resultId, JSON.stringify(state))

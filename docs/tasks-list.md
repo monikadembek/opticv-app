@@ -451,17 +451,17 @@ Frontend:
 
 ### 40. Bullet upgrades - allow editing bullets and apply it to optimized cv
 
-**status: in progress**
-**time: 10.06.2026 - **
+**status: done**
+**time: 10.06.2026 - 11.06.2026**
 
 - allow inline editing the suggested rewrite (BulletAction 'rewrite') and applying the edited version to cv;
 
 ---
 
-### 41. Bullet upgrades - missing bullets suggestions and recommended_cut
+### 41. Bullet upgrades - add missing bullets suggestions and remove recommended_cut bullets
 
-**status: todo**
-**time: **
+**status: in progress**
+**time: 11.06.2026 - **
 
 - allow selecting suggested missing bullets and applying it to optimized cv;
 - allow inline editing the suggested missing bullets and applying the edited version to optimized cv;
