@@ -29,6 +29,7 @@
       <li
         class="rounded-lg border border-surface-200 p-3"
         [class.border-green-400]="bullet.action === 'rewrite' && bullet.rewrittenText && isSelected(position.company, position.title, bullet.originalText)"
+        [class.border-red-400]="bullet.action === 'recommend_cut' && isRemovedBullet(position.company, position.title, bullet.originalText)"
       >
         @switch (bullet.action) { @case ('rewrite') { @if (bullet.rewrittenText)
         {
@@ -157,20 +158,33 @@
         </p>
         } } @case ('recommend_cut') {
         <div>
-          <div class="flex items-start gap-2 mb-1">
-            <span
-              class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700 font-medium shrink-0"
-              >Suggested: remove</span
-            >
-            <span class="text-sm text-surface-700"
-              >{{ bullet.originalText }}</span
-            >
-          </div>
-          @if (bullet.cutReason) {
-          <p class="m-0 text-xs text-surface-500 mt-1">
-            {{ bullet.cutReason }}
-          </p>
-          }
+          <label class="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              [checked]="isRemovedBullet(position.company, position.title, bullet.originalText)"
+              (change)="removedBulletToggled.emit({ company: position.company, title: position.title, originalText: bullet.originalText })"
+              class="accent-primary-500 mt-0.5 shrink-0"
+              [attr.aria-label]="'Remove bullet at ' + position.title + ' — ' + position.company + ': ' + bullet.originalText"
+            />
+            <div class="space-y-1 flex-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span
+                  class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700 font-medium shrink-0"
+                  >Suggested: remove</span
+                >
+                @if (isRemovedBullet(position.company, position.title, bullet.originalText)) {
+                <span
+                  class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-700 font-medium"
+                  >Will be removed</span
+                >
+                }
+              </div>
+              <p class="text-sm text-surface-700 m-0">{{ bullet.originalText }}</p>
+              @if (bullet.cutReason) {
+              <p class="m-0 text-xs text-surface-500">{{ bullet.cutReason }}</p>
+              }
+            </div>
+          </label>
         </div>
         } @case ('keep_as_is') {
         <div class="flex items-start gap-2">
@@ -198,23 +212,84 @@
     <div class="space-y-4">
       @for (suggestion of result().missingBulletSuggestions; track si; let si =
       $index) {
-      <div class="rounded-lg border border-surface-200 p-4">
-        <p class="m-0 text-sm font-medium text-surface-700 mb-2">
-          {{ suggestion.forPosition }}
-        </p>
-        <div
-          class="rounded-lg bg-surface-50 border border-surface-200 p-3 text-sm text-surface-800 mb-2"
-        >
-          {{ suggestion.suggestedBullet }}
-        </div>
-        <p class="m-0 text-xs italic text-surface-500 mb-2">
-          {{ suggestion.rationale }}
-        </p>
-        <div
-          class="rounded-lg bg-blue-50 border border-blue-200 p-3 text-sm text-blue-700"
-        >
-          {{ suggestion.questionToAskUser }}
-        </div>
+      <div
+        class="rounded-lg border border-surface-200 p-4"
+        [class.border-green-400]="isMissingSelected(suggestion.forPosition, suggestion.suggestedBullet)"
+      >
+        <label class="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            [checked]="isMissingSelected(suggestion.forPosition, suggestion.suggestedBullet)"
+            (change)="missingBulletToggled.emit({ forPosition: suggestion.forPosition, suggestedBullet: suggestion.suggestedBullet })"
+            class="accent-primary-500 mt-0.5 shrink-0"
+            [attr.aria-label]="'Add suggested bullet for ' + suggestion.forPosition"
+          />
+          <div class="space-y-2 flex-1">
+            <p class="m-0 text-sm font-medium text-surface-700">
+              {{ suggestion.forPosition }}
+            </p>
+            <div class="flex items-center gap-2">
+              <span class="font-semibold text-sm">Suggested bullet:</span>
+              @if (isMissingEdited(suggestion.forPosition, suggestion.suggestedBullet)) {
+              <span
+                class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 font-medium"
+                >Edited</span
+              >
+              }
+              @if (isMissingSelected(suggestion.forPosition, suggestion.suggestedBullet) && !isMissingEditing(suggestion.forPosition, suggestion.suggestedBullet)) {
+              <button
+                type="button"
+                class="ml-auto inline-flex items-center justify-center rounded p-1 text-surface-400 hover:text-surface-700 hover:bg-surface-100 transition-colors"
+                (click)="missingBulletEditStarted.emit(missingBulletKey(suggestion.forPosition, suggestion.suggestedBullet))"
+                aria-label="Edit suggested bullet"
+              >
+                <i class="pi pi-pencil text-xs"></i>
+              </button>
+              }
+            </div>
+            @if (isMissingEditing(suggestion.forPosition, suggestion.suggestedBullet)) {
+            <div class="space-y-2">
+              <textarea
+                pTextarea
+                [autoResize]="true"
+                [value]="editedBulletText()"
+                (input)="editTextChanged.emit($any($event.target).value)"
+                class="w-full text-sm"
+                rows="3"
+                aria-label="Edit suggested bullet text"
+              ></textarea>
+              <div class="flex gap-2">
+                <p-button
+                  label="Save"
+                  size="small"
+                  (onClick)="missingBulletEditSaved.emit({ key: missingBulletKey(suggestion.forPosition, suggestion.suggestedBullet), text: editedBulletText() })"
+                />
+                <p-button
+                  label="Cancel"
+                  size="small"
+                  severity="secondary"
+                  [text]="true"
+                  (onClick)="editCancelled.emit()"
+                />
+              </div>
+            </div>
+            } @else {
+            <p class="text-sm text-surface-800 m-0">
+              {{ getMissingDisplayText(suggestion.forPosition, suggestion.suggestedBullet) }}
+            </p>
+            }
+            @if (suggestion.rationale) {
+            <p class="m-0 text-xs italic text-surface-500">
+              {{ suggestion.rationale }}
+            </p>
+            }
+            <div
+              class="rounded-lg bg-blue-50 border border-blue-200 p-3 text-sm text-blue-700"
+            >
+              {{ suggestion.questionToAskUser }}
+            </div>
+          </div>
+        </label>
       </div>
       }
     </div>

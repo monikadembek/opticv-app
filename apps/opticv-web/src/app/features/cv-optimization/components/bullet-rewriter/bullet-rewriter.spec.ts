@@ -150,6 +150,63 @@ describe('BulletRewriter', () => {
     it('renders cut reason', () => {
       expect(fixture.nativeElement.textContent).toContain('Does not support the frontend narrative.');
     });
+
+    it('renders "Will be removed" badge when bullet is in removedBullets', () => {
+      const cutBullet = MOCK_RESULT.positions[0].bullets[1];
+      fixture.componentRef.setInput('removedBullets', [
+        { company: MOCK_RESULT.positions[0].company, title: MOCK_RESULT.positions[0].title, originalText: cutBullet.originalText },
+      ]);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain('Will be removed');
+    });
+
+    it('does not render "Will be removed" when bullet is not in removedBullets', () => {
+      fixture.componentRef.setInput('removedBullets', []);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).not.toContain('Will be removed');
+    });
+
+    it('emits removedBulletToggled when the remove checkbox changes', () => {
+      const cutBullet = MOCK_RESULT.positions[0].bullets[1];
+      const emitted: { company: string; title: string; originalText: string }[] = [];
+      fixture.componentInstance.removedBulletToggled.subscribe((k) => emitted.push(k));
+      const checkboxes: NodeListOf<HTMLInputElement> = fixture.nativeElement.querySelectorAll('input[type="checkbox"]');
+      const removeCheckbox = Array.from(checkboxes).find((cb) =>
+        cb.getAttribute('aria-label')?.startsWith('Remove bullet'),
+      );
+      removeCheckbox?.click();
+      expect(emitted[0]).toEqual({
+        company: MOCK_RESULT.positions[0].company,
+        title: MOCK_RESULT.positions[0].title,
+        originalText: cutBullet.originalText,
+      });
+    });
+
+    it('isRemovedBullet returns true when the bullet is in removedBullets', () => {
+      const cutBullet = MOCK_RESULT.positions[0].bullets[1];
+      fixture.componentRef.setInput('removedBullets', [
+        { company: MOCK_RESULT.positions[0].company, title: MOCK_RESULT.positions[0].title, originalText: cutBullet.originalText },
+      ]);
+      fixture.detectChanges();
+      expect(
+        fixture.componentInstance.isRemovedBullet(
+          MOCK_RESULT.positions[0].company,
+          MOCK_RESULT.positions[0].title,
+          cutBullet.originalText,
+        ),
+      ).toBe(true);
+    });
+
+    it('isRemovedBullet returns false when the bullet is not in removedBullets', () => {
+      fixture.componentRef.setInput('removedBullets', []);
+      expect(
+        fixture.componentInstance.isRemovedBullet(
+          MOCK_RESULT.positions[0].company,
+          MOCK_RESULT.positions[0].title,
+          'some other bullet',
+        ),
+      ).toBe(false);
+    });
   });
 
   describe('keep_as_is bullets', () => {
@@ -181,6 +238,9 @@ describe('BulletRewriter', () => {
   });
 
   describe('missing bullet suggestions', () => {
+    const SUGGESTION = MOCK_RESULT.missingBulletSuggestions[0];
+    const missingKey = `${SUGGESTION.forPosition}|${SUGGESTION.suggestedBullet}`;
+
     it('renders the "Missing Bullet Suggestions" heading when suggestions are present', () => {
       expect(fixture.nativeElement.textContent).toContain('Missing Bullet Suggestions');
     });
@@ -207,6 +267,134 @@ describe('BulletRewriter', () => {
       fixture.componentRef.setInput('result', { ...MOCK_RESULT, missingBulletSuggestions: [] });
       fixture.detectChanges();
       expect(fixture.nativeElement.textContent).not.toContain('Missing Bullet Suggestions');
+    });
+
+    it('emits missingBulletToggled when the add checkbox changes', () => {
+      const emitted: { forPosition: string; suggestedBullet: string }[] = [];
+      fixture.componentInstance.missingBulletToggled.subscribe((k) => emitted.push(k));
+      const checkboxes: NodeListOf<HTMLInputElement> = fixture.nativeElement.querySelectorAll('input[type="checkbox"]');
+      const addCheckbox = Array.from(checkboxes).find((cb) =>
+        cb.getAttribute('aria-label')?.startsWith('Add suggested bullet'),
+      );
+      addCheckbox?.click();
+      expect(emitted[0]).toEqual({
+        forPosition: SUGGESTION.forPosition,
+        suggestedBullet: SUGGESTION.suggestedBullet,
+      });
+    });
+
+    it('isMissingSelected returns true when the suggestion is in selectedMissingBullets', () => {
+      fixture.componentRef.setInput('selectedMissingBullets', [
+        { forPosition: SUGGESTION.forPosition, suggestedBullet: SUGGESTION.suggestedBullet },
+      ]);
+      fixture.detectChanges();
+      expect(
+        fixture.componentInstance.isMissingSelected(SUGGESTION.forPosition, SUGGESTION.suggestedBullet),
+      ).toBe(true);
+    });
+
+    it('isMissingSelected returns false when not in selectedMissingBullets', () => {
+      fixture.componentRef.setInput('selectedMissingBullets', []);
+      expect(
+        fixture.componentInstance.isMissingSelected(SUGGESTION.forPosition, SUGGESTION.suggestedBullet),
+      ).toBe(false);
+    });
+
+    it('shows the edit button for a selected missing bullet', () => {
+      fixture.componentRef.setInput('selectedMissingBullets', [
+        { forPosition: SUGGESTION.forPosition, suggestedBullet: SUGGESTION.suggestedBullet },
+      ]);
+      fixture.detectChanges();
+      const btn = fixture.nativeElement.querySelector('[aria-label="Edit suggested bullet"]');
+      expect(btn).toBeTruthy();
+    });
+
+    it('does not show the edit button for an unselected missing bullet', () => {
+      fixture.componentRef.setInput('selectedMissingBullets', []);
+      fixture.detectChanges();
+      const btn = fixture.nativeElement.querySelector('[aria-label="Edit suggested bullet"]');
+      expect(btn).toBeNull();
+    });
+
+    it('emits missingBulletEditStarted with the missing bullet key when edit button is clicked', () => {
+      fixture.componentRef.setInput('selectedMissingBullets', [
+        { forPosition: SUGGESTION.forPosition, suggestedBullet: SUGGESTION.suggestedBullet },
+      ]);
+      fixture.detectChanges();
+      const emitted: string[] = [];
+      fixture.componentInstance.missingBulletEditStarted.subscribe((k: string) => emitted.push(k));
+      const btn: HTMLElement = fixture.nativeElement.querySelector('[aria-label="Edit suggested bullet"]');
+      btn.click();
+      expect(emitted).toEqual([missingKey]);
+    });
+
+    it('shows the textarea when activeBulletEditKey matches the missing bullet key', () => {
+      fixture.componentRef.setInput('activeBulletEditKey', missingKey);
+      fixture.detectChanges();
+      const textarea = fixture.nativeElement.querySelector('textarea[aria-label="Edit suggested bullet text"]');
+      expect(textarea).toBeTruthy();
+    });
+
+    it('does not show the textarea when activeBulletEditKey does not match', () => {
+      fixture.componentRef.setInput('activeBulletEditKey', null);
+      fixture.detectChanges();
+      const textarea = fixture.nativeElement.querySelector('textarea[aria-label="Edit suggested bullet text"]');
+      expect(textarea).toBeNull();
+    });
+
+    it('emits missingBulletEditSaved with key and text when Save is clicked', () => {
+      fixture.componentRef.setInput('activeBulletEditKey', missingKey);
+      fixture.componentRef.setInput('editedBulletText', 'Edited missing bullet');
+      fixture.detectChanges();
+      const emitted: { key: string; text: string }[] = [];
+      fixture.componentInstance.missingBulletEditSaved.subscribe((e) => emitted.push(e));
+      const pButtons: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('p-button');
+      const savePBtn = Array.from(pButtons).find((b) => b.getAttribute('label') === 'Save');
+      const saveBtn = savePBtn?.querySelector('button') ?? savePBtn;
+      saveBtn?.click();
+      fixture.detectChanges();
+      expect(emitted[0]).toEqual({ key: missingKey, text: 'Edited missing bullet' });
+    });
+
+    it('shows the Edited badge when missingBulletEdits contains an entry for the suggestion', () => {
+      const edits = new Map([[missingKey, 'Custom missing text']]);
+      fixture.componentRef.setInput('missingBulletEdits', edits);
+      fixture.detectChanges();
+      const badges: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('.bg-blue-100');
+      expect(badges.length).toBeGreaterThan(0);
+    });
+
+    it('getMissingDisplayText returns edited text when key is in missingBulletEdits', () => {
+      const edits = new Map([[missingKey, 'My custom missing bullet']]);
+      fixture.componentRef.setInput('missingBulletEdits', edits);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain('My custom missing bullet');
+    });
+
+    it('getMissingDisplayText returns suggestedBullet when key is not in missingBulletEdits', () => {
+      fixture.componentRef.setInput('missingBulletEdits', new Map());
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain(SUGGESTION.suggestedBullet);
+    });
+
+    it('missingBulletKey builds the correct composite key', () => {
+      expect(
+        fixture.componentInstance.missingBulletKey(SUGGESTION.forPosition, SUGGESTION.suggestedBullet),
+      ).toBe(missingKey);
+    });
+
+    it('isMissingEdited returns true when key is in missingBulletEdits', () => {
+      fixture.componentRef.setInput('missingBulletEdits', new Map([[missingKey, 'text']]));
+      expect(
+        fixture.componentInstance.isMissingEdited(SUGGESTION.forPosition, SUGGESTION.suggestedBullet),
+      ).toBe(true);
+    });
+
+    it('isMissingEditing returns true when activeBulletEditKey matches the missing key', () => {
+      fixture.componentRef.setInput('activeBulletEditKey', missingKey);
+      expect(
+        fixture.componentInstance.isMissingEditing(SUGGESTION.forPosition, SUGGESTION.suggestedBullet),
+      ).toBe(true);
     });
   });
 

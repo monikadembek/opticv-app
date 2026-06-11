@@ -831,6 +831,137 @@ describe('CvOptimization', () => {
     });
   });
 
+  describe('bullet state signals', () => {
+    it('removedBullets defaults to an empty array', () => {
+      expect(component.removedBullets()).toEqual([]);
+    });
+
+    it('selectedMissingBullets defaults to an empty array', () => {
+      expect(component.selectedMissingBullets()).toEqual([]);
+    });
+
+    it('missingBulletEdits defaults to an empty Map', () => {
+      expect(component.missingBulletEdits().size).toBe(0);
+    });
+
+    it('bulletEdits defaults to an empty Map', () => {
+      expect(component.bulletEdits().size).toBe(0);
+    });
+  });
+
+  describe('canExportCv — new selection types', () => {
+    it('returns true when selectedMissingBullets is non-empty and not processing', () => {
+      component.cvStructuredData.set(mockCvStructuredData);
+      component.selectedMissingBullets.set([
+        { forPosition: 'Dev at Acme', suggestedBullet: 'Led team of 5.' },
+      ]);
+      expect(component.canExportCv()).toBe(true);
+    });
+
+    it('returns true when removedBullets is non-empty and not processing', () => {
+      component.cvStructuredData.set(mockCvStructuredData);
+      component.removedBullets.set([
+        { company: 'Acme', title: 'Dev', originalText: 'Old bullet.' },
+      ]);
+      expect(component.canExportCv()).toBe(true);
+    });
+  });
+
+  describe('onMissingBulletToggled', () => {
+    const entry = { forPosition: 'Dev at Acme', suggestedBullet: 'Led team of 5.' };
+
+    it('adds the entry when not already present', () => {
+      component.onMissingBulletToggled(entry);
+      expect(component.selectedMissingBullets()).toContainEqual(entry);
+    });
+
+    it('removes the entry when already present', () => {
+      component.selectedMissingBullets.set([entry]);
+      component.onMissingBulletToggled(entry);
+      expect(component.selectedMissingBullets()).not.toContainEqual(entry);
+    });
+  });
+
+  describe('onRemovedBulletToggled', () => {
+    const key = { company: 'Acme', title: 'Dev', originalText: 'Old bullet.' };
+
+    it('adds the key when not already present', () => {
+      component.onRemovedBulletToggled(key);
+      expect(component.removedBullets()).toContainEqual(key);
+    });
+
+    it('removes the key when already present', () => {
+      component.removedBullets.set([key]);
+      component.onRemovedBulletToggled(key);
+      expect(component.removedBullets()).not.toContainEqual(key);
+    });
+  });
+
+  describe('onMissingBulletEditStarted', () => {
+    it('sets activeBulletEditKey to the provided key', () => {
+      const key = 'Dev at Acme|Led team of 5.';
+      component.onMissingBulletEditStarted(key);
+      expect(component.activeBulletEditKey()).toBe(key);
+    });
+
+    it('sets editedBulletText from missingBulletEdits when entry exists', () => {
+      const key = 'Dev at Acme|Led team of 5.';
+      component.missingBulletEdits.set(new Map([[key, 'My edited text']]));
+      component.onMissingBulletEditStarted(key);
+      expect(component.editedBulletText()).toBe('My edited text');
+    });
+
+    it('sets editedBulletText to empty string when no existing edit and no matching suggestion', () => {
+      const key = 'Dev at Acme|Led team of 5.';
+      component.onMissingBulletEditStarted(key);
+      expect(component.editedBulletText()).toBe('');
+    });
+  });
+
+  describe('onMissingBulletEditSaved', () => {
+    it('stores the trimmed text in missingBulletEdits', () => {
+      component.jobApplicationId.set(null);
+      component.onMissingBulletEditSaved({ key: 'Pos|Bullet', text: '  Trimmed  ' });
+      expect(component.missingBulletEdits().get('Pos|Bullet')).toBe('Trimmed');
+    });
+
+    it('removes the key from missingBulletEdits when text is blank', () => {
+      component.missingBulletEdits.set(new Map([['Pos|Bullet', 'existing']]));
+      component.jobApplicationId.set(null);
+      component.onMissingBulletEditSaved({ key: 'Pos|Bullet', text: '   ' });
+      expect(component.missingBulletEdits().has('Pos|Bullet')).toBe(false);
+    });
+
+    it('clears activeBulletEditKey and editedBulletText after save', () => {
+      component.activeBulletEditKey.set('Pos|Bullet');
+      component.editedBulletText.set('some text');
+      component.jobApplicationId.set(null);
+      component.onMissingBulletEditSaved({ key: 'Pos|Bullet', text: 'saved' });
+      expect(component.activeBulletEditKey()).toBeNull();
+      expect(component.editedBulletText()).toBe('');
+    });
+  });
+
+  describe('runOptimization — resets new state', () => {
+    it('clears selectedMissingBullets on a new run', () => {
+      component.selectedMissingBullets.set([{ forPosition: 'X', suggestedBullet: 'Y' }]);
+      component.runOptimization(mockJobSubmittedData);
+      expect(component.selectedMissingBullets()).toEqual([]);
+    });
+
+    it('clears removedBullets on a new run', () => {
+      component.removedBullets.set([{ company: 'A', title: 'B', originalText: 'C' }]);
+      component.runOptimization(mockJobSubmittedData);
+      expect(component.removedBullets()).toEqual([]);
+    });
+
+    it('clears missingBulletEdits on a new run', () => {
+      component.missingBulletEdits.set(new Map([['key', 'val']]));
+      component.runOptimization(mockJobSubmittedData);
+      expect(component.missingBulletEdits().size).toBe(0);
+    });
+  });
+
   describe('openOriginalCv', () => {
     it('calls downloadCv with the cvDocument id from the job application', () => {
       component.jobApplication.set(mockJobApplicationWithCv);

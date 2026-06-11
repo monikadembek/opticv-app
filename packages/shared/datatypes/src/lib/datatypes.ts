@@ -421,4 +421,10 @@ export type BulletEditKey = {
 export type BulletUserState = {
   edits: Array<BulletEditKey & { editedText: string }>;
   selectedBullets: BulletSelectionKey[];
+  selectedMissingBullets: Array<{
+    forPosition: string;
+    suggestedBullet: string;
+    editedText?: string;
+  }>;
+  removedBullets: BulletSelectionKey[];
 };

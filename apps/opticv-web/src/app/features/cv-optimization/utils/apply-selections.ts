@@ -1,4 +1,5 @@
 import type {
+  BulletSelectionKey,
   BulletUpgradeResult,
   CvStructuredData,
   KeywordGapResult,
@@ -13,8 +14,21 @@ export function applySelectionsToCV(
   bulletResult: BulletUpgradeResult | null,
   keywordResult: KeywordGapResult | null,
   bulletEdits: Map<string, string> = new Map(),
+  removedBullets: BulletSelectionKey[] = [],
+  selectedMissingBullets: Array<{ forPosition: string; suggestedBullet: string }> = [],
+  missingBulletEdits: Map<string, string> = new Map(),
 ): CvStructuredData {
   const clone: CvStructuredData = structuredClone(cv);
+
+  for (const key of removedBullets) {
+    const expIndex = clone.experience.findIndex(
+      (e) => e.company === key.company && e.title === key.title,
+    );
+    if (expIndex === -1) continue;
+    clone.experience[expIndex].bullets = clone.experience[expIndex].bullets.filter(
+      (b) => b.trim() !== key.originalText.trim(),
+    );
+  }
 
   if (selections.selectedSummaryAngle && summaryResult) {
     if (selections.customSummaryText !== null) {
@@ -54,6 +68,18 @@ export function applySelectionsToCV(
           bulletEdits.get(editKey) ?? bulletItem.rewrittenText;
       }
     }
+  }
+
+  for (const entry of selectedMissingBullets) {
+    const missingKey = `${entry.forPosition}|${entry.suggestedBullet}`;
+    const text = missingBulletEdits.get(missingKey) ?? entry.suggestedBullet;
+    const expIndex = clone.experience.findIndex((e) => {
+      const dashFormat = `${e.company ?? ''} - ${e.title ?? ''}`;
+      const atFormat = `${e.title ?? ''} at ${e.company ?? ''}`;
+      return dashFormat === entry.forPosition || atFormat === entry.forPosition;
+    });
+    if (expIndex === -1) continue;
+    clone.experience[expIndex].bullets.push(text);
   }
 
   if (selections.selectedKeywords.length > 0 && keywordResult) {
