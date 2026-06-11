@@ -45,21 +45,26 @@
             <div class="space-y-2 flex-1">
               <div class="flex items-center gap-2">
                 <span class="font-semibold text-sm">Rewritten version:</span>
-                @if (isEdited(position.company, position.title, bullet.originalText)) {
-                <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 font-medium">Edited</span>
-                }
-                @if (!isEditing(position.company, position.title, bullet.originalText)) {
+                @if (isEdited(position.company, position.title,
+                bullet.originalText)) {
+                <span
+                  class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 font-medium"
+                  >Edited</span
+                >
+                } @if (!isEditing(position.company, position.title,
+                bullet.originalText)) {
                 <button
                   type="button"
                   class="ml-auto inline-flex items-center justify-center rounded p-1 text-surface-400 hover:text-surface-700 hover:bg-surface-100 transition-colors"
-                  (click)="editStarted.emit(bulletKey(position.company, position.title, bullet.originalText)); $event.preventDefault()"
+                  (click)="editStarted.emit(bulletKey(position.company, position.title, bullet.originalText))"
                   aria-label="Edit rewritten bullet"
                 >
                   <i class="pi pi-pencil text-xs"></i>
                 </button>
                 }
               </div>
-              @if (isEditing(position.company, position.title, bullet.originalText)) {
+              @if (isEditing(position.company, position.title,
+              bullet.originalText)) {
               <div class="space-y-2">
                 <textarea
                   pTextarea
@@ -87,7 +92,8 @@
               </div>
               } @else {
               <p class="text-sm text-surface-800 m-0">
-                {{ getDisplayText(position.company, position.title, bullet.originalText, bullet.rewrittenText) }}
+                {{ getDisplayText(position.company, position.title,
+                bullet.originalText, bullet.rewrittenText) }}
               </p>
               }
               <p class="text-sm text-surface-400">
