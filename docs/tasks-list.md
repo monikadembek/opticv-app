@@ -505,11 +505,13 @@ Frontend:
 
 ### 45. Homepage - content change
 
-**status: todo**
-**time:**
+**status: done**
+**time: 11.06.2026-12.06.2026**
 
 - change texts on homepage, use some content from landing page;
-- display the 3 step process of using OptiCV app
+- display hero section,
+- cards in grid with app features
+- display the 3 step process of how to use OptiCV app
 
 ---
 

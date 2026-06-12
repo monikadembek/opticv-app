@@ -11,6 +11,7 @@
   --color-lime: #d7e506;
   --color-light-yellow: #fdffde;
   --color-green-light: #10b981;
+  --text-color: #334155;
 }
 
 @font-face {
@@ -39,7 +40,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-family: Lato, sans-serif;
-  color: var(--text-color);
+  color: #334155;
   font-size: 16px;
 }
 
@@ -70,15 +71,16 @@ a:active {
 
 .heading-1 {
   font-family: Montserrat, Verdana, Geneva, Tahoma, sans-serif;
-  font-size: 2.2rem;
+  font-size: 3.5rem;
   font-weight: 600;
+  line-height: 1.1;
 }
 
 .heading-2 {
   font-family: Montserrat, Verdana, Geneva, Tahoma, sans-serif;
-  font-size: 2rem;
+  font-size: 2.5rem;
   font-weight: 600;
-  line-height: 2.4rem;
+  line-height: 1.1;
 }
 
 .main-container {

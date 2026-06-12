@@ -1,6 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { Supabase } from '../../core/auth/services/supabase';
 
 @Component({
   selector: 'app-home',
@@ -11,9 +17,14 @@ import { ButtonModule } from 'primeng/button';
 })
 export class Home {
   private router = inject(Router);
+  private supabaseService = inject(Supabase);
+
+  isUserLoggedIn = computed(() =>
+    this.supabaseService.currentSession() ? true : false,
+  );
 
   goToCreator(): void {
-    this.router.navigate(['optimize-cv']);
+    this.router.navigate(['cv-optimization']);
   }
 
   signIn(): void {

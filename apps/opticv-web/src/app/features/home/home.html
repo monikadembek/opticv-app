@@ -1,54 +1,182 @@
 <div>
-  <section
-    class="hero main-container mt-10 pb-20 flex flex-col md:flex-row relative"
-  >
-    <div class="green-row hidden md:block"></div>
-    <div class="hero__content mb-10 sm:mb-5 md:mb-4 z-2 flex-1">
-      <div class="md:mt-5 py-2 bg-green">
-        <h1 class="heading-1 responsive-horizontal-padding text-white">
-          CV Online
-        </h1>
-      </div>
-
-      <div class="py-2">
-        <h2 class="heading-2 responsive-horizontal-padding text-green">
-          Create CV, <br />
-          which will pass ATS requirements <br />
-          and get your dream job!
-        </h2>
-      </div>
-
-      <div class="responsive-horizontal-padding py-4 mb-4 md:mb-8">
-        <p>
-          With the help of AI, optimize your CV for ATS systems and match it to
-          a specific job posting.
-        </p>
-      </div>
-
-      <div class="block md:hidden">
-        <img
-          src="/images/hero-image.png"
-          alt="girl sitting with laptop happy with her hands up"
-          class="hero__image"
-        />
-      </div>
-
-      <div class="hero__buttons responsive-horizontal-padding flex gap-4 mt-8">
-        <p-button label="Optimize CV" (onClick)="goToCreator()"></p-button>
-        <p-button label="Sign In" (onClick)="signIn()"></p-button>
+  <section class="bg-emerald-200 hero-section">
+    <div class="main-container responsive-horizontal-padding py-16">
+      <h1 class="heading-1 text-center mb-8">
+        <span class="text-green">Land more interviews,</span>
+        <br />one tailored CV at a time.
+      </h1>
+      <p class="text-2xl text-center mb-8">
+        <span class="font-bold">75% of CVs never reach a recruiter</span><br />
+        they're rejected by ATS software first.
+      </p>
+      <p class="text-center text-xl mb-2">
+        <span class="font-bold"
+          >OptiCV uses AI to optimize your CV for ATS,</span
+        ><br />
+        write your <span class="font-bold">cover letter</span> and prepare you
+        for <span class="font-bold">the interview</span>.
+      </p>
+      <p class="text-center text-xl mb-10">
+        All tailored to the specific job you're applying for.
+      </p>
+      <div class="flex justify-center gap-4 mt-8 mb-2">
+        <p-button label="Optimize my CV" (onClick)="goToCreator()"></p-button>
+        @if (!isUserLoggedIn()) {
+        <p-button
+          label="Sign In"
+          [outlined]="true"
+          (onClick)="signIn()"
+        ></p-button>
+        }
       </div>
     </div>
-    <div
-      class="hidden md:block responsive-horizontal-padding z-2 relative flex-1"
-    >
+    <div class="hero__image-container">
       <img
-        src="/images/hero-image.png"
+        src="/images/13467.jpg"
         alt="girl sitting with laptop happy with her hands up"
         class="hero__image"
       />
-      <div class="circle-solid"></div>
-      <div class="circle-wavy circle-wavy--top"></div>
-      <div class="circle-wavy circle-wavy--bottom"></div>
+    </div>
+  </section>
+
+  <section class="features-section">
+    <div class="main-container responsive-horizontal-padding py-16">
+      <h2 class="heading-2 text-center mb-6">
+        Everything you need <br />to
+        <span class="text-green">apply with confidence</span>
+      </h2>
+      <p class="text-center mb-10">
+        Everything you need to go from application to offer in one place.
+      </p>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="pi pi-chart-bar"></i>
+          </div>
+          <h3 class="feature-card__title">ATS Score Analysis</h3>
+          <p class="feature-card__text">
+            Find out exactly why your CV gets rejected before a human even reads
+            it.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="pi pi-key"></i>
+          </div>
+          <h3 class="feature-card__title">Keyword Matching</h3>
+          <p class="feature-card__text">
+            Automatically surface missing keywords from the job description and
+            add them to your CV.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="pi pi-pen-to-square"></i>
+          </div>
+          <h3 class="feature-card__title">Summary Rewrite</h3>
+          <p class="feature-card__text">
+            Get an AI-rewritten professional summary optimised for the role
+            you're targeting.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="pi pi-list-check"></i>
+          </div>
+          <h3 class="feature-card__title">Bullet Upgrades</h3>
+          <p class="feature-card__text">
+            Strengthen your experience bullets with impact-driven language
+            tailored to the job.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="pi pi-file-edit"></i>
+          </div>
+          <h3 class="feature-card__title">Cover Letter</h3>
+          <p class="feature-card__text">
+            Get a tailored, job-specific cover letter generated alongside your
+            optimized CV.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="pi pi-comments"></i>
+          </div>
+          <h3 class="feature-card__title">Interview Prep</h3>
+          <p class="feature-card__text">
+            Receive likely interview questions and model answers based on the
+            role and your background.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="pi pi-palette"></i>
+          </div>
+          <h3 class="feature-card__title">Premium Templates</h3>
+          <p class="feature-card__text">
+            Choose from professionally designed CV templates that pass ATS
+            scanners and impress recruiters.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="pi pi-eye"></i>
+          </div>
+          <h3 class="feature-card__title">Real-time Preview</h3>
+          <p class="feature-card__text">
+            See exactly how your optimized CV looks as you apply changes —
+            before you export.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="pi pi-download"></i>
+          </div>
+          <h3 class="feature-card__title">One-Click Export</h3>
+          <p class="feature-card__text">
+            Download your finished CV and cover letter as PDF or DOCX with a
+            single click.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="how-it-works">
+    <div class="main-container responsive-horizontal-padding py-16">
+      <h2 class="heading-2 text-center mb-6">How to use OptiCV</h2>
+      <p class="features-subtitle text-center mb-10">
+        From upload to optimized CV in three simple steps.
+      </p>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <h3 class="step-card__title">Upload your CV</h3>
+          <p class="step-card__text">
+            Import your existing CV once (PDF or DOCX format). We parse it and
+            resue it across every feature in this app.
+          </p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <h3 class="step-card__title">Paste the job description</h3>
+          <p class="step-card__text">
+            Paste job posting and run optimization process - OptiCV goes to
+            work: scoring, rewriting, and flagging gaps against that specific
+            role, not a generic template..
+          </p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <h3 class="step-card__title">Get your optimized CV</h3>
+          <p class="step-card__text">
+            Review AI suggestions, apply changes or edit inline, then export
+            your tailored, ATS friendly CV, along with a cover letter and
+            interview prep.
+          </p>
+        </div>
+      </div>
     </div>
   </section>
 </div>
