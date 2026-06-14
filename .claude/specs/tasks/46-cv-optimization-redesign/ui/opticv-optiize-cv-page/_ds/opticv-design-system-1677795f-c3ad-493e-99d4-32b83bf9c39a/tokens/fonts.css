@@ -1,0 +1,11 @@
+/* OptiCV webfonts.
+   Montserrat ships as a variable TTF (headings). Lato is loaded from Google Fonts
+   in styles.css (body). PrimeIcons (app icon font) is linked from CDN where needed. */
+
+@font-face {
+  font-family: "Montserrat";
+  src: url("../assets/fonts/Montserrat-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
