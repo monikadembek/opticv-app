@@ -506,6 +506,7 @@ Frontend:
 ### 45. Homepage - content change
 
 **status: done**
+
 **time: 11.06.2026-12.06.2026**
 
 - change texts on homepage, use some content from landing page;
@@ -515,12 +516,27 @@ Frontend:
 
 ---
 
-### 46. Keyword Gap - select, modify and apply optimizations
+### 46. Cv-optimization page redesign
+
+**status: in progress**
+
+**time : 13.06.2026 -**
+
+- create a mockup of cv-optimization page with new visal structure consisting of sidebar on the left and content on the right displayed in cards and export section displayed in footer which is always visible at the bottom of the page (once the optimization proces finishes), use Claude Design,
+- implement mockup created with Claude Design
+
+---
+
+### 47. Keyword Gap - select, modify and apply optimizations
 
 **status: todo**
 **time:**
 
 - allow selecting, modifying, adding missing keywords and applying it to cv.
+
+---
+
+### 48. Setup Stripe
 
 ---
 
@@ -543,18 +559,6 @@ When user deletes its account, gets logged out, but account is already deleted s
 **status: todo**
 
 - implement saving backend logs to database or saving logs to file with Winston?
-
----
-
-### In the dashboard display list of optimization processes performed by given user and then allow to open it in page optimize-cv and display it together with populated form with selected cv and job description data
-
-**status: todo**
-
----
-
-### Allow user to select and modify output results of optimization process nad apply it or save in db optimization_results for given prompt type in column userEditedOutput
-
-**status: todo**
 
 ---
 

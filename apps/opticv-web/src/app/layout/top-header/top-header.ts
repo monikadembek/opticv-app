@@ -41,12 +41,12 @@ export class TopHeader {
           route: '/dashboard',
         },
         {
-          label: 'CV Optimization',
-          route: '/cv-optimization',
-        },
-        {
           label: 'Upload CV',
           route: '/upload-cv',
+        },
+        {
+          label: 'CV Optimization',
+          route: '/cv-optimization',
         },
       ];
       if (this.isLoggedIn()) {
