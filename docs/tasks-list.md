@@ -518,16 +518,26 @@ Frontend:
 
 ### 46. Cv-optimization page redesign
 
-**status: in progress**
+**status: done**
 
-**time : 13.06.2026 -**
+**time : 13.06.2026 - 15.06.2026**
 
-- create a mockup of cv-optimization page with new visal structure consisting of sidebar on the left and content on the right displayed in cards and export section displayed in footer which is always visible at the bottom of the page (once the optimization proces finishes), use Claude Design,
+- create a mockup of cv-optimization page with new visal structure consisting of sidebar on the left and content on the right displayed in cards and export section displayed in footer fixed to the bottom of the page, use Claude Design,
 - implement mockup created with Claude Design
 
 ---
 
-### 47. Keyword Gap - select, modify and apply optimizations
+### 47. Cv-optimization result sections UI changes
+
+**status: todo**
+
+**time:**
+
+- based on the mockup created with Claude Design apply changes to the UI of sections that present cv-optimization results
+
+---
+
+### 48. Keyword Gap - select, modify and apply optimizations
 
 **status: todo**
 **time:**
