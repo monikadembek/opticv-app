@@ -7,7 +7,10 @@ import {
 } from '@angular/core';
 import { PromptType } from '@opticv/datatypes';
 
-export const NAV_GROUPS = [
+export const NAV_GROUPS: {
+  group: string;
+  items: { id: PromptType | 'JOB_POSTING'; icon: string; label: string }[];
+}[] = [
   {
     group: 'Job Posting',
     items: [
@@ -72,7 +75,7 @@ export const NAV_GROUPS = [
 })
 export class OptimSidebar {
   readonly activeSection = input<string>(PromptType.RESUME_AUTOPSY);
-  readonly statuses = input<Map<PromptType, string>>(new Map());
+  readonly statuses = input<Map<PromptType | 'JOB_POSTING', string>>(new Map());
   readonly processingSet = input<Set<PromptType | 'JOB_POSTING'>>(new Set());
   readonly expanded = input<boolean>(true);
   readonly atsScore = input<number | null>(null);

@@ -7,7 +7,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
     <div class="processing-state">
       <div class="processing-info">
         <i class="pi pi-spin pi-spinner"></i>
-        <span class="text-sm;">Analyzing your resume…</span>
+        <span class="text-sm">Analyzing your resume…</span>
       </div>
       <div class="skeleton"></div>
       <div class="skeleton"></div>

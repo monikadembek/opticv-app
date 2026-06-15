@@ -387,7 +387,7 @@ export class CvOptimization implements OnInit {
     const el = document.getElementById(`section-${id}`);
     if (el) {
       const top =
-        el.getBoundingClientRect().top + window.scrollY - (5.5 * 16 + 16);
+        el.getBoundingClientRect().top + window.scrollY - (5.5 * 16 + 42);
       window.scrollTo({ top, behavior: 'smooth' });
     }
   }

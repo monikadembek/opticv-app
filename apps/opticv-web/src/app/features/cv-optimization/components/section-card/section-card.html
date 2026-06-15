@@ -15,7 +15,10 @@
       <i class="pi pi-spin pi-spinner"></i>Processing
     </span>
     } @if (status() === 'error') {
-    <i class="pi pi-times-circle status-error"></i>Error }
+    <span class="status-error">
+      <i class="pi pi-times-circle"></i>Error
+    </span>
+    }
   </div>
   <div class="section-card__body">
     @if (status() === 'processing') {
