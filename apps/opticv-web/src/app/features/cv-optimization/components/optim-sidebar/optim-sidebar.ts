@@ -9,6 +9,16 @@ import { PromptType } from '@opticv/datatypes';
 
 export const NAV_GROUPS = [
   {
+    group: 'Job Posting',
+    items: [
+      {
+        id: 'JOB_POSTING',
+        icon: 'pi-folder',
+        label: 'Job Posting and CV',
+      },
+    ],
+  },
+  {
     group: 'Resume Analysis',
     items: [
       {
@@ -63,7 +73,7 @@ export const NAV_GROUPS = [
 export class OptimSidebar {
   readonly activeSection = input<string>(PromptType.RESUME_AUTOPSY);
   readonly statuses = input<Map<PromptType, string>>(new Map());
-  readonly processingSet = input<Set<PromptType>>(new Set());
+  readonly processingSet = input<Set<PromptType | 'JOB_POSTING'>>(new Set());
   readonly expanded = input<boolean>(true);
   readonly atsScore = input<number | null>(null);
   readonly keywordScore = input<number | null>(null);
