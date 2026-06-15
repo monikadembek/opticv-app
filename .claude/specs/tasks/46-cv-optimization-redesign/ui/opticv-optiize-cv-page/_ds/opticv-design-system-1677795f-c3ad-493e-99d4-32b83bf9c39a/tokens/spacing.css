@@ -1,0 +1,49 @@
+/* OptiCV spacing & sizing tokens
+   4px base grid (Tailwind-derived). */
+
+:root {
+  /* ---- Spacing scale ---- */
+  --space-1: 0.25rem;  /* 4 */
+  --space-2: 0.5rem;   /* 8 */
+  --space-3: 0.75rem;  /* 12 */
+  --space-4: 1rem;     /* 16 */
+  --space-5: 1.25rem;  /* 20 */
+  --space-6: 1.5rem;   /* 24 */
+  --space-8: 2rem;     /* 32 */
+  --space-10: 2.5rem;  /* 40 */
+  --space-12: 3rem;    /* 48 */
+  --space-16: 4rem;    /* 64 */
+  --space-20: 5rem;    /* 80 */
+  --space-24: 6rem;    /* 96 */
+
+  /* ---- Radii ---- */
+  --radius-sm: 0.25rem;  /* 4 — buttons, badges, chips */
+  --radius-md: 0.5rem;   /* 8 — inputs, list rows, callouts */
+  --radius-lg: 0.75rem;  /* 12 — cards */
+  --radius-xl: 1rem;     /* 16 — large feature cards */
+  --radius-full: 9999px; /* pills, avatars, score rings, icon circles */
+
+  /* ---- Layout ---- */
+  --container-max: 1440px;   /* marketing max width */
+  --container-app: 56rem;    /* 896 — app content (max-w-4xl) */
+  --container-narrow: 42rem; /* 672 — forms (max-w-2xl) */
+
+  /* responsive horizontal padding steps */
+  --pad-x-sm: 1.25rem; /* 20 */
+  --pad-x-md: 2rem;    /* 32 */
+  --pad-x-lg: 2.5rem;  /* 40 */
+  --pad-x-xl: 5rem;    /* 80 */
+
+  /* breakpoints (reference) */
+  --bp-sm: 40rem;
+  --bp-md: 48rem;
+  --bp-lg: 64rem;
+  --bp-xl: 80rem;
+
+  /* component sizes */
+  --header-height: 5.5rem;
+  --control-h-sm: 2rem;   /* 32 */
+  --control-h-base: 2.5rem; /* 40 */
+  --control-h-lg: 3rem;   /* 48 */
+  --tap-target-min: 44px;
+}

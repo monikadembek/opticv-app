@@ -1,14 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
   DestroyRef,
-  inject,
   OnInit,
+  computed,
+  effect,
+  inject,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { JsonPipe } from '@angular/common';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   debounceTime,
@@ -20,13 +21,7 @@ import {
   switchMap,
 } from 'rxjs';
 import { MessageService } from 'primeng/api';
-import {
-  JobSubmittedData,
-  JobUpload,
-} from './components/job-upload/job-upload';
-import { AccordionModule } from 'primeng/accordion';
 import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
 import {
   BulletEditKey,
   BulletSelectionKey,
@@ -49,7 +44,10 @@ import {
 } from './services/cv-optimization-api.service';
 import { CvExportService } from './services/cv-export.service';
 import { CvApiService } from '../dashboard/services/cv-api.service';
-import { OptimizationResultPanel } from './components/optimization-result-panel/optimization-result-panel';
+import {
+  JobUpload,
+  JobSubmittedData,
+} from './components/job-upload/job-upload';
 import { AtsScore } from './components/ats-score/ats-score';
 import { KeywordGap } from './components/keyword-gap/keyword-gap';
 import { SummaryRewrite } from './components/summary-rewrite/summary-rewrite';
@@ -57,9 +55,14 @@ import { BulletRewriter } from './components/bullet-rewriter/bullet-rewriter';
 import { CoverLetterEditor } from './components/cover-letter-editor/cover-letter-editor';
 import { InterviewPrep } from './components/interview-prep/interview-prep';
 import { CvTemplateId } from './cv-templates';
-import { CvTemplateSelector } from './components/cv-template-selector/cv-template-selector';
 import { applySelectionsToCV } from './utils/apply-selections';
 import { JobApplicationApiService } from '../../core/services/job-application-api.service';
+import { OptimSidebar } from './components/optim-sidebar/optim-sidebar';
+import { SectionCard } from './components/section-card/section-card';
+import { JobInfoBanner } from './components/job-info-banner/job-info-banner';
+import { ExportFooter } from './components/export-footer/export-footer';
+import { MobileTabs } from './components/mobile-tabs/mobile-tabs';
+import { SectionStatus } from './models';
 
 function isResumeAutopsyResult(value: unknown): value is ResumeAutopsyResult {
   if (typeof value !== 'object' || value === null) return false;
@@ -132,19 +135,19 @@ const ActivePrompts = [
   selector: 'app-cv-optimization-page',
   imports: [
     JobUpload,
-    AccordionModule,
     ButtonModule,
-    TooltipModule,
-    JsonPipe,
     RouterLink,
-    OptimizationResultPanel,
     AtsScore,
     KeywordGap,
     SummaryRewrite,
     BulletRewriter,
     CoverLetterEditor,
     InterviewPrep,
-    CvTemplateSelector,
+    OptimSidebar,
+    SectionCard,
+    JobInfoBanner,
+    ExportFooter,
+    MobileTabs,
   ],
   templateUrl: './cv-optimization.html',
   styleUrl: './cv-optimization.css',
@@ -159,6 +162,7 @@ export class CvOptimization implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private readonly persistSubject = new Subject<void>();
+  private scrollObserver: IntersectionObserver | null = null;
 
   readonly PromptType = PromptType;
   readonly results = signal<Map<PromptType, SseJobCompleteEvent>>(new Map());
@@ -181,9 +185,15 @@ export class CvOptimization implements OnInit {
   readonly bulletUpgradeResultId = signal<string | null>(null);
   readonly activeBulletEditKey = signal<string | null>(null);
   readonly editedBulletText = signal<string>('');
-  readonly selectedMissingBullets = signal<Array<{ forPosition: string; suggestedBullet: string }>>([]);
+  readonly selectedMissingBullets = signal<
+    Array<{ forPosition: string; suggestedBullet: string }>
+  >([]);
   readonly missingBulletEdits = signal<Map<string, string>>(new Map());
   readonly removedBullets = signal<BulletSelectionKey[]>([]);
+
+  readonly sidebarExpanded = signal(true);
+  private readonly breakpointObserver = inject(BreakpointObserver);
+  readonly activeSection = signal<string>(PromptType.RESUME_AUTOPSY);
 
   readonly autopsyResult = computed<ResumeAutopsyResult | null>(() => {
     const r = this.results().get(PromptType.RESUME_AUTOPSY)?.result;
@@ -235,17 +245,34 @@ export class CvOptimization implements OnInit {
     ActivePrompts.some((p) => this.isProcessing().get(p) === true),
   );
 
+  readonly pageState = computed<'initial' | 'processing' | 'completed'>(() => {
+    if (!this.jobApplicationId()) return 'initial';
+    if (this.isProcessingAny()) return 'processing';
+    return 'completed';
+  });
+
+  readonly sectionStatuses = computed(
+    () => new Map([...this.results().entries()].map(([k, v]) => [k, v.status])),
+  );
+
+  readonly processingSet = computed(() => {
+    const set = new Set<PromptType>();
+    for (const [k, v] of this.isProcessing().entries()) {
+      if (v) set.add(k);
+    }
+    return set;
+  });
+
+  readonly atsScore = computed(
+    () => this.autopsyResult()?.overallScore ?? null,
+  );
+  readonly keywordScore = computed(
+    () => this.keywordGapResult()?.matchScore ?? null,
+  );
+
   readonly canExportCv = computed(() => {
     if (!this.isProcessingAny() && this.mergedCv() !== null) {
-      if (this.isStoredMode()) return true;
-      const s = this.selections();
-      return (
-        s.selectedSummaryAngle !== null ||
-        s.selectedBullets.length > 0 ||
-        s.selectedKeywords.length > 0 ||
-        this.selectedMissingBullets().length > 0 ||
-        this.removedBullets().length > 0
-      );
+      return true;
     }
     return false;
   });
@@ -282,6 +309,26 @@ export class CvOptimization implements OnInit {
     return ActivePrompts.some((p) => !this.results().has(p));
   });
 
+  constructor() {
+    effect(() => {
+      const state = this.pageState();
+      if (state !== 'initial') {
+        // Defer to after render so section elements exist in DOM
+        setTimeout(() => this.setupScrollspy(), 0);
+      }
+    });
+
+    // Quill async-loads and auto-focuses after results arrive, undoing any earlier
+    // scroll-to-top. Re-apply scroll after Quill has had time to initialize.
+    let scrollScheduled = false;
+    effect(() => {
+      if (this.isStoredMode() && this.coverLetterResult() && !scrollScheduled) {
+        scrollScheduled = true;
+        setTimeout(() => window.scrollTo({ top: 0 }), 300);
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.persistSubject
       .pipe(debounceTime(500), takeUntilDestroyed(this.destroyRef))
@@ -291,8 +338,69 @@ export class CvOptimization implements OnInit {
       this.route.snapshot.paramMap.get('jobApplicationId');
     if (jobApplicationId) {
       this.isStoredMode.set(true);
+      history.scrollRestoration = 'manual';
+      window.scrollTo({ top: 0 });
       this.loadStoredOptimization(jobApplicationId);
     }
+
+    this.breakpointObserver
+      .observe('(min-width: 769px) and (max-width: 840px)')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(({ matches }) => this.sidebarExpanded.set(!matches));
+
+    this.destroyRef.onDestroy(() => {
+      this.scrollObserver?.disconnect();
+      history.scrollRestoration = 'auto';
+    });
+  }
+
+  private setupScrollspy(): void {
+    this.scrollObserver?.disconnect();
+    const sections = document.querySelectorAll('[data-section]');
+    if (!sections.length) return;
+
+    let initialFired = false;
+    this.scrollObserver = new IntersectionObserver(
+      (entries) => {
+        // Skip the initial batch that fires synchronously on observe() — it reflects
+        // the browser's restored scroll position, not user intent, and causes the
+        // active section to jump on page refresh.
+        if (!initialFired) {
+          initialFired = true;
+          return;
+        }
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const id = entry.target.getAttribute('data-section');
+            if (id) this.activeSection.set(id);
+          }
+        }
+      },
+      { rootMargin: '-30% 0px -50% 0px' },
+    );
+
+    sections.forEach((el) => this.scrollObserver!.observe(el));
+  }
+
+  handleSectionClick(id: string): void {
+    this.activeSection.set(id);
+    const el = document.getElementById(`section-${id}`);
+    if (el) {
+      const top =
+        el.getBoundingClientRect().top + window.scrollY - (5.5 * 16 + 42);
+      window.scrollTo({ top, behavior: 'smooth' });
+    }
+  }
+
+  sectionStatus(type: PromptType): SectionStatus {
+    if (this.isProcessing().get(type)) return 'processing';
+    const r = this.results().get(type);
+    if (!r) return undefined;
+    return r.status === 'completed'
+      ? 'completed'
+      : r.status === 'failed'
+        ? 'error'
+        : 'pending';
   }
 
   private loadStoredOptimization(id: string): void {
@@ -342,7 +450,10 @@ export class CvOptimization implements OnInit {
                   const missingEditsMap = new Map<string, string>();
                   for (const s of state.selectedMissingBullets ?? []) {
                     if (s.editedText !== undefined) {
-                      missingEditsMap.set(`${s.forPosition}|${s.suggestedBullet}`, s.editedText);
+                      missingEditsMap.set(
+                        `${s.forPosition}|${s.suggestedBullet}`,
+                        s.editedText,
+                      );
                     }
                   }
                   this.missingBulletEdits.set(missingEditsMap);
@@ -553,14 +664,23 @@ export class CvOptimization implements OnInit {
     this.persistBulletState();
   }
 
-  onMissingBulletToggled(key: { forPosition: string; suggestedBullet: string }): void {
+  onMissingBulletToggled(key: {
+    forPosition: string;
+    suggestedBullet: string;
+  }): void {
     this.selectedMissingBullets.update((list) => {
       const exists = list.some(
-        (s) => s.forPosition === key.forPosition && s.suggestedBullet === key.suggestedBullet,
+        (s) =>
+          s.forPosition === key.forPosition &&
+          s.suggestedBullet === key.suggestedBullet,
       );
       return exists
         ? list.filter(
-            (s) => !(s.forPosition === key.forPosition && s.suggestedBullet === key.suggestedBullet),
+            (s) =>
+              !(
+                s.forPosition === key.forPosition &&
+                s.suggestedBullet === key.suggestedBullet
+              ),
           )
         : [...list, key];
     });
@@ -577,9 +697,12 @@ export class CvOptimization implements OnInit {
     const separatorIdx = key.indexOf('|');
     const forPosition = key.slice(0, separatorIdx);
     const suggestedBullet = key.slice(separatorIdx + 1);
-    const suggestion = this.bulletUpgradeResult()?.missingBulletSuggestions.find(
-      (s) => s.forPosition === forPosition && s.suggestedBullet === suggestedBullet,
-    );
+    const suggestion =
+      this.bulletUpgradeResult()?.missingBulletSuggestions.find(
+        (s) =>
+          s.forPosition === forPosition &&
+          s.suggestedBullet === suggestedBullet,
+      );
     this.editedBulletText.set(suggestion?.suggestedBullet ?? '');
   }
 

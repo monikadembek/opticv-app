@@ -111,6 +111,7 @@
       [ngModel]="editorContent()"
       (ngModelChange)="editorContent.set($event)"
       [style]="{ height: '400px' }"
+      (onInit)="onEditorInit($event)"
     >
       <ng-template #header>
         <span class="ql-formats">

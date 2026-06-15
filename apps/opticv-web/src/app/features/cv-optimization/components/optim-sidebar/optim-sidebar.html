@@ -1,0 +1,140 @@
+<aside class="optim-sidebar">
+  @if (showScores()) {
+  <div class="sidebar-scores">
+    <!-- ATS Score ring -->
+    <div
+      style="
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      "
+    >
+      <svg width="56" height="56" viewBox="0 0 56 56">
+        <circle
+          cx="28"
+          cy="28"
+          r="22"
+          fill="none"
+          stroke="var(--neutral-200)"
+          stroke-width="5"
+        />
+        <circle
+          cx="28"
+          cy="28"
+          r="22"
+          fill="none"
+          stroke="var(--primary-600)"
+          stroke-width="5"
+          stroke-linecap="round"
+          [attr.stroke-dasharray]="scoreDash(atsScore(), 22) + ' ' + scoreCircumference(22)"
+          stroke-dashoffset="0"
+          transform="rotate(-90 28 28)"
+        />
+        <text
+          x="28"
+          y="32"
+          text-anchor="middle"
+          font-size="11"
+          font-weight="600"
+          fill="var(--text-strong)"
+        >
+          {{ atsScore() }}
+        </text>
+      </svg>
+      <span style="font-size: var(--text-xs); color: var(--text-muted)"
+        >ATS</span
+      >
+    </div>
+    <!-- Keyword Score ring -->
+    <div
+      style="
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      "
+    >
+      <svg width="56" height="56" viewBox="0 0 56 56">
+        <circle
+          cx="28"
+          cy="28"
+          r="22"
+          fill="none"
+          stroke="var(--neutral-200)"
+          stroke-width="5"
+        />
+        <circle
+          cx="28"
+          cy="28"
+          r="22"
+          fill="none"
+          stroke="var(--warning)"
+          stroke-width="5"
+          stroke-linecap="round"
+          [attr.stroke-dasharray]="scoreDash(keywordScore(), 22) + ' ' + scoreCircumference(22)"
+          stroke-dashoffset="0"
+          transform="rotate(-90 28 28)"
+        />
+        <text
+          x="28"
+          y="32"
+          text-anchor="middle"
+          font-size="11"
+          font-weight="600"
+          fill="var(--text-strong)"
+        >
+          {{ keywordScore() }}
+        </text>
+      </svg>
+      <span style="font-size: var(--text-xs); color: var(--text-muted)"
+        >Keywords</span
+      >
+    </div>
+  </div>
+  }
+
+  <nav class="sidebar-nav">
+    @for (group of navGroups; track group.group) { @if (expanded()) {
+    <div class="sidebar-group-label">{{ group.group }}</div>
+    } @else {
+    <div class="sidebar-divider"></div>
+    } @for (item of group.items; track item.id) {
+    <button
+      class="nav-item"
+      [class.active]="activeSection() === item.id"
+      [class.dimmed]="pageState() === 'initial'"
+      [disabled]="pageState() === 'initial'"
+      [title]="!expanded() ? item.label : ''"
+      (click)="sectionClicked.emit(item.id)"
+      type="button"
+    >
+      <span class="nav-item__icon"><i [class]="'pi ' + item.icon"></i></span>
+      @if (expanded()) {
+      <span class="nav-item__label">{{ item.label }}</span>
+      <span class="nav-item__status">
+        @if (processingSet().has(item.id)) {
+        <i class="pi pi-spin pi-spinner" style="color: var(--warning)"></i>
+        } @else if (statuses().get(item.id) === 'completed') {
+        <i class="pi pi-check-circle" style="color: var(--success)"></i>
+        } @else if (statuses().get(item.id) === 'failed') {
+        <i class="pi pi-times-circle" style="color: var(--critical)"></i>
+        }
+      </span>
+      }
+    </button>
+    } }
+  </nav>
+
+  <div class="sidebar-toggle">
+    <button
+      type="button"
+      (click)="toggleClicked.emit()"
+      [title]="expanded() ? 'Collapse sidebar' : 'Expand sidebar'"
+    >
+      <i
+        [class]="expanded() ? 'pi pi-chevron-left' : 'pi pi-chevron-right'"
+      ></i>
+    </button>
+  </div>
+</aside>

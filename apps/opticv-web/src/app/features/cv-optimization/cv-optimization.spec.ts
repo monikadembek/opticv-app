@@ -156,7 +156,7 @@ describe('CvOptimization', () => {
   });
 
   it('should render the page heading', () => {
-    const heading: HTMLElement = fixture.nativeElement.querySelector('h1');
+    const heading: HTMLElement = fixture.nativeElement.querySelector('h2');
     expect(heading.textContent?.trim()).toBe('CV Optimization');
   });
 
@@ -998,6 +998,48 @@ describe('CvOptimization', () => {
 
       expect(() => component.openOriginalCv()).not.toThrow();
       expect(cvApiService.downloadCv).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('pageState', () => {
+    it('returns initial when jobApplicationId is null', () => {
+      component.jobApplicationId.set(null);
+      expect(component.pageState()).toBe('initial');
+    });
+
+    it('returns processing when jobApplicationId is set and any prompt is processing', () => {
+      component.jobApplicationId.set('job-1');
+      component.isProcessing.set(new Map([[PromptType.RESUME_AUTOPSY, true]]));
+      expect(component.pageState()).toBe('processing');
+    });
+
+    it('returns completed when jobApplicationId is set and no prompt is processing', () => {
+      component.jobApplicationId.set('job-1');
+      component.isProcessing.set(new Map());
+      expect(component.pageState()).toBe('completed');
+    });
+  });
+
+  describe('sectionStatuses', () => {
+    it('returns an empty map when results is empty', () => {
+      component.results.set(new Map());
+      expect(component.sectionStatuses().size).toBe(0);
+    });
+
+    it('maps each result entry to its status string', () => {
+      component.results.set(new Map([
+        [PromptType.RESUME_AUTOPSY, { promptType: PromptType.RESUME_AUTOPSY, status: 'completed', result: {} }],
+        [PromptType.KEYWORD_GAP, { promptType: PromptType.KEYWORD_GAP, status: 'failed', result: null }],
+      ]));
+      expect(component.sectionStatuses().get(PromptType.RESUME_AUTOPSY)).toBe('completed');
+      expect(component.sectionStatuses().get(PromptType.KEYWORD_GAP)).toBe('failed');
+    });
+  });
+
+  describe('handleSectionClick', () => {
+    it('updates activeSection to the given id', () => {
+      component.handleSectionClick(PromptType.KEYWORD_GAP);
+      expect(component.activeSection()).toBe(PromptType.KEYWORD_GAP);
     });
   });
 });

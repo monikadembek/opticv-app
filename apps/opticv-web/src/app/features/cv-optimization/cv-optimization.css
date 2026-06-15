@@ -1,16 +1,88 @@
-.section-heading {
-  margin: 40px 0 6px 0;
-  color: var(--color-emerald-600);
-  font-weight: 600;
-  font-size: x-large;
-  font-family:
-    Montserrat,
-    ui-sans-serif,
-    system-ui,
-    sans-serif,
-    'Apple Color Emoji',
-    'Segoe UI Emoji',
-    Segoe UI Symbol,
-    'Noto Color Emoji';
-  text-transform: uppercase;
+.optim-layout {
+  display: flex;
+  min-height: calc(100vh - var(--header-h));
+  position: relative;
+}
+
+.optim-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.optim-content {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6) calc(var(--space-12) + 72px);
+}
+
+@media (max-width: 768px) {
+  .optim-content {
+    /* Footer wraps to ~107px on mobile; reserve enough so content
+       never scrolls underneath the fixed export footer. */
+    padding: var(--space-4) var(--space-4) calc(var(--space-12) + 120px);
+  }
+}
+
+.load-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 64px 16px;
+  text-align: center;
+}
+
+.load-error-message {
+  color: var(--critical);
+}
+
+.optim-heading-wrap {
+  margin: 0 auto;
+}
+
+.optim-heading {
+  font-family: var(--font-heading);
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  color: var(--text-strong);
+  margin: 0 0 32px;
+}
+
+.initial-form-wrap {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.initial-form-header {
+  text-align: left;
+  margin-bottom: 32px;
+}
+
+.initial-form-heading {
+  font-family: var(--font-heading);
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  color: var(--text-strong);
+  margin: 0 0 8px;
+}
+
+.initial-form-subtext {
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.partial-results-warning {
+  margin-bottom: 24px;
+}
+
+.coming-soon-text {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.retry-action {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
 }

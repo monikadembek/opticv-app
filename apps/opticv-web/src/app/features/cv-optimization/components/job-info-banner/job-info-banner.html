@@ -1,0 +1,44 @@
+<div class="job-banner" id="section-JOB_POSTING" data-section="JOB_POSTING">
+  <div class="job-banner-header">
+    <div class="job-banner-icon">
+      <i class="pi pi-folder"></i>
+    </div>
+    <div class="job-banner-info">
+      @if (jobApplication().jobTitle) {
+      <span class="job-banner-title"> {{ jobApplication().jobTitle }} </span>
+      } @if (jobApplication().companyName) {
+      <span class="job-banner-company">
+        at {{ jobApplication().companyName }}
+      </span>
+      }
+    </div>
+  </div>
+
+  @if (jobApplication().cvDocument.fileName) {
+  <button
+    type="button"
+    (click)="openCv.emit()"
+    class="job-banner-cv-btn"
+    [attr.aria-label]="'Open ' + jobApplication().cvDocument.fileName"
+  >
+    <i class="pi pi-file"></i>{{ jobApplication().cvDocument.fileName }}
+  </button>
+  }
+
+  <button
+    type="button"
+    (click)="showDescription.set(!showDescription())"
+    class="job-banner-toggle-btn"
+  >
+    <i
+      [class]="showDescription() ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
+    ></i>
+    {{ showDescription() ? 'Hide' : 'View' }} job description
+  </button>
+
+  @if (showDescription()) {
+  <textarea class="job-banner-description" rows="10" cols="30" pTextarea>
+{{ jobApplication().jobDescription }}</textarea
+  >
+  }
+</div>

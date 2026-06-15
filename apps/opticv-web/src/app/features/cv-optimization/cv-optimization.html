@@ -1,467 +1,269 @@
-<div class="mx-auto max-w-4xl px-4 py-12">
-  <h1 class="mb-8 text-3xl font-bold text-surface-900">CV Optimization</h1>
+@if (loadError()) {
+<div class="load-error">
+  <span class="load-error-message">{{ loadError() }}</span>
+  <p-button
+    label="Back to Dashboard"
+    icon="pi pi-arrow-left"
+    routerLink="/dashboard"
+    ariaLabel="Back to Dashboard"
+  />
+</div>
+} @else {
+<!-- Mobile tabs (hidden in initial state and on desktop) -->
+@if (pageState() !== 'initial') {
+<app-mobile-tabs
+  [activeSection]="activeSection()"
+  [statuses]="sectionStatuses()"
+  (sectionClicked)="handleSectionClick($event)"
+/>
+}
 
-  @if (loadError()) {
-  <div class="flex flex-col items-center gap-4 py-16 text-center">
-    <span class="text-red-500">{{ loadError() }}</span>
-    <p-button
-      label="Back to Dashboard"
-      icon="pi pi-arrow-left"
-      routerLink="/dashboard"
-      ariaLabel="Back to Dashboard"
-    />
-  </div>
-  } @else { @if (!isStoredMode()) {
-  <h2 class="section-heading">Resume and job description</h2>
-  <p class="mb-6">
-    Select CV and paste information about job offer that you want to apply for.
-    This will allow to analyze your resume and optimize it against that specific
-    job offer.
-  </p>
-  <p-accordion [value]="['0']" [multiple]="true">
-    <p-accordion-panel value="0">
-      <p-accordion-header>
-        Select CV and paste job description
-      </p-accordion-header>
-      <p-accordion-content>
-        <app-job-upload (jobSubmitted)="runOptimization($event)" />
-      </p-accordion-content>
-    </p-accordion-panel>
-  </p-accordion>
-  } @if (isStoredMode() && jobApplication()) {
-  <div class="mb-8">
-    <h2 class="section-heading">Job Application</h2>
-    @if (jobApplication()!.cvDocument.fileName) {
-    <button
-      type="button"
-      class="text-sm text-primary-600 hover:text-primary-800 hover:underline mb-4 flex items-center gap-1 cursor-pointer bg-transparent border-none p-0"
-      (click)="openOriginalCv()"
-      [attr.aria-label]="'Open ' + jobApplication()!.cvDocument.fileName"
-    >
-      <i class="pi pi-file"></i>{{ jobApplication()!.cvDocument.fileName }}
-    </button>
-    }
-    <div class="flex flex-col gap-2 mb-4">
-      @if (jobApplication()!.jobTitle) {
-      <p class="text-lg font-semibold text-surface-900 m-0">
-        {{ jobApplication()!.jobTitle }}
-      </p>
-      } @if (jobApplication()!.companyName) {
-      <p class="text-surface-600 m-0">{{ jobApplication()!.companyName }}</p>
-      }
-    </div>
-    <details class="group">
-      <summary
-        class="cursor-pointer text-sm text-primary-600 hover:text-primary-800 select-none"
-      >
-        View job description
-      </summary>
-      <p class="mt-3 text-sm text-surface-700 whitespace-pre-wrap">
-        {{ jobApplication()!.jobDescription }}
-      </p>
-    </details>
-  </div>
-  } @if (hasPartialStoredResults()) {
-  <div
-    class="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800 text-sm"
-  >
-    <i class="pi pi-info-circle mr-2"></i>
-    Some optimization results are unavailable for this stored optimization.
-  </div>
-  }
+<div class="optim-layout">
+  <!-- Sidebar -->
+  <app-optim-sidebar
+    [activeSection]="activeSection()"
+    [statuses]="sectionStatuses()"
+    [processingSet]="processingSet()"
+    [expanded]="sidebarExpanded()"
+    [atsScore]="atsScore()"
+    [keywordScore]="keywordScore()"
+    [pageState]="pageState()"
+    (sectionClicked)="handleSectionClick($event)"
+    (toggleClicked)="sidebarExpanded.set(!sidebarExpanded())"
+  />
 
-  <h2 class="section-heading">Resume analysis and improvements</h2>
-  <p class="mb-6">
-    Based on the provided job offer your resume is analyzed. You get a detailed
-    analysis and suggestions for specific improvements.
-  </p>
-  <p-accordion [value]="['0']" [multiple]="true">
-    <p-accordion-panel value="1">
-      <p-accordion-header>
-        <div class="flex justify-between w-full">
-          <span>ATS Analysis</span>
-          @if(isProcessing().get(PromptType.RESUME_AUTOPSY)) {
-          <span class="text-amber-600 mr-4">
-            <i class="pi pi-spin pi-spinner mr-2.5"></i>Processing
-          </span>
-          } @else if (results().get(PromptType.RESUME_AUTOPSY) &&
-          results().get(PromptType.RESUME_AUTOPSY)?.status === 'completed') {
-          <span class="text-green-700 mr-4"
-            >{{ results().get(PromptType.RESUME_AUTOPSY)?.status?.toUpperCase()
-            }}</span
-          >
-          } @else if (results().get(PromptType.RESUME_AUTOPSY)) {
-          <span class="text-red-700 mr-4"
-            >{{ results().get(PromptType.RESUME_AUTOPSY)?.status?.toUpperCase()
-            }}</span
-          >
-          }
+  <!-- Main content -->
+  <main class="optim-main">
+    <div class="optim-content">
+      @if (pageState() === 'processing' || pageState() === 'completed') {
+      <div class="optim-heading-wrap">
+        <h2 class="optim-heading">CV Optimization</h2>
+      </div>
+      } @if (pageState() === 'initial') {
+      <!-- Initial upload form -->
+      <div class="initial-form-wrap">
+        <div class="initial-form-header">
+          <h2 class="initial-form-heading">CV Optimization</h2>
+          <p class="initial-form-subtext">
+            Select your CV and paste the job description to start.
+          </p>
         </div>
-      </p-accordion-header>
-      <p-accordion-content>
-        <app-optimization-result-panel
-          [loading]="isProcessing().get(PromptType.RESUME_AUTOPSY) ?? false"
-          [error]="results().get(PromptType.RESUME_AUTOPSY)?.error ?? null"
-          [hasData]="autopsyResult() !== null"
-        >
-          @if (autopsyResult(); as result) {
-          <app-ats-score [data]="result" />
-          }
-        </app-optimization-result-panel>
-        @if (retryablePromptTypes().has(PromptType.RESUME_AUTOPSY)) {
-        <div class="mt-4 flex justify-end">
+        <div class="job-banner">
+          <app-job-upload (jobSubmitted)="runOptimization($event)" />
+        </div>
+      </div>
+      } @else {
+      <!-- Job info banner -->
+      @if (jobApplication()) {
+      <app-job-info-banner
+        [jobApplication]="jobApplication()!"
+        (openCv)="openOriginalCv()"
+      />
+      }
+
+      <!-- Partial results warning -->
+      @if (hasPartialStoredResults()) {
+      <div
+        class="partial-results-warning rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800 text-sm"
+      >
+        <i class="pi pi-info-circle" style="margin-right: 8px"></i>
+        Some optimization results are unavailable for this stored optimization.
+      </div>
+      }
+
+      <!-- ATS Analysis -->
+      <app-section-card
+        [sectionId]="PromptType.RESUME_AUTOPSY"
+        icon="pi-chart-bar"
+        title="ATS Analysis"
+        [status]="sectionStatus(PromptType.RESUME_AUTOPSY)"
+      >
+        @if (autopsyResult()) {
+        <app-ats-score [data]="autopsyResult()!" />
+        } @if (retryablePromptTypes().has(PromptType.RESUME_AUTOPSY)) {
+        <div class="retry-action">
           <p-button
             label="Retry"
             ariaLabel="Retry ATS Analysis"
             icon="pi pi-refresh"
             severity="warn"
+            size="small"
             [disabled]="isProcessing().get(PromptType.RESUME_AUTOPSY) ?? false"
             (onClick)="retryOptimization(PromptType.RESUME_AUTOPSY)"
           />
         </div>
         }
-      </p-accordion-content>
-    </p-accordion-panel>
-    <p-accordion-panel value="2">
-      <p-accordion-header>
-        <div class="flex justify-between w-full">
-          <span>Keyword Gap Analysis</span>
-          @if(isProcessing().get(PromptType.KEYWORD_GAP)) {
-          <span class="text-amber-600 mr-4">
-            <i class="pi pi-spin pi-spinner mr-2.5"></i>Processing
-          </span>
-          } @else if (results().get(PromptType.KEYWORD_GAP) &&
-          results().get(PromptType.KEYWORD_GAP)?.status === 'completed') {
-          <span class="text-green-700 mr-4"
-            >{{ results().get(PromptType.KEYWORD_GAP)?.status?.toUpperCase()
-            }}</span
-          >
-          } @else if (results().get(PromptType.KEYWORD_GAP)) {
-          <span class="text-red-700 mr-4"
-            >{{ results().get(PromptType.KEYWORD_GAP)?.status?.toUpperCase()
-            }}</span
-          >
-          }
-        </div>
-      </p-accordion-header>
-      <p-accordion-content>
-        <app-optimization-result-panel
-          [loading]="isProcessing().get(PromptType.KEYWORD_GAP) ?? false"
-          [error]="results().get(PromptType.KEYWORD_GAP)?.error ?? null"
-          [hasData]="keywordGapResult() !== null"
-        >
-          @if (keywordGapResult(); as result) {
-          <app-keyword-gap
-            [result]="result"
-            [selectedKeywords]="selections().selectedKeywords"
-            (keywordToggled)="onKeywordToggled($event)"
-          />
-          }
-        </app-optimization-result-panel>
-        @if (retryablePromptTypes().has(PromptType.KEYWORD_GAP)) {
-        <div class="mt-4 flex justify-end">
+      </app-section-card>
+
+      <!-- Keyword Gap -->
+      <app-section-card
+        [sectionId]="PromptType.KEYWORD_GAP"
+        icon="pi-key"
+        title="Keyword Gap"
+        [status]="sectionStatus(PromptType.KEYWORD_GAP)"
+      >
+        @if (keywordGapResult()) {
+        <app-keyword-gap
+          [result]="keywordGapResult()!"
+          [selectedKeywords]="selections().selectedKeywords"
+          (keywordToggled)="onKeywordToggled($event)"
+        />
+        } @if (retryablePromptTypes().has(PromptType.KEYWORD_GAP)) {
+        <div class="retry-action">
           <p-button
             label="Retry"
             ariaLabel="Retry Keyword Gap Analysis"
             icon="pi pi-refresh"
             severity="warn"
+            size="small"
             [disabled]="isProcessing().get(PromptType.KEYWORD_GAP) ?? false"
             (onClick)="retryOptimization(PromptType.KEYWORD_GAP)"
           />
         </div>
         }
-      </p-accordion-content>
-    </p-accordion-panel>
-    <p-accordion-panel value="3">
-      <p-accordion-header>
-        <div class="flex justify-between w-full">
-          <span>Rewritten Summary</span>
-          @if(isProcessing().get(PromptType.SUMMARY_REWRITE)) {
-          <span class="text-amber-600 mr-4">
-            <i class="pi pi-spin pi-spinner mr-2.5"></i>Processing
-          </span>
-          } @else if (results().get(PromptType.SUMMARY_REWRITE) &&
-          results().get(PromptType.SUMMARY_REWRITE)?.status === 'completed') {
-          <span class="text-green-700 mr-4"
-            >{{ results().get(PromptType.SUMMARY_REWRITE)?.status?.toUpperCase()
-            }}</span
-          >
-          } @else if (results().get(PromptType.SUMMARY_REWRITE)) {
-          <span class="text-red-700 mr-4"
-            >{{ results().get(PromptType.SUMMARY_REWRITE)?.status?.toUpperCase()
-            }}</span
-          >
-          }
-        </div>
-      </p-accordion-header>
-      <p-accordion-content>
-        <app-optimization-result-panel
-          [loading]="isProcessing().get(PromptType.SUMMARY_REWRITE) ?? false"
-          [error]="results().get(PromptType.SUMMARY_REWRITE)?.error ?? null"
-          [hasData]="summaryRewriteResult() !== null"
-        >
-          @if (summaryRewriteResult(); as result) {
-          <app-summary-rewrite
-            [result]="result"
-            [selectedAngle]="selections().selectedSummaryAngle"
-            (angleSelected)="onAngleSelected($event)"
-            (summaryTextEdited)="onSummaryTextEdited($event)"
-          />
-          }
-        </app-optimization-result-panel>
-        @if (retryablePromptTypes().has(PromptType.SUMMARY_REWRITE)) {
-        <div class="mt-4 flex justify-end">
+      </app-section-card>
+
+      <!-- Summary Rewrite -->
+      <app-section-card
+        [sectionId]="PromptType.SUMMARY_REWRITE"
+        icon="pi-pen-to-square"
+        title="Summary Rewrite"
+        [status]="sectionStatus(PromptType.SUMMARY_REWRITE)"
+      >
+        @if (summaryRewriteResult()) {
+        <app-summary-rewrite
+          [result]="summaryRewriteResult()!"
+          [selectedAngle]="selections().selectedSummaryAngle"
+          (angleSelected)="onAngleSelected($event)"
+          (summaryTextEdited)="onSummaryTextEdited($event)"
+        />
+        } @if (retryablePromptTypes().has(PromptType.SUMMARY_REWRITE)) {
+        <div class="retry-action">
           <p-button
             label="Retry"
-            ariaLabel="Retry Rewritten Summary"
+            ariaLabel="Retry Summary Rewrite"
             icon="pi pi-refresh"
             severity="warn"
+            size="small"
             [disabled]="isProcessing().get(PromptType.SUMMARY_REWRITE) ?? false"
             (onClick)="retryOptimization(PromptType.SUMMARY_REWRITE)"
           />
         </div>
         }
-      </p-accordion-content>
-    </p-accordion-panel>
-    <p-accordion-panel value="4">
-      <p-accordion-header>
-        <div class="flex justify-between w-full">
-          <span>Bullet Upgrades</span>
-          @if(isProcessing().get(PromptType.BULLET_UPGRADE)) {
-          <span class="text-amber-600 mr-4">
-            <i class="pi pi-spin pi-spinner mr-2.5"></i>Processing
-          </span>
-          } @else if (results().get(PromptType.BULLET_UPGRADE) &&
-          results().get(PromptType.BULLET_UPGRADE)?.status === 'completed') {
-          <span class="text-green-700 mr-4"
-            >{{ results().get(PromptType.BULLET_UPGRADE)?.status?.toUpperCase()
-            }}</span
-          >
-          } @else if (results().get(PromptType.BULLET_UPGRADE)) {
-          <span class="text-red-700 mr-4"
-            >{{ results().get(PromptType.BULLET_UPGRADE)?.status?.toUpperCase()
-            }}</span
-          >
-          }
-        </div>
-      </p-accordion-header>
-      <p-accordion-content>
-        <app-optimization-result-panel
-          [loading]="isProcessing().get(PromptType.BULLET_UPGRADE) ?? false"
-          [error]="results().get(PromptType.BULLET_UPGRADE)?.error ?? null"
-          [hasData]="bulletUpgradeResult() !== null"
-        >
-          @if (bulletUpgradeResult(); as result) {
-          <app-bullet-rewriter
-            [result]="result"
-            [selectedBullets]="selections().selectedBullets"
-            [bulletEdits]="bulletEdits()"
-            [activeBulletEditKey]="activeBulletEditKey()"
-            [editedBulletText]="editedBulletText()"
-            [selectedMissingBullets]="selectedMissingBullets()"
-            [missingBulletEdits]="missingBulletEdits()"
-            [removedBullets]="removedBullets()"
-            (bulletToggled)="onBulletToggled($event)"
-            (editStarted)="onBulletEditStarted($event)"
-            (editSaved)="onBulletEditSaved($event)"
-            (editCancelled)="onBulletEditCancelled()"
-            (editTextChanged)="onBulletEditTextChanged($event)"
-            (missingBulletToggled)="onMissingBulletToggled($event)"
-            (missingBulletEditStarted)="onMissingBulletEditStarted($event)"
-            (missingBulletEditSaved)="onMissingBulletEditSaved($event)"
-            (removedBulletToggled)="onRemovedBulletToggled($event)"
-          />
-          }
-        </app-optimization-result-panel>
-        @if (retryablePromptTypes().has(PromptType.BULLET_UPGRADE)) {
-        <div class="mt-4 flex justify-end">
+      </app-section-card>
+
+      <!-- Bullet Upgrades -->
+      <app-section-card
+        [sectionId]="PromptType.BULLET_UPGRADE"
+        icon="pi-list-check"
+        title="Bullet Upgrades"
+        [status]="sectionStatus(PromptType.BULLET_UPGRADE)"
+      >
+        @if (bulletUpgradeResult()) {
+        <app-bullet-rewriter
+          [result]="bulletUpgradeResult()!"
+          [selectedBullets]="selections().selectedBullets"
+          [bulletEdits]="bulletEdits()"
+          [activeBulletEditKey]="activeBulletEditKey()"
+          [editedBulletText]="editedBulletText()"
+          [selectedMissingBullets]="selectedMissingBullets()"
+          [missingBulletEdits]="missingBulletEdits()"
+          [removedBullets]="removedBullets()"
+          (bulletToggled)="onBulletToggled($event)"
+          (editStarted)="onBulletEditStarted($event)"
+          (editSaved)="onBulletEditSaved($event)"
+          (editCancelled)="onBulletEditCancelled()"
+          (editTextChanged)="onBulletEditTextChanged($event)"
+          (missingBulletToggled)="onMissingBulletToggled($event)"
+          (missingBulletEditStarted)="onMissingBulletEditStarted($event)"
+          (missingBulletEditSaved)="onMissingBulletEditSaved($event)"
+          (removedBulletToggled)="onRemovedBulletToggled($event)"
+        />
+        } @if (retryablePromptTypes().has(PromptType.BULLET_UPGRADE)) {
+        <div class="retry-action">
           <p-button
             label="Retry"
             ariaLabel="Retry Bullet Upgrades"
             icon="pi pi-refresh"
             severity="warn"
+            size="small"
             [disabled]="isProcessing().get(PromptType.BULLET_UPGRADE) ?? false"
             (onClick)="retryOptimization(PromptType.BULLET_UPGRADE)"
           />
         </div>
         }
-      </p-accordion-content>
-    </p-accordion-panel>
-  </p-accordion>
+      </app-section-card>
 
-  <h2 class="section-heading">Additional materials</h2>
-  <p class="mb-6">
-    Based on the provided cv and job offer you also get a tailored cover letter
-    and a set of information that will allow you to prepare for the interview.
-  </p>
-  <p-accordion [value]="['0']" [multiple]="true">
-    <p-accordion-panel value="5">
-      <p-accordion-header>
-        <div class="flex justify-between w-full">
-          <span>Cover Letter</span>
-          @if(isProcessing().get(PromptType.COVER_LETTER)) {
-          <span class="text-amber-600 mr-4">
-            <i class="pi pi-spin pi-spinner mr-2.5"></i>Processing
-          </span>
-          } @else if (results().get(PromptType.COVER_LETTER) &&
-          results().get(PromptType.COVER_LETTER)?.status === 'completed') {
-          <span class="text-green-700 mr-4"
-            >{{ results().get(PromptType.COVER_LETTER)?.status?.toUpperCase()
-            }}</span
-          >
-          } @else if (results().get(PromptType.COVER_LETTER)) {
-          <span class="text-red-700 mr-4"
-            >{{ results().get(PromptType.COVER_LETTER)?.status?.toUpperCase()
-            }}</span
-          >
-          }
-        </div>
-      </p-accordion-header>
-      <p-accordion-content>
-        <app-optimization-result-panel
-          [loading]="isProcessing().get(PromptType.COVER_LETTER) ?? false"
-          [error]="results().get(PromptType.COVER_LETTER)?.error ?? null"
-          [hasData]="coverLetterResult() !== null"
-        >
-          @if (coverLetterResult(); as result) {
-          <app-cover-letter-editor [result]="result" />
-          }
-        </app-optimization-result-panel>
-        @if (retryablePromptTypes().has(PromptType.COVER_LETTER)) {
-        <div class="mt-4 flex justify-end">
+      <!-- Cover Letter -->
+      <app-section-card
+        [sectionId]="PromptType.COVER_LETTER"
+        icon="pi-file-edit"
+        title="Cover Letter"
+        [status]="sectionStatus(PromptType.COVER_LETTER)"
+      >
+        @if (coverLetterResult()) {
+        <app-cover-letter-editor [result]="coverLetterResult()!" />
+        } @if (retryablePromptTypes().has(PromptType.COVER_LETTER)) {
+        <div class="retry-action">
           <p-button
             label="Retry"
             ariaLabel="Retry Cover Letter"
             icon="pi pi-refresh"
             severity="warn"
+            size="small"
             [disabled]="isProcessing().get(PromptType.COVER_LETTER) ?? false"
             (onClick)="retryOptimization(PromptType.COVER_LETTER)"
           />
         </div>
         }
-      </p-accordion-content>
-    </p-accordion-panel>
-    <p-accordion-panel value="6">
-      <p-accordion-header>
-        <div class="flex justify-between w-full">
-          <span>Interview Prep (10Q&A)</span>
-          @if(isProcessing().get(PromptType.INTERVIEW_PREP)) {
-          <span class="text-amber-600 mr-4">
-            <i class="pi pi-spin pi-spinner mr-2.5"></i>Processing
-          </span>
-          } @else if (results().get(PromptType.INTERVIEW_PREP) &&
-          results().get(PromptType.INTERVIEW_PREP)?.status === 'completed') {
-          <span class="text-green-700 mr-4"
-            >{{ results().get(PromptType.INTERVIEW_PREP)?.status?.toUpperCase()
-            }}</span
-          >
-          } @else if (results().get(PromptType.INTERVIEW_PREP)) {
-          <span class="text-red-700 mr-4"
-            >{{ results().get(PromptType.INTERVIEW_PREP)?.status?.toUpperCase()
-            }}</span
-          >
-          }
-        </div>
-      </p-accordion-header>
-      <p-accordion-content>
-        <app-optimization-result-panel
-          [loading]="isProcessing().get(PromptType.INTERVIEW_PREP) ?? false"
-          [error]="results().get(PromptType.INTERVIEW_PREP)?.error ?? null"
-          [hasData]="interviewPrepResult() !== null"
-        >
-          @if (interviewPrepResult(); as result) {
-          <app-interview-prep [result]="result" />
-          }
-        </app-optimization-result-panel>
-        @if (retryablePromptTypes().has(PromptType.INTERVIEW_PREP)) {
-        <div class="mt-4 flex justify-end">
+      </app-section-card>
+
+      <!-- Interview Prep -->
+      <app-section-card
+        [sectionId]="PromptType.INTERVIEW_PREP"
+        icon="pi-comments"
+        title="Interview Prep"
+        [status]="sectionStatus(PromptType.INTERVIEW_PREP)"
+      >
+        @if (interviewPrepResult()) {
+        <app-interview-prep [result]="interviewPrepResult()!" />
+        } @if (retryablePromptTypes().has(PromptType.INTERVIEW_PREP)) {
+        <div class="retry-action">
           <p-button
             label="Retry"
             ariaLabel="Retry Interview Prep"
             icon="pi pi-refresh"
             severity="warn"
+            size="small"
             [disabled]="isProcessing().get(PromptType.INTERVIEW_PREP) ?? false"
             (onClick)="retryOptimization(PromptType.INTERVIEW_PREP)"
           />
         </div>
         }
-      </p-accordion-content>
-    </p-accordion-panel>
-    <p-accordion-panel value="7">
-      <p-accordion-header>
-        <div class="flex justify-between w-full">
-          <span>LinkedIn Updates</span>
-          @if(isProcessing().get(PromptType.LINKEDIN_REWRITE)) {
-          <span class="text-amber-600 mr-4">
-            <i class="pi pi-spin pi-spinner mr-2.5"></i>Processing
-          </span>
-          } @else if (results().get(PromptType.LINKEDIN_REWRITE) &&
-          results().get(PromptType.LINKEDIN_REWRITE)?.status === 'completed') {
-          <span class="text-green-700 mr-4"
-            >{{
-            results().get(PromptType.LINKEDIN_REWRITE)?.status?.toUpperCase()
-            }}</span
-          >
-          } @else if (results().get(PromptType.LINKEDIN_REWRITE)) {
-          <span class="text-red-700 mr-4"
-            >{{
-            results().get(PromptType.LINKEDIN_REWRITE)?.status?.toUpperCase()
-            }}</span
-          >
-          }
-        </div>
-      </p-accordion-header>
-      <p-accordion-content>
-        @if (results().get(PromptType.LINKEDIN_REWRITE); as r) {
-        <pre class="whitespace-pre-wrap text-sm">{{ r.result | json }}</pre>
-        } @else if(results().get(PromptType.LINKEDIN_REWRITE)?.error; as error)
-        {
-        <p class="text-red-700 m-0">{{error}}</p>
-        }@else {
-        <p class="m-0">Coming soon</p>
-        }
-      </p-accordion-content>
-    </p-accordion-panel>
-  </p-accordion>
+      </app-section-card>
 
-  @if (jobApplicationId()) {
-  <div>
-    <h2 class="section-heading">Export CV</h2>
-    <p class="text-surface-600 mb-8">
-      Choose Template. All Templates are ATS optimized.
-    </p>
-    <app-cv-template-selector
-      [(selected)]="selectedTemplate"
-      [mergedCv]="mergedCv()"
-    />
-
-    @if (canExportCv()) {
-    <div class="flex flex-wrap gap-3 mt-10">
-      <p-button
-        label="Export CV as PDF"
-        icon="pi pi-file-pdf"
-        size="small"
-        [loading]="isExportingPdf()"
-        [disabled]="isExportingPdf()"
-        (onClick)="exportCvAsPdf()"
-        ariaLabel="Export optimized CV to PDF"
-      />
-      <p-button
-        label="Export CV as DOCX"
-        icon="pi pi-file-word"
-        size="small"
-        [loading]="isExportingDocx()"
-        [disabled]="isExportingDocx()"
-        (onClick)="exportCvAsDocx()"
-        ariaLabel="Export optimized CV to DOCX"
-      />
+      <!-- LinkedIn Updates -->
+      <app-section-card
+        [sectionId]="PromptType.LINKEDIN_REWRITE"
+        icon="pi-link"
+        title="LinkedIn Updates"
+      >
+        <p class="coming-soon-text">Coming soon</p>
+      </app-section-card>
+      }
     </div>
-    } @else if (!isStoredMode()) {
-    <p class="text-sm text-surface-400 m-0 mt-2">
-      Run optimization process and select at least one change above to export a
-      modified CV.
-    </p>
-    }
-  </div>
-  } }
+  </main>
 </div>
+
+<!-- Export footer -->
+@if (canExportCv() && jobApplicationId()) {
+<app-export-footer
+  [sidebarExpanded]="sidebarExpanded()"
+  [(selectedTemplate)]="selectedTemplate"
+  [isExportingPdf]="isExportingPdf()"
+  [isExportingDocx]="isExportingDocx()"
+  [mergedCv]="mergedCv()"
+  (exportPdf)="exportCvAsPdf()"
+  (exportDocx)="exportCvAsDocx()"
+/>
+} }

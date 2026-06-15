@@ -1,0 +1,30 @@
+<div
+  [id]="'section-' + sectionId()"
+  [attr.data-section]="sectionId()"
+  class="section-card"
+>
+  <div class="section-card__header">
+    <div class="section-card__icon"><i [class]="'pi ' + icon()"></i></div>
+    <h2 class="section-card__title">{{ title() }}</h2>
+    @if (status() === 'completed') {
+    <span class="status-completed">
+      <i class="pi pi-check-circle"></i>Completed
+    </span>
+    } @if (status() === 'processing') {
+    <span class="status-processing">
+      <i class="pi pi-spin pi-spinner"></i>Processing
+    </span>
+    } @if (status() === 'error') {
+    <span class="status-error">
+      <i class="pi pi-times-circle"></i>Error
+    </span>
+    }
+  </div>
+  <div class="section-card__body">
+    @if (status() === 'processing') {
+    <app-processing-placeholder />
+    } @else if (status() !== 'pending') {
+    <ng-content />
+    }
+  </div>
+</div>
