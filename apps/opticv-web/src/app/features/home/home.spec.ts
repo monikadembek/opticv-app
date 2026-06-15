@@ -26,7 +26,9 @@ describe('Home', () => {
   it('should render the hero heading', () => {
     fixture.detectChanges();
     const h1 = fixture.nativeElement.querySelector('h1');
-    expect(h1.textContent.trim()).toBe('CV Online');
+    expect(h1.textContent.trim()).toBe(
+      'Land more interviews, one tailored CV at a time.',
+    );
   });
 
   it('should render the Optimize CV button', () => {
@@ -45,10 +47,10 @@ describe('Home', () => {
     expect(button).not.toBeNull();
   });
 
-  it('should navigate to optimize-cv when goToCreator is called', () => {
+  it('should navigate to cv-optimization when goToCreator is called', () => {
     const navigateSpy = vi.spyOn(router, 'navigate');
     component.goToCreator();
-    expect(navigateSpy).toHaveBeenCalledWith(['optimize-cv']);
+    expect(navigateSpy).toHaveBeenCalledWith(['cv-optimization']);
   });
 
   it('should navigate to login when signIn is called', () => {

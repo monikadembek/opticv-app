@@ -1,0 +1,14 @@
+<div class="mobile-tabs">
+  @for (item of navItems; track item.id) {
+    <button
+      #tabBtn
+      class="mobile-tab"
+      [class.active]="activeSection() === item.id"
+      type="button"
+      (click)="sectionClicked.emit(item.id)"
+    >
+      <i [class]="'pi ' + item.icon"></i>
+      <span>{{ item.label.split(' ')[0] }}</span>
+    </button>
+  }
+</div>

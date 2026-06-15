@@ -45,7 +45,7 @@ export class TopHeader {
           route: '/upload-cv',
         },
         {
-          label: 'CV Optimization',
+          label: 'Optimize CV',
           route: '/cv-optimization',
         },
       ];

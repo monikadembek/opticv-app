@@ -56,10 +56,10 @@ describe('TopHeader', () => {
       expect(component.items).toHaveLength(4);
       expect(component.items![1].label).toBe('Dashboard');
       expect(component.items![1]['route']).toBe('/dashboard');
-      expect(component.items![2].label).toBe('CV Optimization');
-      expect(component.items![2]['route']).toBe('/cv-optimization');
-      expect(component.items![3].label).toBe('Upload CV');
-      expect(component.items![3]['route']).toBe('/upload-cv');
+      expect(component.items![2].label).toBe('Upload CV');
+      expect(component.items![2]['route']).toBe('/upload-cv');
+      expect(component.items![3].label).toBe('CV Optimization');
+      expect(component.items![3]['route']).toBe('/cv-optimization');
     });
   });
 

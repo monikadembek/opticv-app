@@ -1,0 +1,61 @@
+<div class="export-footer" [class.collapsed]="!sidebarExpanded()">
+  <!-- Template selector -->
+  <div class="template-selector">
+    <i class="pi pi-palette template-icon"></i>
+    <span class="template-label">Template:</span>
+    <select
+      class="template-select"
+      [ngModel]="selectedTemplate()"
+      (ngModelChange)="selectedTemplate.set($event)"
+    >
+      @for (t of templates; track t.id) {
+      <option [value]="t.id">{{ t.name }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="export-actions">
+    <!-- Preview button -->
+    <p-button
+      label="Preview"
+      icon="pi pi-eye"
+      severity="secondary"
+      [outlined]="true"
+      size="small"
+      (onClick)="previewVisible.set(true)"
+    />
+    <!-- Export buttons -->
+    <p-button
+      label="Export PDF"
+      icon="pi pi-file-pdf"
+      size="small"
+      [loading]="isExportingPdf()"
+      [disabled]="isExportingPdf()"
+      (onClick)="exportPdf.emit()"
+      ariaLabel="Export optimized CV to PDF"
+    />
+    <p-button
+      label="Export DOCX"
+      icon="pi pi-file-word"
+      size="small"
+      [loading]="isExportingDocx()"
+      [disabled]="isExportingDocx()"
+      (onClick)="exportDocx.emit()"
+      ariaLabel="Export optimized CV to DOCX"
+    />
+  </div>
+</div>
+
+<p-dialog
+  header="CV Preview"
+  [visible]="previewVisible()"
+  (visibleChange)="$event ? null : previewVisible.set(false)"
+  [modal]="true"
+  [style]="{ width: '900px', maxWidth: '95vw' }"
+  [draggable]="false"
+>
+  <app-cv-template-preview
+    [cv]="mergedCv()"
+    [templateId]="selectedTemplate()"
+  />
+</p-dialog>
