@@ -317,6 +317,16 @@ export class CvOptimization implements OnInit {
         setTimeout(() => this.setupScrollspy(), 0);
       }
     });
+
+    // Quill async-loads and auto-focuses after results arrive, undoing any earlier
+    // scroll-to-top. Re-apply scroll after Quill has had time to initialize.
+    let scrollScheduled = false;
+    effect(() => {
+      if (this.isStoredMode() && this.coverLetterResult() && !scrollScheduled) {
+        scrollScheduled = true;
+        setTimeout(() => window.scrollTo({ top: 0 }), 300);
+      }
+    });
   }
 
   ngOnInit(): void {
@@ -328,6 +338,8 @@ export class CvOptimization implements OnInit {
       this.route.snapshot.paramMap.get('jobApplicationId');
     if (jobApplicationId) {
       this.isStoredMode.set(true);
+      history.scrollRestoration = 'manual';
+      window.scrollTo({ top: 0 });
       this.loadStoredOptimization(jobApplicationId);
     }
 
@@ -338,6 +350,7 @@ export class CvOptimization implements OnInit {
 
     this.destroyRef.onDestroy(() => {
       this.scrollObserver?.disconnect();
+      history.scrollRestoration = 'auto';
     });
   }
 
@@ -346,8 +359,16 @@ export class CvOptimization implements OnInit {
     const sections = document.querySelectorAll('[data-section]');
     if (!sections.length) return;
 
+    let initialFired = false;
     this.scrollObserver = new IntersectionObserver(
       (entries) => {
+        // Skip the initial batch that fires synchronously on observe() — it reflects
+        // the browser's restored scroll position, not user intent, and causes the
+        // active section to jump on page refresh.
+        if (!initialFired) {
+          initialFired = true;
+          return;
+        }
         for (const entry of entries) {
           if (entry.isIntersecting) {
             const id = entry.target.getAttribute('data-section');

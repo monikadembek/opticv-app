@@ -31,6 +31,7 @@ function plainTextToHtml(text: string): string {
 export class CoverLetterEditor {
   private readonly exportService = inject(CoverLetterExportService);
   private readonly messageService = inject(MessageService);
+  private userHasInteracted = false;
 
   readonly result = input.required<CoverLetterResult>();
 
@@ -51,6 +52,21 @@ export class CoverLetterEditor {
       const idx = this.safeIndex();
       this.selectedVariantIndex.set(idx);
       this.editorContent.set(this.buildContent(idx));
+    });
+  }
+
+  onEditorInit({
+    editor,
+  }: {
+    editor: { blur: () => void; root: HTMLElement };
+  }): void {
+    editor.root.addEventListener('mousedown', () => {
+      this.userHasInteracted = true;
+    });
+    editor.root.addEventListener('focus', () => {
+      if (!this.userHasInteracted) {
+        editor.blur();
+      }
     });
   }
 
