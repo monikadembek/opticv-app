@@ -412,6 +412,7 @@ export class CvOptimization implements OnInit {
         switchMap(({ jobApplication, results }) => {
           this.jobApplicationId.set(id);
           this.jobApplication.set(jobApplication);
+          console.log('results: ', results);
 
           const resultMap = new Map<PromptType, SseJobCompleteEvent>();
           for (const r of results) {

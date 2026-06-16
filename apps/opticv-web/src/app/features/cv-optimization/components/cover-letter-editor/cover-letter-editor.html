@@ -2,9 +2,12 @@
   <!-- Warnings banner -->
   @if (result().warnings.length > 0) {
   <p-message severity="warn">
-    <ul class="m-0 pl-4 space-y-1">
+    <ul class="m-0 p-3 pb-0">
       @for (warning of result().warnings; track warning) {
-      <li class="text-sm">{{ warning }}</li>
+      <li class="text-sm mb-3">
+        <i class="pi pi-exclamation-triangle text-amber-500 mr-1.5"></i>
+        {{ warning }}
+      </li>
       }
     </ul>
   </p-message>
@@ -30,34 +33,34 @@
       <div
         class="rounded-xl border p-5 space-y-3 flex flex-col"
         [class]="selectedVariantIndex() === $index
-          ? 'border-primary-500 bg-primary-50/40'
-          : 'border-surface-200'"
+          ? 'border-(--primary-600) border-2 bg-(--primary-50)'
+          : 'border-(--border-subtle)'"
         role="article"
         [attr.aria-label]="variant.hookType + ' variant'"
       >
         <!-- Card header -->
         <div
-          class="flex items-center gap-2 flex-wrap pb-2 border-b border-surface-200"
+          class="flex items-center gap-2 flex-wrap pb-2 border-b border-(--border-subtle)"
         >
           <span
-            class="text-sm font-semibold uppercase tracking-wide bg-surface-100 text-surface-600 rounded-full px-2 py-0.5"
+            class="text-sm font-semibold capitalize tracking-wide bg-(--neutral-100) text-surface-400 rounded-sm px-2 py-0.5"
           >
             {{ variant.hookType }}
           </span>
           @if ($index === safeIndex()) {
           <span
-            class="text-sm font-semibold bg-primary-100 text-green-700 rounded-full px-2 py-0.5"
+            class="text-sm font-semibold bg-(--primary-600)/10 text-green-700 rounded-sm px-2 py-0.5"
           >
             Recommended
           </span>
           }
-          <span class="text-xs text-surface-400 ml-auto"
+          <span class="text-xs text-(--text-muted) ml-auto"
             >{{ variant.wordCount }} words</span
           >
         </div>
 
         <!-- Strategic angle -->
-        <p class="m-0 text-sm italic text-surface-500">
+        <p class="mb-3 text-sm italic text-surface-500">
           {{ variant.strategicAngle }}
         </p>
 
@@ -79,9 +82,13 @@
           >
             Keywords:
           </p>
-          <div class="flex flex-wrap gap-1">
+          <div class="flex flex-wrap gap-2">
             @for (kw of variant.keywordsIncorporated; track kw) {
-            <span class="text-xs text-surface-600 px-2 py-0.5"> {{ kw }} </span>
+            <span
+              class="text-xs bg-(--neutral-100) text-surface-600 rounded-sm px-2 py-0.5"
+            >
+              {{ kw }}
+            </span>
             }
           </div>
         </div>
@@ -90,8 +97,9 @@
         <!-- Select button -->
         <div class="mt-auto pt-2">
           <p-button
-            label="Use this version"
-            variant="outlined"
+            [label]="selectedVariantIndex() === $index ? 'Selected' : 'Use this version'"
+            severity="success"
+            [variant]="selectedVariantIndex() === $index ? undefined : 'outlined'"
             size="small"
             [style]="{ width: '100%' }"
             (onClick)="selectVariant($index)"
@@ -105,7 +113,7 @@
   <!-- Editor section -->
   <div>
     <h3 class="text-base font-semibold text-surface-800 mb-3">
-      Edit Cover Letter
+      Edit Selected Cover Letter
     </h3>
     <p-editor
       [ngModel]="editorContent()"
@@ -124,15 +132,19 @@
 
   <div class="flex gap-3">
     <p-button
-      label="Export to PDF"
+      label="Export PDF"
       severity="primary"
+      size="small"
+      icon="pi pi-file-pdf"
       [loading]="isBusyPdf()"
       [disabled]="isBusyPdf() || isBusyDocx()"
       (onClick)="onExportPdf()"
     />
     <p-button
-      label="Export to DOCX"
+      label="Export DOCX"
       severity="primary"
+      size="small"
+      icon="pi pi-file-word"
       [loading]="isBusyDocx()"
       [disabled]="isBusyPdf() || isBusyDocx()"
       (onClick)="onExportDocx()"

@@ -527,13 +527,19 @@ Frontend:
 
 ---
 
-### 47. Cv-optimization result sections UI changes
+### 47. Apply UI changes to sections that present results of cv-optimization process
 
-**status: todo**
+**status: in progress**
 
-**time:**
+**time: 15.06.2026 -**
 
-- based on the mockup created with Claude Design apply changes to the UI of sections that present cv-optimization results
+- based on the mockup created with Claude Design apply changes to the UI of sections that present cv-optimization results:
+  - ATS Analysis
+  - Keyword Gap
+  - Summary Rewrite
+  - Bullet Upgrades
+  - Cover Letter
+  - Interview Prep
 
 ---
 

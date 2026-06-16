@@ -6,7 +6,7 @@
     </h3>
     @if (isNoSummary()) {
     <p class="m-0 text-sm italic text-surface-400">
-      Your CV had no summary — here are three options to add one.
+      Your CV had no summary - here are three options, select one.
     </p>
     } @else {
     <p class="m-0 text-sm text-surface-700 leading-relaxed">
@@ -17,9 +17,11 @@
 
   <!-- Recommendation Reason -->
   @if (result().recommendationReason; as reason) {
-  <div class="rounded-lg bg-surface-50 border border-surface-200 p-4">
+  <div
+    class="rounded-md bg-(--neutral-100)/60 border border-(--border-subtle) p-4"
+  >
     <p
-      class="m-0 text-xs font-semibold uppercase tracking-wide text-surface-400 mb-1"
+      class="m-0 text-xs font-semibold uppercase tracking-wide text-(--text-muted) mb-1"
     >
       Why the recommended variant?
     </p>
@@ -35,7 +37,7 @@
       class="rounded-xl border p-5 space-y-3 cursor-pointer transition-colors"
       [class]="selectedAngle() === variant.angle
           ? 'border-green-500 border-2'
-          : 'border-surface-200 hover:border-surface-500'"
+          : 'border-(--border-subtle) hover:border-surface-500'"
       role="button"
       [attr.aria-pressed]="selectedAngle() === variant.angle"
       [attr.aria-label]="'Select ' + angleLabels[variant.angle] + ' variant'"
@@ -46,7 +48,7 @@
     >
       <!-- Card Header -->
       <div
-        class="flex items-center gap-2 flex-wrap pb-1 border-b-gray-400 border-b border-b-solid"
+        class="flex items-center gap-2 flex-wrap pb-1 border-b-(--border-subtle) border-b border-b-solid"
       >
         <input
           type="radio"
@@ -59,26 +61,24 @@
           (change)="selectVariant(variant.angle)"
         />
         <span
-          class="text-sm font-semibold uppercase tracking-wide bg-surface-100 text-surface-600 rounded-full px-2 py-0.5"
+          class="text-sm font-medium capitalize tracking-wide bg-(--neutral-100) text-(--text-muted) rounded-sm px-2 py-0.5"
         >
           {{ angleLabels[variant.angle] }}
         </span>
         @if (variant.angle === result().recommendedVariant) {
         <span
-          class="text-sm font-semibold bg-primary-100 text-green-700 rounded-full px-2 py-0.5"
+          class="text-sm font-medium bg-(--primary-50) text-green-700 rounded-sm px-2 py-0.5"
         >
           Recommended
         </span>
         }
-        <span class="text-xs text-surface-400 ml-auto"
+        <span class="text-xs text-(--text-muted) ml-auto"
           >{{ variant.wordCount }} words</span
         >
       </div>
 
       <!-- Summary Text -->
-      <p
-        class="m-0 mb-5 pb-3 text-sm text-surface-800 leading-relaxed border-b-gray-400 border-b border-b-solid"
-      >
+      <p class="m-0 mb-3 text-sm text-surface-800 leading-relaxed">
         {{ variant.text }}
       </p>
 
@@ -91,14 +91,14 @@
       @if (variant.keywordsUsed.length > 0) {
       <div>
         <p
-          class="m-0 text-sm font-semibold uppercase tracking-wide text-surface-400 mb-1.5"
+          class="m-0 text-sm font-semibold uppercase tracking-wide text-(--text-muted) mb-1.5"
         >
           Keywords used
         </p>
-        <div class="flex flex-wrap gap-1.5">
+        <div class="flex flex-wrap gap-2">
           @for (kw of variant.keywordsUsed; track kw) {
           <span
-            class="text-xs bg-primary-50 text-primary-700 rounded px-1.5 py-0.5"
+            class="text-xs bg-(--primary-50) text-(--primary-700) rounded-sm px-2 py-0.5"
             >{{ kw }}</span
           >
           }
@@ -112,10 +112,10 @@
   <!-- Selected variant editor -->
   @if (selectedAngle()) {
   <div class="space-y-2">
-    <div class="flex items-center gap-2 text-sm text-green-700">
+    <div class="flex items-center gap-2 text-sm text-green-700 font-semibold">
       <i class="pi pi-check-circle"></i>
       <span
-        >{{ angleLabels[selectedAngle()!] }} variant selected — edit below if
+        >{{ angleLabels[selectedAngle()!] }} variant selected - edit below if
         needed.</span
       >
     </div>
@@ -145,7 +145,7 @@
     <div class="flex flex-wrap gap-1.5">
       @for (kw of result().keywordsIncorporated; track kw) {
       <span
-        class="text-sm bg-surface-100 text-surface-600 rounded px-1.5 py-0.5"
+        class="text-sm bg-(--primary-50) text-(--primary-700) rounded-sm px-2 py-0.5"
         >{{ kw }}</span
       >
       }

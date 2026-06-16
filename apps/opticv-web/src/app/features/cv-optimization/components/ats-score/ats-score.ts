@@ -60,24 +60,8 @@ export class AtsScore {
     });
   }
 
-  toggleGroup(severity: string): void {
-    this.collapsedGroups.update((set) => {
-      const next = new Set(set);
-      if (next.has(severity)) {
-        next.delete(severity);
-      } else {
-        next.add(severity);
-      }
-      return next;
-    });
-  }
-
   isIssueExpanded(id: string): boolean {
     return this.expandedIssueIds().has(id);
-  }
-
-  isGroupCollapsed(severity: string): boolean {
-    return this.collapsedGroups().has(severity);
   }
 
   scoreColorClass(score: number): string {
