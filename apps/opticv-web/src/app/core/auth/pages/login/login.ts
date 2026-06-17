@@ -41,9 +41,8 @@ export class Login {
     const { email } = loginForm.form.value;
 
     if (loginForm.valid && email.length > 0) {
-      const { data, error } = await this.supabase.signInWithOtp(email);
+      const { error } = await this.supabase.signInWithOtp(email);
       if (!error) {
-        console.log('data', data);
         this.supabase.setPendingEmail(email);
         this.router.navigate(['/verify']);
       }

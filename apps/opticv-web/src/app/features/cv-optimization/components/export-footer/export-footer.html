@@ -1,17 +1,59 @@
 <div class="export-footer" [class.collapsed]="!sidebarExpanded()">
   <!-- Template selector -->
   <div class="template-selector">
-    <i class="pi pi-palette template-icon"></i>
+    <span class="hidden md:inline"
+      ><i class="pi pi-palette template-icon"></i
+    ></span>
     <span class="template-label">Template:</span>
-    <select
+    <p-select
       class="template-select"
+      size="small"
+      [options]="templates"
+      optionLabel="name"
+      optionValue="id"
       [ngModel]="selectedTemplate()"
       (ngModelChange)="selectedTemplate.set($event)"
+    ></p-select>
+
+    <!-- Accent color select -->
+    <p-select
+      class="accent-select"
+      size="small"
+      [options]="accentColors"
+      optionLabel="name"
+      optionValue="hex"
+      [ngModel]="accentColor()"
+      (ngModelChange)="accentColor.set($event)"
+      ariaLabel="Accent color"
     >
-      @for (t of templates; track t.id) {
-      <option [value]="t.id">{{ t.name }}</option>
-      }
-    </select>
+      <ng-template #selectedItem let-selected>
+        @if (selected) {
+        <span class="accent-option selected-option">
+          <span class="accent-swatch" [style.background]="selected.hex"></span>
+          {{ selected.name }}
+        </span>
+        }
+      </ng-template>
+      <ng-template #item let-color>
+        <span class="accent-option">
+          <span class="accent-swatch" [style.background]="color.hex"></span>
+          {{ color.name }}
+        </span>
+      </ng-template>
+    </p-select>
+
+    <!-- ATS template info button -->
+    <p-button
+      icon="pi pi-info"
+      [rounded]="true"
+      [outlined]="true"
+      size="small"
+      severity="secondary"
+      class="ats-info-button"
+      ariaLabel="ATS template information"
+      title="ATS template information"
+      (onClick)="infoDialogVisible.set(true)"
+    />
   </div>
 
   <div class="export-actions">
@@ -22,6 +64,16 @@
       severity="secondary"
       [outlined]="true"
       size="small"
+      class="preview-button hidden md:inline"
+      (onClick)="previewVisible.set(true)"
+    />
+    <p-button
+      icon="pi pi-eye"
+      severity="secondary"
+      [outlined]="true"
+      size="small"
+      class="md:hidden"
+      title="Preview"
       (onClick)="previewVisible.set(true)"
     />
     <!-- Export buttons -->
@@ -57,5 +109,34 @@
   <app-cv-template-preview
     [cv]="mergedCv()"
     [templateId]="selectedTemplate()"
+    [accentColor]="accentColor()"
   />
+</p-dialog>
+
+<p-dialog
+  header="ATS Template Information"
+  [visible]="infoDialogVisible()"
+  (visibleChange)="$event ? null : infoDialogVisible.set(false)"
+  [modal]="true"
+  [style]="{ width: '600px', maxWidth: '95vw' }"
+  [draggable]="false"
+>
+  <p class="font-semibold mb-5">All templates are ATS friendly.</p>
+  <p class="font-semibold">All templates follow ATS best practices:</p>
+  <ul class="list-disc ml-8 mb-5">
+    <li>Single-column layout — no sidebars or tables</li>
+    <li>
+      Standard section headings (Summary, Experience, Education, Skills,
+      Languages)
+    </li>
+    <li>Clean heading hierarchy</li>
+    <li>No images, icons, or graphics — pure text</li>
+    <li>Standard fonts (Lato + Montserrat)</li>
+  </ul>
+  <p>
+    Use the <span class="font-semibold">Accent Color select</span> (in the
+    export section) to try different accent colors: emerald, blue, purple, red,
+    or teal, which updates the Default, Modern, Corporate, and Impact templates
+    dynamically.
+  </p>
 </p-dialog>

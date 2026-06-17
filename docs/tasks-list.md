@@ -543,7 +543,29 @@ Frontend:
 
 ---
 
-### 48. Keyword Gap - select, modify and apply optimizations
+### 48. Add new templates
+
+**status: done**
+**time: 16.06.2026 - 17.06.2026**
+
+- add new templates, mockups are provided in html file
+- add select with a limited number of accent colors that user can choose from and the selected color will be applied as the accent color on the cv
+- in export footer component next to the templates select add button that will open dialog with information:
+  - All templates are ATS friendly
+  - Information ATS friendly template should consist of
+
+---
+
+### 49. Visual improvements in docx and pdf templates structure
+
+**status: todo**
+**time:**
+
+- pdfs and docx files need some improvemnts regarding their visual structure
+
+---
+
+### 49. Keyword Gap - select, modify and apply optimizations
 
 **status: todo**
 **time:**
@@ -552,7 +574,7 @@ Frontend:
 
 ---
 
-### 48. Setup Stripe
+### 50. Setup Stripe
 
 ---
 

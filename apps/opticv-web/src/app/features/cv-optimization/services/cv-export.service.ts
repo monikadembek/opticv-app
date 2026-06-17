@@ -1,9 +1,26 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import type { CvStructuredData } from '@opticv/datatypes';
-import { CvTemplateId } from '../cv-templates';
+import { CvTemplateId, DEFAULT_ACCENT_COLOR } from '../cv-templates';
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const normalized = hex.replace('#', '');
+  return {
+    r: parseInt(normalized.substring(0, 2), 16),
+    g: parseInt(normalized.substring(2, 4), 16),
+    b: parseInt(normalized.substring(4, 6), 16),
+  };
+}
+
+function hexToRgbProfile(
+  hex: string,
+): Pick<PdfStyleProfile, 'accentR' | 'accentG' | 'accentB'> {
+  const { r, g, b } = hexToRgb(hex);
+  return { accentR: r, accentG: g, accentB: b };
+}
 
 interface PdfStyleProfile {
+  accentAware: boolean;
   accentR: number;
   accentG: number;
   accentB: number;
@@ -13,6 +30,7 @@ interface PdfStyleProfile {
   contactSize: number;
   contactAlign: 'left' | 'right-block';
   nameAlign: 'left' | 'center';
+  headerBand: boolean;
   headingStyle: 'underline' | 'leftBar' | 'filledBand';
   skillsStyle: 'chips' | 'comma';
   chipsStyle: 'outlined' | 'filled';
@@ -27,6 +45,7 @@ interface PdfStyleProfile {
 }
 
 interface DocxStyleProfile {
+  accentAware: boolean;
   accentHex: string;
   nameHex: string;
   nameSize: number;
@@ -36,6 +55,7 @@ interface DocxStyleProfile {
   nameCenter: boolean;
   contactCenter: boolean;
   contactRightStack: boolean;
+  skillsStyle: 'chips' | 'comma';
   nameFont: string;
   nameBold: boolean;
   nameItalic: boolean;
@@ -45,64 +65,265 @@ interface DocxStyleProfile {
 }
 
 const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
-  ats: {
-    accentR: 42, accentG: 157, accentB: 143,
-    nameSize: 20, headingSize: 12, bodySize: 10, contactSize: 9,
-    contactAlign: 'left', nameAlign: 'left',
-    headingStyle: 'underline', skillsStyle: 'chips', chipsStyle: 'outlined',
-    entryCardStyle: false, accentBullet: false,
-    nameFont: 'helvetica', nameStyle: 'bold',
+  default: {
+    accentAware: true,
+    accentR: 230,
+    accentG: 57,
+    accentB: 70,
+    nameSize: 20,
+    headingSize: 12,
+    bodySize: 10,
+    contactSize: 9,
+    contactAlign: 'right-block',
+    nameAlign: 'left',
+    headerBand: false,
+    headingStyle: 'leftBar',
+    skillsStyle: 'chips',
+    chipsStyle: 'outlined',
+    entryCardStyle: false,
+    accentBullet: true,
+    nameFont: 'helvetica',
+    nameStyle: 'bold',
     headingFont: 'helvetica',
-    bodyFont: 'helvetica', bodyStyle: 'normal',
+    bodyFont: 'helvetica',
+    bodyStyle: 'normal',
+    dateStyle: 'italic',
+  },
+  classic: {
+    accentAware: false,
+    accentR: 30,
+    accentG: 41,
+    accentB: 59,
+    nameSize: 20,
+    headingSize: 12,
+    bodySize: 10,
+    contactSize: 9,
+    contactAlign: 'left',
+    nameAlign: 'left',
+    headerBand: false,
+    headingStyle: 'underline',
+    skillsStyle: 'comma',
+    chipsStyle: 'outlined',
+    entryCardStyle: false,
+    accentBullet: false,
+    nameFont: 'helvetica',
+    nameStyle: 'bold',
+    headingFont: 'helvetica',
+    bodyFont: 'helvetica',
+    bodyStyle: 'normal',
     dateStyle: 'italic',
   },
   modern: {
-    accentR: 230, accentG: 57, accentB: 70,
-    nameSize: 20, headingSize: 12, bodySize: 10, contactSize: 9,
-    contactAlign: 'right-block', nameAlign: 'left',
-    headingStyle: 'leftBar', skillsStyle: 'chips', chipsStyle: 'outlined',
-    entryCardStyle: false, accentBullet: true,
-    nameFont: 'helvetica', nameStyle: 'bold',
+    accentAware: true,
+    accentR: 0,
+    accentG: 0,
+    accentB: 0,
+    nameSize: 20,
+    headingSize: 12,
+    bodySize: 10,
+    contactSize: 9,
+    contactAlign: 'left',
+    nameAlign: 'left',
+    headerBand: false,
+    headingStyle: 'underline',
+    skillsStyle: 'chips',
+    chipsStyle: 'outlined',
+    entryCardStyle: false,
+    accentBullet: true,
+    nameFont: 'helvetica',
+    nameStyle: 'bold',
     headingFont: 'helvetica',
-    bodyFont: 'helvetica', bodyStyle: 'normal',
+    bodyFont: 'helvetica',
+    bodyStyle: 'normal',
     dateStyle: 'italic',
   },
-  executive: {
-    accentR: 123, accentG: 45, accentB: 139,
-    nameSize: 20, headingSize: 12, bodySize: 10, contactSize: 9,
-    contactAlign: 'left', nameAlign: 'center',
-    headingStyle: 'filledBand', skillsStyle: 'chips', chipsStyle: 'filled',
-    entryCardStyle: true, accentBullet: false,
-    nameFont: 'helvetica', nameStyle: 'bold',
+  corporate: {
+    accentAware: true,
+    accentR: 0,
+    accentG: 0,
+    accentB: 0,
+    nameSize: 18,
+    headingSize: 11,
+    bodySize: 10,
+    contactSize: 9,
+    contactAlign: 'left',
+    nameAlign: 'left',
+    headerBand: true,
+    headingStyle: 'leftBar',
+    skillsStyle: 'chips',
+    chipsStyle: 'filled',
+    entryCardStyle: false,
+    accentBullet: false,
+    nameFont: 'helvetica',
+    nameStyle: 'bold',
     headingFont: 'helvetica',
-    bodyFont: 'helvetica', bodyStyle: 'normal',
-    dateStyle: 'italic',
+    bodyFont: 'helvetica',
+    bodyStyle: 'normal',
+    dateStyle: 'normal',
+  },
+  minimal: {
+    accentAware: false,
+    accentR: 100,
+    accentG: 116,
+    accentB: 139,
+    nameSize: 20,
+    headingSize: 9,
+    bodySize: 10,
+    contactSize: 9,
+    contactAlign: 'left',
+    nameAlign: 'center',
+    headerBand: false,
+    headingStyle: 'underline',
+    skillsStyle: 'comma',
+    chipsStyle: 'outlined',
+    entryCardStyle: false,
+    accentBullet: false,
+    nameFont: 'helvetica',
+    nameStyle: 'normal',
+    headingFont: 'helvetica',
+    bodyFont: 'helvetica',
+    bodyStyle: 'normal',
+    dateStyle: 'normal',
+  },
+  impact: {
+    accentAware: true,
+    accentR: 0,
+    accentG: 0,
+    accentB: 0,
+    nameSize: 22,
+    headingSize: 11,
+    bodySize: 10,
+    contactSize: 9,
+    contactAlign: 'left',
+    nameAlign: 'left',
+    headerBand: false,
+    headingStyle: 'filledBand',
+    skillsStyle: 'chips',
+    chipsStyle: 'filled',
+    entryCardStyle: false,
+    accentBullet: true,
+    nameFont: 'helvetica',
+    nameStyle: 'bold',
+    headingFont: 'helvetica',
+    bodyFont: 'helvetica',
+    bodyStyle: 'normal',
+    dateStyle: 'normal',
   },
 };
 
 const DOCX_PROFILES: Record<CvTemplateId, DocxStyleProfile> = {
-  ats: {
-    accentHex: '2A9D8F', nameHex: '1A1A1A',
-    nameSize: 40, headingSize: 24, bodySize: 20, contactSize: 18,
-    nameCenter: false, contactCenter: false, contactRightStack: false,
-    nameFont: 'helvetica', nameBold: true, nameItalic: false,
-    headingFont: 'helvetica', headingBold: true,
+  default: {
+    accentAware: true,
+    accentHex: 'E63946',
+    nameHex: '1A1A1A',
+    nameSize: 40,
+    headingSize: 24,
+    bodySize: 20,
+    contactSize: 18,
+    nameCenter: false,
+    contactCenter: false,
+    contactRightStack: true,
+    skillsStyle: 'chips',
+    nameFont: 'helvetica',
+    nameBold: true,
+    nameItalic: false,
+    headingFont: 'helvetica',
+    headingBold: true,
+    bodyFont: 'helvetica',
+  },
+  classic: {
+    accentAware: false,
+    accentHex: '1E293B',
+    nameHex: '1E293B',
+    nameSize: 40,
+    headingSize: 24,
+    bodySize: 20,
+    contactSize: 18,
+    nameCenter: false,
+    contactCenter: false,
+    contactRightStack: false,
+    skillsStyle: 'comma',
+    nameFont: 'helvetica',
+    nameBold: true,
+    nameItalic: false,
+    headingFont: 'helvetica',
+    headingBold: true,
     bodyFont: 'helvetica',
   },
   modern: {
-    accentHex: 'E63946', nameHex: '1A1A1A',
-    nameSize: 40, headingSize: 24, bodySize: 20, contactSize: 18,
-    nameCenter: false, contactCenter: false, contactRightStack: true,
-    nameFont: 'helvetica', nameBold: true, nameItalic: false,
-    headingFont: 'helvetica', headingBold: true,
+    accentAware: true,
+    accentHex: '059669',
+    nameHex: '0F172A',
+    nameSize: 40,
+    headingSize: 24,
+    bodySize: 20,
+    contactSize: 18,
+    nameCenter: false,
+    contactCenter: false,
+    contactRightStack: false,
+    skillsStyle: 'chips',
+    nameFont: 'helvetica',
+    nameBold: true,
+    nameItalic: false,
+    headingFont: 'helvetica',
+    headingBold: true,
     bodyFont: 'helvetica',
   },
-  executive: {
-    accentHex: '7B2D8B', nameHex: '7B2D8B',
-    nameSize: 40, headingSize: 24, bodySize: 20, contactSize: 18,
-    nameCenter: true, contactCenter: true, contactRightStack: false,
-    nameFont: 'helvetica', nameBold: true, nameItalic: false,
-    headingFont: 'helvetica', headingBold: true,
+  corporate: {
+    accentAware: true,
+    accentHex: '059669',
+    nameHex: '0F172A',
+    nameSize: 36,
+    headingSize: 22,
+    bodySize: 20,
+    contactSize: 18,
+    nameCenter: false,
+    contactCenter: false,
+    contactRightStack: false,
+    skillsStyle: 'chips',
+    nameFont: 'helvetica',
+    nameBold: true,
+    nameItalic: false,
+    headingFont: 'helvetica',
+    headingBold: true,
+    bodyFont: 'helvetica',
+  },
+  minimal: {
+    accentAware: false,
+    accentHex: '64748B',
+    nameHex: '1E293B',
+    nameSize: 40,
+    headingSize: 18,
+    bodySize: 20,
+    contactSize: 18,
+    nameCenter: true,
+    contactCenter: true,
+    contactRightStack: false,
+    skillsStyle: 'comma',
+    nameFont: 'helvetica',
+    nameBold: false,
+    nameItalic: false,
+    headingFont: 'helvetica',
+    headingBold: false,
+    bodyFont: 'helvetica',
+  },
+  impact: {
+    accentAware: true,
+    accentHex: '059669',
+    nameHex: '0F172A',
+    nameSize: 44,
+    headingSize: 22,
+    bodySize: 20,
+    contactSize: 18,
+    nameCenter: false,
+    contactCenter: false,
+    contactRightStack: false,
+    skillsStyle: 'chips',
+    nameFont: 'helvetica',
+    nameBold: true,
+    nameItalic: false,
+    headingFont: 'helvetica',
+    headingBold: true,
     bodyFont: 'helvetica',
   },
 };
@@ -113,12 +334,16 @@ export class CvExportService {
 
   async exportToPdf(
     cv: CvStructuredData,
-    templateId: CvTemplateId = 'ats',
+    templateId: CvTemplateId = 'default',
+    accentColor: string = DEFAULT_ACCENT_COLOR,
   ): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) return;
 
     const { jsPDF } = await import('jspdf');
-    const profile = PDF_PROFILES[templateId];
+    const baseProfile = PDF_PROFILES[templateId];
+    const profile = baseProfile.accentAware
+      ? { ...baseProfile, ...hexToRgbProfile(accentColor) }
+      : baseProfile;
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
 
     const marginLeft = 56;
@@ -170,10 +395,10 @@ export class CvExportService {
         y += 16;
         setBlack();
       } else {
-        // filledBand (executive)
-        doc.setFillColor(243, 232, 255);
+        // filledBand (impact)
+        doc.setFillColor(profile.accentR, profile.accentG, profile.accentB);
         doc.rect(marginLeft - 10, y - 12, maxWidth + 20, 17, 'F');
-        setAccent();
+        doc.setTextColor(255, 255, 255);
         doc.setFontSize(profile.headingSize);
         doc.setFont(profile.headingFont, 'bold');
         doc.text(label, marginLeft, y);
@@ -358,7 +583,28 @@ export class CvExportService {
       setBlack();
       y = Math.max(y + 26, rightY) + 8;
     } else {
-      // ATS: simple left-aligned
+      // Classic / Corporate / Minimal-fallback: simple left-aligned, optional header band
+      if (profile.headerBand) {
+        const contactLineCount = [
+          cv.contact.email,
+          cv.contact.phone,
+          cv.contact.location,
+          cv.contact.linkedin,
+          cv.contact.website,
+        ].filter(Boolean).length;
+        const bandHeight = 26 + (contactLineCount > 0 ? 13 : 0) + 14;
+        doc.setFillColor(241, 245, 249);
+        doc.rect(marginLeft - 10, y - 18, maxWidth + 20, bandHeight, 'F');
+        doc.setDrawColor(profile.accentR, profile.accentG, profile.accentB);
+        doc.setLineWidth(1.5);
+        doc.line(
+          marginLeft - 10,
+          y - 18 + bandHeight,
+          marginLeft - 10 + maxWidth + 20,
+          y - 18 + bandHeight,
+        );
+      }
+
       if (cv.contact.name) {
         setBlack();
         doc.setFontSize(profile.nameSize);
@@ -387,19 +633,19 @@ export class CvExportService {
         }
         setBlack();
       }
-      y += 8;
+      y += profile.headerBand ? 16 : 8;
     }
 
     // ── Summary ─────────────────────────────────────────────────────────────
     if (cv.summary) {
-      addSectionHeading('Summary');
+      addSectionHeading('Professional Summary');
       addWrappedText(cv.summary, profile.bodySize, 'normal');
       y += 8;
     }
 
     // ── Experience ───────────────────────────────────────────────────────────
     if (cv.experience.length > 0) {
-      addSectionHeading('Experience');
+      addSectionHeading('Work Experience');
       for (const exp of cv.experience) {
         checkPage(20);
 
@@ -473,7 +719,12 @@ export class CvExportService {
     // ── Skills ───────────────────────────────────────────────────────────────
     if (cv.skills.length > 0) {
       addSectionHeading('Skills');
-      addSkillChips(cv.skills);
+      if (profile.skillsStyle === 'comma') {
+        addWrappedText(cv.skills.join(', '), profile.bodySize, 'normal');
+        y += 8;
+      } else {
+        addSkillChips(cv.skills);
+      }
     }
 
     // ── Certifications ───────────────────────────────────────────────────────
@@ -521,7 +772,8 @@ export class CvExportService {
 
   async exportToDocx(
     cv: CvStructuredData,
-    templateId: CvTemplateId = 'ats',
+    templateId: CvTemplateId = 'default',
+    accentColor: string = DEFAULT_ACCENT_COLOR,
   ): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) return;
 
@@ -535,7 +787,11 @@ export class CvExportService {
     } = await import('docx');
 
     type Para = InstanceType<typeof Paragraph>;
-    const profile = DOCX_PROFILES[templateId];
+    const baseProfile = DOCX_PROFILES[templateId];
+    const accentHex = accentColor.replace('#', '').toUpperCase();
+    const profile = baseProfile.accentAware
+      ? { ...baseProfile, accentHex }
+      : baseProfile;
     const children: Para[] = [];
 
     const heading = (text: string): Para =>
@@ -637,13 +893,13 @@ export class CvExportService {
 
     // ── Summary ──────────────────────────────────────────────────────────────
     if (cv.summary) {
-      children.push(heading('Summary'));
+      children.push(heading('Professional Summary'));
       children.push(para(cv.summary));
     }
 
     // ── Experience ───────────────────────────────────────────────────────────
     if (cv.experience.length > 0) {
-      children.push(heading('Experience'));
+      children.push(heading('Work Experience'));
       for (const exp of cv.experience) {
         const titleLine = [exp.title, exp.company].filter(Boolean).join(' — ');
         if (titleLine) children.push(para(titleLine, true));

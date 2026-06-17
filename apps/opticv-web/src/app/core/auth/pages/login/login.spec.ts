@@ -1,41 +1,35 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { Component } from '@angular/core';
-import { MessageService } from 'primeng/api';
 import { Login } from './login';
 import { Supabase } from '../../services/supabase';
 
 @Component({ template: '', standalone: true })
 class VerifyStub {}
 
-function createSupabaseMock(otpResult: { data: any; error: any } = { data: {}, error: null }) {
+function createSupabaseMock(
+  otpResult: { data: any; error: any } = { data: {}, error: null },
+) {
   return {
     signInWithOtp: vi.fn().mockResolvedValue(otpResult),
     setPendingEmail: vi.fn(),
   };
 }
 
-function createMessageServiceMock() {
-  return { add: vi.fn() };
-}
-
 describe('Login', () => {
   let component: Login;
   let fixture: ComponentFixture<Login>;
   let supabaseMock: ReturnType<typeof createSupabaseMock>;
-  let messageServiceMock: ReturnType<typeof createMessageServiceMock>;
 
   beforeEach(async () => {
     TestBed.resetTestingModule();
     supabaseMock = createSupabaseMock();
-    messageServiceMock = createMessageServiceMock();
 
     await TestBed.configureTestingModule({
       imports: [Login],
       providers: [
         provideRouter([{ path: 'verify', component: VerifyStub }]),
         { provide: Supabase, useValue: supabaseMock },
-        { provide: MessageService, useValue: messageServiceMock },
       ],
     }).compileComponents();
 
@@ -84,15 +78,16 @@ describe('Login', () => {
 
     it('should call supabase.signInWithOtp with the submitted email on valid form', async () => {
       await component.onSubmit(buildForm('user@example.com'));
-      expect(supabaseMock.signInWithOtp).toHaveBeenCalledWith('user@example.com');
+      expect(supabaseMock.signInWithOtp).toHaveBeenCalledWith(
+        'user@example.com',
+      );
     });
 
-    it('should show success toast and set pending email when OTP succeeds', async () => {
+    it('should set pending email when OTP succeeds', async () => {
       await component.onSubmit(buildForm('user@example.com'));
-      expect(messageServiceMock.add).toHaveBeenCalledWith(
-        expect.objectContaining({ severity: 'success' }),
+      expect(supabaseMock.setPendingEmail).toHaveBeenCalledWith(
+        'user@example.com',
       );
-      expect(supabaseMock.setPendingEmail).toHaveBeenCalledWith('user@example.com');
     });
 
     it('should navigate to /verify when OTP succeeds', async () => {
@@ -103,7 +98,10 @@ describe('Login', () => {
     });
 
     it('should set errorMessage when OTP returns an error', async () => {
-      supabaseMock.signInWithOtp.mockResolvedValue({ data: null, error: { message: 'fail' } });
+      supabaseMock.signInWithOtp.mockResolvedValue({
+        data: null,
+        error: { message: 'fail' },
+      });
       await component.onSubmit(buildForm('user@example.com'));
       expect(component.errorMessage()).toBe('Error during sign in process');
     });
@@ -114,7 +112,10 @@ describe('Login', () => {
     });
 
     it('should clear errorMessage before attempting sign in', async () => {
-      supabaseMock.signInWithOtp.mockResolvedValue({ data: null, error: { message: 'fail' } });
+      supabaseMock.signInWithOtp.mockResolvedValue({
+        data: null,
+        error: { message: 'fail' },
+      });
       await component.onSubmit(buildForm('user@example.com'));
       expect(component.errorMessage()).toBe('Error during sign in process');
 

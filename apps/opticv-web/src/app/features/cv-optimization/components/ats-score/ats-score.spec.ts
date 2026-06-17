@@ -32,7 +32,10 @@ const MOCK_RESULT: ResumeAutopsyResult = {
     },
   ],
   strengths: [
-    { title: 'Clear contact info', detail: 'All required contact fields are present.' },
+    {
+      title: 'Clear contact info',
+      detail: 'All required contact fields are present.',
+    },
   ],
 };
 
@@ -102,11 +105,15 @@ describe('AtsScore', () => {
   });
 
   it('strokeDashoffset returns full circumference for score 0', () => {
-    expect(component.strokeDashoffset(0)).toBeCloseTo(component.ringCircumference);
+    expect(component.strokeDashoffset(0)).toBeCloseTo(
+      component.ringCircumference,
+    );
   });
 
   it('strokeDashoffset returns half circumference for score 50', () => {
-    expect(component.strokeDashoffset(50)).toBeCloseTo(component.ringCircumference / 2);
+    expect(component.strokeDashoffset(50)).toBeCloseTo(
+      component.ringCircumference / 2,
+    );
   });
 
   it('toggleIssue adds id to expanded set', () => {
@@ -118,17 +125,6 @@ describe('AtsScore', () => {
     component.toggleIssue('1');
     component.toggleIssue('1');
     expect(component.isIssueExpanded('1')).toBe(false);
-  });
-
-  it('toggleGroup adds severity to collapsed set', () => {
-    component.toggleGroup('critical');
-    expect(component.isGroupCollapsed('critical')).toBe(true);
-  });
-
-  it('toggleGroup removes severity when called again', () => {
-    component.toggleGroup('critical');
-    component.toggleGroup('critical');
-    expect(component.isGroupCollapsed('critical')).toBe(false);
   });
 
   it('does not render quotedText blockquote when quotedText is empty string', () => {

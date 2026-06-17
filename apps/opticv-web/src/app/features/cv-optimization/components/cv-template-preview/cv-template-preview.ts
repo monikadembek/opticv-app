@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import type { CvStructuredData } from '@opticv/datatypes';
-import { CvTemplateId } from '../../cv-templates';
+import { CvTemplateId, DEFAULT_ACCENT_COLOR } from '../../cv-templates';
 import {
   AtsContactPipe,
   DateRangePipe,
@@ -16,4 +16,5 @@ import {
 export class CvTemplatePreview {
   readonly cv = input.required<CvStructuredData | null>();
   readonly templateId = input.required<CvTemplateId | null>();
+  readonly accentColor = input<string>(DEFAULT_ACCENT_COLOR);
 }
