@@ -115,9 +115,9 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
   },
   modern: {
     accentAware: true,
-    accentR: 5,
-    accentG: 150,
-    accentB: 105,
+    accentR: 0,
+    accentG: 0,
+    accentB: 0,
     nameSize: 20,
     headingSize: 12,
     bodySize: 10,
@@ -139,9 +139,9 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
   },
   corporate: {
     accentAware: true,
-    accentR: 5,
-    accentG: 150,
-    accentB: 105,
+    accentR: 0,
+    accentG: 0,
+    accentB: 0,
     nameSize: 18,
     headingSize: 11,
     bodySize: 10,
@@ -187,9 +187,9 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
   },
   impact: {
     accentAware: true,
-    accentR: 5,
-    accentG: 150,
-    accentB: 105,
+    accentR: 0,
+    accentG: 0,
+    accentB: 0,
     nameSize: 22,
     headingSize: 11,
     bodySize: 10,
@@ -638,14 +638,14 @@ export class CvExportService {
 
     // ── Summary ─────────────────────────────────────────────────────────────
     if (cv.summary) {
-      addSectionHeading('Summary');
+      addSectionHeading('Professional Summary');
       addWrappedText(cv.summary, profile.bodySize, 'normal');
       y += 8;
     }
 
     // ── Experience ───────────────────────────────────────────────────────────
     if (cv.experience.length > 0) {
-      addSectionHeading('Experience');
+      addSectionHeading('Work Experience');
       for (const exp of cv.experience) {
         checkPage(20);
 
@@ -893,13 +893,13 @@ export class CvExportService {
 
     // ── Summary ──────────────────────────────────────────────────────────────
     if (cv.summary) {
-      children.push(heading('Summary'));
+      children.push(heading('Professional Summary'));
       children.push(para(cv.summary));
     }
 
     // ── Experience ───────────────────────────────────────────────────────────
     if (cv.experience.length > 0) {
-      children.push(heading('Experience'));
+      children.push(heading('Work Experience'));
       for (const exp of cv.experience) {
         const titleLine = [exp.title, exp.company].filter(Boolean).join(' — ');
         if (titleLine) children.push(para(titleLine, true));
