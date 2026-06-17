@@ -35,7 +35,8 @@ const MOCK_RESULT: CoverLetterResult = {
       fullLetter: 'Third variant full letter text.',
       wordCount: 5,
       strategicAngle: 'Confidence-led',
-      openingHook: 'I have cut release cycles by 40% at every company I have joined.',
+      openingHook:
+        'I have cut release cycles by 40% at every company I have joined.',
       closingCTA: 'I am ready to do the same for you.',
       keywordsIncorporated: [],
       bestFor: 'Senior and leadership positions',
@@ -55,7 +56,10 @@ const MOCK_RESULT_SALUTATION_IN_LETTER: CoverLetterResult = {
   ...MOCK_RESULT,
   variants: MOCK_RESULT.variants.map((v, i) =>
     i === 1
-      ? { ...v, fullLetter: `${MOCK_RESULT.salutation}\n\nSecond variant body text.` }
+      ? {
+          ...v,
+          fullLetter: `${MOCK_RESULT.salutation}\n\nSecond variant body text.`,
+        }
       : v,
   ),
 };
@@ -98,7 +102,8 @@ describe('CoverLetterEditor', () => {
   });
 
   it('shows "Recommended" badge only on the recommended variant card', () => {
-    const articles: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('[role="article"]');
+    const articles: NodeListOf<HTMLElement> =
+      fixture.nativeElement.querySelectorAll('[role="article"]');
     const recommendedIndex = MOCK_RESULT.variants.findIndex(
       (v) => v.hookType === MOCK_RESULT.recommendedVariant,
     );
@@ -143,21 +148,30 @@ describe('CoverLetterEditor', () => {
     fixture.componentRef.setInput('result', MOCK_RESULT_WITH_WARNINGS);
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Check word count');
-    expect(fixture.nativeElement.textContent).toContain('Review tone for target company');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Review tone for target company',
+    );
   });
 
   it('renders the recommendation reason', () => {
-    expect(fixture.nativeElement.textContent).toContain(MOCK_RESULT.recommendationReason);
+    expect(fixture.nativeElement.textContent).toContain(
+      MOCK_RESULT.recommendationReason,
+    );
   });
 
   it('renders Export to PDF and Export to DOCX buttons enabled by default', () => {
     const text = fixture.nativeElement.textContent;
-    expect(text).toContain('Export to PDF');
-    expect(text).toContain('Export to DOCX');
+    expect(text).toContain('Export PDF');
+    expect(text).toContain('Export DOCX');
 
-    const buttons: NodeListOf<HTMLButtonElement> = fixture.nativeElement.querySelectorAll('p-button');
-    const pdfButton = Array.from(buttons).find((b) => b.getAttribute('label') === 'Export to PDF');
-    const docxButton = Array.from(buttons).find((b) => b.getAttribute('label') === 'Export to DOCX');
+    const buttons: NodeListOf<HTMLButtonElement> =
+      fixture.nativeElement.querySelectorAll('p-button');
+    const pdfButton = Array.from(buttons).find(
+      (b) => b.getAttribute('label') === 'Export PDF',
+    );
+    const docxButton = Array.from(buttons).find(
+      (b) => b.getAttribute('label') === 'Export DOCX',
+    );
     expect(pdfButton?.getAttribute('ng-reflect-disabled')).not.toBe('true');
     expect(docxButton?.getAttribute('ng-reflect-disabled')).not.toBe('true');
     expect(pdfButton?.getAttribute('ptoolip')).toBeNull();
@@ -169,9 +183,11 @@ describe('CoverLetterEditor', () => {
       fixture.componentRef.setInput('result', MOCK_RESULT_SALUTATION_IN_LETTER);
       fixture.detectChanges();
 
-      const recommendedIndex = MOCK_RESULT_SALUTATION_IN_LETTER.variants.findIndex(
-        (v) => v.hookType === MOCK_RESULT_SALUTATION_IN_LETTER.recommendedVariant,
-      );
+      const recommendedIndex =
+        MOCK_RESULT_SALUTATION_IN_LETTER.variants.findIndex(
+          (v) =>
+            v.hookType === MOCK_RESULT_SALUTATION_IN_LETTER.recommendedVariant,
+        );
       component.selectVariant(recommendedIndex);
 
       const content = component.editorContent();
@@ -191,19 +207,26 @@ describe('CoverLetterEditor', () => {
   describe('export handlers', () => {
     it('calls exportService.exportToPdf with current editorContent', async () => {
       await component.onExportPdf();
-      expect(mockExportService.exportToPdf).toHaveBeenCalledWith(component.editorContent());
+      expect(mockExportService.exportToPdf).toHaveBeenCalledWith(
+        component.editorContent(),
+      );
     });
 
     it('calls exportService.exportToDocx with current editorContent', async () => {
       await component.onExportDocx();
-      expect(mockExportService.exportToDocx).toHaveBeenCalledWith(component.editorContent());
+      expect(mockExportService.exportToDocx).toHaveBeenCalledWith(
+        component.editorContent(),
+      );
     });
 
     it('shows error toast when exportToPdf throws', async () => {
       mockExportService.exportToPdf.mockRejectedValueOnce(new Error('fail'));
       await component.onExportPdf();
       expect(mockMessageService.add).toHaveBeenCalledWith(
-        expect.objectContaining({ severity: 'error', summary: 'Export failed' }),
+        expect.objectContaining({
+          severity: 'error',
+          summary: 'Export failed',
+        }),
       );
     });
 
@@ -211,7 +234,10 @@ describe('CoverLetterEditor', () => {
       mockExportService.exportToDocx.mockRejectedValueOnce(new Error('fail'));
       await component.onExportDocx();
       expect(mockMessageService.add).toHaveBeenCalledWith(
-        expect.objectContaining({ severity: 'error', summary: 'Export failed' }),
+        expect.objectContaining({
+          severity: 'error',
+          summary: 'Export failed',
+        }),
       );
     });
 

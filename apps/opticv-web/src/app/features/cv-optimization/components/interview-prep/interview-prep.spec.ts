@@ -24,7 +24,10 @@ const MOCK_RESULT: InterviewPrepResult = {
           guidance: 'Focus on one concrete improvement and tie it to outcome.',
         },
       ],
-      trapsToAvoid: ['Blaming team members', 'Focusing only on technical details'],
+      trapsToAvoid: [
+        'Blaming team members',
+        'Focusing only on technical details',
+      ],
     },
     {
       question: 'How do you handle conflicting priorities?',
@@ -44,7 +47,8 @@ const MOCK_RESULT: InterviewPrepResult = {
   questionsToAskInterviewer: [
     {
       question: 'What does success look like in the first 90 days?',
-      rationale: 'Shows you are results-oriented and want clarity on expectations.',
+      rationale:
+        'Shows you are results-oriented and want clarity on expectations.',
     },
     {
       question: 'How does the team handle technical debt?',
@@ -109,7 +113,9 @@ describe('InterviewPrep', () => {
     });
 
     it('renders "what they\'re assessing" text', () => {
-      expect(fixture.nativeElement.textContent).toContain('Leadership and ownership');
+      expect(fixture.nativeElement.textContent).toContain(
+        'Leadership and ownership',
+      );
     });
 
     it('renders suggested answer text', () => {
@@ -124,7 +130,9 @@ describe('InterviewPrep', () => {
 
     it('shows placeholder fill note when needsUserInput is true and placeholdersToFill is non-empty', () => {
       expect(fixture.nativeElement.textContent).toContain('Fill in:');
-      expect(fixture.nativeElement.textContent).toContain('[number of engineers]');
+      expect(fixture.nativeElement.textContent).toContain(
+        '[number of engineers]',
+      );
       expect(fixture.nativeElement.textContent).toContain('[timeline]');
     });
 
@@ -139,7 +147,9 @@ describe('InterviewPrep', () => {
 
     it('renders traps to avoid when non-empty', () => {
       expect(fixture.nativeElement.textContent).toContain('Traps to avoid');
-      expect(fixture.nativeElement.textContent).toContain('Blaming team members');
+      expect(fixture.nativeElement.textContent).toContain(
+        'Blaming team members',
+      );
     });
 
     it('hides traps section when trapsToAvoid is empty', () => {
@@ -152,15 +162,22 @@ describe('InterviewPrep', () => {
     });
 
     it('shows "No questions available." when questions is empty', () => {
-      fixture.componentRef.setInput('result', { ...MOCK_RESULT, questions: [] });
+      fixture.componentRef.setInput('result', {
+        ...MOCK_RESULT,
+        questions: [],
+      });
       fixture.detectChanges();
-      expect(fixture.nativeElement.textContent).toContain('No questions available.');
+      expect(fixture.nativeElement.textContent).toContain(
+        'No questions available.',
+      );
     });
   });
 
   describe('questions to ask interviewer', () => {
     it('renders section heading and question text', () => {
-      expect(fixture.nativeElement.textContent).toContain('Questions to Ask Interviewer');
+      expect(fixture.nativeElement.textContent).toContain(
+        'Questions to Ask Interviewer',
+      );
       expect(fixture.nativeElement.textContent).toContain(
         'What does success look like in the first 90 days?',
       );
@@ -172,13 +189,17 @@ describe('InterviewPrep', () => {
         questionsToAskInterviewer: [],
       });
       fixture.detectChanges();
-      expect(fixture.nativeElement.textContent).not.toContain('Questions to Ask Interviewer');
+      expect(fixture.nativeElement.textContent).not.toContain(
+        'Questions to Ask Interviewer',
+      );
     });
   });
 
   describe('stress-test questions', () => {
     it('renders section heading and question text', () => {
-      expect(fixture.nativeElement.textContent).toContain('Stress-Test Questions');
+      expect(fixture.nativeElement.textContent).toContain(
+        'Stress-Test Questions',
+      );
       expect(fixture.nativeElement.textContent).toContain(
         'Why have you been in your current role for only 18 months?',
       );
@@ -190,7 +211,9 @@ describe('InterviewPrep', () => {
         stressTestQuestions: [],
       });
       fixture.detectChanges();
-      expect(fixture.nativeElement.textContent).not.toContain('Stress-Test Questions');
+      expect(fixture.nativeElement.textContent).not.toContain(
+        'Stress-Test Questions',
+      );
     });
   });
 
@@ -203,9 +226,78 @@ describe('InterviewPrep', () => {
     });
 
     it('hides section when preparationTips is empty', () => {
-      fixture.componentRef.setInput('result', { ...MOCK_RESULT, preparationTips: [] });
+      fixture.componentRef.setInput('result', {
+        ...MOCK_RESULT,
+        preparationTips: [],
+      });
       fixture.detectChanges();
-      expect(fixture.nativeElement.textContent).not.toContain('Preparation Tips');
+      expect(fixture.nativeElement.textContent).not.toContain(
+        'Preparation Tips',
+      );
+    });
+  });
+
+  describe('categoryClass', () => {
+    it('returns correct class for behavioral', () => {
+      expect(fixture.componentInstance.categoryClass('behavioral')).toBe(
+        'bg-blue-100 text-blue-800',
+      );
+    });
+
+    it('returns correct class for technical', () => {
+      expect(fixture.componentInstance.categoryClass('technical')).toBe(
+        'bg-purple-100 text-purple-800',
+      );
+    });
+
+    it('returns correct class for situational', () => {
+      expect(fixture.componentInstance.categoryClass('situational')).toBe(
+        'bg-green-100 text-green-800',
+      );
+    });
+
+    it('returns correct class for fit', () => {
+      expect(fixture.componentInstance.categoryClass('fit')).toBe(
+        'bg-orange-100 text-orange-800',
+      );
+    });
+
+    it('returns correct class for candidate_specific', () => {
+      expect(fixture.componentInstance.categoryClass('candidate_specific')).toBe(
+        'bg-pink-100 text-pink-800',
+      );
+    });
+
+    it('returns correct class for leadership', () => {
+      expect(fixture.componentInstance.categoryClass('leadership')).toBe(
+        'bg-indigo-100 text-indigo-800',
+      );
+    });
+
+    it('returns correct class for culture', () => {
+      expect(fixture.componentInstance.categoryClass('culture')).toBe(
+        'bg-teal-100 text-teal-800',
+      );
+    });
+  });
+
+  describe('likelihoodClass', () => {
+    it('returns correct class for very_high', () => {
+      expect(fixture.componentInstance.likelihoodClass('very_high')).toBe(
+        'bg-red-100 text-red-700',
+      );
+    });
+
+    it('returns correct class for high', () => {
+      expect(fixture.componentInstance.likelihoodClass('high')).toBe(
+        'bg-amber-100 text-amber-700',
+      );
+    });
+
+    it('returns correct class for medium', () => {
+      expect(fixture.componentInstance.likelihoodClass('medium')).toBe(
+        'bg-surface-100 text-surface-500',
+      );
     });
   });
 
@@ -218,9 +310,9 @@ describe('InterviewPrep', () => {
       messageService = TestBed.inject(MessageService);
     });
 
-    it('renders "Export to PDF" and "Export to DOCX" buttons', () => {
-      expect(fixture.nativeElement.textContent).toContain('Export to PDF');
-      expect(fixture.nativeElement.textContent).toContain('Export to DOCX');
+    it('renders "Export PDF" and "Export DOCX" buttons', () => {
+      expect(fixture.nativeElement.textContent).toContain('Export PDF');
+      expect(fixture.nativeElement.textContent).toContain('Export DOCX');
     });
 
     it('sets isBusyPdf to true while PDF export is in progress', () => {
@@ -262,7 +354,9 @@ describe('InterviewPrep', () => {
     });
 
     it('calls messageService.add with error severity when PDF export throws', async () => {
-      vi.spyOn(exportService, 'exportToPdf').mockRejectedValue(new Error('fail'));
+      vi.spyOn(exportService, 'exportToPdf').mockRejectedValue(
+        new Error('fail'),
+      );
       const addSpy = vi.spyOn(messageService, 'add');
 
       await fixture.componentInstance.onExportPdf();
@@ -274,7 +368,9 @@ describe('InterviewPrep', () => {
     });
 
     it('calls messageService.add with error severity when DOCX export throws', async () => {
-      vi.spyOn(exportService, 'exportToDocx').mockRejectedValue(new Error('fail'));
+      vi.spyOn(exportService, 'exportToDocx').mockRejectedValue(
+        new Error('fail'),
+      );
       const addSpy = vi.spyOn(messageService, 'add');
 
       await fixture.componentInstance.onExportDocx();
@@ -297,9 +393,15 @@ describe('InterviewPrep', () => {
       fixture.detectChanges();
 
       const host = fixture.nativeElement as HTMLElement;
-      const buttons = Array.from(host.querySelectorAll<HTMLButtonElement>('button'));
-      const pdfButton = buttons.find((b) => b.textContent?.includes('Export to PDF'))!;
-      const docxButton = buttons.find((b) => b.textContent?.includes('Export to DOCX'))!;
+      const buttons = Array.from(
+        host.querySelectorAll<HTMLButtonElement>('button'),
+      );
+      const pdfButton = buttons.find((b) =>
+        b.textContent?.includes('Export PDF'),
+      )!;
+      const docxButton = buttons.find((b) =>
+        b.textContent?.includes('Export DOCX'),
+      )!;
 
       expect(pdfButton.disabled).toBe(true);
       expect(docxButton.disabled).toBe(true);
@@ -319,9 +421,15 @@ describe('InterviewPrep', () => {
       fixture.detectChanges();
 
       const host = fixture.nativeElement as HTMLElement;
-      const buttons = Array.from(host.querySelectorAll<HTMLButtonElement>('button'));
-      const pdfButton = buttons.find((b) => b.textContent?.includes('Export to PDF'))!;
-      const docxButton = buttons.find((b) => b.textContent?.includes('Export to DOCX'))!;
+      const buttons = Array.from(
+        host.querySelectorAll<HTMLButtonElement>('button'),
+      );
+      const pdfButton = buttons.find((b) =>
+        b.textContent?.includes('Export PDF'),
+      )!;
+      const docxButton = buttons.find((b) =>
+        b.textContent?.includes('Export DOCX'),
+      )!;
 
       expect(pdfButton.disabled).toBe(true);
       expect(docxButton.disabled).toBe(true);
@@ -335,9 +443,15 @@ describe('InterviewPrep', () => {
       fixture.detectChanges();
 
       const host = fixture.nativeElement as HTMLElement;
-      const buttons = Array.from(host.querySelectorAll<HTMLButtonElement>('button'));
-      const pdfButton = buttons.find((b) => b.textContent?.includes('Export to PDF'))!;
-      const docxButton = buttons.find((b) => b.textContent?.includes('Export to DOCX'))!;
+      const buttons = Array.from(
+        host.querySelectorAll<HTMLButtonElement>('button'),
+      );
+      const pdfButton = buttons.find((b) =>
+        b.textContent?.includes('Export PDF'),
+      )!;
+      const docxButton = buttons.find((b) =>
+        b.textContent?.includes('Export DOCX'),
+      )!;
 
       expect(pdfButton.disabled).toBe(false);
       expect(docxButton.disabled).toBe(false);
@@ -349,9 +463,15 @@ describe('InterviewPrep', () => {
       fixture.detectChanges();
 
       const host = fixture.nativeElement as HTMLElement;
-      const buttons = Array.from(host.querySelectorAll<HTMLButtonElement>('button'));
-      const pdfButton = buttons.find((b) => b.textContent?.includes('Export to PDF'))!;
-      const docxButton = buttons.find((b) => b.textContent?.includes('Export to DOCX'))!;
+      const buttons = Array.from(
+        host.querySelectorAll<HTMLButtonElement>('button'),
+      );
+      const pdfButton = buttons.find((b) =>
+        b.textContent?.includes('Export PDF'),
+      )!;
+      const docxButton = buttons.find((b) =>
+        b.textContent?.includes('Export DOCX'),
+      )!;
 
       expect(pdfButton.disabled).toBe(false);
       expect(docxButton.disabled).toBe(false);
