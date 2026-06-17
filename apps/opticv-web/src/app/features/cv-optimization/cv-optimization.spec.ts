@@ -14,6 +14,7 @@ import {
 } from './services/cv-optimization-api.service';
 import { JobApplicationApiService } from '../../core/services/job-application-api.service';
 import { CvApiService } from '../dashboard/services/cv-api.service';
+import { CvExportService } from './services/cv-export.service';
 
 const mockCv: CvDocumentListItem = {
   id: 'cv-id-1',
@@ -98,6 +99,10 @@ describe('CvOptimization', () => {
   let cvApiService: {
     downloadCv: ReturnType<typeof vi.fn>;
   };
+  let cvExportService: {
+    exportToPdf: ReturnType<typeof vi.fn>;
+    exportToDocx: ReturnType<typeof vi.fn>;
+  };
 
   interface CreateComponentOptions {
     jobApplicationId?: string | null;
@@ -130,6 +135,10 @@ describe('CvOptimization', () => {
     cvApiService = {
       downloadCv: vi.fn().mockReturnValue(of({ url: 'https://signed.url' })),
     };
+    cvExportService = {
+      exportToPdf: vi.fn().mockResolvedValue(undefined),
+      exportToDocx: vi.fn().mockResolvedValue(undefined),
+    };
 
     await TestBed.configureTestingModule({
       imports: [CvOptimization],
@@ -137,6 +146,7 @@ describe('CvOptimization', () => {
         { provide: CvOptimizationApiService, useValue: apiService },
         { provide: JobApplicationApiService, useValue: jobApplicationApiService },
         { provide: CvApiService, useValue: cvApiService },
+        { provide: CvExportService, useValue: cvExportService },
         { provide: ActivatedRoute, useValue: makeActivatedRoute(jobApplicationId) },
         MessageService,
       ],
@@ -542,8 +552,8 @@ describe('CvOptimization', () => {
   });
 
   describe('selectedTemplate', () => {
-    it('defaults to ats', () => {
-      expect(component.selectedTemplate()).toBe('ats' satisfies CvTemplateId);
+    it('defaults to bold', () => {
+      expect(component.selectedTemplate()).toBe('bold' satisfies CvTemplateId);
     });
 
     it('can be set to modern', () => {
@@ -551,9 +561,48 @@ describe('CvOptimization', () => {
       expect(component.selectedTemplate()).toBe('modern');
     });
 
-    it('can be set to executive', () => {
-      component.selectedTemplate.set('executive');
-      expect(component.selectedTemplate()).toBe('executive');
+    it('can be set to impact', () => {
+      component.selectedTemplate.set('impact');
+      expect(component.selectedTemplate()).toBe('impact');
+    });
+  });
+
+  describe('accentColor', () => {
+    it('defaults to emerald', () => {
+      expect(component.accentColor()).toBe('#059669');
+    });
+
+    it('can be set to a different accent color', () => {
+      component.accentColor.set('#2563eb');
+      expect(component.accentColor()).toBe('#2563eb');
+    });
+  });
+
+  describe('export calls', () => {
+    beforeEach(() => {
+      component.cvStructuredData.set(mockCvStructuredData);
+    });
+
+    it('exportCvAsPdf passes selectedTemplate and accentColor to exportToPdf', () => {
+      component.selectedTemplate.set('modern');
+      component.accentColor.set('#2563eb');
+      component.exportCvAsPdf();
+      expect(cvExportService.exportToPdf).toHaveBeenCalledWith(
+        expect.anything(),
+        'modern',
+        '#2563eb',
+      );
+    });
+
+    it('exportCvAsDocx passes selectedTemplate and accentColor to exportToDocx', () => {
+      component.selectedTemplate.set('impact');
+      component.accentColor.set('#dc2626');
+      component.exportCvAsDocx();
+      expect(cvExportService.exportToDocx).toHaveBeenCalledWith(
+        expect.anything(),
+        'impact',
+        '#dc2626',
+      );
     });
   });
 
@@ -587,57 +636,21 @@ describe('CvOptimization', () => {
       expect(component.canExportCv()).toBe(false);
     });
 
-    it('returns false when CV data exists but no selection has been made', () => {
+    it('returns true when CV data is set and nothing is processing', () => {
       component.cvStructuredData.set(mockCvStructuredData);
-      expect(component.canExportCv()).toBe(false);
-    });
-
-    it('returns true when a summary angle is selected and not processing', () => {
-      component.cvStructuredData.set(mockCvStructuredData);
-      component.selections.set({
-        selectedSummaryAngle: 'achievement_led',
-        customSummaryText: null,
-        selectedBullets: [],
-        selectedKeywords: [],
-      });
       expect(component.canExportCv()).toBe(true);
     });
 
-    it('returns false when a selection is made but an active prompt is still processing', () => {
+    it('returns false when CV data exists but an active prompt is still processing', () => {
       component.cvStructuredData.set(mockCvStructuredData);
-      component.selections.set({
-        selectedSummaryAngle: 'achievement_led',
-        customSummaryText: null,
-        selectedBullets: [],
-        selectedKeywords: [],
-      });
       component.isProcessing.set(new Map([[PromptType.KEYWORD_GAP, true]]));
       expect(component.canExportCv()).toBe(false);
     });
 
-    it('returns true once processing finishes and a selection exists', () => {
+    it('returns true once processing finishes and CV data is set', () => {
       component.cvStructuredData.set(mockCvStructuredData);
-      component.selections.set({
-        selectedSummaryAngle: 'achievement_led',
-        customSummaryText: null,
-        selectedBullets: [],
-        selectedKeywords: [],
-      });
       component.isProcessing.set(new Map([[PromptType.KEYWORD_GAP, false]]));
       expect(component.canExportCv()).toBe(true);
-    });
-
-    it('returns true in stored mode when CV data is available and not processing', () => {
-      component.cvStructuredData.set(mockCvStructuredData);
-      component.isStoredMode.set(true);
-      expect(component.canExportCv()).toBe(true);
-    });
-
-    it('returns false in stored mode when an active prompt is still processing', () => {
-      component.cvStructuredData.set(mockCvStructuredData);
-      component.isStoredMode.set(true);
-      component.isProcessing.set(new Map([[PromptType.RESUME_AUTOPSY, true]]));
-      expect(component.canExportCv()).toBe(false);
     });
   });
 
@@ -849,8 +862,8 @@ describe('CvOptimization', () => {
     });
   });
 
-  describe('canExportCv — new selection types', () => {
-    it('returns true when selectedMissingBullets is non-empty and not processing', () => {
+  describe('canExportCv — CV data with bullet state', () => {
+    it('remains true when selectedMissingBullets is non-empty and not processing', () => {
       component.cvStructuredData.set(mockCvStructuredData);
       component.selectedMissingBullets.set([
         { forPosition: 'Dev at Acme', suggestedBullet: 'Led team of 5.' },
@@ -858,12 +871,21 @@ describe('CvOptimization', () => {
       expect(component.canExportCv()).toBe(true);
     });
 
-    it('returns true when removedBullets is non-empty and not processing', () => {
+    it('remains true when removedBullets is non-empty and not processing', () => {
       component.cvStructuredData.set(mockCvStructuredData);
       component.removedBullets.set([
         { company: 'Acme', title: 'Dev', originalText: 'Old bullet.' },
       ]);
       expect(component.canExportCv()).toBe(true);
+    });
+
+    it('returns false when CV data and bullet state exist but a prompt is processing', () => {
+      component.cvStructuredData.set(mockCvStructuredData);
+      component.selectedMissingBullets.set([
+        { forPosition: 'Dev at Acme', suggestedBullet: 'Led team of 5.' },
+      ]);
+      component.isProcessing.set(new Map([[PromptType.KEYWORD_GAP, true]]));
+      expect(component.canExportCv()).toBe(false);
     });
   });
 

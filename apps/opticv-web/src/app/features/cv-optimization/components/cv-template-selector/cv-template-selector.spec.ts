@@ -23,13 +23,13 @@ describe('CvTemplateSelector', () => {
     expect(component).toBeTruthy();
   });
 
-  it('defaults selected to ats', () => {
-    expect(component.selected()).toBe('ats');
+  it('defaults selected to bold', () => {
+    expect(component.selected()).toBe('bold');
   });
 
   it('renders a card for each template', () => {
     const cards = fixture.nativeElement.querySelectorAll('[role="radio"]');
-    expect(cards.length).toBe(3);
+    expect(cards.length).toBe(6);
   });
 
   it('select() updates the selected signal', () => {
@@ -37,9 +37,9 @@ describe('CvTemplateSelector', () => {
     expect(component.selected()).toBe('modern');
   });
 
-  it('select() called with executive sets selected to executive', () => {
-    component.select('executive');
-    expect(component.selected()).toBe('executive');
+  it('select() called with impact sets selected to impact', () => {
+    component.select('impact');
+    expect(component.selected()).toBe('impact');
   });
 
   it('openPreview() sets previewTemplateId and previewVisible', () => {
@@ -54,61 +54,82 @@ describe('CvTemplateSelector', () => {
   });
 
   it('closePreview() sets previewVisible to false', () => {
-    component.openPreview('ats', new MouseEvent('click'));
+    component.openPreview('bold', new MouseEvent('click'));
     component.closePreview();
     expect(component.previewVisible()).toBe(false);
   });
 
   it('templateName returns the correct name for a known id', () => {
-    expect(component.templateName('ats')).toBe('Default');
+    expect(component.templateName('bold')).toBe('Bold');
     expect(component.templateName('modern')).toBe('Modern');
-    expect(component.templateName('executive')).toBe('Executive');
+    expect(component.templateName('classic')).toBe('Classic');
+    expect(component.templateName('corporate')).toBe('Corporate');
+    expect(component.templateName('minimal')).toBe('Minimal');
+    expect(component.templateName('impact')).toBe('Impact');
   });
 
   it('templateName returns empty string for null', () => {
     expect(component.templateName(null)).toBe('');
   });
 
+  describe('thumbnailColor', () => {
+    it('returns the accentColor input for accent-aware templates', () => {
+      fixture.componentRef.setInput('accentColor', '#2563eb');
+      fixture.detectChanges();
+      expect(component.thumbnailColor('bold')).toBe('#2563eb');
+      expect(component.thumbnailColor('modern')).toBe('#2563eb');
+      expect(component.thumbnailColor('corporate')).toBe('#2563eb');
+      expect(component.thumbnailColor('impact')).toBe('#2563eb');
+    });
+
+    it('returns a fixed neutral color for classic and minimal', () => {
+      fixture.componentRef.setInput('accentColor', '#2563eb');
+      fixture.detectChanges();
+      expect(component.thumbnailColor('classic')).toBe('#94a3b8');
+      expect(component.thumbnailColor('minimal')).toBe('#94a3b8');
+    });
+  });
+
   describe('onKeydown', () => {
     it('ArrowRight wraps from last to first', () => {
-      component.select('executive');
+      component.select('impact');
       const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
       vi.spyOn(event, 'preventDefault');
-      component.onKeydown(event, 'executive');
-      expect(component.selected()).toBe('ats');
+      component.onKeydown(event, 'impact');
+      expect(component.selected()).toBe('bold');
       expect(event.preventDefault).toHaveBeenCalled();
     });
 
     it('ArrowLeft wraps from first to last', () => {
-      component.select('ats');
+      component.select('bold');
       const event = new KeyboardEvent('keydown', { key: 'ArrowLeft' });
       vi.spyOn(event, 'preventDefault');
-      component.onKeydown(event, 'ats');
-      expect(component.selected()).toBe('executive');
+      component.onKeydown(event, 'bold');
+      expect(component.selected()).toBe('impact');
       expect(event.preventDefault).toHaveBeenCalled();
     });
 
     it('ArrowDown moves forward', () => {
-      component.select('ats');
+      component.select('bold');
       const event = new KeyboardEvent('keydown', { key: 'ArrowDown' });
       vi.spyOn(event, 'preventDefault');
-      component.onKeydown(event, 'ats');
-      expect(component.selected()).toBe('modern');
+      component.onKeydown(event, 'bold');
+      expect(component.selected()).toBe('classic');
     });
 
     it('ArrowUp moves backward', () => {
-      component.select('modern');
+      component.select('classic');
       const event = new KeyboardEvent('keydown', { key: 'ArrowUp' });
       vi.spyOn(event, 'preventDefault');
-      component.onKeydown(event, 'modern');
-      expect(component.selected()).toBe('ats');
+      component.onKeydown(event, 'classic');
+      expect(component.selected()).toBe('bold');
     });
 
     it('Space selects the focused template', () => {
       const event = new KeyboardEvent('keydown', { key: ' ' });
       vi.spyOn(event, 'preventDefault');
-      component.onKeydown(event, 'executive');
-      expect(component.selected()).toBe('executive');
+      component.onKeydown(event, 'impact');
+      expect(component.selected()).toBe('impact');
       expect(event.preventDefault).toHaveBeenCalled();
     });
 
@@ -120,10 +141,10 @@ describe('CvTemplateSelector', () => {
     });
 
     it('unhandled key does nothing', () => {
-      component.select('ats');
+      component.select('bold');
       const event = new KeyboardEvent('keydown', { key: 'Tab' });
-      component.onKeydown(event, 'ats');
-      expect(component.selected()).toBe('ats');
+      component.onKeydown(event, 'bold');
+      expect(component.selected()).toBe('bold');
     });
   });
 });

@@ -263,7 +263,10 @@
 @if (canExportCv() && jobApplicationId()) {
 <app-export-footer
   [sidebarExpanded]="sidebarExpanded()"
-  [(selectedTemplate)]="selectedTemplate"
+  [selectedTemplate]="selectedTemplate()"
+  (selectedTemplateChange)="selectedTemplate.set($event)"
+  [accentColor]="accentColor()"
+  (accentColorChange)="accentColor.set($event)"
   [isExportingPdf]="isExportingPdf()"
   [isExportingDocx]="isExportingDocx()"
   [mergedCv]="mergedCv()"

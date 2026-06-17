@@ -54,7 +54,7 @@ import { SummaryRewrite } from './components/summary-rewrite/summary-rewrite';
 import { BulletRewriter } from './components/bullet-rewriter/bullet-rewriter';
 import { CoverLetterEditor } from './components/cover-letter-editor/cover-letter-editor';
 import { InterviewPrep } from './components/interview-prep/interview-prep';
-import { CvTemplateId } from './cv-templates';
+import { CvTemplateId, DEFAULT_ACCENT_COLOR } from './cv-templates';
 import { applySelectionsToCV } from './utils/apply-selections';
 import { JobApplicationApiService } from '../../core/services/job-application-api.service';
 import { OptimSidebar } from './components/optim-sidebar/optim-sidebar';
@@ -177,7 +177,8 @@ export class CvOptimization implements OnInit {
   });
   readonly isExportingPdf = signal(false);
   readonly isExportingDocx = signal(false);
-  readonly selectedTemplate = signal<CvTemplateId>('ats');
+  readonly selectedTemplate = signal<CvTemplateId>('bold');
+  readonly accentColor = signal<string>(DEFAULT_ACCENT_COLOR);
   readonly isStoredMode = signal(false);
   readonly loadError = signal<string | null>(null);
   readonly jobApplication = signal<JobApplicationWithCv | null>(null);
@@ -828,7 +829,7 @@ export class CvOptimization implements OnInit {
     if (!cv) return;
     this.isExportingPdf.set(true);
     this.cvExportService
-      .exportToPdf(cv, this.selectedTemplate())
+      .exportToPdf(cv, this.selectedTemplate(), this.accentColor())
       .finally(() => {
         this.isExportingPdf.set(false);
       });
@@ -840,7 +841,7 @@ export class CvOptimization implements OnInit {
     if (!cv) return;
     this.isExportingDocx.set(true);
     this.cvExportService
-      .exportToDocx(cv, this.selectedTemplate())
+      .exportToDocx(cv, this.selectedTemplate(), this.accentColor())
       .finally(() => {
         this.isExportingDocx.set(false);
       });

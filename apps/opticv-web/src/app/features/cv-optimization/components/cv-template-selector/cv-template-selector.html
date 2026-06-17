@@ -21,13 +21,13 @@
       <div
         class="w-full"
         style="height: 8px"
-        [style.background]="template.accentColor"
+        [style.background]="thumbnailColor(template.id)"
       ></div>
       <div class="w-full bg-surface-50" style="height: 32px; padding: 4px 6px">
         <div
           class="rounded"
           style="height: 4px; width: 60%; margin-bottom: 3px"
-          [style.background]="template.accentColor + '33'"
+          [style.background]="thumbnailColor(template.id) + '33'"
         ></div>
         <div
           class="bg-surface-200 rounded"
@@ -85,5 +85,6 @@
   <app-cv-template-preview
     [cv]="mergedCv()"
     [templateId]="previewTemplateId()"
+    [accentColor]="accentColor()"
   />
 </p-dialog>

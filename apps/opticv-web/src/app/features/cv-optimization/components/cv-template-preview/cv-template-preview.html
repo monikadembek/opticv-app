@@ -3,118 +3,7 @@
 } @else {
   @switch (templateId()) {
 
-    @case ('ats') {
-      <div style="max-width: 794px; margin: 0 auto; padding: 40px 56px; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 11px; color: #1a1a1a; background: #fff;">
-        @if (cv()!.contact.name) {
-          <div style="font-size: 22px; font-weight: bold; color: #1a1a1a; margin-bottom: 4px;">{{ cv()!.contact.name }}</div>
-        }
-        @if (cv()!.contact.email || cv()!.contact.phone || cv()!.contact.location || cv()!.contact.linkedin || cv()!.contact.website) {
-          <div style="font-size: 10px; color: #444; margin-bottom: 16px;">
-            {{ [cv()!.contact.email, cv()!.contact.phone, cv()!.contact.location, cv()!.contact.linkedin, cv()!.contact.website] | atsContact }}
-          </div>
-        }
-
-        @if (cv()!.summary) {
-          <div style="border-bottom: 1.5px solid #2a9d8f; margin-bottom: 4px; padding-bottom: 2px;">
-            <span style="font-size: 13px; font-weight: bold; color: #2a9d8f;">SUMMARY</span>
-          </div>
-          <div style="margin-bottom: 14px; line-height: 1.5;">{{ cv()!.summary }}</div>
-        }
-
-        @if (cv()!.experience.length > 0) {
-          <div style="border-bottom: 1.5px solid #2a9d8f; margin-bottom: 4px; padding-bottom: 2px;">
-            <span style="font-size: 13px; font-weight: bold; color: #2a9d8f;">EXPERIENCE</span>
-          </div>
-          <div style="margin-bottom: 14px;">
-            @for (exp of cv()!.experience; track exp.title) {
-              <div style="margin-bottom: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                  <span style="font-weight: bold; font-size: 11px;">{{ exp.title }}@if (exp.company) { — {{ exp.company }} }</span>
-                  <span style="font-size: 10px; color: #555;">
-                    @if (exp.current) { {{ exp.startDate ?? '' }} – Present }
-                    @else { {{ [exp.startDate, exp.endDate] | dateRange }} }
-                  </span>
-                </div>
-                @if (exp.location) {
-                  <div style="font-size: 10px; font-style: italic; color: #555; margin-bottom: 3px;">{{ exp.location }}</div>
-                }
-                @for (bullet of exp.bullets; track bullet) {
-                  <div style="margin-left: 12px; line-height: 1.5;">• {{ bullet }}</div>
-                }
-              </div>
-            }
-          </div>
-        }
-
-        @if (cv()!.education.length > 0) {
-          <div style="border-bottom: 1.5px solid #2a9d8f; margin-bottom: 4px; padding-bottom: 2px;">
-            <span style="font-size: 13px; font-weight: bold; color: #2a9d8f;">EDUCATION</span>
-          </div>
-          <div style="margin-bottom: 14px;">
-            @for (edu of cv()!.education; track edu.institution) {
-              <div style="margin-bottom: 8px;">
-                @if (edu.degree || edu.field) {
-                  <div style="font-weight: bold;">{{ [edu.degree, edu.field] | degreeField }}</div>
-                }
-                @if (edu.institution) {
-                  <div>{{ edu.institution }}@if (edu.startDate || edu.endDate) { | {{ [edu.startDate, edu.endDate] | dateRange }} }</div>
-                }
-              </div>
-            }
-          </div>
-        }
-
-        @if (cv()!.skills.length > 0) {
-          <div style="border-bottom: 1.5px solid #2a9d8f; margin-bottom: 6px; padding-bottom: 2px;">
-            <span style="font-size: 13px; font-weight: bold; color: #2a9d8f;">SKILLS</span>
-          </div>
-          <div style="margin-bottom: 14px; display: flex; flex-wrap: wrap; gap: 6px;">
-            @for (skill of cv()!.skills; track skill) {
-              <span style="border: 1px solid #2a9d8f; border-radius: 12px; padding: 2px 10px; font-size: 10px; color: #2a9d8f;">{{ skill }}</span>
-            }
-          </div>
-        }
-
-        @if (cv()!.certifications.length > 0) {
-          <div style="border-bottom: 1.5px solid #2a9d8f; margin-bottom: 4px; padding-bottom: 2px;">
-            <span style="font-size: 13px; font-weight: bold; color: #2a9d8f;">CERTIFICATIONS</span>
-          </div>
-          <div style="margin-bottom: 14px;">
-            @for (cert of cv()!.certifications; track cert.name) {
-              <div style="line-height: 1.6;">• {{ cert.name }}@if (cert.issuer) { · {{ cert.issuer }} }@if (cert.date) { · {{ cert.date }} }</div>
-            }
-          </div>
-        }
-
-        @if (cv()!.projects.length > 0) {
-          <div style="border-bottom: 1.5px solid #2a9d8f; margin-bottom: 4px; padding-bottom: 2px;">
-            <span style="font-size: 13px; font-weight: bold; color: #2a9d8f;">PROJECTS</span>
-          </div>
-          <div style="margin-bottom: 14px;">
-            @for (proj of cv()!.projects; track proj.name) {
-              <div style="margin-bottom: 8px;">
-                <div style="font-weight: bold;">{{ proj.name }}</div>
-                @if (proj.description) { <div style="line-height: 1.5;">{{ proj.description }}</div> }
-                @if (proj.technologies.length > 0) { <div style="font-style: italic; color: #555; font-size: 10px;">{{ proj.technologies.join(', ') }}</div> }
-              </div>
-            }
-          </div>
-        }
-
-        @if (cv()!.languages.length > 0) {
-          <div style="border-bottom: 1.5px solid #2a9d8f; margin-bottom: 4px; padding-bottom: 2px;">
-            <span style="font-size: 13px; font-weight: bold; color: #2a9d8f;">LANGUAGES</span>
-          </div>
-          <div>
-            @for (lang of cv()!.languages; track lang.language) {
-              <span>{{ lang.language }}@if (lang.proficiency) { ({{ lang.proficiency }}) }@if (!$last) { · }</span>
-            }
-          </div>
-        }
-      </div>
-    }
-
-    @case ('modern') {
+    @case ('bold') {
       <div style="max-width: 794px; margin: 0 auto; padding: 40px 56px; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 11px; color: #1a1a1a; background: #fff;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
           <div>
@@ -131,20 +20,20 @@
         </div>
 
         @if (cv()!.summary) {
-          <div style="border-left: 3px solid #e63946; padding-left: 10px; margin-bottom: 4px;">
-            <span style="font-size: 13px; font-weight: bold; color: #e63946;">Professional Summary</span>
+          <div [style.border-left]="'3px solid ' + accentColor()" style="padding-left: 10px; margin-bottom: 4px;">
+            <span [style.color]="accentColor()" style="font-size: 13px; font-weight: bold;">Professional Summary</span>
           </div>
           <div style="margin-bottom: 16px; line-height: 1.5;">{{ cv()!.summary }}</div>
         }
 
         @if (cv()!.experience.length > 0) {
-          <div style="border-left: 3px solid #e63946; padding-left: 10px; margin-bottom: 6px;">
-            <span style="font-size: 13px; font-weight: bold; color: #e63946;">Work Experience</span>
+          <div [style.border-left]="'3px solid ' + accentColor()" style="padding-left: 10px; margin-bottom: 6px;">
+            <span [style.color]="accentColor()" style="font-size: 13px; font-weight: bold;">Work Experience</span>
           </div>
           <div style="margin-bottom: 16px;">
             @for (exp of cv()!.experience; track exp.title) {
               <div style="margin-bottom: 12px; padding-left: 14px; position: relative;">
-                <span style="position: absolute; left: 0; top: 1px; color: #e63946; font-size: 13px;">•</span>
+                <span [style.color]="accentColor()" style="position: absolute; left: 0; top: 1px; font-size: 13px;">•</span>
                 <div style="font-weight: bold; font-size: 11px;">{{ exp.title }}</div>
                 @if (exp.company || exp.location || exp.startDate || exp.endDate) {
                   <div style="font-size: 10px; color: #666; margin-bottom: 4px;">
@@ -162,19 +51,19 @@
         }
 
         @if (cv()!.skills.length > 0) {
-          <div style="border-left: 3px solid #e63946; padding-left: 10px; margin-bottom: 6px;">
-            <span style="font-size: 13px; font-weight: bold; color: #e63946;">Technical Skills</span>
+          <div [style.border-left]="'3px solid ' + accentColor()" style="padding-left: 10px; margin-bottom: 6px;">
+            <span [style.color]="accentColor()" style="font-size: 13px; font-weight: bold;">Technical Skills</span>
           </div>
           <div style="margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 6px;">
             @for (skill of cv()!.skills; track skill) {
-              <span style="border: 1px solid #e63946; border-radius: 12px; padding: 2px 10px; font-size: 10px; color: #e63946;">{{ skill }}</span>
+              <span [style.border]="'1px solid ' + accentColor()" [style.color]="accentColor()" style="border-radius: 12px; padding: 2px 10px; font-size: 10px;">{{ skill }}</span>
             }
           </div>
         }
 
         @if (cv()!.education.length > 0) {
-          <div style="border-left: 3px solid #e63946; padding-left: 10px; margin-bottom: 6px;">
-            <span style="font-size: 13px; font-weight: bold; color: #e63946;">Education</span>
+          <div [style.border-left]="'3px solid ' + accentColor()" style="padding-left: 10px; margin-bottom: 6px;">
+            <span [style.color]="accentColor()" style="font-size: 13px; font-weight: bold;">Education</span>
           </div>
           <div style="margin-bottom: 16px;">
             @for (edu of cv()!.education; track edu.institution) {
@@ -191,8 +80,8 @@
         }
 
         @if (cv()!.certifications.length > 0) {
-          <div style="border-left: 3px solid #e63946; padding-left: 10px; margin-bottom: 6px;">
-            <span style="font-size: 13px; font-weight: bold; color: #e63946;">Certifications</span>
+          <div [style.border-left]="'3px solid ' + accentColor()" style="padding-left: 10px; margin-bottom: 6px;">
+            <span [style.color]="accentColor()" style="font-size: 13px; font-weight: bold;">Certifications</span>
           </div>
           <div style="margin-bottom: 16px;">
             @for (cert of cv()!.certifications; track cert.name) {
@@ -202,13 +91,13 @@
         }
 
         @if (cv()!.projects.length > 0) {
-          <div style="border-left: 3px solid #e63946; padding-left: 10px; margin-bottom: 6px;">
-            <span style="font-size: 13px; font-weight: bold; color: #e63946;">Projects</span>
+          <div [style.border-left]="'3px solid ' + accentColor()" style="padding-left: 10px; margin-bottom: 6px;">
+            <span [style.color]="accentColor()" style="font-size: 13px; font-weight: bold;">Projects</span>
           </div>
           <div style="margin-bottom: 16px;">
             @for (proj of cv()!.projects; track proj.name) {
               <div style="margin-bottom: 8px; padding-left: 14px; position: relative;">
-                <span style="position: absolute; left: 0; top: 1px; color: #e63946; font-size: 13px;">•</span>
+                <span [style.color]="accentColor()" style="position: absolute; left: 0; top: 1px; font-size: 13px;">•</span>
                 <div style="font-weight: bold;">{{ proj.name }}</div>
                 @if (proj.description) { <div style="line-height: 1.5;">{{ proj.description }}</div> }
                 @if (proj.technologies.length > 0) { <div style="font-style: italic; color: #555; font-size: 10px;">{{ proj.technologies.join(', ') }}</div> }
@@ -218,8 +107,8 @@
         }
 
         @if (cv()!.languages.length > 0) {
-          <div style="border-left: 3px solid #e63946; padding-left: 10px; margin-bottom: 6px;">
-            <span style="font-size: 13px; font-weight: bold; color: #e63946;">Languages</span>
+          <div [style.border-left]="'3px solid ' + accentColor()" style="padding-left: 10px; margin-bottom: 6px;">
+            <span [style.color]="accentColor()" style="font-size: 13px; font-weight: bold;">Languages</span>
           </div>
           <div>
             @for (lang of cv()!.languages; track lang.language) {
@@ -230,94 +119,451 @@
       </div>
     }
 
-    @case ('executive') {
-      <div style="max-width: 794px; margin: 0 auto; padding: 40px 56px; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 11px; color: #1a1a1a; background: #fff;">
-        <div style="text-align: center; margin-bottom: 20px;">
-          @if (cv()!.contact.name) {
-            <div style="font-size: 22px; font-weight: bold; color: #7b2d8b; font-family: Georgia, 'Times New Roman', serif; margin-bottom: 4px;">{{ cv()!.contact.name }}</div>
+    @case ('classic') {
+      <div style="max-width: 794px; margin: 0 auto; padding: 40px 56px; font-family: 'Lato', sans-serif; font-size: 10px; color: #334155; background: #fff;">
+        @if (cv()!.contact.name) {
+          <div style="font-size: 26px; font-weight: 700; color: #1e293b; line-height: 1.1; letter-spacing: 0.02em;">{{ cv()!.contact.name }}</div>
+        }
+        @if (cv()!.contact.email || cv()!.contact.phone || cv()!.contact.location || cv()!.contact.linkedin || cv()!.contact.website) {
+          <div style="font-size: 9px; color: #64748b; margin-top: 8px; line-height: 1.6;">
+            {{ [cv()!.contact.email, cv()!.contact.phone, cv()!.contact.location, cv()!.contact.linkedin, cv()!.contact.website] | atsContact }}
+          </div>
+        }
+        <div style="border-top: 1.5px solid #334155; margin-top: 12px;"></div>
+
+        @if (cv()!.summary) {
+          <div style="font-size: 12px; font-weight: 700; color: #1e293b; text-transform: uppercase; letter-spacing: 1.2px; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-top: 18px; margin-bottom: 8px;">Summary</div>
+          <p style="font-size: 10px; color: #334155; line-height: 1.6; margin: 0;">{{ cv()!.summary }}</p>
+        }
+
+        @if (cv()!.experience.length > 0) {
+          <div style="font-size: 12px; font-weight: 700; color: #1e293b; text-transform: uppercase; letter-spacing: 1.2px; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-top: 18px; margin-bottom: 8px;">Experience</div>
+          @for (exp of cv()!.experience; track exp.title) {
+            <div style="margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1px;">
+                <span style="font-weight: 700; color: #1e293b; font-size: 10.5px;">{{ exp.title }}@if (exp.company) { — {{ exp.company }} }</span>
+                <span style="color: #64748b; font-size: 9px; font-style: italic; white-space: nowrap;">
+                  @if (exp.current) { {{ exp.startDate ?? '' }} – Present } @else { {{ [exp.startDate, exp.endDate] | dateRange }} }
+                </span>
+              </div>
+              @if (exp.location) {
+                <div style="color: #64748b; font-size: 9px; font-style: italic; margin-bottom: 3px;">{{ exp.location }}</div>
+              }
+              @for (bullet of exp.bullets; track bullet) {
+                <div style="display: flex; gap: 6px; padding-left: 4px; margin-bottom: 1px;">
+                  <span style="color: #94a3b8; font-size: 10px; line-height: 1.5; flex-shrink: 0;">•</span>
+                  <span style="font-size: 10px; color: #334155; line-height: 1.5;">{{ bullet }}</span>
+                </div>
+              }
+            </div>
           }
-          @if (cv()!.contact.email || cv()!.contact.phone || cv()!.contact.location || cv()!.contact.linkedin) {
-            <div style="font-size: 10px; color: #444; margin-top: 6px;">
+        }
+
+        @if (cv()!.education.length > 0) {
+          <div style="font-size: 12px; font-weight: 700; color: #1e293b; text-transform: uppercase; letter-spacing: 1.2px; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-top: 18px; margin-bottom: 8px;">Education</div>
+          @for (edu of cv()!.education; track edu.institution) {
+            <div style="margin-bottom: 8px;">
+              @if (edu.degree || edu.field) {
+                <div style="font-weight: 700; color: #1e293b;">{{ [edu.degree, edu.field] | degreeField }}</div>
+              }
+              @if (edu.institution) {
+                <div style="color: #334155;">{{ edu.institution }}@if (edu.startDate || edu.endDate) { | {{ [edu.startDate, edu.endDate] | dateRange }} }</div>
+              }
+            </div>
+          }
+        }
+
+        @if (cv()!.skills.length > 0) {
+          <div style="font-size: 12px; font-weight: 700; color: #1e293b; text-transform: uppercase; letter-spacing: 1.2px; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-top: 18px; margin-bottom: 8px;">Skills</div>
+          <p style="font-size: 10px; color: #334155; line-height: 1.6; margin: 0;">{{ cv()!.skills.join(', ') }}</p>
+        }
+
+        @if (cv()!.certifications.length > 0) {
+          <div style="font-size: 12px; font-weight: 700; color: #1e293b; text-transform: uppercase; letter-spacing: 1.2px; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-top: 18px; margin-bottom: 8px;">Certifications</div>
+          @for (cert of cv()!.certifications; track cert.name) {
+            <div style="line-height: 1.6;">• {{ cert.name }}@if (cert.issuer) { · {{ cert.issuer }} }@if (cert.date) { · {{ cert.date }} }</div>
+          }
+        }
+
+        @if (cv()!.projects.length > 0) {
+          <div style="font-size: 12px; font-weight: 700; color: #1e293b; text-transform: uppercase; letter-spacing: 1.2px; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-top: 18px; margin-bottom: 8px;">Projects</div>
+          @for (proj of cv()!.projects; track proj.name) {
+            <div style="margin-bottom: 8px;">
+              <div style="font-weight: 700; color: #1e293b;">{{ proj.name }}</div>
+              @if (proj.description) { <div style="line-height: 1.5;">{{ proj.description }}</div> }
+              @if (proj.technologies.length > 0) { <div style="font-style: italic; color: #64748b; font-size: 9px;">{{ proj.technologies.join(', ') }}</div> }
+            </div>
+          }
+        }
+
+        @if (cv()!.languages.length > 0) {
+          <div style="font-size: 12px; font-weight: 700; color: #1e293b; text-transform: uppercase; letter-spacing: 1.2px; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-top: 18px; margin-bottom: 8px;">Languages</div>
+          <div>
+            @for (lang of cv()!.languages; track lang.language) {
+              <span>{{ lang.language }}@if (lang.proficiency) { ({{ lang.proficiency }}) }@if (!$last) { · }</span>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    @case ('modern') {
+      <div style="max-width: 794px; margin: 0 auto; padding: 40px 56px; font-family: 'Montserrat', sans-serif; font-size: 10px; color: #334155; background: #fff;">
+        @if (cv()!.contact.name) {
+          <div style="font-size: 26px; font-weight: 700; color: #0f172a; line-height: 1.1; letter-spacing: 0.01em;">{{ cv()!.contact.name }}</div>
+        }
+        @if (cv()!.contact.email || cv()!.contact.phone || cv()!.contact.location || cv()!.contact.linkedin || cv()!.contact.website) {
+          <div style="font-family: 'Lato', sans-serif; font-size: 9px; color: #64748b; margin-top: 8px; line-height: 1.6;">
+            {{ [cv()!.contact.email, cv()!.contact.phone, cv()!.contact.location, cv()!.contact.linkedin, cv()!.contact.website] | atsContact }}
+          </div>
+        }
+
+        @if (cv()!.summary) {
+          <div [style.color]="accentColor()" [style.border-bottom]="'2px solid ' + accentColor()" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; padding-bottom: 3px; margin-top: 18px; margin-bottom: 8px;">Summary</div>
+          <p style="font-family: 'Lato', sans-serif; font-size: 10px; color: #334155; line-height: 1.6; margin: 0;">{{ cv()!.summary }}</p>
+        }
+
+        @if (cv()!.experience.length > 0) {
+          <div [style.color]="accentColor()" [style.border-bottom]="'2px solid ' + accentColor()" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; padding-bottom: 3px; margin-top: 18px; margin-bottom: 8px;">Experience</div>
+          @for (exp of cv()!.experience; track exp.title) {
+            <div style="margin-bottom: 12px; font-family: 'Lato', sans-serif;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1px;">
+                <span style="font-weight: 700; color: #0f172a; font-size: 10.5px;">{{ exp.title }}@if (exp.company) { — {{ exp.company }} }</span>
+                <span style="color: #64748b; font-size: 9px; font-style: italic; white-space: nowrap;">
+                  @if (exp.current) { {{ exp.startDate ?? '' }} – Present } @else { {{ [exp.startDate, exp.endDate] | dateRange }} }
+                </span>
+              </div>
+              @if (exp.location) {
+                <div style="color: #64748b; font-size: 9px; font-style: italic; margin-bottom: 3px;">{{ exp.location }}</div>
+              }
+              @for (bullet of exp.bullets; track bullet) {
+                <div style="display: flex; gap: 6px; padding-left: 4px; margin-bottom: 1px;">
+                  <span [style.color]="accentColor()" style="font-size: 10px; line-height: 1.5; flex-shrink: 0;">•</span>
+                  <span style="font-size: 10px; color: #334155; line-height: 1.5;">{{ bullet }}</span>
+                </div>
+              }
+            </div>
+          }
+        }
+
+        @if (cv()!.skills.length > 0) {
+          <div [style.color]="accentColor()" [style.border-bottom]="'2px solid ' + accentColor()" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; padding-bottom: 3px; margin-top: 18px; margin-bottom: 8px;">Skills</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+            @for (skill of cv()!.skills; track skill) {
+              <span [style.color]="accentColor()" [style.border]="'1px solid ' + accentColor()" style="font-family: 'Lato', sans-serif; font-size: 9px; border-radius: 12px; padding: 2px 10px; background: white;">{{ skill }}</span>
+            }
+          </div>
+        }
+
+        @if (cv()!.education.length > 0) {
+          <div [style.color]="accentColor()" [style.border-bottom]="'2px solid ' + accentColor()" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; padding-bottom: 3px; margin-top: 18px; margin-bottom: 8px;">Education</div>
+          @for (edu of cv()!.education; track edu.institution) {
+            <div style="margin-bottom: 8px; font-family: 'Lato', sans-serif;">
+              @if (edu.degree || edu.field) {
+                <div style="font-weight: 700; color: #0f172a;">{{ [edu.degree, edu.field] | degreeField }}</div>
+              }
+              @if (edu.institution) {
+                <div style="color: #334155;">{{ edu.institution }}@if (edu.startDate || edu.endDate) { | {{ [edu.startDate, edu.endDate] | dateRange }} }</div>
+              }
+            </div>
+          }
+        }
+
+        @if (cv()!.certifications.length > 0) {
+          <div [style.color]="accentColor()" [style.border-bottom]="'2px solid ' + accentColor()" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; padding-bottom: 3px; margin-top: 18px; margin-bottom: 8px;">Certifications</div>
+          @for (cert of cv()!.certifications; track cert.name) {
+            <div style="font-family: 'Lato', sans-serif; line-height: 1.6;">• {{ cert.name }}@if (cert.issuer) { · {{ cert.issuer }} }@if (cert.date) { · {{ cert.date }} }</div>
+          }
+        }
+
+        @if (cv()!.projects.length > 0) {
+          <div [style.color]="accentColor()" [style.border-bottom]="'2px solid ' + accentColor()" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; padding-bottom: 3px; margin-top: 18px; margin-bottom: 8px;">Projects</div>
+          @for (proj of cv()!.projects; track proj.name) {
+            <div style="margin-bottom: 8px; font-family: 'Lato', sans-serif;">
+              <div style="font-weight: 700; color: #0f172a;">{{ proj.name }}</div>
+              @if (proj.description) { <div style="line-height: 1.5;">{{ proj.description }}</div> }
+              @if (proj.technologies.length > 0) { <div style="font-style: italic; color: #64748b; font-size: 9px;">{{ proj.technologies.join(', ') }}</div> }
+            </div>
+          }
+        }
+
+        @if (cv()!.languages.length > 0) {
+          <div [style.color]="accentColor()" [style.border-bottom]="'2px solid ' + accentColor()" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; padding-bottom: 3px; margin-top: 18px; margin-bottom: 8px;">Languages</div>
+          <div style="font-family: 'Lato', sans-serif;">
+            @for (lang of cv()!.languages; track lang.language) {
+              <span>{{ lang.language }}@if (lang.proficiency) { ({{ lang.proficiency }}) }@if (!$last) { · }</span>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    @case ('corporate') {
+      <div style="max-width: 794px; margin: 0 auto; padding: 40px 56px; font-family: 'Lato', sans-serif; font-size: 10px; color: #334155; background: #fff;">
+        <div [style.border-bottom]="'3px solid ' + accentColor()" style="background: #f1f5f9; padding: 16px 20px; border-radius: 4px; margin-bottom: 4px;">
+          @if (cv()!.contact.name) {
+            <div style="font-family: 'Montserrat', sans-serif; font-size: 24px; font-weight: 700; color: #0f172a; line-height: 1.1; letter-spacing: 0.01em;">{{ cv()!.contact.name }}</div>
+          }
+          @if (cv()!.contact.email || cv()!.contact.phone || cv()!.contact.location || cv()!.contact.linkedin || cv()!.contact.website) {
+            <div style="font-size: 9px; color: #475569; margin-top: 6px; line-height: 1.6;">
               {{ [cv()!.contact.email, cv()!.contact.phone, cv()!.contact.location, cv()!.contact.linkedin, cv()!.contact.website] | atsContact }}
             </div>
           }
         </div>
 
         @if (cv()!.summary) {
-          <div style="background: #f3e8ff; color: #7b2d8b; font-weight: bold; font-size: 13px; padding: 5px 10px; margin-bottom: 6px;">Professional Summary</div>
-          <div style="margin-bottom: 16px; line-height: 1.5;">{{ cv()!.summary }}</div>
+          <div [style.border-left]="'3px solid ' + accentColor()" style="font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; color: #1e293b; text-transform: uppercase; letter-spacing: 0.8px; padding-left: 10px; margin-top: 16px; margin-bottom: 8px;">Summary</div>
+          <p style="font-size: 10px; color: #334155; line-height: 1.6; margin: 0;">{{ cv()!.summary }}</p>
         }
 
         @if (cv()!.experience.length > 0) {
-          <div style="background: #f3e8ff; color: #7b2d8b; font-weight: bold; font-size: 13px; padding: 5px 10px; margin-bottom: 8px;">Work Experience</div>
-          <div style="margin-bottom: 16px;">
-            @for (exp of cv()!.experience; track exp.title) {
-              <div style="margin-bottom: 12px; border-left: 3px solid #e9d5ff; padding-left: 12px; background: #faf5ff; padding-top: 6px; padding-bottom: 6px; padding-right: 8px;">
-                <div style="font-weight: bold; font-size: 11px;">{{ exp.title }}</div>
-                @if (exp.company || exp.location || exp.startDate || exp.endDate) {
-                  <div style="font-size: 10px; color: #7b2d8b; margin-bottom: 4px;">
-                    {{ exp.company }}@if (exp.location) { | {{ exp.location }} }@if (exp.startDate || exp.endDate || exp.current) {
-                      | @if (exp.current) { {{ exp.startDate ?? '' }} – Present } @else { {{ [exp.startDate, exp.endDate] | dateRange }} }
-                    }
-                  </div>
-                }
-                @for (bullet of exp.bullets; track bullet) {
-                  <div style="margin-left: 10px; line-height: 1.5; margin-bottom: 2px;">• {{ bullet }}</div>
-                }
+          <div [style.border-left]="'3px solid ' + accentColor()" style="font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; color: #1e293b; text-transform: uppercase; letter-spacing: 0.8px; padding-left: 10px; margin-top: 16px; margin-bottom: 8px;">Experience</div>
+          @for (exp of cv()!.experience; track exp.title) {
+            <div style="margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1px;">
+                <span style="font-weight: 700; color: #0f172a; font-size: 10.5px;">{{ exp.title }}@if (exp.company) { — {{ exp.company }} }</span>
+                <span style="color: #475569; font-size: 9px; font-weight: 500; white-space: nowrap;">
+                  @if (exp.current) { {{ exp.startDate ?? '' }} – Present } @else { {{ [exp.startDate, exp.endDate] | dateRange }} }
+                </span>
               </div>
-            }
-          </div>
+              @if (exp.location) {
+                <div style="color: #64748b; font-size: 9px; font-style: italic; margin-bottom: 3px;">{{ exp.location }}</div>
+              }
+              @for (bullet of exp.bullets; track bullet) {
+                <div style="display: flex; gap: 6px; padding-left: 4px; margin-bottom: 1px;">
+                  <span style="color: #475569; font-size: 10px; line-height: 1.5; flex-shrink: 0;">•</span>
+                  <span style="font-size: 10px; color: #334155; line-height: 1.5;">{{ bullet }}</span>
+                </div>
+              }
+            </div>
+          }
         }
 
         @if (cv()!.skills.length > 0) {
-          <div style="background: #f3e8ff; color: #7b2d8b; font-weight: bold; font-size: 13px; padding: 5px 10px; margin-bottom: 8px;">Skills</div>
-          <div style="margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 6px;">
+          <div [style.border-left]="'3px solid ' + accentColor()" style="font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; color: #1e293b; text-transform: uppercase; letter-spacing: 0.8px; padding-left: 10px; margin-top: 16px; margin-bottom: 8px;">Skills</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 5px;">
             @for (skill of cv()!.skills; track skill) {
-              <span style="background: #7b2d8b; color: #fff; border-radius: 4px; padding: 2px 10px; font-size: 10px;">{{ skill }}</span>
+              <span style="font-size: 9px; color: #334155; background: #f1f5f9; border-radius: 4px; padding: 2px 10px; border: 1px solid #e2e8f0;">{{ skill }}</span>
             }
           </div>
         }
 
         @if (cv()!.education.length > 0) {
-          <div style="background: #f3e8ff; color: #7b2d8b; font-weight: bold; font-size: 13px; padding: 5px 10px; margin-bottom: 8px;">Education</div>
-          <div style="margin-bottom: 16px;">
-            @for (edu of cv()!.education; track edu.institution) {
-              <div style="margin-bottom: 8px; border-left: 3px solid #e9d5ff; padding-left: 12px; background: #faf5ff; padding-top: 4px; padding-bottom: 4px; padding-right: 8px;">
-                @if (edu.degree || edu.field) {
-                  <div style="font-weight: bold;">{{ [edu.degree, edu.field] | degreeField }}</div>
-                }
-                @if (edu.institution) {
-                  <div style="color: #555; font-size: 10px;">{{ edu.institution }}@if (edu.startDate || edu.endDate) { | {{ [edu.startDate, edu.endDate] | dateRange }} }</div>
-                }
-              </div>
-            }
-          </div>
+          <div [style.border-left]="'3px solid ' + accentColor()" style="font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; color: #1e293b; text-transform: uppercase; letter-spacing: 0.8px; padding-left: 10px; margin-top: 16px; margin-bottom: 8px;">Education</div>
+          @for (edu of cv()!.education; track edu.institution) {
+            <div style="margin-bottom: 8px;">
+              @if (edu.degree || edu.field) {
+                <div style="font-weight: 700; color: #0f172a;">{{ [edu.degree, edu.field] | degreeField }}</div>
+              }
+              @if (edu.institution) {
+                <div style="color: #334155;">{{ edu.institution }}@if (edu.startDate || edu.endDate) { | {{ [edu.startDate, edu.endDate] | dateRange }} }</div>
+              }
+            </div>
+          }
         }
 
         @if (cv()!.certifications.length > 0) {
-          <div style="background: #f3e8ff; color: #7b2d8b; font-weight: bold; font-size: 13px; padding: 5px 10px; margin-bottom: 6px;">Certifications</div>
-          <div style="margin-bottom: 16px;">
-            @for (cert of cv()!.certifications; track cert.name) {
-              <div style="line-height: 1.6;">• {{ cert.name }}@if (cert.issuer) { · {{ cert.issuer }} }@if (cert.date) { · {{ cert.date }} }</div>
-            }
-          </div>
+          <div [style.border-left]="'3px solid ' + accentColor()" style="font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; color: #1e293b; text-transform: uppercase; letter-spacing: 0.8px; padding-left: 10px; margin-top: 16px; margin-bottom: 8px;">Certifications</div>
+          @for (cert of cv()!.certifications; track cert.name) {
+            <div style="line-height: 1.6;">• {{ cert.name }}@if (cert.issuer) { · {{ cert.issuer }} }@if (cert.date) { · {{ cert.date }} }</div>
+          }
         }
 
         @if (cv()!.projects.length > 0) {
-          <div style="background: #f3e8ff; color: #7b2d8b; font-weight: bold; font-size: 13px; padding: 5px 10px; margin-bottom: 8px;">Projects</div>
-          <div style="margin-bottom: 16px;">
-            @for (proj of cv()!.projects; track proj.name) {
-              <div style="margin-bottom: 8px; border-left: 3px solid #e9d5ff; padding-left: 12px; background: #faf5ff; padding-top: 4px; padding-bottom: 4px; padding-right: 8px;">
-                <div style="font-weight: bold;">{{ proj.name }}</div>
-                @if (proj.description) { <div style="line-height: 1.5;">{{ proj.description }}</div> }
-                @if (proj.technologies.length > 0) { <div style="font-style: italic; color: #7b2d8b; font-size: 10px;">{{ proj.technologies.join(', ') }}</div> }
+          <div [style.border-left]="'3px solid ' + accentColor()" style="font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; color: #1e293b; text-transform: uppercase; letter-spacing: 0.8px; padding-left: 10px; margin-top: 16px; margin-bottom: 8px;">Projects</div>
+          @for (proj of cv()!.projects; track proj.name) {
+            <div style="margin-bottom: 8px;">
+              <div style="font-weight: 700; color: #0f172a;">{{ proj.name }}</div>
+              @if (proj.description) { <div style="line-height: 1.5;">{{ proj.description }}</div> }
+              @if (proj.technologies.length > 0) { <div style="font-style: italic; color: #64748b; font-size: 9px;">{{ proj.technologies.join(', ') }}</div> }
+            </div>
+          }
+        }
+
+        @if (cv()!.languages.length > 0) {
+          <div [style.border-left]="'3px solid ' + accentColor()" style="font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; color: #1e293b; text-transform: uppercase; letter-spacing: 0.8px; padding-left: 10px; margin-top: 16px; margin-bottom: 8px;">Languages</div>
+          <div>
+            @for (lang of cv()!.languages; track lang.language) {
+              <span>{{ lang.language }}@if (lang.proficiency) { ({{ lang.proficiency }}) }@if (!$last) { · }</span>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    @case ('minimal') {
+      <div style="max-width: 794px; margin: 0 auto; padding: 40px 56px; font-family: 'Lato', sans-serif; font-size: 10px; color: #475569; background: #fff;">
+        <div style="text-align: center;">
+          @if (cv()!.contact.name) {
+            <div style="font-size: 28px; font-weight: 300; color: #1e293b; line-height: 1.1; letter-spacing: 4px; text-transform: uppercase;">{{ cv()!.contact.name }}</div>
+          }
+          @if (cv()!.contact.email || cv()!.contact.phone || cv()!.contact.location || cv()!.contact.linkedin || cv()!.contact.website) {
+            <div style="font-size: 9px; color: #94a3b8; margin-top: 10px; line-height: 1.6; letter-spacing: 0.5px;">
+              {{ [cv()!.contact.email, cv()!.contact.phone, cv()!.contact.location, cv()!.contact.linkedin, cv()!.contact.website] | atsContact }}
+            </div>
+          }
+        </div>
+        <div style="border-top: 0.5px solid #e2e8f0; margin-top: 14px;"></div>
+
+        @if (cv()!.summary) {
+          <div style="text-align: center; font-size: 10px; font-weight: 400; color: #64748b; text-transform: uppercase; letter-spacing: 3px; border-bottom: 0.5px solid #e2e8f0; padding-bottom: 4px; margin-top: 18px; margin-bottom: 10px;">Summary</div>
+          <p style="font-size: 10px; color: #475569; line-height: 1.6; margin: 0;">{{ cv()!.summary }}</p>
+        }
+
+        @if (cv()!.experience.length > 0) {
+          <div style="text-align: center; font-size: 10px; font-weight: 400; color: #64748b; text-transform: uppercase; letter-spacing: 3px; border-bottom: 0.5px solid #e2e8f0; padding-bottom: 4px; margin-top: 18px; margin-bottom: 10px;">Experience</div>
+          @for (exp of cv()!.experience; track exp.title) {
+            <div style="margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1px;">
+                <span style="font-weight: 700; color: #1e293b; font-size: 10.5px;">{{ exp.title }}@if (exp.company) { — {{ exp.company }} }</span>
+                <span style="color: #94a3b8; font-size: 9px; white-space: nowrap;">
+                  @if (exp.current) { {{ exp.startDate ?? '' }} – Present } @else { {{ [exp.startDate, exp.endDate] | dateRange }} }
+                </span>
               </div>
+              @if (exp.location) {
+                <div style="color: #94a3b8; font-size: 9px; margin-bottom: 3px;">{{ exp.location }}</div>
+              }
+              @for (bullet of exp.bullets; track bullet) {
+                <div style="display: flex; gap: 6px; padding-left: 4px; margin-bottom: 1px;">
+                  <span style="color: #cbd5e1; font-size: 10px; line-height: 1.5; flex-shrink: 0;">•</span>
+                  <span style="font-size: 10px; color: #475569; line-height: 1.5;">{{ bullet }}</span>
+                </div>
+              }
+            </div>
+          }
+        }
+
+        @if (cv()!.education.length > 0) {
+          <div style="text-align: center; font-size: 10px; font-weight: 400; color: #64748b; text-transform: uppercase; letter-spacing: 3px; border-bottom: 0.5px solid #e2e8f0; padding-bottom: 4px; margin-top: 18px; margin-bottom: 10px;">Education</div>
+          @for (edu of cv()!.education; track edu.institution) {
+            <div style="margin-bottom: 8px; text-align: center;">
+              @if (edu.degree || edu.field) {
+                <div style="font-weight: 700; color: #1e293b;">{{ [edu.degree, edu.field] | degreeField }}</div>
+              }
+              @if (edu.institution) {
+                <div style="color: #475569;">{{ edu.institution }}@if (edu.startDate || edu.endDate) { | {{ [edu.startDate, edu.endDate] | dateRange }} }</div>
+              }
+            </div>
+          }
+        }
+
+        @if (cv()!.skills.length > 0) {
+          <div style="text-align: center; font-size: 10px; font-weight: 400; color: #64748b; text-transform: uppercase; letter-spacing: 3px; border-bottom: 0.5px solid #e2e8f0; padding-bottom: 4px; margin-top: 18px; margin-bottom: 10px;">Skills</div>
+          <p style="text-align: center; font-size: 10px; color: #475569; line-height: 1.6; margin: 0;">{{ cv()!.skills.join(', ') }}</p>
+        }
+
+        @if (cv()!.certifications.length > 0) {
+          <div style="text-align: center; font-size: 10px; font-weight: 400; color: #64748b; text-transform: uppercase; letter-spacing: 3px; border-bottom: 0.5px solid #e2e8f0; padding-bottom: 4px; margin-top: 18px; margin-bottom: 10px;">Certifications</div>
+          @for (cert of cv()!.certifications; track cert.name) {
+            <div style="text-align: center; line-height: 1.6;">• {{ cert.name }}@if (cert.issuer) { · {{ cert.issuer }} }@if (cert.date) { · {{ cert.date }} }</div>
+          }
+        }
+
+        @if (cv()!.projects.length > 0) {
+          <div style="text-align: center; font-size: 10px; font-weight: 400; color: #64748b; text-transform: uppercase; letter-spacing: 3px; border-bottom: 0.5px solid #e2e8f0; padding-bottom: 4px; margin-top: 18px; margin-bottom: 10px;">Projects</div>
+          @for (proj of cv()!.projects; track proj.name) {
+            <div style="margin-bottom: 8px; text-align: center;">
+              <div style="font-weight: 700; color: #1e293b;">{{ proj.name }}</div>
+              @if (proj.description) { <div style="line-height: 1.5;">{{ proj.description }}</div> }
+              @if (proj.technologies.length > 0) { <div style="font-style: italic; color: #94a3b8; font-size: 9px;">{{ proj.technologies.join(', ') }}</div> }
+            </div>
+          }
+        }
+
+        @if (cv()!.languages.length > 0) {
+          <div style="text-align: center; font-size: 10px; font-weight: 400; color: #64748b; text-transform: uppercase; letter-spacing: 3px; border-bottom: 0.5px solid #e2e8f0; padding-bottom: 4px; margin-top: 18px; margin-bottom: 10px;">Languages</div>
+          <div style="text-align: center;">
+            @for (lang of cv()!.languages; track lang.language) {
+              <span>{{ lang.language }}@if (lang.proficiency) { ({{ lang.proficiency }}) }@if (!$last) { · }</span>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    @case ('impact') {
+      <div style="max-width: 794px; margin: 0 auto; padding: 40px 56px; font-family: 'Lato', sans-serif; font-size: 10px; color: #334155; background: #fff;">
+        @if (cv()!.contact.name) {
+          <div style="font-family: 'Montserrat', sans-serif; font-size: 30px; font-weight: 800; color: #0f172a; line-height: 1.1; letter-spacing: -0.01em;">{{ cv()!.contact.name }}</div>
+        }
+        @if (cv()!.contact.email || cv()!.contact.phone || cv()!.contact.location || cv()!.contact.linkedin || cv()!.contact.website) {
+          <div style="font-size: 9px; color: #475569; margin-top: 6px; line-height: 1.6;">
+            {{ [cv()!.contact.email, cv()!.contact.phone, cv()!.contact.location, cv()!.contact.linkedin, cv()!.contact.website] | atsContact }}
+          </div>
+        }
+        <div style="border-top: 3px solid #0f172a; margin-top: 10px;"></div>
+
+        @if (cv()!.summary) {
+          <div [style.background]="accentColor()" style="font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 1.5px; padding: 5px 12px; margin-top: 16px; margin-bottom: 8px; border-radius: 2px; display: inline-block;">Summary</div>
+          <p style="font-size: 10px; color: #334155; line-height: 1.6; margin: 0;">{{ cv()!.summary }}</p>
+        }
+
+        @if (cv()!.experience.length > 0) {
+          <div [style.background]="accentColor()" style="font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 1.5px; padding: 5px 12px; margin-top: 16px; margin-bottom: 8px; border-radius: 2px; display: inline-block;">Experience</div>
+          @for (exp of cv()!.experience; track exp.title) {
+            <div style="margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1px;">
+                <span style="font-family: 'Montserrat', sans-serif; font-weight: 700; color: #0f172a; font-size: 10.5px;">{{ exp.title }}@if (exp.company) { — {{ exp.company }} }</span>
+                <span style="color: #475569; font-size: 9px; font-weight: 600; white-space: nowrap;">
+                  @if (exp.current) { {{ exp.startDate ?? '' }} – Present } @else { {{ [exp.startDate, exp.endDate] | dateRange }} }
+                </span>
+              </div>
+              @if (exp.location) {
+                <div style="color: #64748b; font-size: 9px; font-style: italic; margin-bottom: 3px;">{{ exp.location }}</div>
+              }
+              @for (bullet of exp.bullets; track bullet) {
+                <div style="display: flex; gap: 6px; padding-left: 4px; margin-bottom: 1px;">
+                  <span [style.color]="accentColor()" style="font-size: 10px; line-height: 1.5; flex-shrink: 0;">•</span>
+                  <span style="font-size: 10px; color: #334155; line-height: 1.5;">{{ bullet }}</span>
+                </div>
+              }
+            </div>
+          }
+        }
+
+        @if (cv()!.skills.length > 0) {
+          <div [style.background]="accentColor()" style="font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 1.5px; padding: 5px 12px; margin-top: 16px; margin-bottom: 8px; border-radius: 2px; display: inline-block;">Skills</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+            @for (skill of cv()!.skills; track skill) {
+              <span [style.background]="accentColor()" style="font-size: 9px; color: white; border-radius: 12px; padding: 2px 10px; font-weight: 500;">{{ skill }}</span>
             }
           </div>
         }
 
+        @if (cv()!.education.length > 0) {
+          <div [style.background]="accentColor()" style="font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 1.5px; padding: 5px 12px; margin-top: 16px; margin-bottom: 8px; border-radius: 2px; display: inline-block;">Education</div>
+          @for (edu of cv()!.education; track edu.institution) {
+            <div style="margin-bottom: 8px;">
+              @if (edu.degree || edu.field) {
+                <div style="font-weight: 700; color: #0f172a;">{{ [edu.degree, edu.field] | degreeField }}</div>
+              }
+              @if (edu.institution) {
+                <div style="color: #334155;">{{ edu.institution }}@if (edu.startDate || edu.endDate) { | {{ [edu.startDate, edu.endDate] | dateRange }} }</div>
+              }
+            </div>
+          }
+        }
+
+        @if (cv()!.certifications.length > 0) {
+          <div [style.background]="accentColor()" style="font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 1.5px; padding: 5px 12px; margin-top: 16px; margin-bottom: 8px; border-radius: 2px; display: inline-block;">Certifications</div>
+          @for (cert of cv()!.certifications; track cert.name) {
+            <div style="line-height: 1.6;">• {{ cert.name }}@if (cert.issuer) { · {{ cert.issuer }} }@if (cert.date) { · {{ cert.date }} }</div>
+          }
+        }
+
+        @if (cv()!.projects.length > 0) {
+          <div [style.background]="accentColor()" style="font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 1.5px; padding: 5px 12px; margin-top: 16px; margin-bottom: 8px; border-radius: 2px; display: inline-block;">Projects</div>
+          @for (proj of cv()!.projects; track proj.name) {
+            <div style="margin-bottom: 8px;">
+              <div style="font-family: 'Montserrat', sans-serif; font-weight: 700; color: #0f172a;">{{ proj.name }}</div>
+              @if (proj.description) { <div style="line-height: 1.5;">{{ proj.description }}</div> }
+              @if (proj.technologies.length > 0) { <div style="font-style: italic; color: #64748b; font-size: 9px;">{{ proj.technologies.join(', ') }}</div> }
+            </div>
+          }
+        }
+
         @if (cv()!.languages.length > 0) {
-          <div style="background: #f3e8ff; color: #7b2d8b; font-weight: bold; font-size: 13px; padding: 5px 10px; margin-bottom: 6px;">Languages</div>
+          <div [style.background]="accentColor()" style="font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; color: white; text-transform: uppercase; letter-spacing: 1.5px; padding: 5px 12px; margin-top: 16px; margin-bottom: 8px; border-radius: 2px; display: inline-block;">Languages</div>
           <div>
             @for (lang of cv()!.languages; track lang.language) {
               <span>{{ lang.language }}@if (lang.proficiency) { ({{ lang.proficiency }}) }@if (!$last) { · }</span>

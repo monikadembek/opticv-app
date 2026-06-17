@@ -10,7 +10,13 @@ import {
 import type { CvStructuredData } from '@opticv/datatypes';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
-import { CV_TEMPLATES, CvTemplate, CvTemplateId } from '../../cv-templates';
+import {
+  ACCENT_AWARE_TEMPLATE_IDS,
+  CV_TEMPLATES,
+  CvTemplate,
+  CvTemplateId,
+  DEFAULT_ACCENT_COLOR,
+} from '../../cv-templates';
 import { CvTemplatePreview } from '../cv-template-preview/cv-template-preview';
 
 @Component({
@@ -24,8 +30,9 @@ import { CvTemplatePreview } from '../cv-template-preview/cv-template-preview';
   },
 })
 export class CvTemplateSelector {
-  readonly selected = model<CvTemplateId>('ats');
+  readonly selected = model<CvTemplateId>('bold');
   readonly mergedCv = input.required<CvStructuredData | null>();
+  readonly accentColor = input<string>(DEFAULT_ACCENT_COLOR);
 
   readonly templates: CvTemplate[] = CV_TEMPLATES;
 
@@ -50,6 +57,12 @@ export class CvTemplateSelector {
 
   templateName(id: CvTemplateId | null): string {
     return this.templates.find((t) => t.id === id)?.name ?? '';
+  }
+
+  thumbnailColor(id: CvTemplateId): string {
+    return ACCENT_AWARE_TEMPLATE_IDS.includes(id)
+      ? this.accentColor()
+      : '#94a3b8';
   }
 
   onKeydown(event: KeyboardEvent, id: CvTemplateId): void {
