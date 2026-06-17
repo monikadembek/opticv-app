@@ -66,7 +66,7 @@ vi.mock('docx', () => {
 });
 
 const ALL_TEMPLATE_IDS: CvTemplateId[] = [
-  'bold',
+  'default',
   'classic',
   'modern',
   'corporate',
@@ -74,7 +74,12 @@ const ALL_TEMPLATE_IDS: CvTemplateId[] = [
   'impact',
 ];
 
-const ACCENT_AWARE_IDS: CvTemplateId[] = ['bold', 'modern', 'corporate', 'impact'];
+const ACCENT_AWARE_IDS: CvTemplateId[] = [
+  'default',
+  'modern',
+  'corporate',
+  'impact',
+];
 const MONOCHROME_IDS: CvTemplateId[] = ['classic', 'minimal'];
 
 const makeCv = (): CvStructuredData => ({
@@ -133,16 +138,21 @@ describe('CvExportService (browser)', () => {
   });
 
   describe('exportToPdf', () => {
-    it.each(ALL_TEMPLATE_IDS)('resolves without throwing for template %s', async (id) => {
-      await expect(service.exportToPdf(makeCv(), id)).resolves.toBeUndefined();
-    });
+    it.each(ALL_TEMPLATE_IDS)(
+      'resolves without throwing for template %s',
+      async (id) => {
+        await expect(
+          service.exportToPdf(makeCv(), id),
+        ).resolves.toBeUndefined();
+      },
+    );
 
     it('saves the file as optimized-cv.pdf', async () => {
-      await service.exportToPdf(makeCv(), 'bold');
+      await service.exportToPdf(makeCv(), 'default');
       expect(saveMock).toHaveBeenCalledWith('optimized-cv.pdf');
     });
 
-    it('defaults to the bold template and emerald accent color', async () => {
+    it('defaults to the default template and emerald accent color', async () => {
       await expect(service.exportToPdf(makeCv())).resolves.toBeUndefined();
     });
 
@@ -165,24 +175,45 @@ describe('CvExportService (browser)', () => {
   });
 
   describe('exportToDocx', () => {
-    it.each(ALL_TEMPLATE_IDS)('resolves without throwing for template %s', async (id) => {
-      const clickSpy = vi.fn();
-      const anchor = { href: '', download: '', click: clickSpy } as unknown as HTMLAnchorElement;
-      vi.spyOn(window.document.body, 'appendChild').mockImplementation(() => anchor);
-      vi.spyOn(window.document.body, 'removeChild').mockImplementation(() => anchor);
-      vi.spyOn(window.document, 'createElement').mockReturnValue(anchor);
+    it.each(ALL_TEMPLATE_IDS)(
+      'resolves without throwing for template %s',
+      async (id) => {
+        const clickSpy = vi.fn();
+        const anchor = {
+          href: '',
+          download: '',
+          click: clickSpy,
+        } as unknown as HTMLAnchorElement;
+        vi.spyOn(window.document.body, 'appendChild').mockImplementation(
+          () => anchor,
+        );
+        vi.spyOn(window.document.body, 'removeChild').mockImplementation(
+          () => anchor,
+        );
+        vi.spyOn(window.document, 'createElement').mockReturnValue(anchor);
 
-      await expect(service.exportToDocx(makeCv(), id)).resolves.toBeUndefined();
-    });
+        await expect(
+          service.exportToDocx(makeCv(), id),
+        ).resolves.toBeUndefined();
+      },
+    );
 
     it('triggers anchor download with optimized-cv.docx', async () => {
       const clickSpy = vi.fn();
-      const anchor = { href: '', download: '', click: clickSpy } as unknown as HTMLAnchorElement;
-      vi.spyOn(window.document.body, 'appendChild').mockImplementation(() => anchor);
-      vi.spyOn(window.document.body, 'removeChild').mockImplementation(() => anchor);
+      const anchor = {
+        href: '',
+        download: '',
+        click: clickSpy,
+      } as unknown as HTMLAnchorElement;
+      vi.spyOn(window.document.body, 'appendChild').mockImplementation(
+        () => anchor,
+      );
+      vi.spyOn(window.document.body, 'removeChild').mockImplementation(
+        () => anchor,
+      );
       vi.spyOn(window.document, 'createElement').mockReturnValue(anchor);
 
-      await service.exportToDocx(makeCv(), 'bold');
+      await service.exportToDocx(makeCv(), 'default');
 
       expect(anchor.download).toBe('optimized-cv.docx');
       expect(clickSpy).toHaveBeenCalled();
@@ -191,17 +222,29 @@ describe('CvExportService (browser)', () => {
     it.each(ACCENT_AWARE_IDS)(
       'applies the given accentColor hex for accent-aware template %s',
       async (id) => {
-        const anchor = { href: '', download: '', click: vi.fn() } as unknown as HTMLAnchorElement;
-        vi.spyOn(window.document.body, 'appendChild').mockImplementation(() => anchor);
-        vi.spyOn(window.document.body, 'removeChild').mockImplementation(() => anchor);
+        const anchor = {
+          href: '',
+          download: '',
+          click: vi.fn(),
+        } as unknown as HTMLAnchorElement;
+        vi.spyOn(window.document.body, 'appendChild').mockImplementation(
+          () => anchor,
+        );
+        vi.spyOn(window.document.body, 'removeChild').mockImplementation(
+          () => anchor,
+        );
         vi.spyOn(window.document, 'createElement').mockReturnValue(anchor);
 
         await service.exportToDocx(makeCv(), id, '#2563eb');
 
         const docArg = toBlob.mock.calls[0][0] as {
-          sections: Array<{ children: Array<{ children?: Array<{ color?: string }> }> }>;
+          sections: Array<{
+            children: Array<{ children?: Array<{ color?: string }> }>;
+          }>;
         };
-        const allRuns = docArg.sections[0].children.flatMap((p) => p.children ?? []);
+        const allRuns = docArg.sections[0].children.flatMap(
+          (p) => p.children ?? [],
+        );
         expect(allRuns.some((r) => r.color === '2563EB')).toBe(true);
       },
     );
@@ -209,17 +252,29 @@ describe('CvExportService (browser)', () => {
     it.each(MONOCHROME_IDS)(
       'ignores the given accentColor for monochrome template %s',
       async (id) => {
-        const anchor = { href: '', download: '', click: vi.fn() } as unknown as HTMLAnchorElement;
-        vi.spyOn(window.document.body, 'appendChild').mockImplementation(() => anchor);
-        vi.spyOn(window.document.body, 'removeChild').mockImplementation(() => anchor);
+        const anchor = {
+          href: '',
+          download: '',
+          click: vi.fn(),
+        } as unknown as HTMLAnchorElement;
+        vi.spyOn(window.document.body, 'appendChild').mockImplementation(
+          () => anchor,
+        );
+        vi.spyOn(window.document.body, 'removeChild').mockImplementation(
+          () => anchor,
+        );
         vi.spyOn(window.document, 'createElement').mockReturnValue(anchor);
 
         await service.exportToDocx(makeCv(), id, '#2563eb');
 
         const docArg = toBlob.mock.calls[0][0] as {
-          sections: Array<{ children: Array<{ children?: Array<{ color?: string }> }> }>;
+          sections: Array<{
+            children: Array<{ children?: Array<{ color?: string }> }>;
+          }>;
         };
-        const allRuns = docArg.sections[0].children.flatMap((p) => p.children ?? []);
+        const allRuns = docArg.sections[0].children.flatMap(
+          (p) => p.children ?? [],
+        );
         expect(allRuns.some((r) => r.color === '2563EB')).toBe(false);
       },
     );
@@ -238,10 +293,14 @@ describe('CvExportService (server)', () => {
   });
 
   it('exportToPdf returns early on server without throwing', async () => {
-    await expect(service.exportToPdf(makeCv(), 'bold')).resolves.toBeUndefined();
+    await expect(
+      service.exportToPdf(makeCv(), 'default'),
+    ).resolves.toBeUndefined();
   });
 
   it('exportToDocx returns early on server without throwing', async () => {
-    await expect(service.exportToDocx(makeCv(), 'bold')).resolves.toBeUndefined();
+    await expect(
+      service.exportToDocx(makeCv(), 'default'),
+    ).resolves.toBeUndefined();
   });
 });

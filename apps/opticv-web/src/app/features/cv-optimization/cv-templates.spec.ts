@@ -11,10 +11,10 @@ describe('CV_TEMPLATES', () => {
     expect(CV_TEMPLATES.length).toBe(6);
   });
 
-  it('has ids bold, classic, modern, corporate, minimal, impact in order', () => {
+  it('has ids default, classic, modern, corporate, minimal, impact in order', () => {
     const ids: CvTemplateId[] = CV_TEMPLATES.map((t) => t.id);
     expect(ids).toEqual([
-      'bold',
+      'default',
       'classic',
       'modern',
       'corporate',
@@ -66,9 +66,9 @@ describe('DEFAULT_ACCENT_COLOR', () => {
 });
 
 describe('ACCENT_AWARE_TEMPLATE_IDS', () => {
-  it('equals bold, modern, corporate, impact (order-independent)', () => {
+  it('equals default, modern, corporate, impact (order-independent)', () => {
     expect(new Set(ACCENT_AWARE_TEMPLATE_IDS)).toEqual(
-      new Set(['bold', 'modern', 'corporate', 'impact']),
+      new Set(['default', 'modern', 'corporate', 'impact']),
     );
   });
 });

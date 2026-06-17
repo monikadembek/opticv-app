@@ -28,8 +28,8 @@ describe('ExportFooter', () => {
       expect(component.templates).toEqual(CV_TEMPLATES);
     });
 
-    it('defaults selectedTemplate to bold', () => {
-      expect(component.selectedTemplate()).toBe('bold');
+    it('defaults selectedTemplate to default', () => {
+      expect(component.selectedTemplate()).toBe('default');
     });
 
     it('updates selectedTemplate model when set directly', () => {
@@ -86,7 +86,7 @@ describe('ExportFooter', () => {
       fixture.detectChanges();
       const text = fixture.nativeElement.textContent;
       expect(text).toContain('Single-column layout');
-      expect(text).toContain('Bold, Modern, Corporate, and Impact');
+      expect(text).toContain('Default, Modern, Corporate, and Impact');
     });
 
     it('closes the dialog when infoDialogVisible is set to false', () => {
@@ -102,9 +102,10 @@ describe('ExportFooter', () => {
     it('emits exportPdf when Export PDF button is clicked', () => {
       const emitSpy = vi.spyOn(component.exportPdf, 'emit');
       const pBtns = fixture.debugElement.queryAll(By.css('p-button'));
-      const pdfBtn = pBtns.find((b) =>
-        b.nativeElement.getAttribute('label') === 'Export PDF' ||
-        b.nativeElement.textContent?.includes('Export PDF'),
+      const pdfBtn = pBtns.find(
+        (b) =>
+          b.nativeElement.getAttribute('label') === 'Export PDF' ||
+          b.nativeElement.textContent?.includes('Export PDF'),
       );
       pdfBtn?.triggerEventHandler('onClick', null);
       expect(emitSpy).toHaveBeenCalledOnce();
@@ -113,9 +114,10 @@ describe('ExportFooter', () => {
     it('emits exportDocx when Export DOCX button is clicked', () => {
       const emitSpy = vi.spyOn(component.exportDocx, 'emit');
       const pBtns = fixture.debugElement.queryAll(By.css('p-button'));
-      const docxBtn = pBtns.find((b) =>
-        b.nativeElement.getAttribute('label') === 'Export DOCX' ||
-        b.nativeElement.textContent?.includes('Export DOCX'),
+      const docxBtn = pBtns.find(
+        (b) =>
+          b.nativeElement.getAttribute('label') === 'Export DOCX' ||
+          b.nativeElement.textContent?.includes('Export DOCX'),
       );
       docxBtn?.triggerEventHandler('onClick', null);
       expect(emitSpy).toHaveBeenCalledOnce();
@@ -125,8 +127,8 @@ describe('ExportFooter', () => {
       fixture.componentRef.setInput('isExportingPdf', true);
       fixture.detectChanges();
       const pBtns = fixture.debugElement.queryAll(By.css('p-button'));
-      const pdfBtn = pBtns.find((b) =>
-        b.nativeElement.getAttribute('label') === 'Export PDF',
+      const pdfBtn = pBtns.find(
+        (b) => b.nativeElement.getAttribute('label') === 'Export PDF',
       );
       const btn = pdfBtn?.nativeElement.querySelector('button');
       expect(btn?.disabled).toBe(true);
@@ -136,8 +138,8 @@ describe('ExportFooter', () => {
       fixture.componentRef.setInput('isExportingDocx', true);
       fixture.detectChanges();
       const pBtns = fixture.debugElement.queryAll(By.css('p-button'));
-      const docxBtn = pBtns.find((b) =>
-        b.nativeElement.getAttribute('label') === 'Export DOCX',
+      const docxBtn = pBtns.find(
+        (b) => b.nativeElement.getAttribute('label') === 'Export DOCX',
       );
       const btn = docxBtn?.nativeElement.querySelector('button');
       expect(btn?.disabled).toBe(true);
@@ -151,9 +153,10 @@ describe('ExportFooter', () => {
 
     it('sets previewVisible to true when Preview button is clicked', () => {
       const pBtns = fixture.debugElement.queryAll(By.css('p-button'));
-      const previewBtn = pBtns.find((b) =>
-        b.nativeElement.getAttribute('label') === 'Preview' ||
-        b.nativeElement.textContent?.includes('Preview'),
+      const previewBtn = pBtns.find(
+        (b) =>
+          b.nativeElement.getAttribute('label') === 'Preview' ||
+          b.nativeElement.textContent?.includes('Preview'),
       );
       previewBtn?.triggerEventHandler('onClick', null);
       expect(component.previewVisible()).toBe(true);

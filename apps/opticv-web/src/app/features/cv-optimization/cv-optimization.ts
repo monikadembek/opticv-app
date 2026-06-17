@@ -177,7 +177,7 @@ export class CvOptimization implements OnInit {
   });
   readonly isExportingPdf = signal(false);
   readonly isExportingDocx = signal(false);
-  readonly selectedTemplate = signal<CvTemplateId>('bold');
+  readonly selectedTemplate = signal<CvTemplateId>('default');
   readonly accentColor = signal<string>(DEFAULT_ACCENT_COLOR);
   readonly isStoredMode = signal(false);
   readonly loadError = signal<string | null>(null);

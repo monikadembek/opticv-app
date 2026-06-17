@@ -3,7 +3,13 @@ import { signal } from '@angular/core';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { NEVER, Subject, of, throwError } from 'rxjs';
 import { MessageService } from 'primeng/api';
-import type { CvDocumentListItem, CvStructuredData, JobApplication, JobApplicationWithCv, OptimizationResultSummary } from '@opticv/datatypes';
+import type {
+  CvDocumentListItem,
+  CvStructuredData,
+  JobApplication,
+  JobApplicationWithCv,
+  OptimizationResultSummary,
+} from '@opticv/datatypes';
 import type { CvTemplateId } from './cv-templates';
 import { PromptType } from '@opticv/datatypes';
 import type { JobSubmittedData } from './components/job-upload/job-upload';
@@ -40,7 +46,14 @@ const mockJobApplication: JobApplication = {
 };
 
 const mockCvStructuredData: CvStructuredData = {
-  contact: { name: 'Test User', email: 'test@example.com', phone: null, location: null, linkedin: null, website: null },
+  contact: {
+    name: 'Test User',
+    email: 'test@example.com',
+    phone: null,
+    location: null,
+    linkedin: null,
+    website: null,
+  },
   summary: null,
   experience: [],
   education: [],
@@ -64,9 +77,7 @@ const mockJobApplicationWithCv: JobApplicationWithCv = {
 function makeActivatedRoute(jobApplicationId: string | null = null) {
   return {
     snapshot: {
-      paramMap: convertToParamMap(
-        jobApplicationId ? { jobApplicationId } : {},
-      ),
+      paramMap: convertToParamMap(jobApplicationId ? { jobApplicationId } : {}),
     },
   };
 }
@@ -114,7 +125,9 @@ describe('CvOptimization', () => {
     const {
       jobApplicationId = null,
       getOptimizationResults = vi.fn().mockReturnValue(of([])),
-      getStructuredData = vi.fn().mockReturnValue(of({ data: mockCvStructuredData })),
+      getStructuredData = vi
+        .fn()
+        .mockReturnValue(of({ data: mockCvStructuredData })),
     } = options;
 
     TestBed.resetTestingModule();
@@ -125,7 +138,9 @@ describe('CvOptimization', () => {
       extractCvData: vi.fn(),
       getStructuredData,
       getOptimizationResults,
-      runSingleOptimizationProcess: vi.fn().mockReturnValue(of({ runId: 'run-id-1' })),
+      runSingleOptimizationProcess: vi
+        .fn()
+        .mockReturnValue(of({ runId: 'run-id-1' })),
       streamOptimizationEvents: vi.fn().mockReturnValue(of()),
       retryOptimization: vi.fn(),
     };
@@ -144,10 +159,16 @@ describe('CvOptimization', () => {
       imports: [CvOptimization],
       providers: [
         { provide: CvOptimizationApiService, useValue: apiService },
-        { provide: JobApplicationApiService, useValue: jobApplicationApiService },
+        {
+          provide: JobApplicationApiService,
+          useValue: jobApplicationApiService,
+        },
         { provide: CvApiService, useValue: cvApiService },
         { provide: CvExportService, useValue: cvExportService },
-        { provide: ActivatedRoute, useValue: makeActivatedRoute(jobApplicationId) },
+        {
+          provide: ActivatedRoute,
+          useValue: makeActivatedRoute(jobApplicationId),
+        },
         MessageService,
       ],
     }).compileComponents();
@@ -190,7 +211,16 @@ describe('CvOptimization', () => {
         strengths: [],
       };
       component.results.set(
-        new Map([[PromptType.RESUME_AUTOPSY, { promptType: PromptType.RESUME_AUTOPSY, status: 'completed', result }]]),
+        new Map([
+          [
+            PromptType.RESUME_AUTOPSY,
+            {
+              promptType: PromptType.RESUME_AUTOPSY,
+              status: 'completed',
+              result,
+            },
+          ],
+        ]),
       );
       expect(component.autopsyResult()).toEqual(result);
     });
@@ -202,7 +232,12 @@ describe('CvOptimization', () => {
     it('keywordGapResult returns typed result when valid KeywordGapResult is stored', () => {
       const result = {
         matchScore: 80,
-        matchScoreBreakdown: { requiredMatched: 3, requiredTotal: 5, preferredMatched: 2, preferredTotal: 4 },
+        matchScoreBreakdown: {
+          requiredMatched: 3,
+          requiredTotal: 5,
+          preferredMatched: 2,
+          preferredTotal: 4,
+        },
         matchedKeywords: [],
         missingKeywords: [],
         underweightedKeywords: [],
@@ -210,7 +245,12 @@ describe('CvOptimization', () => {
         acronymIssues: [],
       };
       component.results.set(
-        new Map([[PromptType.KEYWORD_GAP, { promptType: PromptType.KEYWORD_GAP, status: 'completed', result }]]),
+        new Map([
+          [
+            PromptType.KEYWORD_GAP,
+            { promptType: PromptType.KEYWORD_GAP, status: 'completed', result },
+          ],
+        ]),
       );
       expect(component.keywordGapResult()).toEqual(result);
     });
@@ -227,14 +267,32 @@ describe('CvOptimization', () => {
         keywordsIncorporated: ['Angular'],
       };
       component.results.set(
-        new Map([[PromptType.SUMMARY_REWRITE, { promptType: PromptType.SUMMARY_REWRITE, status: 'completed', result }]]),
+        new Map([
+          [
+            PromptType.SUMMARY_REWRITE,
+            {
+              promptType: PromptType.SUMMARY_REWRITE,
+              status: 'completed',
+              result,
+            },
+          ],
+        ]),
       );
       expect(component.summaryRewriteResult()).toEqual(result);
     });
 
     it('summaryRewriteResult returns null when stored result has wrong shape', () => {
       component.results.set(
-        new Map([[PromptType.SUMMARY_REWRITE, { promptType: PromptType.SUMMARY_REWRITE, status: 'completed', result: { foo: 'bar' } }]]),
+        new Map([
+          [
+            PromptType.SUMMARY_REWRITE,
+            {
+              promptType: PromptType.SUMMARY_REWRITE,
+              status: 'completed',
+              result: { foo: 'bar' },
+            },
+          ],
+        ]),
       );
       expect(component.summaryRewriteResult()).toBeNull();
     });
@@ -248,17 +306,39 @@ describe('CvOptimization', () => {
         positions: [],
         missingBulletSuggestions: [],
         overallNotes: 'Looks good.',
-        verbDiversityCheck: { uniqueVerbsUsed: 4, totalBullets: 6, diverseEnough: true },
+        verbDiversityCheck: {
+          uniqueVerbsUsed: 4,
+          totalBullets: 6,
+          diverseEnough: true,
+        },
       };
       component.results.set(
-        new Map([[PromptType.BULLET_UPGRADE, { promptType: PromptType.BULLET_UPGRADE, status: 'completed', result }]]),
+        new Map([
+          [
+            PromptType.BULLET_UPGRADE,
+            {
+              promptType: PromptType.BULLET_UPGRADE,
+              status: 'completed',
+              result,
+            },
+          ],
+        ]),
       );
       expect(component.bulletUpgradeResult()).toEqual(result);
     });
 
     it('bulletUpgradeResult returns null when stored result has wrong shape', () => {
       component.results.set(
-        new Map([[PromptType.BULLET_UPGRADE, { promptType: PromptType.BULLET_UPGRADE, status: 'completed', result: { foo: 'bar' } }]]),
+        new Map([
+          [
+            PromptType.BULLET_UPGRADE,
+            {
+              promptType: PromptType.BULLET_UPGRADE,
+              status: 'completed',
+              result: { foo: 'bar' },
+            },
+          ],
+        ]),
       );
       expect(component.bulletUpgradeResult()).toBeNull();
     });
@@ -287,14 +367,32 @@ describe('CvOptimization', () => {
         warnings: [],
       };
       component.results.set(
-        new Map([[PromptType.COVER_LETTER, { promptType: PromptType.COVER_LETTER, status: 'completed', result }]]),
+        new Map([
+          [
+            PromptType.COVER_LETTER,
+            {
+              promptType: PromptType.COVER_LETTER,
+              status: 'completed',
+              result,
+            },
+          ],
+        ]),
       );
       expect(component.coverLetterResult()).toEqual(result);
     });
 
     it('coverLetterResult returns null when stored result has wrong shape', () => {
       component.results.set(
-        new Map([[PromptType.COVER_LETTER, { promptType: PromptType.COVER_LETTER, status: 'completed', result: { foo: 'bar' } }]]),
+        new Map([
+          [
+            PromptType.COVER_LETTER,
+            {
+              promptType: PromptType.COVER_LETTER,
+              status: 'completed',
+              result: { foo: 'bar' },
+            },
+          ],
+        ]),
       );
       expect(component.coverLetterResult()).toBeNull();
     });
@@ -309,7 +407,16 @@ describe('CvOptimization', () => {
         warnings: [],
       };
       component.results.set(
-        new Map([[PromptType.COVER_LETTER, { promptType: PromptType.COVER_LETTER, status: 'completed', result }]]),
+        new Map([
+          [
+            PromptType.COVER_LETTER,
+            {
+              promptType: PromptType.COVER_LETTER,
+              status: 'completed',
+              result,
+            },
+          ],
+        ]),
       );
       expect(component.coverLetterResult()).toBeNull();
     });
@@ -326,21 +433,48 @@ describe('CvOptimization', () => {
         preparationTips: ['Research the company', 'Practice STAR answers'],
       };
       component.results.set(
-        new Map([[PromptType.INTERVIEW_PREP, { promptType: PromptType.INTERVIEW_PREP, status: 'completed', result }]]),
+        new Map([
+          [
+            PromptType.INTERVIEW_PREP,
+            {
+              promptType: PromptType.INTERVIEW_PREP,
+              status: 'completed',
+              result,
+            },
+          ],
+        ]),
       );
       expect(component.interviewPrepResult()).toEqual(result);
     });
 
     it('interviewPrepResult returns null when stored result has wrong shape', () => {
       component.results.set(
-        new Map([[PromptType.INTERVIEW_PREP, { promptType: PromptType.INTERVIEW_PREP, status: 'completed', result: { foo: 'bar' } }]]),
+        new Map([
+          [
+            PromptType.INTERVIEW_PREP,
+            {
+              promptType: PromptType.INTERVIEW_PREP,
+              status: 'completed',
+              result: { foo: 'bar' },
+            },
+          ],
+        ]),
       );
       expect(component.interviewPrepResult()).toBeNull();
     });
 
     it('interviewPrepResult returns null when preparationTips is missing', () => {
       component.results.set(
-        new Map([[PromptType.INTERVIEW_PREP, { promptType: PromptType.INTERVIEW_PREP, status: 'completed', result: { questions: [] } }]]),
+        new Map([
+          [
+            PromptType.INTERVIEW_PREP,
+            {
+              promptType: PromptType.INTERVIEW_PREP,
+              status: 'completed',
+              result: { questions: [] },
+            },
+          ],
+        ]),
       );
       expect(component.interviewPrepResult()).toBeNull();
     });
@@ -433,7 +567,9 @@ describe('CvOptimization', () => {
       sseSubject.next(event);
 
       expect(component.results().get(PromptType.RESUME_AUTOPSY)).toEqual(event);
-      expect(component.isProcessing().get(PromptType.RESUME_AUTOPSY)).toBe(false);
+      expect(component.isProcessing().get(PromptType.RESUME_AUTOPSY)).toBe(
+        false,
+      );
     });
 
     it('stores a failed SSE event in results and clears isProcessing', () => {
@@ -452,25 +588,36 @@ describe('CvOptimization', () => {
 
       sseSubject.next(failedEvent);
 
-      expect(component.results().get(PromptType.KEYWORD_GAP)).toEqual(failedEvent);
+      expect(component.results().get(PromptType.KEYWORD_GAP)).toEqual(
+        failedEvent,
+      );
       expect(component.isProcessing().get(PromptType.KEYWORD_GAP)).toBe(false);
     });
 
     it('stores the result from an active prompt SSE event', () => {
       const sseSubject = new Subject<SseJobCompleteEvent>();
-      apiService.streamOptimizationEvents.mockReturnValue(sseSubject.asObservable());
+      apiService.streamOptimizationEvents.mockReturnValue(
+        sseSubject.asObservable(),
+      );
 
       component.runOptimization(mockJobSubmittedData);
 
       const bulletEvent: SseJobCompleteEvent = {
         promptType: PromptType.BULLET_UPGRADE,
         status: 'completed',
-        result: { positions: [], missingBulletSuggestions: [], overallNotes: '', verbDiversityCheck: {} },
+        result: {
+          positions: [],
+          missingBulletSuggestions: [],
+          overallNotes: '',
+          verbDiversityCheck: {},
+        },
       };
 
       sseSubject.next(bulletEvent);
 
-      expect(component.results().get(PromptType.BULLET_UPGRADE)).toEqual(bulletEvent);
+      expect(component.results().get(PromptType.BULLET_UPGRADE)).toEqual(
+        bulletEvent,
+      );
     });
 
     it('a second call to runOptimization discards results from the first', () => {
@@ -505,20 +652,38 @@ describe('CvOptimization', () => {
       component.jobApplicationId.set(mockJobApplication.id);
       component.results.set(
         new Map([
-          [PromptType.KEYWORD_GAP, { promptType: PromptType.KEYWORD_GAP, status: 'failed', error: 'timeout' }],
+          [
+            PromptType.KEYWORD_GAP,
+            {
+              promptType: PromptType.KEYWORD_GAP,
+              status: 'failed',
+              error: 'timeout',
+            },
+          ],
         ]),
       );
-      expect(component.retryablePromptTypes().has(PromptType.KEYWORD_GAP)).toBe(true);
+      expect(component.retryablePromptTypes().has(PromptType.KEYWORD_GAP)).toBe(
+        true,
+      );
     });
 
     it('includes a prompt type that completed but returned an invalid result shape', () => {
       component.jobApplicationId.set(mockJobApplication.id);
       component.results.set(
         new Map([
-          [PromptType.RESUME_AUTOPSY, { promptType: PromptType.RESUME_AUTOPSY, status: 'completed', result: { bad: 'data' } }],
+          [
+            PromptType.RESUME_AUTOPSY,
+            {
+              promptType: PromptType.RESUME_AUTOPSY,
+              status: 'completed',
+              result: { bad: 'data' },
+            },
+          ],
         ]),
       );
-      expect(component.retryablePromptTypes().has(PromptType.RESUME_AUTOPSY)).toBe(true);
+      expect(
+        component.retryablePromptTypes().has(PromptType.RESUME_AUTOPSY),
+      ).toBe(true);
     });
 
     it('does not include a prompt type that completed with a valid result', () => {
@@ -533,27 +698,47 @@ describe('CvOptimization', () => {
       };
       component.results.set(
         new Map([
-          [PromptType.RESUME_AUTOPSY, { promptType: PromptType.RESUME_AUTOPSY, status: 'completed', result: validResult }],
+          [
+            PromptType.RESUME_AUTOPSY,
+            {
+              promptType: PromptType.RESUME_AUTOPSY,
+              status: 'completed',
+              result: validResult,
+            },
+          ],
         ]),
       );
-      expect(component.retryablePromptTypes().has(PromptType.RESUME_AUTOPSY)).toBe(false);
+      expect(
+        component.retryablePromptTypes().has(PromptType.RESUME_AUTOPSY),
+      ).toBe(false);
     });
 
     it('does not include a prompt type that is currently processing', () => {
       component.jobApplicationId.set(mockJobApplication.id);
       component.results.set(
         new Map([
-          [PromptType.KEYWORD_GAP, { promptType: PromptType.KEYWORD_GAP, status: 'failed', error: 'timeout' }],
+          [
+            PromptType.KEYWORD_GAP,
+            {
+              promptType: PromptType.KEYWORD_GAP,
+              status: 'failed',
+              error: 'timeout',
+            },
+          ],
         ]),
       );
       component.isProcessing.set(new Map([[PromptType.KEYWORD_GAP, true]]));
-      expect(component.retryablePromptTypes().has(PromptType.KEYWORD_GAP)).toBe(false);
+      expect(component.retryablePromptTypes().has(PromptType.KEYWORD_GAP)).toBe(
+        false,
+      );
     });
   });
 
   describe('selectedTemplate', () => {
-    it('defaults to bold', () => {
-      expect(component.selectedTemplate()).toBe('bold' satisfies CvTemplateId);
+    it('defaults to default', () => {
+      expect(component.selectedTemplate()).toBe(
+        'default' satisfies CvTemplateId,
+      );
     });
 
     it('can be set to modern', () => {
@@ -622,11 +807,13 @@ describe('CvOptimization', () => {
     });
 
     it('returns false when all active prompts finish processing', () => {
-      component.isProcessing.set(new Map([
-        [PromptType.KEYWORD_GAP, false],
-        [PromptType.RESUME_AUTOPSY, false],
-        [PromptType.BULLET_UPGRADE, false],
-      ]));
+      component.isProcessing.set(
+        new Map([
+          [PromptType.KEYWORD_GAP, false],
+          [PromptType.RESUME_AUTOPSY, false],
+          [PromptType.BULLET_UPGRADE, false],
+        ]),
+      );
       expect(component.isProcessingAny()).toBe(false);
     });
   });
@@ -666,7 +853,9 @@ describe('CvOptimization', () => {
 
       component.retryOptimization(PromptType.RESUME_AUTOPSY);
 
-      expect(component.isProcessing().get(PromptType.RESUME_AUTOPSY)).toBe(true);
+      expect(component.isProcessing().get(PromptType.RESUME_AUTOPSY)).toBe(
+        true,
+      );
     });
 
     it('calls runSingleOptimizationProcess with the stored jobApplicationId and promptType', () => {
@@ -684,25 +873,38 @@ describe('CvOptimization', () => {
     it('updates results and clears isProcessing when the retry SSE event arrives', () => {
       component.jobApplicationId.set(mockJobApplication.id);
       const sseSubject = new Subject<SseJobCompleteEvent>();
-      apiService.streamOptimizationEvents.mockReturnValue(sseSubject.asObservable());
+      apiService.streamOptimizationEvents.mockReturnValue(
+        sseSubject.asObservable(),
+      );
 
       component.retryOptimization(PromptType.RESUME_AUTOPSY);
 
       const event: SseJobCompleteEvent = {
         promptType: PromptType.RESUME_AUTOPSY,
         status: 'completed',
-        result: { overallScore: 88, predictedScoreAfterFixes: 95, topPriority: 'Keywords', summary: 'Good', issues: [], strengths: [] },
+        result: {
+          overallScore: 88,
+          predictedScoreAfterFixes: 95,
+          topPriority: 'Keywords',
+          summary: 'Good',
+          issues: [],
+          strengths: [],
+        },
       };
       sseSubject.next(event);
 
       expect(component.results().get(PromptType.RESUME_AUTOPSY)).toEqual(event);
-      expect(component.isProcessing().get(PromptType.RESUME_AUTOPSY)).toBe(false);
+      expect(component.isProcessing().get(PromptType.RESUME_AUTOPSY)).toBe(
+        false,
+      );
     });
 
     it('clears isProcessing on stream error', () => {
       component.jobApplicationId.set(mockJobApplication.id);
       const sseSubject = new Subject<SseJobCompleteEvent>();
-      apiService.streamOptimizationEvents.mockReturnValue(sseSubject.asObservable());
+      apiService.streamOptimizationEvents.mockReturnValue(
+        sseSubject.asObservable(),
+      );
 
       component.retryOptimization(PromptType.KEYWORD_GAP);
       sseSubject.error(new Error('network failure'));
@@ -752,9 +954,9 @@ describe('CvOptimization', () => {
       });
 
       expect(component.results().has(PromptType.RESUME_AUTOPSY)).toBe(true);
-      expect(component.results().get(PromptType.RESUME_AUTOPSY)?.result).toEqual(
-        completedResult.structuredOutput,
-      );
+      expect(
+        component.results().get(PromptType.RESUME_AUTOPSY)?.result,
+      ).toEqual(completedResult.structuredOutput);
     });
 
     it('skips results that are not COMPLETED', async () => {
@@ -801,9 +1003,11 @@ describe('CvOptimization', () => {
     it('sets loadError when the API call fails', async () => {
       await createComponent({
         jobApplicationId: 'job-app-id-1',
-        getOptimizationResults: vi.fn().mockReturnValue(
-          throwError(() => ({ error: { message: 'Server error' } })),
-        ),
+        getOptimizationResults: vi
+          .fn()
+          .mockReturnValue(
+            throwError(() => ({ error: { message: 'Server error' } })),
+          ),
       });
 
       expect(component.loadError()).toBe('Server error');
@@ -815,7 +1019,9 @@ describe('CvOptimization', () => {
         getOptimizationResults: vi.fn().mockReturnValue(throwError(() => ({}))),
       });
 
-      expect(component.loadError()).toBe('Failed to load optimization. Please try again.');
+      expect(component.loadError()).toBe(
+        'Failed to load optimization. Please try again.',
+      );
     });
   });
 
@@ -826,20 +1032,47 @@ describe('CvOptimization', () => {
 
     it('returns true in stored mode when at least one active prompt has no result', () => {
       component.isStoredMode.set(true);
-      component.results.set(new Map([[PromptType.KEYWORD_GAP, { promptType: PromptType.KEYWORD_GAP, status: 'completed' }]]));
+      component.results.set(
+        new Map([
+          [
+            PromptType.KEYWORD_GAP,
+            { promptType: PromptType.KEYWORD_GAP, status: 'completed' },
+          ],
+        ]),
+      );
       expect(component.hasPartialStoredResults()).toBe(true);
     });
 
     it('returns false in stored mode when all active prompts have results', () => {
       component.isStoredMode.set(true);
-      component.results.set(new Map([
-        [PromptType.KEYWORD_GAP, { promptType: PromptType.KEYWORD_GAP, status: 'completed' }],
-        [PromptType.RESUME_AUTOPSY, { promptType: PromptType.RESUME_AUTOPSY, status: 'completed' }],
-        [PromptType.BULLET_UPGRADE, { promptType: PromptType.BULLET_UPGRADE, status: 'completed' }],
-        [PromptType.SUMMARY_REWRITE, { promptType: PromptType.SUMMARY_REWRITE, status: 'completed' }],
-        [PromptType.COVER_LETTER, { promptType: PromptType.COVER_LETTER, status: 'completed' }],
-        [PromptType.INTERVIEW_PREP, { promptType: PromptType.INTERVIEW_PREP, status: 'completed' }],
-      ]));
+      component.results.set(
+        new Map([
+          [
+            PromptType.KEYWORD_GAP,
+            { promptType: PromptType.KEYWORD_GAP, status: 'completed' },
+          ],
+          [
+            PromptType.RESUME_AUTOPSY,
+            { promptType: PromptType.RESUME_AUTOPSY, status: 'completed' },
+          ],
+          [
+            PromptType.BULLET_UPGRADE,
+            { promptType: PromptType.BULLET_UPGRADE, status: 'completed' },
+          ],
+          [
+            PromptType.SUMMARY_REWRITE,
+            { promptType: PromptType.SUMMARY_REWRITE, status: 'completed' },
+          ],
+          [
+            PromptType.COVER_LETTER,
+            { promptType: PromptType.COVER_LETTER, status: 'completed' },
+          ],
+          [
+            PromptType.INTERVIEW_PREP,
+            { promptType: PromptType.INTERVIEW_PREP, status: 'completed' },
+          ],
+        ]),
+      );
       expect(component.hasPartialStoredResults()).toBe(false);
     });
   });
@@ -890,7 +1123,10 @@ describe('CvOptimization', () => {
   });
 
   describe('onMissingBulletToggled', () => {
-    const entry = { forPosition: 'Dev at Acme', suggestedBullet: 'Led team of 5.' };
+    const entry = {
+      forPosition: 'Dev at Acme',
+      suggestedBullet: 'Led team of 5.',
+    };
 
     it('adds the entry when not already present', () => {
       component.onMissingBulletToggled(entry);
@@ -943,7 +1179,10 @@ describe('CvOptimization', () => {
   describe('onMissingBulletEditSaved', () => {
     it('stores the trimmed text in missingBulletEdits', () => {
       component.jobApplicationId.set(null);
-      component.onMissingBulletEditSaved({ key: 'Pos|Bullet', text: '  Trimmed  ' });
+      component.onMissingBulletEditSaved({
+        key: 'Pos|Bullet',
+        text: '  Trimmed  ',
+      });
       expect(component.missingBulletEdits().get('Pos|Bullet')).toBe('Trimmed');
     });
 
@@ -966,13 +1205,17 @@ describe('CvOptimization', () => {
 
   describe('runOptimization — resets new state', () => {
     it('clears selectedMissingBullets on a new run', () => {
-      component.selectedMissingBullets.set([{ forPosition: 'X', suggestedBullet: 'Y' }]);
+      component.selectedMissingBullets.set([
+        { forPosition: 'X', suggestedBullet: 'Y' },
+      ]);
       component.runOptimization(mockJobSubmittedData);
       expect(component.selectedMissingBullets()).toEqual([]);
     });
 
     it('clears removedBullets on a new run', () => {
-      component.removedBullets.set([{ company: 'A', title: 'B', originalText: 'C' }]);
+      component.removedBullets.set([
+        { company: 'A', title: 'B', originalText: 'C' },
+      ]);
       component.runOptimization(mockJobSubmittedData);
       expect(component.removedBullets()).toEqual([]);
     });
@@ -1009,7 +1252,10 @@ describe('CvOptimization', () => {
 
     it('does nothing when jobApplication has no cvDocument', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      component.jobApplication.set({ ...mockJobApplicationWithCv, cvDocument: null as any });
+      component.jobApplication.set({
+        ...mockJobApplicationWithCv,
+        cvDocument: null as any,
+      });
 
       expect(() => component.openOriginalCv()).not.toThrow();
       expect(cvApiService.downloadCv).not.toHaveBeenCalled();
@@ -1049,12 +1295,32 @@ describe('CvOptimization', () => {
     });
 
     it('maps each result entry to its status string', () => {
-      component.results.set(new Map([
-        [PromptType.RESUME_AUTOPSY, { promptType: PromptType.RESUME_AUTOPSY, status: 'completed', result: {} }],
-        [PromptType.KEYWORD_GAP, { promptType: PromptType.KEYWORD_GAP, status: 'failed', result: null }],
-      ]));
-      expect(component.sectionStatuses().get(PromptType.RESUME_AUTOPSY)).toBe('completed');
-      expect(component.sectionStatuses().get(PromptType.KEYWORD_GAP)).toBe('failed');
+      component.results.set(
+        new Map([
+          [
+            PromptType.RESUME_AUTOPSY,
+            {
+              promptType: PromptType.RESUME_AUTOPSY,
+              status: 'completed',
+              result: {},
+            },
+          ],
+          [
+            PromptType.KEYWORD_GAP,
+            {
+              promptType: PromptType.KEYWORD_GAP,
+              status: 'failed',
+              result: null,
+            },
+          ],
+        ]),
+      );
+      expect(component.sectionStatuses().get(PromptType.RESUME_AUTOPSY)).toBe(
+        'completed',
+      );
+      expect(component.sectionStatuses().get(PromptType.KEYWORD_GAP)).toBe(
+        'failed',
+      );
     });
   });
 

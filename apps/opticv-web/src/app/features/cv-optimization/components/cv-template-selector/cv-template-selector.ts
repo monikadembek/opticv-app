@@ -30,7 +30,7 @@ import { CvTemplatePreview } from '../cv-template-preview/cv-template-preview';
   },
 })
 export class CvTemplateSelector {
-  readonly selected = model<CvTemplateId>('bold');
+  readonly selected = model<CvTemplateId>('default');
   readonly mergedCv = input.required<CvStructuredData | null>();
   readonly accentColor = input<string>(DEFAULT_ACCENT_COLOR);
 

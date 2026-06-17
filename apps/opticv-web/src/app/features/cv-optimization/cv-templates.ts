@@ -1,5 +1,5 @@
 export type CvTemplateId =
-  | 'bold'
+  | 'default'
   | 'classic'
   | 'modern'
   | 'corporate'
@@ -14,8 +14,8 @@ export interface CvTemplate {
 
 export const CV_TEMPLATES: CvTemplate[] = [
   {
-    id: 'bold',
-    name: 'Bold',
+    id: 'default',
+    name: 'Default',
     description: 'Single column, bold accent bar, ATS-safe',
   },
   {
@@ -64,7 +64,7 @@ export const CV_ACCENT_COLORS: AccentColor[] = [
 export const DEFAULT_ACCENT_COLOR = '#059669';
 
 export const ACCENT_AWARE_TEMPLATE_IDS: CvTemplateId[] = [
-  'bold',
+  'default',
   'modern',
   'corporate',
   'impact',
