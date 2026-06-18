@@ -104,9 +104,10 @@
   (visibleChange)="$event ? null : previewVisible.set(false)"
   [modal]="true"
   [style]="{ width: '900px', maxWidth: '95vw' }"
+  [contentStyle]="{ padding: '0', overflow: 'auto', height: '90vh' }"
   [draggable]="false"
 >
-  <app-cv-template-preview
+  <app-cv-a4-preview
     [cv]="mergedCv()"
     [templateId]="selectedTemplate()"
     [accentColor]="accentColor()"

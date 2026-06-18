@@ -556,7 +556,19 @@ Frontend:
 
 ---
 
-### 49. Visual improvements in docx and pdf templates structure
+### 49. Template preview - show in cards with A4 format
+
+**status: done**
+**time: 17.06.2026 - 18.06.2026**
+
+- template preview should show optimized cv in A4 format instead of adjusting to the dialog size
+- for longer cvs multiple A4 cards should be displayed with content flowing from one page to the next
+- vertical and horizontal scrollbars should be displayed if A4 card is bigger than the dialog size
+- set the same page margins as the pdf and docx have
+
+---
+
+### 50. Visual improvements in docx and pdf exported files structure
 
 **status: todo**
 **time:**
@@ -565,7 +577,7 @@ Frontend:
 
 ---
 
-### 49. Keyword Gap - select, modify and apply optimizations
+### 51. Keyword Gap - select, modify and apply optimizations
 
 **status: todo**
 **time:**
@@ -574,7 +586,7 @@ Frontend:
 
 ---
 
-### 50. Setup Stripe
+### Setup Stripe
 
 ---
 

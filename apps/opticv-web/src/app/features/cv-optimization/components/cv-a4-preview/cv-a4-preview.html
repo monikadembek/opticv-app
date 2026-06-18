@@ -1,0 +1,39 @@
+<div class="a4-preview-root">
+  <div #hiddenContainer class="a4-hidden-container" aria-hidden="true">
+    <app-cv-template-preview
+      [cv]="cv()"
+      [templateId]="templateId()"
+      [accentColor]="accentColor()"
+    />
+  </div>
+
+  @if (measuring()) {
+  <div class="a4-spinner-wrapper">
+    <p-progressSpinner strokeWidth="4" />
+  </div>
+  } @if (!measuring()) {
+  <div class="a4-pages-wrapper">
+    @for (i of pages(); track i) {
+    <div
+      class="a4-page"
+      [attr.aria-label]="'Page ' + (i + 1) + ' of ' + pages().length"
+    >
+      <div class="a4-page-content">
+        <div class="a4-page-window">
+          <div
+            class="a4-page-clip"
+            [style.transform]="'translateY(-' + i * CONTENT_HEIGHT_PX + 'px)'"
+          >
+            <app-cv-template-preview
+              [cv]="cv()"
+              [templateId]="templateId()"
+              [accentColor]="accentColor()"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+  }
+</div>
