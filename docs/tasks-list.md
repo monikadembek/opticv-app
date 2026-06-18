@@ -558,8 +558,8 @@ Frontend:
 
 ### 49. Template preview - show in cards with A4 format
 
-**status: in progress**
-**time: 17.06.2026**
+**status: done**
+**time: 17.06.2026 - 18.06.2026**
 
 - template preview should show optimized cv in A4 format instead of adjusting to the dialog size
 - for longer cvs multiple A4 cards should be displayed with content flowing from one page to the next
@@ -568,7 +568,7 @@ Frontend:
 
 ---
 
-### 50. Visual improvements in docx and pdf templates structure
+### 50. Visual improvements in docx and pdf exported files structure
 
 **status: todo**
 **time:**
