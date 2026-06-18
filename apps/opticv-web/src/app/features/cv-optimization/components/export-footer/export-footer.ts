@@ -16,13 +16,13 @@ import {
   CV_TEMPLATES,
   DEFAULT_ACCENT_COLOR,
 } from '../../cv-templates';
-import { CvTemplatePreview } from '../cv-template-preview/cv-template-preview';
+import { CvA4Preview } from '../cv-a4-preview/cv-a4-preview';
 import type { CvStructuredData } from '@opticv/datatypes';
 
 @Component({
   selector: 'app-export-footer',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ButtonModule, DialogModule, FormsModule, Select, CvTemplatePreview],
+  imports: [ButtonModule, DialogModule, FormsModule, Select, CvA4Preview],
   templateUrl: './export-footer.html',
   styleUrl: './export-footer.css',
 })

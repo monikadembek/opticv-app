@@ -1,0 +1,63 @@
+.a4-hidden-container {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  width: 794px;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.a4-preview-root {
+  position: relative;
+  background: #e5e7eb;
+  padding: 24px 16px;
+  min-height: 200px;
+  min-width: fit-content;
+}
+
+.a4-spinner-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.a4-pages-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
+  min-width: 794px;
+}
+
+.a4-page {
+  width: 794px;
+  height: 1123px;
+  /* 32px margin on all sides; vertical margins create the page-break whitespace */
+  padding: 32px 0;
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+/* Inner area = A4 height minus the page shell padding (1123 - 32*2 = 1059px).
+   The 60px top/bottom padding creates the content margins (matches PDF). */
+.a4-page-content {
+  width: 794px;
+  height: 1059px;
+  padding: 60px 0;
+  box-sizing: border-box;
+}
+
+/* The real clip boundary: exactly CONTENT_HEIGHT_PX (1059 - 60*2 = 939px) of
+   content per page. overflow:hidden clips here so pages never overlap. */
+.a4-page-window {
+  width: 794px;
+  height: 939px;
+  overflow: hidden;
+}
+
+.a4-page-clip {
+  width: 794px;
+}
