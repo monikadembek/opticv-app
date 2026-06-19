@@ -131,11 +131,14 @@
           [keywordEdits]="keywordEdits()"
           [activeKeywordEditKey]="activeKeywordEditKey()"
           [editedKeywordText]="editedKeywordText()"
+          [experiencePositions]="experiencePositionLabels()"
+          [keywordBulletPositions]="keywordBulletPositions()"
           (keywordToggled)="onKeywordToggled($event)"
           (keywordEditStarted)="onKeywordEditStarted($event)"
           (keywordEditSaved)="onKeywordEditSaved($event)"
           (keywordEditCancelled)="onKeywordEditCancelled()"
           (keywordEditTextChanged)="onKeywordEditTextChanged($event)"
+          (keywordBulletPositionSelected)="onKeywordBulletPositionSelected($event)"
         />
         } @if (retryablePromptTypes().has(PromptType.KEYWORD_GAP)) {
         <div class="retry-action">

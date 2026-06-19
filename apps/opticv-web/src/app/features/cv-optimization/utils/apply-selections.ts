@@ -18,6 +18,7 @@ export function applySelectionsToCV(
   selectedMissingBullets: Array<{ forPosition: string; suggestedBullet: string }> = [],
   missingBulletEdits: Map<string, string> = new Map(),
   keywordEdits: Map<string, string> = new Map(),
+  keywordBulletPositions: Map<string, string> = new Map(),
 ): CvStructuredData {
   const clone: CvStructuredData = structuredClone(cv);
 
@@ -95,6 +96,19 @@ export function applySelectionsToCV(
         if (!existing.has(displayText.toLowerCase())) {
           clone.skills.push(displayText);
           existing.add(displayText.toLowerCase());
+        }
+      } else if (placement === 'experience_bullet') {
+        const forPosition = keywordBulletPositions.get(kw);
+        if (!forPosition) continue;
+        const baseText = entry?.recommendation ?? kw;
+        const displayText = keywordEdits.get(kw) ?? baseText;
+        const expIndex = clone.experience.findIndex((e) => {
+          const dashFormat = `${e.company ?? ''} - ${e.title ?? ''}`;
+          const atFormat = `${e.title ?? ''} at ${e.company ?? ''}`;
+          return dashFormat === forPosition || atFormat === forPosition;
+        });
+        if (expIndex !== -1) {
+          clone.experience[expIndex].bullets.push(displayText);
         }
       }
     }

@@ -196,6 +196,7 @@ export class CvOptimization implements OnInit {
   readonly keywordEdits = signal<Map<string, string>>(new Map());
   readonly activeKeywordEditKey = signal<string | null>(null);
   readonly editedKeywordText = signal<string>('');
+  readonly keywordBulletPositions = signal<Map<string, string>>(new Map());
 
   readonly sidebarExpanded = signal(true);
   private readonly breakpointObserver = inject(BreakpointObserver);
@@ -210,6 +211,12 @@ export class CvOptimization implements OnInit {
     const r = this.results().get(PromptType.KEYWORD_GAP)?.result;
     return isKeywordGapResult(r) ? r : null;
   });
+
+  readonly experiencePositionLabels = computed<string[]>(() =>
+    (this.cvStructuredData()?.experience ?? []).map(
+      (e) => `${e.company ?? ''} - ${e.title ?? ''}`,
+    ),
+  );
 
   readonly summaryRewriteResult = computed<SummaryRewriteResult | null>(() => {
     const r = this.results().get(PromptType.SUMMARY_REWRITE)?.result;
@@ -245,6 +252,7 @@ export class CvOptimization implements OnInit {
       this.selectedMissingBullets(),
       this.missingBulletEdits(),
       this.keywordEdits(),
+      this.keywordBulletPositions(),
     );
   });
 
@@ -471,6 +479,11 @@ export class CvOptimization implements OnInit {
                     keywordEditsMap.set(e.originalKeyword, e.editedText);
                   }
                   this.keywordEdits.set(keywordEditsMap);
+                  const kwBulletPosMap = new Map<string, string>();
+                  for (const p of state.keywordBulletPositions ?? []) {
+                    kwBulletPosMap.set(p.keyword, p.forPosition);
+                  }
+                  this.keywordBulletPositions.set(kwBulletPosMap);
                 } catch {
                   console.warn(
                     'Could not parse bullet user state from stored optimization',
@@ -519,6 +532,7 @@ export class CvOptimization implements OnInit {
     this.keywordEdits.set(new Map());
     this.activeKeywordEditKey.set(null);
     this.editedKeywordText.set('');
+    this.keywordBulletPositions.set(new Map());
     this.jobApplicationId.set(jobApplication.id);
     this.submittedJobApplication.set(jobApplication);
     this.cvStructuredData.set(extractedData);
@@ -669,6 +683,22 @@ export class CvOptimization implements OnInit {
     this.persistBulletState();
   }
 
+  onKeywordBulletPositionSelected(event: {
+    keyword: string;
+    forPosition: string;
+  }): void {
+    this.keywordBulletPositions.update((map) => {
+      const next = new Map(map);
+      if (event.forPosition === '') {
+        next.delete(event.keyword);
+      } else {
+        next.set(event.keyword, event.forPosition);
+      }
+      return next;
+    });
+    this.persistBulletState();
+  }
+
   onBulletEditStarted(key: string): void {
     this.activeBulletEditKey.set(key);
     const existing = this.bulletEdits().get(key);
@@ -815,12 +845,17 @@ export class CvOptimization implements OnInit {
       for (const [originalKeyword, editedText] of this.keywordEdits()) {
         keywordEditsArr.push({ originalKeyword, editedText });
       }
+      const keywordBulletPositionsArr: Array<{ keyword: string; forPosition: string }> = [];
+      for (const [keyword, forPosition] of this.keywordBulletPositions()) {
+        keywordBulletPositionsArr.push({ keyword, forPosition });
+      }
       const state: BulletUserState = {
         edits,
         selectedBullets: this.selections().selectedBullets,
         selectedMissingBullets,
         removedBullets: this.removedBullets(),
         keywordEdits: keywordEditsArr,
+        keywordBulletPositions: keywordBulletPositionsArr,
       };
       this.cvOptimizationApiService
         .saveUserOutput(resultId, JSON.stringify(state))

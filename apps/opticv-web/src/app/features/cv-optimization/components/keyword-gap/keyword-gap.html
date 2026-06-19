@@ -167,6 +167,31 @@
               </div>
             </div>
             }
+            @if (isSelected(item.keyword) && item.suggestedPlacement === 'experience_bullet') {
+            <div class="mt-2 flex items-center gap-2">
+              <label
+                [for]="'kw-pos-' + item.keyword"
+                class="text-xs text-surface-600 shrink-0"
+                >Add to position:</label
+              >
+              <select
+                [id]="'kw-pos-' + item.keyword"
+                class="text-sm border border-(--border-subtle) rounded px-2 py-1 flex-1 bg-white"
+                [value]="getKeywordPosition(item.keyword)"
+                (change)="onPositionChange(item.keyword, $any($event.target).value)"
+              >
+                <option value="">— pick a position —</option>
+                @for (pos of experiencePositions(); track pos) {
+                <option [value]="pos">{{ pos }}</option>
+                }
+              </select>
+            </div>
+            @if (!getKeywordPosition(item.keyword)) {
+            <p class="text-xs text-amber-600 mt-1">
+              Pick a position to include this in your CV.
+            </p>
+            }
+            }
             <p class="mt-1 text-sm text-surface-500">
               {{ item.recommendation }}
             </p>
@@ -270,6 +295,31 @@
                 />
               </div>
             </div>
+            }
+            @if (isSelected(item.keyword) && item.suggestedPlacement === 'experience_bullet') {
+            <div class="mt-2 flex items-center gap-2">
+              <label
+                [for]="'kw-lacks-pos-' + item.keyword"
+                class="text-xs text-surface-600 shrink-0"
+                >Add to position:</label
+              >
+              <select
+                [id]="'kw-lacks-pos-' + item.keyword"
+                class="text-sm border border-(--border-subtle) rounded px-2 py-1 flex-1 bg-white"
+                [value]="getKeywordPosition(item.keyword)"
+                (change)="onPositionChange(item.keyword, $any($event.target).value)"
+              >
+                <option value="">— pick a position —</option>
+                @for (pos of experiencePositions(); track pos) {
+                <option [value]="pos">{{ pos }}</option>
+                }
+              </select>
+            </div>
+            @if (!getKeywordPosition(item.keyword)) {
+            <p class="text-xs text-amber-600 mt-1">
+              Pick a position to include this in your CV.
+            </p>
+            }
             }
             <p class="mt-1 text-sm text-surface-500">
               {{ item.recommendation }}

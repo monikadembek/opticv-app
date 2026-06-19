@@ -298,10 +298,75 @@ describe('applySelectionsToCV', () => {
       expect(result.skills).toContain('CSS');
     });
 
-    it('does not add keywords with placement "experience_bullet"', () => {
+    it('does not add keywords with placement "experience_bullet" to skills', () => {
       const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedKeywords: ['React'] };
       const result = applySelectionsToCV(BASE_CV, selections, null, null, KEYWORD_RESULT);
       expect(result.skills).not.toContain('React');
+    });
+
+    describe('experience_bullet placement', () => {
+      const kwResultWithRecommendation: KeywordGapResult = {
+        ...KEYWORD_RESULT,
+        missingKeywords: [
+          {
+            ...BASE_MISSING_KW,
+            keyword: 'React',
+            suggestedPlacement: 'experience_bullet',
+            isRequired: true,
+            recommendation: 'Demonstrate React expertise by adding a specific project example.',
+          },
+        ],
+      };
+      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedKeywords: ['React'] };
+      const position = 'Acme Corp - Frontend Developer';
+
+      it('appends recommendation text as a bullet to the chosen position', () => {
+        const kwBulletPositions = new Map([['React', position]]);
+        const result = applySelectionsToCV(
+          BASE_CV, selections, null, null, kwResultWithRecommendation,
+          new Map(), [], [], new Map(), new Map(), kwBulletPositions,
+        );
+        expect(result.experience[0].bullets).toContain(
+          'Demonstrate React expertise by adding a specific project example.',
+        );
+        expect(result.experience[1].bullets).not.toContain(
+          'Demonstrate React expertise by adding a specific project example.',
+        );
+      });
+
+      it('uses keywordEdits override instead of recommendation text', () => {
+        const kwBulletPositions = new Map([['React', position]]);
+        const kwEdits = new Map([['React', 'Built high-performance React dashboards serving 50k users.']]);
+        const result = applySelectionsToCV(
+          BASE_CV, selections, null, null, kwResultWithRecommendation,
+          new Map(), [], [], new Map(), kwEdits, kwBulletPositions,
+        );
+        expect(result.experience[0].bullets).toContain(
+          'Built high-performance React dashboards serving 50k users.',
+        );
+        expect(result.experience[0].bullets).not.toContain(
+          'Demonstrate React expertise by adding a specific project example.',
+        );
+      });
+
+      it('does not modify any experience entry when no position is assigned', () => {
+        const result = applySelectionsToCV(
+          BASE_CV, selections, null, null, kwResultWithRecommendation,
+          new Map(), [], [], new Map(), new Map(), new Map(),
+        );
+        expect(result.experience[0].bullets).toHaveLength(3);
+        expect(result.experience[1].bullets).toHaveLength(1);
+      });
+
+      it('does not modify any experience entry when the position label does not match', () => {
+        const kwBulletPositions = new Map([['React', 'Nonexistent Corp - CTO']]);
+        const result = applySelectionsToCV(
+          BASE_CV, selections, null, null, kwResultWithRecommendation,
+          new Map(), [], [], new Map(), new Map(), kwBulletPositions,
+        );
+        expect(result.experience[0].bullets).toHaveLength(3);
+        expect(result.experience[1].bullets).toHaveLength(1);
+      });
     });
 
     it('does not duplicate a keyword already present in skills', () => {

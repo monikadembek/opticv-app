@@ -582,10 +582,11 @@ Frontend:
 
 ### 51. Keyword Gap - allow editing missing keyword
 
-**status: in progress**
+**status: done**
 **time: 19.06.2026**
 
 - add edit buttons to missing keywords so user can edit keyword, similar to what is implemented in bullet upgrades section
+- allow keywords with suggestedPlacement 'experience_bullet' to be added to the optimized CV by letting user pick which experience position to append the recommendation text as a new bullet
 
 ---
 
