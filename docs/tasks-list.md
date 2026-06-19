@@ -570,12 +570,13 @@ Frontend:
 
 ### 50. After the optimization process runs the job posting section is hidden, it should still be visible
 
-**status: in progress**
+**status: done**
 
 **time: 18.06.2026 - 19.06.2026**
 
-- make the job posting section still visible after the optimization process runs
-- for state 'processing' and 'completed' the job posting section should still be visible, but in readonly mode
+- make the job posting form section still visible after the optimization process runs
+- for state 'processing' and 'completed' the job posting section should still be visible, but form should be in readonly mode
+- in the top right corner of the page display button to run new optimization
 
 ---
 
