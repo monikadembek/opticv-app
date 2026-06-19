@@ -568,7 +568,19 @@ Frontend:
 
 ---
 
-### 50. Visual improvements in docx and pdf exported files structure
+### 50. After the optimization process runs the job posting section is hidden, it should still be visible
+
+**status: done**
+
+**time: 18.06.2026 - 19.06.2026**
+
+- make the job posting form section still visible after the optimization process runs
+- for state 'processing' and 'completed' the job posting section should still be visible, but form should be in readonly mode
+- in the top right corner of the page display button to run new optimization
+
+---
+
+### 51. Visual improvements in docx and pdf exported files structure
 
 **status: todo**
 **time:**
@@ -577,7 +589,7 @@ Frontend:
 
 ---
 
-### 51. Keyword Gap - select, modify and apply optimizations
+### 52. Keyword Gap - select, modify and apply optimizations
 
 **status: todo**
 **time:**

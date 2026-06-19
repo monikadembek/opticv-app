@@ -36,8 +36,16 @@
   <main class="optim-main">
     <div class="optim-content">
       @if (pageState() === 'processing' || pageState() === 'completed') {
-      <div class="optim-heading-wrap">
+      <div class="optim-heading-wrap mb-8">
         <h2 class="optim-heading">CV Optimization</h2>
+        <p-button
+          label="New Optimization"
+          icon="pi pi-plus"
+          severity="success"
+          size="small"
+          routerLink="/cv-optimization"
+          ariaLabel="Start a new optimization"
+        />
       </div>
       } @if (pageState() === 'initial') {
       <!-- Initial upload form -->
@@ -53,8 +61,22 @@
         </div>
       </div>
       } @else {
-      <!-- Job info banner -->
-      @if (jobApplication()) {
+      <!-- Job info: live flow (read-only prefilled form) -->
+      @if (!isStoredMode() && submittedJobApplication()) {
+      <app-section-card
+        sectionId="JOB_POSTING"
+        icon="pi-folder"
+        title="Job Posting"
+      >
+        <app-job-upload
+          [isReadonly]="true"
+          [prefillData]="submittedJobApplication()"
+        />
+      </app-section-card>
+      }
+
+      <!-- Job info: stored mode (banner) -->
+      @if (isStoredMode() && jobApplication()) {
       <app-job-info-banner
         [jobApplication]="jobApplication()!"
         (openCv)="openOriginalCv()"

@@ -27,11 +27,13 @@
         <p class="text-sm text-red-600" role="alert">
           Couldn't get list of your cv's
         </p>
+        @if (!isReadonly()) {
         <p-button
           type="button"
           label="Reload"
           (onClick)="reloadCvs()"
         ></p-button>
+        }
       </div>
       } @if (!cvList.isLoading() && !cvList.error() && cvList.value().length ===
       0) {
@@ -146,6 +148,7 @@
       } }
     </div>
 
+    @if (!isReadonly()) {
     <div class="flex flex-col gap-3">
       <p-button
         type="submit"
@@ -158,5 +161,6 @@
       <p class="text-sm text-red-600" role="alert">{{ submitError() }}</p>
       }
     </div>
+    }
   </form>
 </div>
