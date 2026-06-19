@@ -507,7 +507,6 @@ export class CvOptimization implements OnInit {
     this.selectedMissingBullets.set([]);
     this.missingBulletEdits.set(new Map());
     this.removedBullets.set([]);
-    this.submittedJobApplication.set(null);
     this.jobApplicationId.set(jobApplication.id);
     this.submittedJobApplication.set(jobApplication);
     this.cvStructuredData.set(extractedData);

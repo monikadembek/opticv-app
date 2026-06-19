@@ -30,7 +30,6 @@ import {
   JobApplicationResponse,
 } from '@opticv/datatypes';
 
-
 export interface JobSubmittedData {
   jobApplication: JobApplication;
   extractedData: CvStructuredData;
@@ -171,7 +170,7 @@ export class JobUpload {
           this.messageService.add({
             severity: 'success',
             summary: 'Success',
-            detail: 'CV and job description were successfully submited',
+            detail: 'CV and job description were successfully submitted',
           });
           this.isSubmitting.set(false);
           console.log('extraced data from cv: ', extractedData);
