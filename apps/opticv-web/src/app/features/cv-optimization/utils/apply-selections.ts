@@ -17,6 +17,7 @@ export function applySelectionsToCV(
   removedBullets: BulletSelectionKey[] = [],
   selectedMissingBullets: Array<{ forPosition: string; suggestedBullet: string }> = [],
   missingBulletEdits: Map<string, string> = new Map(),
+  keywordEdits: Map<string, string> = new Map(),
 ): CvStructuredData {
   const clone: CvStructuredData = structuredClone(cv);
 
@@ -90,9 +91,10 @@ export function applySelectionsToCV(
       );
       const placement = entry?.suggestedPlacement;
       if (placement === 'skills' || placement === 'multiple' || !placement) {
-        if (!existing.has(kw.toLowerCase())) {
-          clone.skills.push(kw);
-          existing.add(kw.toLowerCase());
+        const displayText = keywordEdits.get(kw) ?? kw;
+        if (!existing.has(displayText.toLowerCase())) {
+          clone.skills.push(displayText);
+          existing.add(displayText.toLowerCase());
         }
       }
     }

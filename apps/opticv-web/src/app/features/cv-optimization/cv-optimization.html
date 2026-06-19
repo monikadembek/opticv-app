@@ -128,7 +128,14 @@
         <app-keyword-gap
           [result]="keywordGapResult()!"
           [selectedKeywords]="selections().selectedKeywords"
+          [keywordEdits]="keywordEdits()"
+          [activeKeywordEditKey]="activeKeywordEditKey()"
+          [editedKeywordText]="editedKeywordText()"
           (keywordToggled)="onKeywordToggled($event)"
+          (keywordEditStarted)="onKeywordEditStarted($event)"
+          (keywordEditSaved)="onKeywordEditSaved($event)"
+          (keywordEditCancelled)="onKeywordEditCancelled()"
+          (keywordEditTextChanged)="onKeywordEditTextChanged($event)"
         />
         } @if (retryablePromptTypes().has(PromptType.KEYWORD_GAP)) {
         <div class="retry-action">

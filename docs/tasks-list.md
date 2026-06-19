@@ -580,21 +580,21 @@ Frontend:
 
 ---
 
-### 51. Visual improvements in docx and pdf exported files structure
+### 51. Keyword Gap - allow editing missing keyword
+
+**status: in progress**
+**time: 19.06.2026**
+
+- add edit buttons to missing keywords so user can edit keyword, similar to what is implemented in bullet upgrades section
+
+---
+
+### 52. Visual improvements in docx and pdf exported files structure
 
 **status: todo**
 **time:**
 
 - pdfs and docx files need some improvemnts regarding their visual structure
-
----
-
-### 52. Keyword Gap - select, modify and apply optimizations
-
-**status: todo**
-**time:**
-
-- allow selecting, modifying, adding missing keywords and applying it to cv.
 
 ---
 
