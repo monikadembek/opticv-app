@@ -37,7 +37,9 @@
 }
 
 .optim-heading-wrap {
-  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .optim-heading {
@@ -45,7 +47,7 @@
   font-size: var(--text-3xl);
   font-weight: var(--weight-bold);
   color: var(--text-strong);
-  margin: 0 0 32px;
+  margin: 0;
 }
 
 .initial-form-wrap {

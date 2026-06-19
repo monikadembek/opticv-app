@@ -30,6 +30,7 @@ import {
   CoverLetterResult,
   CvStructuredData,
   InterviewPrepResult,
+  JobApplication,
   JobApplicationWithCv,
   KeywordGapResult,
   PromptType,
@@ -124,11 +125,11 @@ function isInterviewPrepResult(value: unknown): value is InterviewPrepResult {
 
 const ActivePrompts = [
   PromptType.RESUME_AUTOPSY,
-  PromptType.KEYWORD_GAP,
-  PromptType.BULLET_UPGRADE,
-  PromptType.SUMMARY_REWRITE,
-  PromptType.COVER_LETTER,
-  PromptType.INTERVIEW_PREP,
+  // PromptType.KEYWORD_GAP,
+  // PromptType.BULLET_UPGRADE,
+  // PromptType.SUMMARY_REWRITE,
+  // PromptType.COVER_LETTER,
+  // PromptType.INTERVIEW_PREP,
 ];
 
 @Component({
@@ -182,6 +183,7 @@ export class CvOptimization implements OnInit {
   readonly isStoredMode = signal(false);
   readonly loadError = signal<string | null>(null);
   readonly jobApplication = signal<JobApplicationWithCv | null>(null);
+  readonly submittedJobApplication = signal<JobApplication | null>(null);
   readonly bulletEdits = signal<Map<string, string>>(new Map());
   readonly bulletUpgradeResultId = signal<string | null>(null);
   readonly activeBulletEditKey = signal<string | null>(null);
@@ -505,7 +507,9 @@ export class CvOptimization implements OnInit {
     this.selectedMissingBullets.set([]);
     this.missingBulletEdits.set(new Map());
     this.removedBullets.set([]);
+    this.submittedJobApplication.set(null);
     this.jobApplicationId.set(jobApplication.id);
+    this.submittedJobApplication.set(jobApplication);
     this.cvStructuredData.set(extractedData);
 
     from(Object.values(PromptType))

@@ -2,7 +2,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
+  input,
   output,
   signal,
 } from '@angular/core';
@@ -28,6 +30,7 @@ import {
   JobApplicationResponse,
 } from '@opticv/datatypes';
 
+
 export interface JobSubmittedData {
   jobApplication: JobApplication;
   extractedData: CvStructuredData;
@@ -50,6 +53,9 @@ export class JobUpload {
   private readonly cvOptimizationApiService = inject(CvOptimizationApiService);
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
+
+  isReadonly = input<boolean>(false);
+  prefillData = input<JobApplication | null>(null);
 
   jobSubmitted = output<JobSubmittedData>();
   jobApplication: JobApplicationResponse | null = null;
@@ -90,6 +96,25 @@ export class JobUpload {
 
   constructor() {
     this.reloadCvs();
+
+    effect(() => {
+      const data = this.prefillData();
+      if (data) {
+        this.form.patchValue({
+          cvDocumentId: data.cvDocumentId,
+          companyName: data.companyName ?? '',
+          jobTitle: data.jobTitle ?? '',
+          jobDescription: data.jobDescription,
+          notes: data.notes ?? '',
+        });
+      }
+
+      if (this.isReadonly()) {
+        this.form.disable();
+      } else {
+        this.form.enable();
+      }
+    });
   }
 
   reloadCvs(): void {

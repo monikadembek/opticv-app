@@ -188,7 +188,7 @@ describe('CvOptimization', () => {
 
   it('should render the page heading', () => {
     const heading: HTMLElement = fixture.nativeElement.querySelector('h2');
-    expect(heading.textContent?.trim()).toBe('CV Optimization');
+    expect(heading.textContent?.trim()).toContain('CV Optimization');
   });
 
   it('should render the job-upload component', () => {
@@ -501,30 +501,10 @@ describe('CvOptimization', () => {
     it('calls runSingleOptimizationProcess for each active PromptType', () => {
       component.runOptimization(mockJobSubmittedData);
 
-      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledTimes(6);
-      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
-        mockJobApplication.id,
-        PromptType.KEYWORD_GAP,
-      );
+      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledTimes(1);
       expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
         mockJobApplication.id,
         PromptType.RESUME_AUTOPSY,
-      );
-      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
-        mockJobApplication.id,
-        PromptType.BULLET_UPGRADE,
-      );
-      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
-        mockJobApplication.id,
-        PromptType.SUMMARY_REWRITE,
-      );
-      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
-        mockJobApplication.id,
-        PromptType.COVER_LETTER,
-      );
-      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
-        mockJobApplication.id,
-        PromptType.INTERVIEW_PREP,
       );
     });
 
@@ -541,13 +521,13 @@ describe('CvOptimization', () => {
       );
     });
 
-    it('sets isProcessing to true for the first 3 concurrent prompt types as soon as their streams open', () => {
+    it('sets isProcessing to true for the active prompt type as soon as its stream opens', () => {
       apiService.streamOptimizationEvents.mockReturnValue(NEVER);
 
       component.runOptimization(mockJobSubmittedData);
 
       const processingValues = Array.from(component.isProcessing().values());
-      expect(processingValues.filter(Boolean).length).toBeGreaterThanOrEqual(3);
+      expect(processingValues.filter(Boolean).length).toBeGreaterThanOrEqual(1);
     });
 
     it('updates results and clears isProcessing on a completed SSE event', () => {
@@ -801,8 +781,8 @@ describe('CvOptimization', () => {
       expect(component.isProcessingAny()).toBe(true);
     });
 
-    it('returns true when SUMMARY_REWRITE is processing (it is an active prompt)', () => {
-      component.isProcessing.set(new Map([[PromptType.SUMMARY_REWRITE, true]]));
+    it('returns true when RESUME_AUTOPSY is processing (it is an active prompt)', () => {
+      component.isProcessing.set(new Map([[PromptType.RESUME_AUTOPSY, true]]));
       expect(component.isProcessingAny()).toBe(true);
     });
 
@@ -830,13 +810,13 @@ describe('CvOptimization', () => {
 
     it('returns false when CV data exists but an active prompt is still processing', () => {
       component.cvStructuredData.set(mockCvStructuredData);
-      component.isProcessing.set(new Map([[PromptType.KEYWORD_GAP, true]]));
+      component.isProcessing.set(new Map([[PromptType.RESUME_AUTOPSY, true]]));
       expect(component.canExportCv()).toBe(false);
     });
 
     it('returns true once processing finishes and CV data is set', () => {
       component.cvStructuredData.set(mockCvStructuredData);
-      component.isProcessing.set(new Map([[PromptType.KEYWORD_GAP, false]]));
+      component.isProcessing.set(new Map([[PromptType.RESUME_AUTOPSY, false]]));
       expect(component.canExportCv()).toBe(true);
     });
   });
@@ -1048,28 +1028,8 @@ describe('CvOptimization', () => {
       component.results.set(
         new Map([
           [
-            PromptType.KEYWORD_GAP,
-            { promptType: PromptType.KEYWORD_GAP, status: 'completed' },
-          ],
-          [
             PromptType.RESUME_AUTOPSY,
             { promptType: PromptType.RESUME_AUTOPSY, status: 'completed' },
-          ],
-          [
-            PromptType.BULLET_UPGRADE,
-            { promptType: PromptType.BULLET_UPGRADE, status: 'completed' },
-          ],
-          [
-            PromptType.SUMMARY_REWRITE,
-            { promptType: PromptType.SUMMARY_REWRITE, status: 'completed' },
-          ],
-          [
-            PromptType.COVER_LETTER,
-            { promptType: PromptType.COVER_LETTER, status: 'completed' },
-          ],
-          [
-            PromptType.INTERVIEW_PREP,
-            { promptType: PromptType.INTERVIEW_PREP, status: 'completed' },
           ],
         ]),
       );
@@ -1117,7 +1077,7 @@ describe('CvOptimization', () => {
       component.selectedMissingBullets.set([
         { forPosition: 'Dev at Acme', suggestedBullet: 'Led team of 5.' },
       ]);
-      component.isProcessing.set(new Map([[PromptType.KEYWORD_GAP, true]]));
+      component.isProcessing.set(new Map([[PromptType.RESUME_AUTOPSY, true]]));
       expect(component.canExportCv()).toBe(false);
     });
   });
@@ -1275,7 +1235,7 @@ describe('CvOptimization', () => {
       expect(component.pageState()).toBe('initial');
     });
 
-    it('returns processing when jobApplicationId is set and any prompt is processing', () => {
+    it('returns processing when jobApplicationId is set and an active prompt is processing', () => {
       component.jobApplicationId.set('job-1');
       component.isProcessing.set(new Map([[PromptType.RESUME_AUTOPSY, true]]));
       expect(component.pageState()).toBe('processing');
