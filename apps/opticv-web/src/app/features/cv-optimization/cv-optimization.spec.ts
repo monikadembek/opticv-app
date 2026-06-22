@@ -91,6 +91,22 @@ function makeCvListResource() {
 }
 
 describe('CvOptimization', () => {
+  // CvA4Preview (rendered inside the page's preview dialog) uses ResizeObserver
+  // which is not available in JSDOM — assign directly to avoid vi.stubGlobal
+  // side-effects on other test files sharing the same worker.
+  const g = globalThis as Record<string, unknown>;
+  const originalResizeObserver = g['ResizeObserver'];
+  beforeEach(() => {
+    g['ResizeObserver'] = class {
+      observe = vi.fn();
+      disconnect = vi.fn();
+    };
+  });
+
+  afterEach(() => {
+    g['ResizeObserver'] = originalResizeObserver;
+  });
+
   let fixture: ComponentFixture<CvOptimization>;
   let component: CvOptimization;
   let apiService: {
@@ -501,10 +517,30 @@ describe('CvOptimization', () => {
     it('calls runSingleOptimizationProcess for each active PromptType', () => {
       component.runOptimization(mockJobSubmittedData);
 
-      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledTimes(1);
+      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledTimes(6);
       expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
         mockJobApplication.id,
         PromptType.RESUME_AUTOPSY,
+      );
+      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
+        mockJobApplication.id,
+        PromptType.KEYWORD_GAP,
+      );
+      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
+        mockJobApplication.id,
+        PromptType.BULLET_UPGRADE,
+      );
+      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
+        mockJobApplication.id,
+        PromptType.SUMMARY_REWRITE,
+      );
+      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
+        mockJobApplication.id,
+        PromptType.COVER_LETTER,
+      );
+      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
+        mockJobApplication.id,
+        PromptType.INTERVIEW_PREP,
       );
     });
 
@@ -1027,10 +1063,12 @@ describe('CvOptimization', () => {
       component.isStoredMode.set(true);
       component.results.set(
         new Map([
-          [
-            PromptType.RESUME_AUTOPSY,
-            { promptType: PromptType.RESUME_AUTOPSY, status: 'completed' },
-          ],
+          [PromptType.RESUME_AUTOPSY, { promptType: PromptType.RESUME_AUTOPSY, status: 'completed' }],
+          [PromptType.KEYWORD_GAP, { promptType: PromptType.KEYWORD_GAP, status: 'completed' }],
+          [PromptType.BULLET_UPGRADE, { promptType: PromptType.BULLET_UPGRADE, status: 'completed' }],
+          [PromptType.SUMMARY_REWRITE, { promptType: PromptType.SUMMARY_REWRITE, status: 'completed' }],
+          [PromptType.COVER_LETTER, { promptType: PromptType.COVER_LETTER, status: 'completed' }],
+          [PromptType.INTERVIEW_PREP, { promptType: PromptType.INTERVIEW_PREP, status: 'completed' }],
         ]),
       );
       expect(component.hasPartialStoredResults()).toBe(false);

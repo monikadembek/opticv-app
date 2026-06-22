@@ -8,7 +8,18 @@ describe('ExportFooter', () => {
   let fixture: ComponentFixture<ExportFooter>;
   let component: ExportFooter;
 
+  // CvA4Preview (used inside the preview dialog) uses ResizeObserver which is
+  // not available in JSDOM — assign directly to avoid vi.stubGlobal side-effects
+  // on other test files sharing the same worker.
+  const g = globalThis as Record<string, unknown>;
+  const originalResizeObserver = g['ResizeObserver'];
+
   beforeEach(async () => {
+    g['ResizeObserver'] = class {
+      observe = vi.fn();
+      disconnect = vi.fn();
+    };
+
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [ExportFooter],
@@ -16,6 +27,10 @@ describe('ExportFooter', () => {
     fixture = TestBed.createComponent(ExportFooter);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    g['ResizeObserver'] = originalResizeObserver;
   });
 
   it('should create', () => {

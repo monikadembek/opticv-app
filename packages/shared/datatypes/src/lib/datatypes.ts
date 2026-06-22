@@ -427,4 +427,6 @@ export type BulletUserState = {
     editedText?: string;
   }>;
   removedBullets: BulletSelectionKey[];
+  keywordEdits?: Array<{ originalKeyword: string; editedText: string }>;
+  keywordBulletPositions?: Array<{ keyword: string; forPosition: string }>;
 };

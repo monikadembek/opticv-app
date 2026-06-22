@@ -15,8 +15,13 @@ export function applySelectionsToCV(
   keywordResult: KeywordGapResult | null,
   bulletEdits: Map<string, string> = new Map(),
   removedBullets: BulletSelectionKey[] = [],
-  selectedMissingBullets: Array<{ forPosition: string; suggestedBullet: string }> = [],
+  selectedMissingBullets: Array<{
+    forPosition: string;
+    suggestedBullet: string;
+  }> = [],
   missingBulletEdits: Map<string, string> = new Map(),
+  keywordEdits: Map<string, string> = new Map(),
+  keywordBulletPositions: Map<string, string> = new Map(),
 ): CvStructuredData {
   const clone: CvStructuredData = structuredClone(cv);
 
@@ -25,9 +30,9 @@ export function applySelectionsToCV(
       (e) => e.company === key.company && e.title === key.title,
     );
     if (expIndex === -1) continue;
-    clone.experience[expIndex].bullets = clone.experience[expIndex].bullets.filter(
-      (b) => b.trim() !== key.originalText.trim(),
-    );
+    clone.experience[expIndex].bullets = clone.experience[
+      expIndex
+    ].bullets.filter((b) => b.trim() !== key.originalText.trim());
   }
 
   if (selections.selectedSummaryAngle && summaryResult) {
@@ -85,14 +90,27 @@ export function applySelectionsToCV(
   if (selections.selectedKeywords.length > 0 && keywordResult) {
     const existing = new Set(clone.skills.map((s) => s.toLowerCase()));
     for (const kw of selections.selectedKeywords) {
-      const entry = keywordResult.missingKeywords.find(
-        (m) => m.keyword === kw,
-      );
+      const entry = keywordResult.missingKeywords.find((m) => m.keyword === kw);
       const placement = entry?.suggestedPlacement;
       if (placement === 'skills' || placement === 'multiple' || !placement) {
-        if (!existing.has(kw.toLowerCase())) {
-          clone.skills.push(kw);
-          existing.add(kw.toLowerCase());
+        const displayText = keywordEdits.get(kw) ?? kw;
+        if (!existing.has(displayText.toLowerCase())) {
+          clone.skills.push(displayText);
+          existing.add(displayText.toLowerCase());
+        }
+      } else if (placement === 'experience_bullet') {
+        const forPosition = keywordBulletPositions.get(kw);
+        if (!forPosition) continue;
+        const quotedMatch = entry?.recommendation?.match(/'([^']+)'/);
+        const baseText = quotedMatch ? quotedMatch[1] : kw;
+        const displayText = keywordEdits.get(kw) ?? baseText;
+        const expIndex = clone.experience.findIndex((e) => {
+          const dashFormat = `${e.company ?? ''} - ${e.title ?? ''}`;
+          const atFormat = `${e.title ?? ''} at ${e.company ?? ''}`;
+          return dashFormat === forPosition || atFormat === forPosition;
+        });
+        if (expIndex !== -1) {
+          clone.experience[expIndex].bullets.push(displayText);
         }
       }
     }

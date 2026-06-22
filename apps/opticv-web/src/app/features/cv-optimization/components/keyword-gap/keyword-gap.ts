@@ -6,12 +6,14 @@ import {
   output,
 } from '@angular/core';
 import type { KeywordGapResult } from '@opticv/datatypes';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
 
 const RING_CIRCUMFERENCE = 2 * Math.PI * 40;
 
 @Component({
-  imports: [TooltipModule],
+  imports: [ButtonModule, InputTextModule, TooltipModule],
   selector: 'app-keyword-gap',
   templateUrl: './keyword-gap.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -19,8 +21,18 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * 40;
 export class KeywordGap {
   readonly result = input.required<KeywordGapResult>();
   readonly selectedKeywords = input<string[]>([]);
+  readonly keywordEdits = input<Map<string, string>>(new Map());
+  readonly activeKeywordEditKey = input<string | null>(null);
+  readonly editedKeywordText = input<string>('');
+  readonly experiencePositions = input<string[]>([]);
+  readonly keywordBulletPositions = input<Map<string, string>>(new Map());
 
   readonly keywordToggled = output<string>();
+  readonly keywordEditStarted = output<string>();
+  readonly keywordEditSaved = output<{ key: string; text: string }>();
+  readonly keywordEditCancelled = output<void>();
+  readonly keywordEditTextChanged = output<string>();
+  readonly keywordBulletPositionSelected = output<{ keyword: string; forPosition: string }>();
 
   readonly ringCircumference = RING_CIRCUMFERENCE;
 
@@ -56,5 +68,25 @@ export class KeywordGap {
 
   toggleKeyword(keyword: string): void {
     this.keywordToggled.emit(keyword);
+  }
+
+  isEditingKeyword(keyword: string): boolean {
+    return this.activeKeywordEditKey() === keyword;
+  }
+
+  isEditedKeyword(keyword: string): boolean {
+    return this.keywordEdits().has(keyword);
+  }
+
+  getKeywordDisplayText(keyword: string): string {
+    return this.keywordEdits().get(keyword) ?? keyword;
+  }
+
+  getKeywordPosition(keyword: string): string {
+    return this.keywordBulletPositions().get(keyword) ?? '';
+  }
+
+  onPositionChange(keyword: string, forPosition: string): void {
+    this.keywordBulletPositionSelected.emit({ keyword, forPosition });
   }
 }

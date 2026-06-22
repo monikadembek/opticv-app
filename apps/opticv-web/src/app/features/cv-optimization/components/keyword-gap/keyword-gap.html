@@ -115,14 +115,82 @@
               <label
                 [for]="'kw-' + item.keyword"
                 class="font-semibold text-sm text-surface-800 cursor-pointer"
-                >{{ item.keyword }}</label
+                >{{ getKeywordDisplayText(item.keyword) }}</label
               >
+              @if (isEditedKeyword(item.keyword)) {
+              <span
+                class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 font-medium"
+                >Edited</span
+              >
+              } @if (!isEditingKeyword(item.keyword)) {
+              <p-button
+                type="button"
+                variant="outlined"
+                severity="success"
+                size="small"
+                class="py-0!"
+                (click)="keywordEditStarted.emit(item.keyword)"
+                aria-label="Edit keyword"
+              >
+                <i class="pi pi-pencil text-xs!"></i> Edit
+              </p-button>
+              }
               <span
                 class="text-xs bg-(--neutral-100) text-surface-600 rounded px-1.5 py-0.5 ml-auto capitalize"
                 title="Suggested placement"
                 >{{ item.suggestedPlacement.replace('_', ' ') }}</span
               >
             </div>
+            @if (isEditingKeyword(item.keyword)) {
+            <div class="space-y-2 mt-2">
+              <input
+                pInputText
+                type="text"
+                [value]="editedKeywordText()"
+                (input)="keywordEditTextChanged.emit($any($event.target).value)"
+                class="w-full text-sm"
+                aria-label="Edit keyword text"
+              />
+              <div class="flex gap-2">
+                <p-button
+                  label="Save"
+                  size="small"
+                  (onClick)="keywordEditSaved.emit({ key: item.keyword, text: editedKeywordText() })"
+                />
+                <p-button
+                  label="Cancel"
+                  size="small"
+                  severity="secondary"
+                  [text]="true"
+                  (onClick)="keywordEditCancelled.emit()"
+                />
+              </div>
+            </div>
+            } @if (isSelected(item.keyword) && item.suggestedPlacement ===
+            'experience_bullet') {
+            <div class="mt-2 flex items-center gap-2">
+              <label
+                [for]="'kw-pos-' + item.keyword"
+                class="text-xs text-surface-600 shrink-0"
+                >Add to position:</label
+              >
+              <select
+                [id]="'kw-pos-' + item.keyword"
+                class="text-sm border border-(--border-subtle) rounded px-2 py-1 flex-1 bg-white"
+                [value]="getKeywordPosition(item.keyword)"
+                (change)="onPositionChange(item.keyword, $any($event.target).value)"
+              >
+                <option value="">— pick a position —</option>
+                @for (pos of experiencePositions(); track pos) {
+                <option [value]="pos">{{ pos }}</option>
+                }
+              </select>
+            </div>
+            @if (!getKeywordPosition(item.keyword)) {
+            <p class="text-xs text-amber-600 mt-1">
+              Pick a position to include this in your CV.
+            </p>
+            } }
             <p class="mt-1 text-sm text-surface-500">
               {{ item.recommendation }}
             </p>
@@ -176,13 +244,81 @@
               <label
                 [for]="'kw-lacks-' + item.keyword"
                 class="font-semibold text-sm text-surface-800 cursor-pointer"
-                >{{ item.keyword }}</label
+                >{{ getKeywordDisplayText(item.keyword) }}</label
               >
+              @if (isEditedKeyword(item.keyword)) {
+              <span
+                class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 font-medium"
+                >Edited</span
+              >
+              } @if (!isEditingKeyword(item.keyword)) {
+              <p-button
+                type="button"
+                variant="outlined"
+                severity="success"
+                size="small"
+                class="py-0!"
+                (click)="keywordEditStarted.emit(item.keyword)"
+                aria-label="Edit keyword"
+              >
+                <i class="pi pi-pencil text-xs!"></i> Edit
+              </p-button>
+              }
               <span
                 class="text-xs bg-(--neutral-100) text-surface-600 capitalize rounded px-1.5 py-0.5 ml-auto"
                 >{{ item.suggestedPlacement.replace('_', ' ') }}</span
               >
             </div>
+            @if (isEditingKeyword(item.keyword)) {
+            <div class="space-y-2 mt-2">
+              <input
+                pInputText
+                type="text"
+                [value]="editedKeywordText()"
+                (input)="keywordEditTextChanged.emit($any($event.target).value)"
+                class="w-full text-sm"
+                aria-label="Edit keyword text"
+              />
+              <div class="flex gap-2">
+                <p-button
+                  label="Save"
+                  size="small"
+                  (onClick)="keywordEditSaved.emit({ key: item.keyword, text: editedKeywordText() })"
+                />
+                <p-button
+                  label="Cancel"
+                  size="small"
+                  severity="secondary"
+                  [text]="true"
+                  (onClick)="keywordEditCancelled.emit()"
+                />
+              </div>
+            </div>
+            } @if (isSelected(item.keyword) && item.suggestedPlacement ===
+            'experience_bullet') {
+            <div class="mt-2 flex items-center gap-2">
+              <label
+                [for]="'kw-lacks-pos-' + item.keyword"
+                class="text-xs text-surface-600 shrink-0"
+                >Add to position:</label
+              >
+              <select
+                [id]="'kw-lacks-pos-' + item.keyword"
+                class="text-sm border border-(--border-subtle) rounded px-2 py-1 flex-1 bg-white"
+                [value]="getKeywordPosition(item.keyword)"
+                (change)="onPositionChange(item.keyword, $any($event.target).value)"
+              >
+                <option value="">— pick a position —</option>
+                @for (pos of experiencePositions(); track pos) {
+                <option [value]="pos">{{ pos }}</option>
+                }
+              </select>
+            </div>
+            @if (!getKeywordPosition(item.keyword)) {
+            <p class="text-xs text-amber-600 mt-1">
+              Pick a position to include this in your CV.
+            </p>
+            } }
             <p class="mt-1 text-sm text-surface-500">
               {{ item.recommendation }}
             </p>
