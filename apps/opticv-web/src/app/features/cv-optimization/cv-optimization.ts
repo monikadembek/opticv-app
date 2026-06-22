@@ -654,7 +654,22 @@ export class CvOptimization implements OnInit {
 
   onKeywordEditStarted(keyword: string): void {
     this.activeKeywordEditKey.set(keyword);
-    this.editedKeywordText.set(this.keywordEdits().get(keyword) ?? keyword);
+    if (this.keywordEdits().has(keyword)) {
+      this.editedKeywordText.set(this.keywordEdits().get(keyword)!);
+      return;
+    }
+    const entry = this.keywordGapResult()?.missingKeywords.find(
+      (m) => m.keyword === keyword,
+    );
+    if (
+      entry?.suggestedPlacement === 'experience_bullet' &&
+      entry.recommendation
+    ) {
+      const match = entry.recommendation.match(/'([^']+)'/);
+      this.editedKeywordText.set(match ? match[1] : keyword);
+    } else {
+      this.editedKeywordText.set(keyword);
+    }
   }
 
   onKeywordEditTextChanged(text: string): void {
@@ -841,11 +856,17 @@ export class CvOptimization implements OnInit {
         const editedText = this.missingBulletEdits().get(key);
         return editedText !== undefined ? { ...s, editedText } : s;
       });
-      const keywordEditsArr: Array<{ originalKeyword: string; editedText: string }> = [];
+      const keywordEditsArr: Array<{
+        originalKeyword: string;
+        editedText: string;
+      }> = [];
       for (const [originalKeyword, editedText] of this.keywordEdits()) {
         keywordEditsArr.push({ originalKeyword, editedText });
       }
-      const keywordBulletPositionsArr: Array<{ keyword: string; forPosition: string }> = [];
+      const keywordBulletPositionsArr: Array<{
+        keyword: string;
+        forPosition: string;
+      }> = [];
       for (const [keyword, forPosition] of this.keywordBulletPositions()) {
         keywordBulletPositionsArr.push({ keyword, forPosition });
       }
