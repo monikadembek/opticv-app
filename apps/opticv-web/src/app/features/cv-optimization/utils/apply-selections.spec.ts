@@ -305,7 +305,23 @@ describe('applySelectionsToCV', () => {
     });
 
     describe('experience_bullet placement', () => {
-      const kwResultWithRecommendation: KeywordGapResult = {
+      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedKeywords: ['React'] };
+      const position = 'Acme Corp - Frontend Developer';
+
+      const kwResultWithQuotedRecommendation: KeywordGapResult = {
+        ...KEYWORD_RESULT,
+        missingKeywords: [
+          {
+            ...BASE_MISSING_KW,
+            keyword: 'React',
+            suggestedPlacement: 'experience_bullet',
+            isRequired: true,
+            recommendation: "Add 'Built performant UIs with React hooks and context API' to your experience.",
+          },
+        ],
+      };
+
+      const kwResultWithUnquotedRecommendation: KeywordGapResult = {
         ...KEYWORD_RESULT,
         missingKeywords: [
           {
@@ -317,41 +333,51 @@ describe('applySelectionsToCV', () => {
           },
         ],
       };
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedKeywords: ['React'] };
-      const position = 'Acme Corp - Frontend Developer';
 
-      it('appends recommendation text as a bullet to the chosen position', () => {
+      it('extracts the quoted text from recommendation as the bullet', () => {
         const kwBulletPositions = new Map([['React', position]]);
         const result = applySelectionsToCV(
-          BASE_CV, selections, null, null, kwResultWithRecommendation,
+          BASE_CV, selections, null, null, kwResultWithQuotedRecommendation,
           new Map(), [], [], new Map(), new Map(), kwBulletPositions,
         );
         expect(result.experience[0].bullets).toContain(
-          'Demonstrate React expertise by adding a specific project example.',
+          'Built performant UIs with React hooks and context API',
         );
         expect(result.experience[1].bullets).not.toContain(
+          'Built performant UIs with React hooks and context API',
+        );
+      });
+
+      it('falls back to keyword when recommendation has no quoted text', () => {
+        const kwBulletPositions = new Map([['React', position]]);
+        const result = applySelectionsToCV(
+          BASE_CV, selections, null, null, kwResultWithUnquotedRecommendation,
+          new Map(), [], [], new Map(), new Map(), kwBulletPositions,
+        );
+        expect(result.experience[0].bullets).toContain('React');
+        expect(result.experience[0].bullets).not.toContain(
           'Demonstrate React expertise by adding a specific project example.',
         );
       });
 
-      it('uses keywordEdits override instead of recommendation text', () => {
+      it('uses keywordEdits override instead of extracted recommendation text', () => {
         const kwBulletPositions = new Map([['React', position]]);
         const kwEdits = new Map([['React', 'Built high-performance React dashboards serving 50k users.']]);
         const result = applySelectionsToCV(
-          BASE_CV, selections, null, null, kwResultWithRecommendation,
+          BASE_CV, selections, null, null, kwResultWithQuotedRecommendation,
           new Map(), [], [], new Map(), kwEdits, kwBulletPositions,
         );
         expect(result.experience[0].bullets).toContain(
           'Built high-performance React dashboards serving 50k users.',
         );
         expect(result.experience[0].bullets).not.toContain(
-          'Demonstrate React expertise by adding a specific project example.',
+          'Built performant UIs with React hooks and context API',
         );
       });
 
       it('does not modify any experience entry when no position is assigned', () => {
         const result = applySelectionsToCV(
-          BASE_CV, selections, null, null, kwResultWithRecommendation,
+          BASE_CV, selections, null, null, kwResultWithQuotedRecommendation,
           new Map(), [], [], new Map(), new Map(), new Map(),
         );
         expect(result.experience[0].bullets).toHaveLength(3);
@@ -361,7 +387,7 @@ describe('applySelectionsToCV', () => {
       it('does not modify any experience entry when the position label does not match', () => {
         const kwBulletPositions = new Map([['React', 'Nonexistent Corp - CTO']]);
         const result = applySelectionsToCV(
-          BASE_CV, selections, null, null, kwResultWithRecommendation,
+          BASE_CV, selections, null, null, kwResultWithQuotedRecommendation,
           new Map(), [], [], new Map(), new Map(), kwBulletPositions,
         );
         expect(result.experience[0].bullets).toHaveLength(3);
