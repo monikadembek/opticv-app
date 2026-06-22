@@ -580,13 +580,14 @@ Frontend:
 
 ---
 
-### 51. Keyword Gap - allow editing missing keyword
+### 51. Keyword Gap - allow editing missing keyword and applying them to optimized cv
 
 **status: done**
-**time: 19.06.2026**
+**time: 19.06.2026 - 22.06.20226**
 
 - add edit buttons to missing keywords so user can edit keyword, similar to what is implemented in bullet upgrades section
 - allow keywords with suggestedPlacement 'experience_bullet' to be added to the optimized CV by letting user pick which experience position to append the recommendation text as a new bullet
+- when editing the 'experience_bullet' the edit input should display quoted text from the recommendation property, if that text is missing than edit field should contain just the keyword
 
 ---
 
@@ -596,6 +597,19 @@ Frontend:
 **time:**
 
 - pdfs and docx files need some improvemnts regarding their visual structure
+
+---
+
+### Keyword Gap - Acronym issues and underweighted keywords
+
+- think of what we can do with those sections, are tey mportant, should we display them, how we could apply the acronym issues
+
+---
+
+### ATS score and keywords score - update them when user applies suggestions
+
+- do research on how this could be implemented
+- do we need another call to AI to check the scores in order to update them?
 
 ---
 
