@@ -102,4 +102,11 @@ export class OptimSidebar {
     const pct = (score ?? 0) / 100;
     return pct * this.scoreCircumference(radius);
   }
+
+  strokeColor(score: number | null): string {
+    const value = score ?? 0;
+    if (value <= 49) return '#ef4444';
+    if (value <= 74) return '#f59e0b';
+    return '#22c55e';
+  }
 }
