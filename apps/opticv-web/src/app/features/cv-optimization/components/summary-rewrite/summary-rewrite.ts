@@ -68,7 +68,6 @@ export class SummaryRewrite {
   }
 
   onTextChange(value: string): void {
-    console.log('onTextChange(): ', value);
     this.editableText.set(value);
     const base = this.selectedVariantText();
     this.summaryTextEdited.emit(value === base ? null : value);
