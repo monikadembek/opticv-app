@@ -1328,4 +1328,215 @@ describe('CvOptimization', () => {
       expect(component.activeSection()).toBe(PromptType.KEYWORD_GAP);
     });
   });
+
+  describe('atsScore', () => {
+    it('returns null when no autopsy result exists', () => {
+      expect(component.atsScore()).toBeNull();
+    });
+
+    it('returns overallScore from autopsy result', () => {
+      component.results.set(
+        new Map([
+          [
+            PromptType.RESUME_AUTOPSY,
+            {
+              promptType: PromptType.RESUME_AUTOPSY,
+              status: 'completed',
+              result: {
+                overallScore: 72,
+                predictedScoreAfterFixes: 90,
+                topPriority: 'Keywords',
+                summary: 'Good',
+                issues: [],
+                strengths: [],
+              },
+            },
+          ],
+        ]),
+      );
+      expect(component.atsScore()).toBe(72);
+    });
+  });
+
+  describe('keywordScore', () => {
+    it('returns null when no keyword gap result exists', () => {
+      expect(component.keywordScore()).toBeNull();
+    });
+
+    it('returns matchScore from keyword gap result', () => {
+      component.results.set(
+        new Map([
+          [
+            PromptType.KEYWORD_GAP,
+            {
+              promptType: PromptType.KEYWORD_GAP,
+              status: 'completed',
+              result: {
+                matchScore: 65,
+                matchScoreBreakdown: {
+                  requiredMatched: 3,
+                  requiredTotal: 5,
+                  preferredMatched: 2,
+                  preferredTotal: 4,
+                },
+                matchedKeywords: [],
+                missingKeywords: [],
+                underweightedKeywords: [],
+                fabricationWarnings: [],
+                acronymIssues: [],
+              },
+            },
+          ],
+        ]),
+      );
+      expect(component.keywordScore()).toBe(65);
+    });
+  });
+
+  describe('liveKeywordScore', () => {
+    it('returns null when no keyword gap result exists', () => {
+      expect(component.liveKeywordScore()).toBeNull();
+    });
+
+    it('returns the same matchScore when no keywords are selected', () => {
+      component.results.set(
+        new Map([
+          [
+            PromptType.KEYWORD_GAP,
+            {
+              promptType: PromptType.KEYWORD_GAP,
+              status: 'completed',
+              result: {
+                matchScore: 60,
+                matchScoreBreakdown: {
+                  requiredMatched: 3,
+                  requiredTotal: 5,
+                  preferredMatched: 2,
+                  preferredTotal: 4,
+                },
+                matchedKeywords: [],
+                missingKeywords: [],
+                underweightedKeywords: [],
+                fabricationWarnings: [],
+                acronymIssues: [],
+              },
+            },
+          ],
+        ]),
+      );
+      expect(component.liveKeywordScore()).toBe(60);
+    });
+
+    it('returns an updated score when a missing keyword is selected', () => {
+      component.results.set(
+        new Map([
+          [
+            PromptType.KEYWORD_GAP,
+            {
+              promptType: PromptType.KEYWORD_GAP,
+              status: 'completed',
+              result: {
+                matchScore: 60,
+                matchScoreBreakdown: {
+                  requiredMatched: 3,
+                  requiredTotal: 5,
+                  preferredMatched: 2,
+                  preferredTotal: 4,
+                },
+                matchedKeywords: [],
+                missingKeywords: [
+                  {
+                    keyword: 'TypeScript',
+                    category: 'languages',
+                    importance: 'critical',
+                    isRequired: true,
+                    candidateLikelyHas: true,
+                    evidenceFromResume: '',
+                    recommendation: '',
+                    suggestedPlacement: 'skills',
+                  },
+                ],
+                underweightedKeywords: [],
+                fabricationWarnings: [],
+                acronymIssues: [],
+              },
+            },
+          ],
+        ]),
+      );
+      component.selections.update((s) => ({
+        ...s,
+        selectedKeywords: ['TypeScript'],
+      }));
+      expect(component.liveKeywordScore()).toBeGreaterThan(60);
+    });
+  });
+
+  describe('projectedAtsScore', () => {
+    it('returns null when no autopsy result exists', () => {
+      expect(component.projectedAtsScore()).toBeNull();
+    });
+
+    it('returns null when autopsy result exists but no selections are made', () => {
+      component.results.set(
+        new Map([
+          [
+            PromptType.RESUME_AUTOPSY,
+            {
+              promptType: PromptType.RESUME_AUTOPSY,
+              status: 'completed',
+              result: {
+                overallScore: 50,
+                predictedScoreAfterFixes: 80,
+                topPriority: 'Keywords',
+                summary: 'Decent',
+                issues: [],
+                strengths: [],
+              },
+            },
+          ],
+        ]),
+      );
+      expect(component.projectedAtsScore()).toBeNull();
+    });
+
+    it('returns a projected score when a keyword is selected and there is a keyword issue', () => {
+      component.results.set(
+        new Map([
+          [
+            PromptType.RESUME_AUTOPSY,
+            {
+              promptType: PromptType.RESUME_AUTOPSY,
+              status: 'completed',
+              result: {
+                overallScore: 50,
+                predictedScoreAfterFixes: 80,
+                topPriority: 'Keywords',
+                summary: 'Decent',
+                issues: [
+                  {
+                    id: 'kw-1',
+                    category: 'keywords',
+                    severity: 'high',
+                    title: 'Missing keywords',
+                    quotedText: '',
+                    location: '',
+                    whyItMatters: '',
+                    fix: '',
+                    estimatedImpact: 10,
+                  },
+                ],
+                strengths: [],
+              },
+            },
+          ],
+        ]),
+      );
+      component.selections.update((s) => ({
+        ...s,
+        selectedKeywords: ['Angular'],
+      }));
+      expect(component.projectedAtsScore()).toBeGreaterThan(50);
+    });
+  });
 });

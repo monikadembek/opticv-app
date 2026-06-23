@@ -192,6 +192,27 @@ describe('OptimSidebar', () => {
     });
   });
 
+  describe('strokeColor', () => {
+    it('returns red for scores 49 and below', () => {
+      expect(component.strokeColor(0)).toBe('#ef4444');
+      expect(component.strokeColor(49)).toBe('#ef4444');
+    });
+
+    it('returns amber for scores between 50 and 74', () => {
+      expect(component.strokeColor(50)).toBe('#f59e0b');
+      expect(component.strokeColor(74)).toBe('#f59e0b');
+    });
+
+    it('returns green for scores 75 and above', () => {
+      expect(component.strokeColor(75)).toBe('#22c55e');
+      expect(component.strokeColor(100)).toBe('#22c55e');
+    });
+
+    it('treats null score as 0 and returns red', () => {
+      expect(component.strokeColor(null)).toBe('#ef4444');
+    });
+  });
+
   describe('host class binding', () => {
     it('adds collapsed class to host when expanded is false', () => {
       fixture.componentRef.setInput('expanded', false);
