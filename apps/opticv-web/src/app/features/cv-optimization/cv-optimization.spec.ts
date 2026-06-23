@@ -1539,4 +1539,26 @@ describe('CvOptimization', () => {
       expect(component.projectedAtsScore()).toBeGreaterThan(50);
     });
   });
+
+  describe('onAngleReset()', () => {
+    it('clears selectedSummaryAngle and customSummaryText', () => {
+      component.onAngleSelected('achievement_led');
+      component.onSummaryTextEdited('Edited text');
+      component.onAngleReset();
+      expect(component.selections().selectedSummaryAngle).toBeNull();
+      expect(component.selections().customSummaryText).toBeNull();
+    });
+
+    it('preserves selectedBullets and selectedKeywords', () => {
+      const bullet = { company: 'Acme', title: 'Dev', originalText: 'Built X' };
+      component.selections.update((s) => ({
+        ...s,
+        selectedBullets: [bullet],
+        selectedKeywords: ['Angular'],
+      }));
+      component.onAngleReset();
+      expect(component.selections().selectedBullets).toEqual([bullet]);
+      expect(component.selections().selectedKeywords).toEqual(['Angular']);
+    });
+  });
 });

@@ -32,6 +32,7 @@ export class SummaryRewrite {
   readonly selectedAngle = input<SummaryRewriteVariantAngle | null>(null);
 
   readonly angleSelected = output<SummaryRewriteVariantAngle>();
+  readonly angleReset = output<void>();
   readonly summaryTextEdited = output<string | null>();
 
   readonly angleLabels = ANGLE_LABELS;
@@ -52,17 +53,18 @@ export class SummaryRewrite {
   );
 
   constructor() {
-    // Seed the editable text whenever the selected angle changes
     effect(() => {
       const text = this.selectedVariantText();
-      if (text !== null) {
-        this.editableText.set(text);
-      }
+      this.editableText.set(text ?? '');
     });
   }
 
   selectVariant(angle: SummaryRewriteVariantAngle): void {
     this.angleSelected.emit(angle);
+  }
+
+  resetVariant(): void {
+    this.angleReset.emit();
   }
 
   onTextChange(value: string): void {

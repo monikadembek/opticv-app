@@ -604,7 +604,17 @@ Frontend:
 
 ---
 
-### 53. Visual improvements in docx and pdf exported files structure
+### 53. Summary rewrite - reset selected summary to original
+
+**status: in progress**
+
+**time: 23.06.2026**
+
+- implement functionality to reset selected summary to original
+
+---
+
+### 54. Visual improvements in docx and pdf exported files structure
 
 **status: todo**
 **time:**
