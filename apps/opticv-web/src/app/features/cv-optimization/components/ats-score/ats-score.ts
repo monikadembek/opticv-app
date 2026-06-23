@@ -10,6 +10,12 @@ import type {
   ResumeAutopsyResult,
 } from '@opticv/datatypes';
 
+interface RingData {
+  label: string;
+  score: number;
+  isEstimate: boolean;
+}
+
 const SEVERITY_ORDER: ResumeAutopsyIssue['severity'][] = [
   'critical',
   'high',
@@ -38,8 +44,20 @@ function groupAndSortIssues(issues: ResumeAutopsyIssue[]): IssueGroup[] {
 })
 export class AtsScore {
   readonly data = input.required<ResumeAutopsyResult>();
+  readonly projectedScore = input<number | null>(null);
 
   readonly ringCircumference = RING_CIRCUMFERENCE;
+
+  readonly secondRing = computed<RingData>(() => {
+    const ps = this.projectedScore();
+    return ps !== null
+      ? { label: 'Estimated score', score: ps, isEstimate: true }
+      : {
+          label: 'After Fixes',
+          score: this.data().predictedScoreAfterFixes,
+          isEstimate: false,
+        };
+  });
 
   readonly issuesBySeverity = computed(() =>
     groupAndSortIssues(this.data().issues),

@@ -25,8 +25,8 @@
     [statuses]="sectionStatuses()"
     [processingSet]="processingSet()"
     [expanded]="sidebarExpanded()"
-    [atsScore]="atsScore()"
-    [keywordScore]="keywordScore()"
+    [atsScore]="projectedAtsScore()"
+    [keywordScore]="liveKeywordScore()"
     [pageState]="pageState()"
     (sectionClicked)="handleSectionClick($event)"
     (toggleClicked)="sidebarExpanded.set(!sidebarExpanded())"
@@ -101,7 +101,10 @@
         [status]="sectionStatus(PromptType.RESUME_AUTOPSY)"
       >
         @if (autopsyResult()) {
-        <app-ats-score [data]="autopsyResult()!" />
+        <app-ats-score
+          [data]="autopsyResult()!"
+          [projectedScore]="projectedAtsScore()"
+        />
         } @if (retryablePromptTypes().has(PromptType.RESUME_AUTOPSY)) {
         <div class="retry-action">
           <p-button
@@ -126,7 +129,7 @@
       >
         @if (keywordGapResult()) {
         <app-keyword-gap
-          [result]="keywordGapResult()!"
+          [result]="recomputedKeywordGapResult()!"
           [selectedKeywords]="selections().selectedKeywords"
           [keywordEdits]="keywordEdits()"
           [activeKeywordEditKey]="activeKeywordEditKey()"

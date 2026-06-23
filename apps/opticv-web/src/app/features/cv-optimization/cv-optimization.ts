@@ -57,6 +57,10 @@ import { CoverLetterEditor } from './components/cover-letter-editor/cover-letter
 import { InterviewPrep } from './components/interview-prep/interview-prep';
 import { CvTemplateId, DEFAULT_ACCENT_COLOR } from './cv-templates';
 import { applySelectionsToCV } from './utils/apply-selections';
+import {
+  recomputeAtsProjection,
+  recomputeKeywordGapResult,
+} from './utils/recompute-scores';
 import { JobApplicationApiService } from '../../core/services/job-application-api.service';
 import { OptimSidebar } from './components/optim-sidebar/optim-sidebar';
 import { SectionCard } from './components/section-card/section-card';
@@ -284,6 +288,29 @@ export class CvOptimization implements OnInit {
   readonly keywordScore = computed(
     () => this.keywordGapResult()?.matchScore ?? null,
   );
+
+  readonly recomputedKeywordGapResult = computed<KeywordGapResult | null>(
+    () => {
+      const r = this.keywordGapResult();
+      if (!r) return null;
+      return recomputeKeywordGapResult(r, this.selections().selectedKeywords);
+    },
+  );
+
+  readonly liveKeywordScore = computed<number | null>(
+    () => this.recomputedKeywordGapResult()?.matchScore ?? null,
+  );
+
+  readonly projectedAtsScore = computed<number | null>(() => {
+    const autopsy = this.autopsyResult();
+    if (!autopsy) return null;
+    return recomputeAtsProjection(
+      autopsy,
+      this.selections(),
+      this.bulletUpgradeResult(),
+      this.selectedMissingBullets(),
+    );
+  });
 
   readonly canExportCv = computed(() => {
     if (!this.isProcessingAny() && this.mergedCv() !== null) {
