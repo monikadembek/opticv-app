@@ -175,4 +175,36 @@ describe('SummaryRewrite', () => {
     );
     expect(achievementCard?.textContent).not.toContain('Keywords used');
   });
+
+  it('hides the editor section when no angle is selected', () => {
+    expect(fixture.nativeElement.textContent).not.toContain('variant selected');
+  });
+
+  it('shows the editor section when an angle is selected', () => {
+    fixture.componentRef.setInput('selectedAngle', 'achievement_led');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Achievement-led variant selected');
+  });
+
+  it('shows the Reset button when a variant is selected', () => {
+    fixture.componentRef.setInput('selectedAngle', 'achievement_led');
+    fixture.detectChanges();
+    const btn = fixture.nativeElement.querySelector('[aria-label="Reset summary selection"]');
+    expect(btn).not.toBeNull();
+  });
+
+  it('hides the Reset button when no variant is selected', () => {
+    const btn = fixture.nativeElement.querySelector('[aria-label="Reset summary selection"]');
+    expect(btn).toBeNull();
+  });
+
+  it('clicking Reset emits angleReset', () => {
+    fixture.componentRef.setInput('selectedAngle', 'achievement_led');
+    fixture.detectChanges();
+    let emitted = false;
+    component.angleReset.subscribe(() => { emitted = true; });
+    const btn: HTMLElement = fixture.nativeElement.querySelector('[aria-label="Reset summary selection"]');
+    btn.click();
+    expect(emitted).toBe(true);
+  });
 });

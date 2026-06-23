@@ -643,6 +643,14 @@ export class CvOptimization implements OnInit {
     }));
   }
 
+  onAngleReset(): void {
+    this.selections.update((s) => ({
+      ...s,
+      selectedSummaryAngle: null,
+      customSummaryText: null,
+    }));
+  }
+
   onSummaryTextEdited(text: string | null): void {
     this.selections.update((s) => ({ ...s, customSummaryText: text }));
   }

@@ -170,6 +170,7 @@
           [result]="summaryRewriteResult()!"
           [selectedAngle]="selections().selectedSummaryAngle"
           (angleSelected)="onAngleSelected($event)"
+          (angleReset)="onAngleReset()"
           (summaryTextEdited)="onSummaryTextEdited($event)"
         />
         } @if (retryablePromptTypes().has(PromptType.SUMMARY_REWRITE)) {
