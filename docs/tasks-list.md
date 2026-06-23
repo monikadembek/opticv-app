@@ -594,9 +594,9 @@ Frontend:
 
 ### 52. ATS score and keywords score - update them when user applies suggestions
 
-**status: in progress**
+**status: done**
 
-**time: 22.06.20226**
+**time: 22.06.2026 - 23.06.2026**
 
 - do research on how this could be implemented, do we need another call to AI to check the scores in order to update them or can we update without llm calls?
 - update predicted ATS score and keywords score when user applies suggestions to cv
