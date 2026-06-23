@@ -1,9 +1,8 @@
 <div class="space-y-8 py-2">
   <!-- Score rings -->
   <div class="flex flex-wrap gap-10 justify-center py-4">
-    @for (ring of [{ label: 'Current ATS Score', score: data().overallScore }, {
-    label: 'After Fixes', score: data().predictedScoreAfterFixes }]; track
-    ring.label) {
+    @for (ring of [{ label: 'Current ATS Score', score: data().overallScore,
+    isEstimate: false }, secondRing()]; track ring.label) {
     <div class="flex flex-col items-center gap-2">
       <svg
         viewBox="0 0 100 100"
@@ -44,6 +43,11 @@
         </text>
       </svg>
       <span class="text-sm font-medium text-surface-600">{{ ring.label }}</span>
+      @if (ring.isEstimate) {
+      <p class="text-xs text-center text-surface-400 max-w-28 leading-snug">
+        Based on applied changes
+      </p>
+      }
     </div>
     }
   </div>

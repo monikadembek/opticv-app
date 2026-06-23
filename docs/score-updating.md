@@ -187,3 +187,71 @@ etc. already update the source signals.
    - Accept bullet rewrites / pick summary variant / apply keywords → ATS "projected" ring
      rises (labeled estimate) while "Current ATS Score" stays put; sidebar ATS stays real.
    - Clear all selections → both scores return exactly to originals.
+
+---
+
+## How the implemented changes work
+
+### Overview
+
+When the user makes selections (accepts bullet rewrites, selects keywords, picks a summary variant), the scores update **live in the browser** — no API call, no re-scoring. It's all computed client-side from the existing AI results.
+
+---
+
+### Keyword Score — `recomputeKeywordGapResult`
+
+**What it does:** recomputes `KeywordGapResult.matchScore` by simulating what the score would be if the selected keywords were already in the CV.
+
+**How it works step by step:**
+
+1. `structuredClone` the original result so the original is never mutated.
+2. For each selected keyword that appears in `missingKeywords`, increment either `requiredMatched` or `preferredMatched` in the breakdown (capped at the respective total).
+3. **Back-solve the weight `w`** — the original score was computed as `w * (reqMatched/reqTotal) + (1-w) * (prefMatched/prefTotal)`. Since we don't know `w` directly, we rearrange the formula to solve for it from the known original score and original ratios. This ensures our updated score uses the same weighting the AI used.
+4. Apply the same formula with the new (incremented) breakdown to get the new score.
+5. Clamp: the new score can never be *lower* than the original.
+
+**Where it flows:**
+- `cv-optimization.ts` has a `recomputedKeywordGapResult` computed signal that calls this function whenever `keywordGapResult` or `selections().selectedKeywords` changes.
+- `liveKeywordScore` extracts just the `matchScore` from it.
+- The sidebar receives `liveKeywordScore()` instead of the static `keywordScore()`.
+- The keyword gap section receives `recomputedKeywordGapResult()!` as its `[result]` binding, so the full breakdown panel also reflects the updated counts.
+
+---
+
+### ATS Score Projection — `recomputeAtsProjection`
+
+**What it does:** estimates a projected ATS score by giving partial credit toward the `predictedScoreAfterFixes` ceiling based on what the user has accepted.
+
+**How it works step by step:**
+
+1. **Early exit:** if no selections at all, return `null` (meaning "show the static After Fixes ring, nothing to project yet").
+2. Start from `original.overallScore` as a float accumulator.
+3. Compute two fractions:
+   - `bulletFraction` = `(acceptedBullets + addedMissingBullets) / totalUpgradableBullets` — how much of the available bullet work has been accepted.
+   - `summaryFraction` = `1` if a summary angle is selected, `0` otherwise.
+4. For each issue in `original.issues`:
+   - `keywords` category → full credit (`estimatedImpact × 1`) if any keyword is selected, zero otherwise.
+   - `content` category → `estimatedImpact × max(bulletFraction, summaryFraction)` — whichever is higher (bullets or summary) counts, avoiding double-counting.
+   - All other categories (`parsing`, `formatting`, `structure`, `length`, `contact`) → no credit, since the user can't directly address those through the selection UI.
+5. **Double clamp:** result is bounded between `overallScore` (floor) and `predictedScoreAfterFixes` (ceiling).
+6. If the rounded result equals `overallScore` (no meaningful change), return `null`.
+
+**Where it flows:**
+- `cv-optimization.ts` has a `projectedAtsScore` computed signal.
+- The `app-ats-score` component receives `[projectedScore]="projectedAtsScore()"`.
+- Inside `ats-score.ts`, a `secondRing` computed decides what the second ring shows:
+  - `projectedScore !== null` → label "Projected (estimate)", score = the projection, shows the "Based on applied changes — not a re-score" caption below.
+  - `projectedScore === null` → label "After Fixes", score = `predictedScoreAfterFixes`, no caption.
+- The first ring ("Current ATS Score") always shows `overallScore` and is never touched.
+
+---
+
+### Summary of what updates when
+
+| User action | What changes |
+|---|---|
+| Selects a keyword | Sidebar keyword score, keyword gap breakdown panel |
+| Accepts a bullet rewrite | ATS second ring shifts toward projection |
+| Adds a missing bullet suggestion | ATS second ring shifts toward projection |
+| Selects a summary variant | ATS second ring shifts toward projection |
+| Clears all selections | Everything reverts; ATS ring shows "After Fixes" again |
