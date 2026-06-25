@@ -868,7 +868,14 @@ export class CvExportService {
 
     const bullet = (text: string): Para =>
       new Paragraph({
-        text,
+        children: [
+          new TextRun({
+            text,
+            font: profile.bodyFont,
+            size: profile.bodySize,
+            color: '1A1A1A',
+          }),
+        ],
         bullet: { level: 0 },
         spacing: { after: 40 },
       });
