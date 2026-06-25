@@ -45,6 +45,8 @@
       <div>{{ cv()!.contact.location }}</div>
       } @if (cv()!.contact.linkedin) {
       <div>{{ cv()!.contact.linkedin }}</div>
+      } @if (cv()!.contact.website) {
+      <div>{{ cv()!.contact.website }}</div>
       }
     </div>
   </div>
@@ -80,13 +82,25 @@
         style="position: absolute; left: 0; top: 1px; font-size: 13px"
         >•</span
       >
-      <div style="font-weight: bold; font-size: 11px">{{ exp.title }}</div>
-      @if (exp.company || exp.location || exp.startDate || exp.endDate) {
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: baseline;
+          margin-bottom: 2px;
+        "
+      >
+        <div style="font-weight: bold; font-size: 11px">{{ exp.title }}</div>
+        @if (exp.startDate || exp.endDate || exp.current) {
+        <div style="font-size: 10px; color: #666; white-space: nowrap">
+          @if (exp.current) { {{ exp.startDate ?? '' }} – Present } @else { {{
+          [exp.startDate, exp.endDate] | dateRange }} }
+        </div>
+        }
+      </div>
+      @if (exp.company || exp.location) {
       <div style="font-size: 10px; color: #666; margin-bottom: 4px">
-        {{ exp.company }}@if (exp.location) { | {{ exp.location }} }@if
-        (exp.startDate || exp.endDate || exp.current) { | @if (exp.current) { {{
-        exp.startDate ?? '' }} – Present } @else { {{ [exp.startDate,
-        exp.endDate] | dateRange }} } }
+        {{ exp.company }}@if (exp.location) { | {{ exp.location }} }
       </div>
       } @for (bullet of exp.bullets; track bullet) {
       <div style="margin-left: 10px; line-height: 1.5; margin-bottom: 2px">

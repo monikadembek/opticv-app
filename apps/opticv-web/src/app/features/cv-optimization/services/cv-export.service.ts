@@ -70,9 +70,9 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
     accentR: 230,
     accentG: 57,
     accentB: 70,
-    nameSize: 20,
+    nameSize: 18,
     headingSize: 12,
-    bodySize: 10,
+    bodySize: 9,
     contactSize: 9,
     contactAlign: 'right-block',
     nameAlign: 'left',
@@ -94,7 +94,7 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
     accentR: 30,
     accentG: 41,
     accentB: 59,
-    nameSize: 20,
+    nameSize: 18,
     headingSize: 12,
     bodySize: 10,
     contactSize: 9,
@@ -216,7 +216,7 @@ const DOCX_PROFILES: Record<CvTemplateId, DocxStyleProfile> = {
     accentAware: true,
     accentHex: 'E63946',
     nameHex: '1A1A1A',
-    nameSize: 40,
+    nameSize: 36,
     headingSize: 24,
     bodySize: 20,
     contactSize: 18,
@@ -235,7 +235,7 @@ const DOCX_PROFILES: Record<CvTemplateId, DocxStyleProfile> = {
     accentAware: false,
     accentHex: '1E293B',
     nameHex: '1E293B',
-    nameSize: 40,
+    nameSize: 36,
     headingSize: 24,
     bodySize: 20,
     contactSize: 18,
@@ -339,6 +339,8 @@ export class CvExportService {
   ): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) return;
 
+    console.log('cv: ', cv);
+
     const { jsPDF } = await import('jspdf');
     const baseProfile = PDF_PROFILES[templateId];
     const profile = baseProfile.accentAware
@@ -371,7 +373,7 @@ export class CvExportService {
     };
 
     const addSectionHeading = (text: string): void => {
-      checkPage(24);
+      checkPage(28);
       const label = text.toUpperCase();
 
       if (profile.headingStyle === 'underline') {
@@ -379,20 +381,26 @@ export class CvExportService {
         doc.setFontSize(profile.headingSize);
         doc.setFont(profile.headingFont, 'bold');
         doc.text(label, marginLeft, y);
-        y += 4;
-        doc.setDrawColor(profile.accentR, profile.accentG, profile.accentB);
+        y += 6;
+        if (templateId === 'classic') {
+          doc.setDrawColor(203, 213, 225);
+        } else if (templateId === 'minimal') {
+          doc.setDrawColor(226, 232, 240);
+        } else {
+          doc.setDrawColor(profile.accentR, profile.accentG, profile.accentB);
+        }
         doc.setLineWidth(0.8);
         doc.line(marginLeft, y, pageWidth - marginRight, y);
-        y += 14;
+        y += 18;
         setBlack();
       } else if (profile.headingStyle === 'leftBar') {
         doc.setFillColor(profile.accentR, profile.accentG, profile.accentB);
-        doc.rect(marginLeft - 6, y - 11, 3, 13, 'F');
+        doc.rect(marginLeft, y - 13, 2, 17, 'F');
         setAccent();
         doc.setFontSize(profile.headingSize);
         doc.setFont(profile.headingFont, 'bold');
-        doc.text(label, marginLeft + 2, y);
-        y += 16;
+        doc.text(label, marginLeft + 10, y);
+        y += 20;
         setBlack();
       } else {
         // filledBand (impact)
@@ -560,6 +568,7 @@ export class CvExportService {
         cv.contact.phone,
         cv.contact.location,
         cv.contact.linkedin,
+        cv.contact.website,
       ].filter(Boolean) as string[];
 
       const nameY = y;
@@ -633,14 +642,21 @@ export class CvExportService {
         }
         setBlack();
       }
-      y += profile.headerBand ? 16 : 8;
+      y += profile.headerBand ? 16 : 2;
+
+      if (templateId === 'classic') {
+        doc.setDrawColor(51, 65, 85);
+        doc.setLineWidth(0.8);
+        doc.line(marginLeft, y, pageWidth - marginRight, y);
+        y += 26;
+      }
     }
 
     // ── Summary ─────────────────────────────────────────────────────────────
     if (cv.summary) {
       addSectionHeading('Professional Summary');
       addWrappedText(cv.summary, profile.bodySize, 'normal');
-      y += 8;
+      y += 14;
     }
 
     // ── Experience ───────────────────────────────────────────────────────────
@@ -655,15 +671,15 @@ export class CvExportService {
           doc.line(marginLeft - 4, y - 10, marginLeft - 4, y + 4);
         }
 
-        const titleLine = [exp.title, exp.company].filter(Boolean).join(' — ');
+        const titleLine = [exp.title, exp.company].filter(Boolean).join(' - ');
         doc.setFontSize(profile.bodySize);
         doc.setFont(profile.bodyFont, 'bold');
         setBlack();
         doc.text(titleLine, marginLeft, y);
 
         const dateStr = exp.current
-          ? `${exp.startDate ?? ''} – Present`
-          : [exp.startDate, exp.endDate].filter(Boolean).join(' – ');
+          ? `${exp.startDate ?? ''} - Present`
+          : [exp.startDate, exp.endDate].filter(Boolean).join(' - ');
 
         if (dateStr.trim()) {
           setGrey();
@@ -680,12 +696,14 @@ export class CvExportService {
           addWrappedText(exp.location, 9, 'italic');
           setBlack();
         }
+        y += 4;
 
         for (const bullet of exp.bullets) {
           addBullet(bullet, profile.accentBullet);
         }
-        y += 6;
+        y += 10;
       }
+      y += 4;
     }
 
     // ── Education ────────────────────────────────────────────────────────────
@@ -702,18 +720,17 @@ export class CvExportService {
 
         const line = [edu.degree, edu.field].filter(Boolean).join(', ');
         if (line) addWrappedText(line, profile.bodySize, 'bold');
-        if (edu.institution)
-          addWrappedText(edu.institution, profile.bodySize, 'normal');
         const dateStr = [edu.startDate, edu.endDate]
           .filter(Boolean)
-          .join(' – ');
-        if (dateStr) {
-          setGrey();
-          addWrappedText(dateStr, 9, 'italic');
-          setBlack();
-        }
+          .join(' - ');
+        const institutionLine = [edu.institution, dateStr]
+          .filter(Boolean)
+          .join(' | ');
+        if (institutionLine)
+          addWrappedText(institutionLine, profile.bodySize, 'normal');
         y += 6;
       }
+      y += 10;
     }
 
     // ── Skills ───────────────────────────────────────────────────────────────
@@ -725,6 +742,7 @@ export class CvExportService {
       } else {
         addSkillChips(cv.skills);
       }
+      y += 10;
     }
 
     // ── Certifications ───────────────────────────────────────────────────────
@@ -736,7 +754,7 @@ export class CvExportService {
           .join(' · ');
         addWrappedText(parts, profile.bodySize, 'normal');
       }
-      y += 8;
+      y += 14;
     }
 
     // ── Projects ─────────────────────────────────────────────────────────────
@@ -754,6 +772,7 @@ export class CvExportService {
         }
         y += 4;
       }
+      y += 10;
     }
 
     // ── Languages ────────────────────────────────────────────────────────────
@@ -763,7 +782,7 @@ export class CvExportService {
         .map((l) =>
           l.proficiency ? `${l.language} (${l.proficiency})` : l.language,
         )
-        .join(', ');
+        .join(' · ');
       addWrappedText(langLine, profile.bodySize, 'normal');
     }
 
@@ -779,10 +798,12 @@ export class CvExportService {
 
     const {
       AlignmentType,
+      BorderStyle,
       Document,
       HeadingLevel,
       Packer,
       Paragraph,
+      TabStopType,
       TextRun,
     } = await import('docx');
 
@@ -806,8 +827,20 @@ export class CvExportService {
           }),
         ],
         heading: HeadingLevel.HEADING_2,
-        spacing: { before: 240, after: 80 },
+        spacing: { before: 240, after: 120 },
         alignment: AlignmentType.LEFT,
+        ...(templateId === 'classic'
+          ? {
+              border: {
+                bottom: {
+                  style: BorderStyle.SINGLE,
+                  size: 6,
+                  color: 'CBD5E1',
+                  space: 4,
+                },
+              },
+            }
+          : {}),
       });
 
     const para = (
@@ -845,25 +878,6 @@ export class CvExportService {
       : AlignmentType.LEFT;
 
     // ── Contact ──────────────────────────────────────────────────────────────
-    if (cv.contact.name) {
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: cv.contact.name,
-              bold: profile.nameBold,
-              italics: profile.nameItalic,
-              font: profile.nameFont,
-              size: profile.nameSize,
-              color: profile.nameHex,
-            }),
-          ],
-          spacing: { after: 80 },
-          alignment: contactAlign,
-        }),
-      );
-    }
-
     const contactParts = [
       cv.contact.email,
       cv.contact.phone,
@@ -873,21 +887,85 @@ export class CvExportService {
     ].filter(Boolean) as string[];
 
     if (profile.contactRightStack) {
-      for (const part of contactParts) {
+      const [firstContact, ...restContacts] = contactParts;
+      children.push(
+        new Paragraph({
+          tabStops: [{ type: TabStopType.RIGHT, position: 9026 }],
+          children: [
+            new TextRun({
+              text: cv.contact.name ?? '',
+              bold: profile.nameBold,
+              italics: profile.nameItalic,
+              font: profile.nameFont,
+              size: profile.nameSize,
+              color: profile.nameHex,
+            }),
+            ...(firstContact
+              ? [
+                  new TextRun({
+                    text: '\t' + firstContact,
+                    bold: false,
+                    font: profile.bodyFont,
+                    size: 18,
+                    color: '666666',
+                  }),
+                ]
+              : []),
+          ],
+          spacing: { after: 40 },
+        }),
+      );
+      for (const part of restContacts) {
         children.push(
           para(part, false, false, 18, '666666', AlignmentType.RIGHT),
         );
       }
-    } else if (contactParts.length > 0) {
+    } else {
+      if (cv.contact.name) {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: cv.contact.name,
+                bold: profile.nameBold,
+                italics: profile.nameItalic,
+                font: profile.nameFont,
+                size: profile.nameSize,
+                color: profile.nameHex,
+              }),
+            ],
+            spacing: { after: 80 },
+            alignment: contactAlign,
+          }),
+        );
+      }
+      if (contactParts.length > 0) {
+        children.push(
+          para(
+            contactParts.join('  |  '),
+            false,
+            false,
+            18,
+            '666666',
+            contactAlign,
+          ),
+        );
+      }
+    }
+
+    if (templateId === 'classic') {
       children.push(
-        para(
-          contactParts.join('  |  '),
-          false,
-          false,
-          18,
-          '666666',
-          contactAlign,
-        ),
+        new Paragraph({
+          children: [],
+          spacing: { before: 40, after: 80 },
+          border: {
+            bottom: {
+              style: BorderStyle.SINGLE,
+              size: 10,
+              color: '334155',
+            },
+          },
+        }),
       );
     }
 
@@ -901,27 +979,57 @@ export class CvExportService {
     if (cv.experience.length > 0) {
       children.push(heading('Work Experience'));
       for (const exp of cv.experience) {
-        const titleLine = [exp.title, exp.company].filter(Boolean).join(' — ');
-        if (titleLine) children.push(para(titleLine, true));
-
+        const titleLine = [exp.title, exp.company].filter(Boolean).join(' - ');
         const dateStr = exp.current
-          ? `${exp.startDate ?? ''} – Present`
-          : [exp.startDate, exp.endDate].filter(Boolean).join(' – ');
-        if (exp.location || dateStr.trim()) {
+          ? `${exp.startDate ?? ''} - Present`
+          : [exp.startDate, exp.endDate].filter(Boolean).join(' - ');
+
+        if (
+          (templateId === 'default' || templateId === 'classic') &&
+          titleLine
+        ) {
           children.push(
-            para(
-              [exp.location, dateStr].filter(Boolean).join('  ·  '),
-              false,
-              true,
-              18,
-              '666666',
-            ),
+            new Paragraph({
+              tabStops: [{ type: TabStopType.RIGHT, position: 9026 }],
+              children: [
+                new TextRun({
+                  text: titleLine,
+                  bold: true,
+                  font: profile.bodyFont,
+                  size: profile.bodySize,
+                  color: '1A1A1A',
+                }),
+                ...(dateStr.trim()
+                  ? [
+                      new TextRun({
+                        text: '\t' + dateStr,
+                        bold: false,
+                        italics: true,
+                        font: profile.bodyFont,
+                        size: 18,
+                        color: '666666',
+                      }),
+                    ]
+                  : []),
+              ],
+              spacing: { after: 60 },
+            }),
           );
+        } else {
+          if (titleLine) children.push(para(titleLine, true));
+          if (dateStr.trim()) {
+            children.push(para(dateStr, false, true, 18, '666666'));
+          }
+        }
+
+        if (exp.location) {
+          children.push(para(exp.location, false, true, 18, '666666'));
         }
 
         for (const b of exp.bullets) {
           children.push(bullet(b));
         }
+        children.push(new Paragraph({ spacing: { after: 60 } }));
       }
     }
 
@@ -931,20 +1039,28 @@ export class CvExportService {
       for (const edu of cv.education) {
         const line = [edu.degree, edu.field].filter(Boolean).join(', ');
         if (line) children.push(para(line, true));
-        if (edu.institution) children.push(para(edu.institution));
         const dateStr = [edu.startDate, edu.endDate]
           .filter(Boolean)
           .join(' – ');
-        if (dateStr) children.push(para(dateStr, false, true, 18, '666666'));
+        if (templateId === 'classic') {
+          const institutionLine = [edu.institution, dateStr]
+            .filter(Boolean)
+            .join(' | ');
+          if (institutionLine) children.push(para(institutionLine));
+        } else {
+          if (edu.institution) children.push(para(edu.institution));
+          if (dateStr) children.push(para(dateStr, false, true, 18, '666666'));
+        }
       }
     }
 
     // ── Skills ───────────────────────────────────────────────────────────────
     if (cv.skills.length > 0) {
       children.push(heading('Skills'));
+      const skillsSeparator = profile.skillsStyle === 'chips' ? ' • ' : ', ';
       children.push(
         para(
-          cv.skills.join(', '),
+          cv.skills.join(skillsSeparator),
           false,
           false,
           profile.bodySize,
@@ -985,7 +1101,7 @@ export class CvExportService {
         .map((l) =>
           l.proficiency ? `${l.language} (${l.proficiency})` : l.language,
         )
-        .join(', ');
+        .join(' · ');
       children.push(para(langLine));
     }
 

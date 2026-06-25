@@ -606,7 +606,7 @@ Frontend:
 
 ### 53. Summary rewrite - reset selected summary to original
 
-**status: in progress**
+**status: done**
 
 **time: 23.06.2026**
 
@@ -616,10 +616,11 @@ Frontend:
 
 ### 54. Visual improvements in docx and pdf exported files structure
 
-**status: todo**
-**time:**
+**status: in progress**
+**time: 24.06.2026 - 25.06.2026**
 
-- pdfs and docx files need some improvemnts regarding their visual structure
+- pdfs and docx files need some improvements regarding their visual structure,
+- disable the selector with accent colors when classic and minimal templates are selected
 
 ---
 
