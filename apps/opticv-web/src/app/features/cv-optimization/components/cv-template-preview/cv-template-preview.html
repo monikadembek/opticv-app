@@ -1150,7 +1150,7 @@
     Education
   </div>
   @for (edu of cv()!.education; track edu.institution) {
-  <div style="margin-bottom: 8px; text-align: center">
+  <div style="margin-bottom: 8px; text-align: left">
     @if (edu.degree || edu.field) {
     <div style="font-weight: 700; color: #1e293b">
       {{ [edu.degree, edu.field] | degreeField }}
@@ -1181,7 +1181,7 @@
   </div>
   <p
     style="
-      text-align: center;
+      text-align: left;
       font-size: 10px;
       color: #475569;
       line-height: 1.6;
@@ -1208,7 +1208,7 @@
     Certifications
   </div>
   @for (cert of cv()!.certifications; track cert.name) {
-  <div style="text-align: center; line-height: 1.6">
+  <div style="text-align: left; line-height: 1.6">
     • {{ cert.name }}@if (cert.issuer) { · {{ cert.issuer }} }@if (cert.date) {
     · {{ cert.date }} }
   </div>
@@ -1230,7 +1230,7 @@
     Projects
   </div>
   @for (proj of cv()!.projects; track proj.name) {
-  <div style="margin-bottom: 8px; text-align: center">
+  <div style="margin-bottom: 8px; text-align: left">
     <div style="font-weight: 700; color: #1e293b">{{ proj.name }}</div>
     @if (proj.description) {
     <div style="line-height: 1.5">{{ proj.description }}</div>
@@ -1257,7 +1257,7 @@
   >
     Languages
   </div>
-  <div style="text-align: center">
+  <div style="text-align: left">
     @for (lang of cv()!.languages; track lang.language) {
     <span
       >{{ lang.language }}@if (lang.proficiency) { ({{ lang.proficiency }}) }@if

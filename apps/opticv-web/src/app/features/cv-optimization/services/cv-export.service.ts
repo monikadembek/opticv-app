@@ -394,7 +394,11 @@ export class CvExportService {
         setAccent();
         doc.setFontSize(profile.headingSize);
         doc.setFont(profile.headingFont, 'bold');
-        doc.text(label, marginLeft, y);
+        if (profile.nameAlign === 'center') {
+          doc.text(label, pageWidth / 2, y, { align: 'center' });
+        } else {
+          doc.text(label, marginLeft, y);
+        }
         y += 6;
         if (templateId === 'classic') {
           doc.setDrawColor(203, 213, 225);
@@ -559,13 +563,12 @@ export class CvExportService {
 
     if (profile.nameAlign === 'center') {
       if (cv.contact.name) {
-        setAccent();
+        setBlack();
         doc.setFontSize(profile.nameSize);
         doc.setFont(profile.nameFont, profile.nameStyle);
         checkPage(28);
         doc.text(cv.contact.name, pageWidth / 2, y, { align: 'center' });
         y += 26;
-        setBlack();
       }
 
       const contactParts = [
@@ -588,7 +591,11 @@ export class CvExportService {
         }
         setBlack();
       }
-      y += 8;
+      y += 6;
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.8);
+      doc.line(marginLeft, y, pageWidth - marginRight, y);
+      y += 20;
     } else if (profile.contactAlign === 'right-block') {
       // Modern: name left, contact right
       const contactParts = [
@@ -867,7 +874,7 @@ export class CvExportService {
         ],
         heading: HeadingLevel.HEADING_2,
         spacing: { before: 240, after: 120 },
-        alignment: AlignmentType.LEFT,
+        alignment: templateId === 'minimal' ? AlignmentType.CENTER : AlignmentType.LEFT,
         ...(templateId === 'classic'
           ? {
               border: {
@@ -890,7 +897,18 @@ export class CvExportService {
                   },
                 },
               }
-            : {}),
+            : templateId === 'minimal'
+              ? {
+                  border: {
+                    bottom: {
+                      style: BorderStyle.SINGLE,
+                      size: 6,
+                      color: 'E2E8F0',
+                      space: 4,
+                    },
+                  },
+                }
+              : {}),
       });
 
     const para = (
@@ -1024,6 +1042,20 @@ export class CvExportService {
           },
         }),
       );
+    } else if (templateId === 'minimal') {
+      children.push(
+        new Paragraph({
+          children: [],
+          spacing: { before: 40, after: 80 },
+          border: {
+            bottom: {
+              style: BorderStyle.SINGLE,
+              size: 6,
+              color: 'E2E8F0',
+            },
+          },
+        }),
+      );
     }
 
     // ── Summary ──────────────────────────────────────────────────────────────
@@ -1045,7 +1077,8 @@ export class CvExportService {
           (templateId === 'default' ||
             templateId === 'classic' ||
             templateId === 'modern' ||
-            templateId === 'corporate') &&
+            templateId === 'corporate' ||
+            templateId === 'minimal') &&
           titleLine
         ) {
           children.push(
@@ -1105,7 +1138,8 @@ export class CvExportService {
         if (
           templateId === 'classic' ||
           templateId === 'modern' ||
-          templateId === 'corporate'
+          templateId === 'corporate' ||
+          templateId === 'minimal'
         ) {
           const institutionLine = [edu.institution, dateStr]
             .filter(Boolean)
@@ -1128,7 +1162,7 @@ export class CvExportService {
           false,
           false,
           profile.bodySize,
-          templateId === 'corporate' ? '1A1A1A' : profile.accentHex,
+          templateId === 'corporate' || templateId === 'minimal' ? '1A1A1A' : profile.accentHex,
         ),
       );
     }
