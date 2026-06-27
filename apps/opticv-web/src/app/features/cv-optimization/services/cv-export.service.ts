@@ -410,7 +410,7 @@ export class CvExportService {
       } else if (profile.headingStyle === 'leftBar') {
         doc.setFillColor(profile.accentR, profile.accentG, profile.accentB);
         doc.rect(marginLeft, y - 13, 2, 17, 'F');
-        setAccent();
+        doc.setTextColor(30, 41, 59);
         doc.setFontSize(profile.headingSize);
         doc.setFont(profile.headingFont, 'bold');
         doc.text(label, marginLeft + 10, y);
@@ -505,10 +505,23 @@ export class CvExportService {
           checkPage(chipHeight + 4);
         }
 
-        doc.setDrawColor(profile.accentR, profile.accentG, profile.accentB);
         doc.setLineWidth(0.5);
 
-        if (profile.chipsStyle === 'filled') {
+        if (templateId === 'corporate') {
+          doc.setDrawColor(226, 232, 240);
+          doc.setFillColor(241, 245, 249);
+          doc.roundedRect(
+            x,
+            y - profile.bodySize + 1,
+            chipWidth,
+            chipHeight,
+            2,
+            2,
+            'FD',
+          );
+          doc.setTextColor(51, 65, 85);
+        } else if (profile.chipsStyle === 'filled') {
+          doc.setDrawColor(profile.accentR, profile.accentG, profile.accentB);
           doc.setFillColor(profile.accentR, profile.accentG, profile.accentB);
           doc.roundedRect(
             x,
@@ -521,6 +534,7 @@ export class CvExportService {
           );
           doc.setTextColor(255, 255, 255);
         } else {
+          doc.setDrawColor(profile.accentR, profile.accentG, profile.accentB);
           doc.setFillColor(255, 255, 255);
           doc.roundedRect(
             x,
@@ -615,18 +629,23 @@ export class CvExportService {
           cv.contact.linkedin,
           cv.contact.website,
         ].filter(Boolean).length;
-        const bandHeight = 26 + (contactLineCount > 0 ? 13 : 0) + 14;
+        const bandPadV = 12;
+        const bandTop = y - bandPadV;
+        const bandHeight =
+          bandPadV + bandPadV + 18 + (contactLineCount > 0 ? 16 : 0) + bandPadV;
         doc.setFillColor(241, 245, 249);
-        doc.rect(marginLeft - 10, y - 18, maxWidth + 20, bandHeight, 'F');
+        doc.rect(marginLeft - 10, bandTop, maxWidth + 20, bandHeight, 'F');
         doc.setDrawColor(profile.accentR, profile.accentG, profile.accentB);
-        doc.setLineWidth(1.5);
+        doc.setLineWidth(2);
         doc.line(
           marginLeft - 10,
-          y - 18 + bandHeight,
+          bandTop + bandHeight,
           marginLeft - 10 + maxWidth + 20,
-          y - 18 + bandHeight,
+          bandTop + bandHeight,
         );
       }
+
+      if (profile.headerBand) y += 12;
 
       if (cv.contact.name) {
         setBlack();
@@ -656,7 +675,7 @@ export class CvExportService {
         }
         setBlack();
       }
-      y += profile.headerBand ? 16 : 2;
+      y += profile.headerBand ? 8 : 2;
 
       if (profile.headerLineSeparator) {
         doc.setDrawColor(
@@ -1025,7 +1044,8 @@ export class CvExportService {
         if (
           (templateId === 'default' ||
             templateId === 'classic' ||
-            templateId === 'modern') &&
+            templateId === 'modern' ||
+            templateId === 'corporate') &&
           titleLine
         ) {
           children.push(
@@ -1082,7 +1102,11 @@ export class CvExportService {
         const dateStr = [edu.startDate, edu.endDate]
           .filter(Boolean)
           .join(' – ');
-        if (templateId === 'classic' || templateId === 'modern') {
+        if (
+          templateId === 'classic' ||
+          templateId === 'modern' ||
+          templateId === 'corporate'
+        ) {
           const institutionLine = [edu.institution, dateStr]
             .filter(Boolean)
             .join(' | ');
@@ -1104,7 +1128,7 @@ export class CvExportService {
           false,
           false,
           profile.bodySize,
-          profile.accentHex,
+          templateId === 'corporate' ? '1A1A1A' : profile.accentHex,
         ),
       );
     }
