@@ -31,7 +31,13 @@ interface PdfStyleProfile {
   contactAlign: 'left' | 'right-block';
   nameAlign: 'left' | 'center';
   headerBand: boolean;
+  headerLineSeparator?: boolean;
+  headerLineSeparatorColorR?: number;
+  headerLineSeparatorColorG?: number;
+  headerLineSeparatorColorB?: number;
+  headerLineSeparatorWidth?: number;
   headingStyle: 'underline' | 'leftBar' | 'filledBand';
+  headingLineWidth?: number;
   skillsStyle: 'chips' | 'comma';
   chipsStyle: 'outlined' | 'filled';
   entryCardStyle: boolean;
@@ -101,7 +107,13 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
     contactAlign: 'left',
     nameAlign: 'left',
     headerBand: false,
+    headerLineSeparator: true,
+    headerLineSeparatorColorR: 51,
+    headerLineSeparatorColorG: 65,
+    headerLineSeparatorColorB: 85,
+    headerLineSeparatorWidth: 0.8,
     headingStyle: 'underline',
+    headingLineWidth: 0.8,
     skillsStyle: 'comma',
     chipsStyle: 'outlined',
     entryCardStyle: false,
@@ -126,6 +138,7 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
     nameAlign: 'left',
     headerBand: false,
     headingStyle: 'underline',
+    headingLineWidth: 1.4,
     skillsStyle: 'chips',
     chipsStyle: 'outlined',
     entryCardStyle: false,
@@ -174,6 +187,7 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
     nameAlign: 'center',
     headerBand: false,
     headingStyle: 'underline',
+    headingLineWidth: 0.8,
     skillsStyle: 'comma',
     chipsStyle: 'outlined',
     entryCardStyle: false,
@@ -389,7 +403,7 @@ export class CvExportService {
         } else {
           doc.setDrawColor(profile.accentR, profile.accentG, profile.accentB);
         }
-        doc.setLineWidth(0.8);
+        doc.setLineWidth(profile.headingLineWidth ?? 0.8);
         doc.line(marginLeft, y, pageWidth - marginRight, y);
         y += 18;
         setBlack();
@@ -620,7 +634,7 @@ export class CvExportService {
         doc.setFont(profile.nameFont, profile.nameStyle);
         checkPage(28);
         doc.text(cv.contact.name, marginLeft, y);
-        y += 26;
+        y += 20;
       }
       const contactParts = [
         cv.contact.email,
@@ -644,11 +658,17 @@ export class CvExportService {
       }
       y += profile.headerBand ? 16 : 2;
 
-      if (templateId === 'classic') {
-        doc.setDrawColor(51, 65, 85);
-        doc.setLineWidth(0.8);
+      if (profile.headerLineSeparator) {
+        doc.setDrawColor(
+          profile.headerLineSeparatorColorR as number,
+          profile.headerLineSeparatorColorG as number,
+          profile.headerLineSeparatorColorB as number,
+        );
+        doc.setLineWidth(profile.headerLineSeparatorWidth as number);
         doc.line(marginLeft, y, pageWidth - marginRight, y);
         y += 26;
+      } else {
+        y += 20;
       }
     }
 
@@ -840,7 +860,18 @@ export class CvExportService {
                 },
               },
             }
-          : {}),
+          : templateId === 'modern'
+            ? {
+                border: {
+                  bottom: {
+                    style: BorderStyle.SINGLE,
+                    size: 12,
+                    color: profile.accentHex,
+                    space: 4,
+                  },
+                },
+              }
+            : {}),
       });
 
     const para = (
@@ -992,7 +1023,9 @@ export class CvExportService {
           : [exp.startDate, exp.endDate].filter(Boolean).join(' - ');
 
         if (
-          (templateId === 'default' || templateId === 'classic') &&
+          (templateId === 'default' ||
+            templateId === 'classic' ||
+            templateId === 'modern') &&
           titleLine
         ) {
           children.push(
@@ -1049,7 +1082,7 @@ export class CvExportService {
         const dateStr = [edu.startDate, edu.endDate]
           .filter(Boolean)
           .join(' – ');
-        if (templateId === 'classic') {
+        if (templateId === 'classic' || templateId === 'modern') {
           const institutionLine = [edu.institution, dateStr]
             .filter(Boolean)
             .join(' | ');
