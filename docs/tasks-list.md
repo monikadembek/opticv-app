@@ -616,17 +616,25 @@ Frontend:
 
 ### 54. Visual improvements in docx and pdf exported files structure
 
-**status: in progress**
-**time: 24.06.2026 - 25.06.2026**
+**status: done**
+**time: 24.06.2026 - 28.06.2026**
 
-- pdfs and docx files need some improvements regarding their visual structure,
+- pdfs and docx files need some improvements regarding their visual structure, they must be adjusted to look similar to html template preview
 - disable the selector with accent colors when classic and minimal templates are selected
+
+---
+
+### 55. Expand job description allowed characters number to 8000 (BE & FE)
 
 ---
 
 ### Keyword Gap - Acronym issues and underweighted keywords
 
 - think of what we can do with those sections, are tey mportant, should we display them, how we could apply the acronym issues
+
+---
+
+### Add functionality to remove bullet point
 
 ---
 
