@@ -626,6 +626,11 @@ Frontend:
 
 ### 55. Expand job description allowed characters number to 8000 (BE & FE)
 
+**status: done**
+**time: 28.06.2026**
+
+- update job description max length to 8000 characters
+
 ---
 
 ### Keyword Gap - Acronym issues and underweighted keywords

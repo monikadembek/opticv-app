@@ -67,7 +67,7 @@ export class JobUpload {
     cvDocumentId: ['', [Validators.required]],
     companyName: ['', [Validators.required, Validators.maxLength(256)]],
     jobTitle: ['', [Validators.required, Validators.maxLength(256)]],
-    jobDescription: ['', [Validators.required, Validators.maxLength(5000)]],
+    jobDescription: ['', [Validators.required, Validators.maxLength(8000)]],
     notes: ['', [Validators.maxLength(1000)]],
   });
 

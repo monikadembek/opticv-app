@@ -62,6 +62,9 @@ vi.mock('docx', () => {
     TextRun,
     HeadingLevel: { HEADING_2: 'HEADING_2' },
     AlignmentType: { LEFT: 'left', RIGHT: 'right', CENTER: 'center' },
+    BorderStyle: { SINGLE: 'single' },
+    ShadingType: { SOLID: 'solid' },
+    TabStopType: { RIGHT: 'right' },
   };
 });
 
@@ -74,7 +77,10 @@ const ALL_TEMPLATE_IDS: CvTemplateId[] = [
   'impact',
 ];
 
-const ACCENT_AWARE_IDS: CvTemplateId[] = [
+// Templates where setTextColor is called with the accent RGB in PDF export
+const PDF_ACCENT_TEXT_COLOR_IDS: CvTemplateId[] = ['default', 'modern', 'impact'];
+// Templates where accentAware=true and accentHex appears in docx TextRun color fields
+const DOCX_ACCENT_COLOR_IDS: CvTemplateId[] = [
   'default',
   'modern',
   'corporate',
@@ -156,8 +162,8 @@ describe('CvExportService (browser)', () => {
       await expect(service.exportToPdf(makeCv())).resolves.toBeUndefined();
     });
 
-    it.each(ACCENT_AWARE_IDS)(
-      'applies the given accentColor RGB for accent-aware template %s',
+    it.each(PDF_ACCENT_TEXT_COLOR_IDS)(
+      'applies the given accentColor RGB as text color for template %s',
       async (id) => {
         await service.exportToPdf(makeCv(), id, '#2563eb');
         // #2563eb -> 37, 99, 235
@@ -219,7 +225,7 @@ describe('CvExportService (browser)', () => {
       expect(clickSpy).toHaveBeenCalled();
     });
 
-    it.each(ACCENT_AWARE_IDS)(
+    it.each(DOCX_ACCENT_COLOR_IDS)(
       'applies the given accentColor hex for accent-aware template %s',
       async (id) => {
         const anchor = {

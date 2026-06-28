@@ -19,10 +19,10 @@ export class CreateJobApplicationDto {
   @MaxLength(256)
   companyName!: string;
 
-  @ApiProperty({ example: 'We are looking for...', maxLength: 5000 })
+  @ApiProperty({ example: 'We are looking for...', maxLength: 8000 })
   @IsString()
   @IsNotEmpty()
-  @MaxLength(5000)
+  @MaxLength(8000)
   jobDescription!: string;
 
   @ApiPropertyOptional({ example: 'Applied via LinkedIn', maxLength: 1000 })
