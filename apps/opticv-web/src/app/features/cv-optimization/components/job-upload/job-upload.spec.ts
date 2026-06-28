@@ -135,8 +135,8 @@ describe('JobUpload', () => {
       expect(component.jobTitleControl.hasError('maxlength')).toBe(true);
     });
 
-    it('jobDescription should have a maxlength of 5000', () => {
-      component.jobDescriptionControl.setValue('a'.repeat(5001));
+    it('jobDescription should have a maxlength of 8000', () => {
+      component.jobDescriptionControl.setValue('a'.repeat(8001));
       expect(component.jobDescriptionControl.hasError('maxlength')).toBe(true);
     });
 
@@ -262,7 +262,10 @@ describe('JobUpload', () => {
       component.jobSubmitted.subscribe((v) => emitted.push(v));
       component.onSubmit();
       expect(emitted).toHaveLength(1);
-      expect(emitted[0]).toEqual({ jobApplication: mockJobApplicationResponse, extractedData: {} });
+      expect(emitted[0]).toEqual({
+        jobApplication: mockJobApplicationResponse,
+        extractedData: {},
+      });
     });
 
     it('should NOT emit jobSubmitted when createJobApplication fails', () => {
