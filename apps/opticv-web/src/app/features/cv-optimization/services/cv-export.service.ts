@@ -38,7 +38,7 @@ interface PdfStyleProfile {
   headerLineSeparatorWidth?: number;
   headingStyle: 'underline' | 'leftBar' | 'filledBand';
   headingLineWidth?: number;
-  skillsStyle: 'chips' | 'comma';
+  skillsStyle: 'chips' | 'comma' | 'pills';
   chipsStyle: 'outlined' | 'filled';
   entryCardStyle: boolean;
   accentBullet: boolean;
@@ -211,8 +211,13 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
     contactAlign: 'left',
     nameAlign: 'left',
     headerBand: false,
+    headerLineSeparator: true,
+    headerLineSeparatorColorR: 0,
+    headerLineSeparatorColorG: 0,
+    headerLineSeparatorColorB: 0,
+    headerLineSeparatorWidth: 2,
     headingStyle: 'filledBand',
-    skillsStyle: 'chips',
+    skillsStyle: 'pills',
     chipsStyle: 'filled',
     entryCardStyle: false,
     accentBullet: true,
@@ -221,7 +226,7 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
     headingFont: 'helvetica',
     bodyFont: 'helvetica',
     bodyStyle: 'normal',
-    dateStyle: 'normal',
+    dateStyle: 'bold',
   },
 };
 
@@ -418,17 +423,17 @@ export class CvExportService {
         doc.setFontSize(profile.headingSize);
         doc.setFont(profile.headingFont, 'bold');
         doc.text(label, marginLeft + 10, y);
-        y += 20;
+        y += 22;
         setBlack();
       } else {
         // filledBand (impact)
         doc.setFillColor(profile.accentR, profile.accentG, profile.accentB);
-        doc.rect(marginLeft - 10, y - 12, maxWidth + 20, 17, 'F');
+        doc.roundedRect(marginLeft, y - 14, maxWidth, 19, 2, 2, 'F');
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(profile.headingSize);
         doc.setFont(profile.headingFont, 'bold');
-        doc.text(label, marginLeft, y);
-        y += 16;
+        doc.text(label, marginLeft + 10, y);
+        y += 20;
         setBlack();
       }
     };
@@ -557,6 +562,48 @@ export class CvExportService {
         x += chipWidth + gap;
       }
       y += chipHeight + 8;
+    };
+
+    const addSkillPills = (skills: string[]): void => {
+      const padH = 10;
+      const padV = 2;
+      const fontSize = 9;
+      const pillHeight = fontSize + padV * 2 + 2;
+      const gap = 5;
+      const radius = 7;
+      let x = marginLeft;
+      checkPage(pillHeight + 4);
+
+      for (const skill of skills) {
+        doc.setFontSize(fontSize);
+        doc.setFont('helvetica', 'normal');
+        const textWidth = doc.getTextWidth(skill);
+        const pillWidth = textWidth + padH * 2;
+
+        if (x + pillWidth > pageWidth - marginRight) {
+          x = marginLeft;
+          y += pillHeight + gap;
+          checkPage(pillHeight + 4);
+        }
+
+        doc.setLineWidth(0);
+        doc.setDrawColor(profile.accentR, profile.accentG, profile.accentB);
+        doc.setFillColor(profile.accentR, profile.accentG, profile.accentB);
+        doc.roundedRect(
+          x,
+          y - fontSize + 1,
+          pillWidth,
+          pillHeight,
+          radius,
+          radius,
+          'FD',
+        );
+        doc.setTextColor(255, 255, 255);
+        doc.text(skill, x + padH, y + padV);
+        setBlack();
+        x += pillWidth + gap;
+      }
+      y += pillHeight + 8;
     };
 
     // ── Contact / Header ────────────────────────────────────────────────────
@@ -785,6 +832,8 @@ export class CvExportService {
       if (profile.skillsStyle === 'comma') {
         addWrappedText(cv.skills.join(', '), profile.bodySize, 'normal');
         y += 8;
+      } else if (profile.skillsStyle === 'pills') {
+        addSkillPills(cv.skills);
       } else {
         addSkillChips(cv.skills);
       }
@@ -849,6 +898,7 @@ export class CvExportService {
       HeadingLevel,
       Packer,
       Paragraph,
+      ShadingType,
       TabStopType,
       TextRun,
     } = await import('docx');
@@ -861,55 +911,110 @@ export class CvExportService {
       : baseProfile;
     const children: Para[] = [];
 
-    const heading = (text: string): Para =>
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: text.toUpperCase(),
-            bold: profile.headingBold,
-            font: profile.headingFont,
-            size: profile.headingSize,
-            color: profile.accentHex,
-          }),
-        ],
-        heading: HeadingLevel.HEADING_2,
-        spacing: { before: 240, after: 120 },
-        alignment: templateId === 'minimal' ? AlignmentType.CENTER : AlignmentType.LEFT,
-        ...(templateId === 'classic'
-          ? {
-              border: {
-                bottom: {
-                  style: BorderStyle.SINGLE,
-                  size: 6,
-                  color: 'CBD5E1',
-                  space: 4,
-                },
-              },
-            }
-          : templateId === 'modern'
+    const impactShading = {
+      type: ShadingType.SOLID,
+      color: profile.accentHex,
+      fill: profile.accentHex,
+    };
+
+    const heading = (text: string): Para[] => {
+      if (templateId === 'impact') {
+        const spacer = new Paragraph({
+          children: [new TextRun({ text: '', size: 6 })],
+          spacing: {
+            before: 240,
+            after: 0,
+            line: 100,
+            lineRule: 'exact' as const,
+          },
+          shading: impactShading,
+        });
+        const textPara = new Paragraph({
+          children: [
+            new TextRun({
+              text: `  ${text.toUpperCase()}`,
+              bold: profile.headingBold,
+              font: profile.headingFont,
+              size: profile.headingSize,
+              color: 'FFFFFF',
+            }),
+          ],
+          heading: HeadingLevel.HEADING_2,
+          spacing: {
+            before: 0,
+            after: 0,
+            line: 260,
+            lineRule: 'exact' as const,
+          },
+          shading: impactShading,
+        });
+        const spacerBottom = new Paragraph({
+          children: [new TextRun({ text: '', size: 6 })],
+          spacing: {
+            before: 0,
+            after: 120,
+            line: 100,
+            lineRule: 'exact' as const,
+          },
+          shading: impactShading,
+        });
+        return [spacer, textPara, spacerBottom];
+      }
+
+      return [
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: text.toUpperCase(),
+              bold: profile.headingBold,
+              font: profile.headingFont,
+              size: profile.headingSize,
+              color: profile.accentHex,
+            }),
+          ],
+          heading: HeadingLevel.HEADING_2,
+          spacing: { before: 240, after: 120 },
+          alignment:
+            templateId === 'minimal'
+              ? AlignmentType.CENTER
+              : AlignmentType.LEFT,
+          ...(templateId === 'classic'
             ? {
                 border: {
                   bottom: {
                     style: BorderStyle.SINGLE,
-                    size: 12,
-                    color: profile.accentHex,
+                    size: 6,
+                    color: 'CBD5E1',
                     space: 4,
                   },
                 },
               }
-            : templateId === 'minimal'
+            : templateId === 'modern'
               ? {
                   border: {
                     bottom: {
                       style: BorderStyle.SINGLE,
-                      size: 6,
-                      color: 'E2E8F0',
+                      size: 12,
+                      color: profile.accentHex,
                       space: 4,
                     },
                   },
                 }
-              : {}),
-      });
+              : templateId === 'minimal'
+                ? {
+                    border: {
+                      bottom: {
+                        style: BorderStyle.SINGLE,
+                        size: 6,
+                        color: 'E2E8F0',
+                        space: 4,
+                      },
+                    },
+                  }
+                : {}),
+        }),
+      ];
+    };
 
     const para = (
       text: string,
@@ -1056,17 +1161,31 @@ export class CvExportService {
           },
         }),
       );
+    } else if (templateId === 'impact') {
+      children.push(
+        new Paragraph({
+          children: [],
+          spacing: { before: 40, after: 80 },
+          border: {
+            bottom: {
+              style: BorderStyle.SINGLE,
+              size: 24,
+              color: '0F172A',
+            },
+          },
+        }),
+      );
     }
 
     // ── Summary ──────────────────────────────────────────────────────────────
     if (cv.summary) {
-      children.push(heading('Professional Summary'));
+      children.push(...heading('Professional Summary'));
       children.push(para(cv.summary));
     }
 
     // ── Experience ───────────────────────────────────────────────────────────
     if (cv.experience.length > 0) {
-      children.push(heading('Work Experience'));
+      children.push(...heading('Work Experience'));
       for (const exp of cv.experience) {
         const titleLine = [exp.title, exp.company].filter(Boolean).join(' - ');
         const dateStr = exp.current
@@ -1078,7 +1197,8 @@ export class CvExportService {
             templateId === 'classic' ||
             templateId === 'modern' ||
             templateId === 'corporate' ||
-            templateId === 'minimal') &&
+            templateId === 'minimal' ||
+            templateId === 'impact') &&
           titleLine
         ) {
           children.push(
@@ -1096,8 +1216,8 @@ export class CvExportService {
                   ? [
                       new TextRun({
                         text: '\t' + dateStr,
-                        bold: false,
-                        italics: true,
+                        bold: templateId === 'impact',
+                        italics: templateId !== 'impact',
                         font: profile.bodyFont,
                         size: 18,
                         color: '666666',
@@ -1128,7 +1248,7 @@ export class CvExportService {
 
     // ── Education ────────────────────────────────────────────────────────────
     if (cv.education.length > 0) {
-      children.push(heading('Education'));
+      children.push(...heading('Education'));
       for (const edu of cv.education) {
         const line = [edu.degree, edu.field].filter(Boolean).join(', ');
         if (line) children.push(para(line, true));
@@ -1139,7 +1259,8 @@ export class CvExportService {
           templateId === 'classic' ||
           templateId === 'modern' ||
           templateId === 'corporate' ||
-          templateId === 'minimal'
+          templateId === 'minimal' ||
+          templateId === 'impact'
         ) {
           const institutionLine = [edu.institution, dateStr]
             .filter(Boolean)
@@ -1154,7 +1275,7 @@ export class CvExportService {
 
     // ── Skills ───────────────────────────────────────────────────────────────
     if (cv.skills.length > 0) {
-      children.push(heading('Skills'));
+      children.push(...heading('Skills'));
       const skillsSeparator = profile.skillsStyle === 'chips' ? ' • ' : ', ';
       children.push(
         para(
@@ -1162,14 +1283,16 @@ export class CvExportService {
           false,
           false,
           profile.bodySize,
-          templateId === 'corporate' || templateId === 'minimal' ? '1A1A1A' : profile.accentHex,
+          templateId === 'corporate' || templateId === 'minimal'
+            ? '1A1A1A'
+            : profile.accentHex,
         ),
       );
     }
 
     // ── Certifications ───────────────────────────────────────────────────────
     if (cv.certifications.length > 0) {
-      children.push(heading('Certifications'));
+      children.push(...heading('Certifications'));
       for (const cert of cv.certifications) {
         const parts = [cert.name, cert.issuer, cert.date]
           .filter(Boolean)
@@ -1180,7 +1303,7 @@ export class CvExportService {
 
     // ── Projects ─────────────────────────────────────────────────────────────
     if (cv.projects.length > 0) {
-      children.push(heading('Projects'));
+      children.push(...heading('Projects'));
       for (const proj of cv.projects) {
         children.push(para(proj.name, true));
         if (proj.description) children.push(para(proj.description));
@@ -1194,7 +1317,7 @@ export class CvExportService {
 
     // ── Languages ────────────────────────────────────────────────────────────
     if (cv.languages.length > 0) {
-      children.push(heading('Languages'));
+      children.push(...heading('Languages'));
       const langLine = cv.languages
         .map((l) =>
           l.proficiency ? `${l.language} (${l.proficiency})` : l.language,
