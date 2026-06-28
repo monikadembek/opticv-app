@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   input,
   model,
   output,
@@ -15,6 +16,7 @@ import {
   CV_ACCENT_COLORS,
   CV_TEMPLATES,
   DEFAULT_ACCENT_COLOR,
+  ACCENT_AWARE_TEMPLATE_IDS,
 } from '../../cv-templates';
 import { CvA4Preview } from '../cv-a4-preview/cv-a4-preview';
 import type { CvStructuredData } from '@opticv/datatypes';
@@ -41,4 +43,8 @@ export class ExportFooter {
   readonly infoDialogVisible = signal(false);
   readonly templates = CV_TEMPLATES;
   readonly accentColors = CV_ACCENT_COLORS;
+
+  readonly accentColorDisabled = computed(
+    () => !ACCENT_AWARE_TEMPLATE_IDS.includes(this.selectedTemplate()),
+  );
 }

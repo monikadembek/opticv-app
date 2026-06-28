@@ -25,6 +25,7 @@
       [ngModel]="accentColor()"
       (ngModelChange)="accentColor.set($event)"
       ariaLabel="Accent color"
+      [disabled]="accentColorDisabled()"
     >
       <ng-template #selectedItem let-selected>
         @if (selected) {

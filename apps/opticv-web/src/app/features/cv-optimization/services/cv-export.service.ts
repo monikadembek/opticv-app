@@ -31,8 +31,14 @@ interface PdfStyleProfile {
   contactAlign: 'left' | 'right-block';
   nameAlign: 'left' | 'center';
   headerBand: boolean;
+  headerLineSeparator?: boolean;
+  headerLineSeparatorColorR?: number;
+  headerLineSeparatorColorG?: number;
+  headerLineSeparatorColorB?: number;
+  headerLineSeparatorWidth?: number;
   headingStyle: 'underline' | 'leftBar' | 'filledBand';
-  skillsStyle: 'chips' | 'comma';
+  headingLineWidth?: number;
+  skillsStyle: 'chips' | 'comma' | 'pills';
   chipsStyle: 'outlined' | 'filled';
   entryCardStyle: boolean;
   accentBullet: boolean;
@@ -70,9 +76,9 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
     accentR: 230,
     accentG: 57,
     accentB: 70,
-    nameSize: 20,
+    nameSize: 18,
     headingSize: 12,
-    bodySize: 10,
+    bodySize: 9,
     contactSize: 9,
     contactAlign: 'right-block',
     nameAlign: 'left',
@@ -94,14 +100,20 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
     accentR: 30,
     accentG: 41,
     accentB: 59,
-    nameSize: 20,
+    nameSize: 18,
     headingSize: 12,
     bodySize: 10,
     contactSize: 9,
     contactAlign: 'left',
     nameAlign: 'left',
     headerBand: false,
+    headerLineSeparator: true,
+    headerLineSeparatorColorR: 51,
+    headerLineSeparatorColorG: 65,
+    headerLineSeparatorColorB: 85,
+    headerLineSeparatorWidth: 0.8,
     headingStyle: 'underline',
+    headingLineWidth: 0.8,
     skillsStyle: 'comma',
     chipsStyle: 'outlined',
     entryCardStyle: false,
@@ -126,6 +138,7 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
     nameAlign: 'left',
     headerBand: false,
     headingStyle: 'underline',
+    headingLineWidth: 1.4,
     skillsStyle: 'chips',
     chipsStyle: 'outlined',
     entryCardStyle: false,
@@ -174,6 +187,7 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
     nameAlign: 'center',
     headerBand: false,
     headingStyle: 'underline',
+    headingLineWidth: 0.8,
     skillsStyle: 'comma',
     chipsStyle: 'outlined',
     entryCardStyle: false,
@@ -197,8 +211,13 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
     contactAlign: 'left',
     nameAlign: 'left',
     headerBand: false,
+    headerLineSeparator: true,
+    headerLineSeparatorColorR: 0,
+    headerLineSeparatorColorG: 0,
+    headerLineSeparatorColorB: 0,
+    headerLineSeparatorWidth: 2,
     headingStyle: 'filledBand',
-    skillsStyle: 'chips',
+    skillsStyle: 'pills',
     chipsStyle: 'filled',
     entryCardStyle: false,
     accentBullet: true,
@@ -207,7 +226,7 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
     headingFont: 'helvetica',
     bodyFont: 'helvetica',
     bodyStyle: 'normal',
-    dateStyle: 'normal',
+    dateStyle: 'bold',
   },
 };
 
@@ -216,7 +235,7 @@ const DOCX_PROFILES: Record<CvTemplateId, DocxStyleProfile> = {
     accentAware: true,
     accentHex: 'E63946',
     nameHex: '1A1A1A',
-    nameSize: 40,
+    nameSize: 36,
     headingSize: 24,
     bodySize: 20,
     contactSize: 18,
@@ -235,7 +254,7 @@ const DOCX_PROFILES: Record<CvTemplateId, DocxStyleProfile> = {
     accentAware: false,
     accentHex: '1E293B',
     nameHex: '1E293B',
-    nameSize: 40,
+    nameSize: 36,
     headingSize: 24,
     bodySize: 20,
     contactSize: 18,
@@ -339,6 +358,8 @@ export class CvExportService {
   ): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) return;
 
+    console.log('cv: ', cv);
+
     const { jsPDF } = await import('jspdf');
     const baseProfile = PDF_PROFILES[templateId];
     const profile = baseProfile.accentAware
@@ -371,38 +392,48 @@ export class CvExportService {
     };
 
     const addSectionHeading = (text: string): void => {
-      checkPage(24);
+      checkPage(28);
       const label = text.toUpperCase();
 
       if (profile.headingStyle === 'underline') {
         setAccent();
         doc.setFontSize(profile.headingSize);
         doc.setFont(profile.headingFont, 'bold');
-        doc.text(label, marginLeft, y);
-        y += 4;
-        doc.setDrawColor(profile.accentR, profile.accentG, profile.accentB);
-        doc.setLineWidth(0.8);
+        if (profile.nameAlign === 'center') {
+          doc.text(label, pageWidth / 2, y, { align: 'center' });
+        } else {
+          doc.text(label, marginLeft, y);
+        }
+        y += 6;
+        if (templateId === 'classic') {
+          doc.setDrawColor(203, 213, 225);
+        } else if (templateId === 'minimal') {
+          doc.setDrawColor(226, 232, 240);
+        } else {
+          doc.setDrawColor(profile.accentR, profile.accentG, profile.accentB);
+        }
+        doc.setLineWidth(profile.headingLineWidth ?? 0.8);
         doc.line(marginLeft, y, pageWidth - marginRight, y);
-        y += 14;
+        y += 18;
         setBlack();
       } else if (profile.headingStyle === 'leftBar') {
         doc.setFillColor(profile.accentR, profile.accentG, profile.accentB);
-        doc.rect(marginLeft - 6, y - 11, 3, 13, 'F');
-        setAccent();
+        doc.rect(marginLeft, y - 13, 2, 17, 'F');
+        doc.setTextColor(30, 41, 59);
         doc.setFontSize(profile.headingSize);
         doc.setFont(profile.headingFont, 'bold');
-        doc.text(label, marginLeft + 2, y);
-        y += 16;
+        doc.text(label, marginLeft + 10, y);
+        y += 22;
         setBlack();
       } else {
         // filledBand (impact)
         doc.setFillColor(profile.accentR, profile.accentG, profile.accentB);
-        doc.rect(marginLeft - 10, y - 12, maxWidth + 20, 17, 'F');
+        doc.roundedRect(marginLeft, y - 14, maxWidth, 19, 2, 2, 'F');
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(profile.headingSize);
         doc.setFont(profile.headingFont, 'bold');
-        doc.text(label, marginLeft, y);
-        y += 16;
+        doc.text(label, marginLeft + 10, y);
+        y += 20;
         setBlack();
       }
     };
@@ -483,10 +514,23 @@ export class CvExportService {
           checkPage(chipHeight + 4);
         }
 
-        doc.setDrawColor(profile.accentR, profile.accentG, profile.accentB);
         doc.setLineWidth(0.5);
 
-        if (profile.chipsStyle === 'filled') {
+        if (templateId === 'corporate') {
+          doc.setDrawColor(226, 232, 240);
+          doc.setFillColor(241, 245, 249);
+          doc.roundedRect(
+            x,
+            y - profile.bodySize + 1,
+            chipWidth,
+            chipHeight,
+            2,
+            2,
+            'FD',
+          );
+          doc.setTextColor(51, 65, 85);
+        } else if (profile.chipsStyle === 'filled') {
+          doc.setDrawColor(profile.accentR, profile.accentG, profile.accentB);
           doc.setFillColor(profile.accentR, profile.accentG, profile.accentB);
           doc.roundedRect(
             x,
@@ -499,6 +543,7 @@ export class CvExportService {
           );
           doc.setTextColor(255, 255, 255);
         } else {
+          doc.setDrawColor(profile.accentR, profile.accentG, profile.accentB);
           doc.setFillColor(255, 255, 255);
           doc.roundedRect(
             x,
@@ -519,17 +564,58 @@ export class CvExportService {
       y += chipHeight + 8;
     };
 
+    const addSkillPills = (skills: string[]): void => {
+      const padH = 10;
+      const padV = 2;
+      const fontSize = 9;
+      const pillHeight = fontSize + padV * 2 + 2;
+      const gap = 5;
+      const radius = 7;
+      let x = marginLeft;
+      checkPage(pillHeight + 4);
+
+      for (const skill of skills) {
+        doc.setFontSize(fontSize);
+        doc.setFont('helvetica', 'normal');
+        const textWidth = doc.getTextWidth(skill);
+        const pillWidth = textWidth + padH * 2;
+
+        if (x + pillWidth > pageWidth - marginRight) {
+          x = marginLeft;
+          y += pillHeight + gap;
+          checkPage(pillHeight + 4);
+        }
+
+        doc.setLineWidth(0);
+        doc.setDrawColor(profile.accentR, profile.accentG, profile.accentB);
+        doc.setFillColor(profile.accentR, profile.accentG, profile.accentB);
+        doc.roundedRect(
+          x,
+          y - fontSize + 1,
+          pillWidth,
+          pillHeight,
+          radius,
+          radius,
+          'FD',
+        );
+        doc.setTextColor(255, 255, 255);
+        doc.text(skill, x + padH, y + padV);
+        setBlack();
+        x += pillWidth + gap;
+      }
+      y += pillHeight + 8;
+    };
+
     // ── Contact / Header ────────────────────────────────────────────────────
 
     if (profile.nameAlign === 'center') {
       if (cv.contact.name) {
-        setAccent();
+        setBlack();
         doc.setFontSize(profile.nameSize);
         doc.setFont(profile.nameFont, profile.nameStyle);
         checkPage(28);
         doc.text(cv.contact.name, pageWidth / 2, y, { align: 'center' });
         y += 26;
-        setBlack();
       }
 
       const contactParts = [
@@ -552,7 +638,11 @@ export class CvExportService {
         }
         setBlack();
       }
-      y += 8;
+      y += 6;
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.8);
+      doc.line(marginLeft, y, pageWidth - marginRight, y);
+      y += 20;
     } else if (profile.contactAlign === 'right-block') {
       // Modern: name left, contact right
       const contactParts = [
@@ -560,6 +650,7 @@ export class CvExportService {
         cv.contact.phone,
         cv.contact.location,
         cv.contact.linkedin,
+        cv.contact.website,
       ].filter(Boolean) as string[];
 
       const nameY = y;
@@ -592,18 +683,23 @@ export class CvExportService {
           cv.contact.linkedin,
           cv.contact.website,
         ].filter(Boolean).length;
-        const bandHeight = 26 + (contactLineCount > 0 ? 13 : 0) + 14;
+        const bandPadV = 12;
+        const bandTop = y - bandPadV;
+        const bandHeight =
+          bandPadV + bandPadV + 18 + (contactLineCount > 0 ? 16 : 0) + bandPadV;
         doc.setFillColor(241, 245, 249);
-        doc.rect(marginLeft - 10, y - 18, maxWidth + 20, bandHeight, 'F');
+        doc.rect(marginLeft - 10, bandTop, maxWidth + 20, bandHeight, 'F');
         doc.setDrawColor(profile.accentR, profile.accentG, profile.accentB);
-        doc.setLineWidth(1.5);
+        doc.setLineWidth(2);
         doc.line(
           marginLeft - 10,
-          y - 18 + bandHeight,
+          bandTop + bandHeight,
           marginLeft - 10 + maxWidth + 20,
-          y - 18 + bandHeight,
+          bandTop + bandHeight,
         );
       }
+
+      if (profile.headerBand) y += 12;
 
       if (cv.contact.name) {
         setBlack();
@@ -611,7 +707,7 @@ export class CvExportService {
         doc.setFont(profile.nameFont, profile.nameStyle);
         checkPage(28);
         doc.text(cv.contact.name, marginLeft, y);
-        y += 26;
+        y += 20;
       }
       const contactParts = [
         cv.contact.email,
@@ -633,14 +729,27 @@ export class CvExportService {
         }
         setBlack();
       }
-      y += profile.headerBand ? 16 : 8;
+      y += profile.headerBand ? 8 : 2;
+
+      if (profile.headerLineSeparator) {
+        doc.setDrawColor(
+          profile.headerLineSeparatorColorR as number,
+          profile.headerLineSeparatorColorG as number,
+          profile.headerLineSeparatorColorB as number,
+        );
+        doc.setLineWidth(profile.headerLineSeparatorWidth as number);
+        doc.line(marginLeft, y, pageWidth - marginRight, y);
+        y += 26;
+      } else {
+        y += 20;
+      }
     }
 
     // ── Summary ─────────────────────────────────────────────────────────────
     if (cv.summary) {
       addSectionHeading('Professional Summary');
       addWrappedText(cv.summary, profile.bodySize, 'normal');
-      y += 8;
+      y += 14;
     }
 
     // ── Experience ───────────────────────────────────────────────────────────
@@ -655,15 +764,15 @@ export class CvExportService {
           doc.line(marginLeft - 4, y - 10, marginLeft - 4, y + 4);
         }
 
-        const titleLine = [exp.title, exp.company].filter(Boolean).join(' — ');
+        const titleLine = [exp.title, exp.company].filter(Boolean).join(' - ');
         doc.setFontSize(profile.bodySize);
         doc.setFont(profile.bodyFont, 'bold');
         setBlack();
         doc.text(titleLine, marginLeft, y);
 
         const dateStr = exp.current
-          ? `${exp.startDate ?? ''} – Present`
-          : [exp.startDate, exp.endDate].filter(Boolean).join(' – ');
+          ? `${exp.startDate ?? ''} - Present`
+          : [exp.startDate, exp.endDate].filter(Boolean).join(' - ');
 
         if (dateStr.trim()) {
           setGrey();
@@ -680,12 +789,14 @@ export class CvExportService {
           addWrappedText(exp.location, 9, 'italic');
           setBlack();
         }
+        y += 4;
 
         for (const bullet of exp.bullets) {
           addBullet(bullet, profile.accentBullet);
         }
-        y += 6;
+        y += 10;
       }
+      y += 4;
     }
 
     // ── Education ────────────────────────────────────────────────────────────
@@ -702,18 +813,17 @@ export class CvExportService {
 
         const line = [edu.degree, edu.field].filter(Boolean).join(', ');
         if (line) addWrappedText(line, profile.bodySize, 'bold');
-        if (edu.institution)
-          addWrappedText(edu.institution, profile.bodySize, 'normal');
         const dateStr = [edu.startDate, edu.endDate]
           .filter(Boolean)
-          .join(' – ');
-        if (dateStr) {
-          setGrey();
-          addWrappedText(dateStr, 9, 'italic');
-          setBlack();
-        }
+          .join(' - ');
+        const institutionLine = [edu.institution, dateStr]
+          .filter(Boolean)
+          .join(' | ');
+        if (institutionLine)
+          addWrappedText(institutionLine, profile.bodySize, 'normal');
         y += 6;
       }
+      y += 10;
     }
 
     // ── Skills ───────────────────────────────────────────────────────────────
@@ -722,9 +832,12 @@ export class CvExportService {
       if (profile.skillsStyle === 'comma') {
         addWrappedText(cv.skills.join(', '), profile.bodySize, 'normal');
         y += 8;
+      } else if (profile.skillsStyle === 'pills') {
+        addSkillPills(cv.skills);
       } else {
         addSkillChips(cv.skills);
       }
+      y += 10;
     }
 
     // ── Certifications ───────────────────────────────────────────────────────
@@ -736,7 +849,7 @@ export class CvExportService {
           .join(' · ');
         addWrappedText(parts, profile.bodySize, 'normal');
       }
-      y += 8;
+      y += 14;
     }
 
     // ── Projects ─────────────────────────────────────────────────────────────
@@ -754,6 +867,7 @@ export class CvExportService {
         }
         y += 4;
       }
+      y += 10;
     }
 
     // ── Languages ────────────────────────────────────────────────────────────
@@ -763,7 +877,7 @@ export class CvExportService {
         .map((l) =>
           l.proficiency ? `${l.language} (${l.proficiency})` : l.language,
         )
-        .join(', ');
+        .join(' · ');
       addWrappedText(langLine, profile.bodySize, 'normal');
     }
 
@@ -779,10 +893,13 @@ export class CvExportService {
 
     const {
       AlignmentType,
+      BorderStyle,
       Document,
       HeadingLevel,
       Packer,
       Paragraph,
+      ShadingType,
+      TabStopType,
       TextRun,
     } = await import('docx');
 
@@ -794,21 +911,110 @@ export class CvExportService {
       : baseProfile;
     const children: Para[] = [];
 
-    const heading = (text: string): Para =>
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: text.toUpperCase(),
-            bold: profile.headingBold,
-            font: profile.headingFont,
-            size: profile.headingSize,
-            color: profile.accentHex,
-          }),
-        ],
-        heading: HeadingLevel.HEADING_2,
-        spacing: { before: 240, after: 80 },
-        alignment: AlignmentType.LEFT,
-      });
+    const impactShading = {
+      type: ShadingType.SOLID,
+      color: profile.accentHex,
+      fill: profile.accentHex,
+    };
+
+    const heading = (text: string): Para[] => {
+      if (templateId === 'impact') {
+        const spacer = new Paragraph({
+          children: [new TextRun({ text: '', size: 6 })],
+          spacing: {
+            before: 240,
+            after: 0,
+            line: 100,
+            lineRule: 'exact' as const,
+          },
+          shading: impactShading,
+        });
+        const textPara = new Paragraph({
+          children: [
+            new TextRun({
+              text: `  ${text.toUpperCase()}`,
+              bold: profile.headingBold,
+              font: profile.headingFont,
+              size: profile.headingSize,
+              color: 'FFFFFF',
+            }),
+          ],
+          heading: HeadingLevel.HEADING_2,
+          spacing: {
+            before: 0,
+            after: 0,
+            line: 260,
+            lineRule: 'exact' as const,
+          },
+          shading: impactShading,
+        });
+        const spacerBottom = new Paragraph({
+          children: [new TextRun({ text: '', size: 6 })],
+          spacing: {
+            before: 0,
+            after: 120,
+            line: 100,
+            lineRule: 'exact' as const,
+          },
+          shading: impactShading,
+        });
+        return [spacer, textPara, spacerBottom];
+      }
+
+      return [
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: text.toUpperCase(),
+              bold: profile.headingBold,
+              font: profile.headingFont,
+              size: profile.headingSize,
+              color: profile.accentHex,
+            }),
+          ],
+          heading: HeadingLevel.HEADING_2,
+          spacing: { before: 240, after: 120 },
+          alignment:
+            templateId === 'minimal'
+              ? AlignmentType.CENTER
+              : AlignmentType.LEFT,
+          ...(templateId === 'classic'
+            ? {
+                border: {
+                  bottom: {
+                    style: BorderStyle.SINGLE,
+                    size: 6,
+                    color: 'CBD5E1',
+                    space: 4,
+                  },
+                },
+              }
+            : templateId === 'modern'
+              ? {
+                  border: {
+                    bottom: {
+                      style: BorderStyle.SINGLE,
+                      size: 12,
+                      color: profile.accentHex,
+                      space: 4,
+                    },
+                  },
+                }
+              : templateId === 'minimal'
+                ? {
+                    border: {
+                      bottom: {
+                        style: BorderStyle.SINGLE,
+                        size: 6,
+                        color: 'E2E8F0',
+                        space: 4,
+                      },
+                    },
+                  }
+                : {}),
+        }),
+      ];
+    };
 
     const para = (
       text: string,
@@ -835,7 +1041,14 @@ export class CvExportService {
 
     const bullet = (text: string): Para =>
       new Paragraph({
-        text,
+        children: [
+          new TextRun({
+            text,
+            font: profile.bodyFont,
+            size: profile.bodySize,
+            color: '1A1A1A',
+          }),
+        ],
         bullet: { level: 0 },
         spacing: { after: 40 },
       });
@@ -845,25 +1058,6 @@ export class CvExportService {
       : AlignmentType.LEFT;
 
     // ── Contact ──────────────────────────────────────────────────────────────
-    if (cv.contact.name) {
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: cv.contact.name,
-              bold: profile.nameBold,
-              italics: profile.nameItalic,
-              font: profile.nameFont,
-              size: profile.nameSize,
-              color: profile.nameHex,
-            }),
-          ],
-          spacing: { after: 80 },
-          alignment: contactAlign,
-        }),
-      );
-    }
-
     const contactParts = [
       cv.contact.email,
       cv.contact.phone,
@@ -873,89 +1067,232 @@ export class CvExportService {
     ].filter(Boolean) as string[];
 
     if (profile.contactRightStack) {
-      for (const part of contactParts) {
+      const [firstContact, ...restContacts] = contactParts;
+      children.push(
+        new Paragraph({
+          tabStops: [{ type: TabStopType.RIGHT, position: 9026 }],
+          children: [
+            new TextRun({
+              text: cv.contact.name ?? '',
+              bold: profile.nameBold,
+              italics: profile.nameItalic,
+              font: profile.nameFont,
+              size: profile.nameSize,
+              color: profile.nameHex,
+            }),
+            ...(firstContact
+              ? [
+                  new TextRun({
+                    text: '\t' + firstContact,
+                    bold: false,
+                    font: profile.bodyFont,
+                    size: 18,
+                    color: '666666',
+                  }),
+                ]
+              : []),
+          ],
+          spacing: { after: 40 },
+        }),
+      );
+      for (const part of restContacts) {
         children.push(
           para(part, false, false, 18, '666666', AlignmentType.RIGHT),
         );
       }
-    } else if (contactParts.length > 0) {
+    } else {
+      if (cv.contact.name) {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: cv.contact.name,
+                bold: profile.nameBold,
+                italics: profile.nameItalic,
+                font: profile.nameFont,
+                size: profile.nameSize,
+                color: profile.nameHex,
+              }),
+            ],
+            spacing: { after: 80 },
+            alignment: contactAlign,
+          }),
+        );
+      }
+      if (contactParts.length > 0) {
+        children.push(
+          para(
+            contactParts.join('  |  '),
+            false,
+            false,
+            18,
+            '666666',
+            contactAlign,
+          ),
+        );
+      }
+    }
+
+    if (templateId === 'classic') {
       children.push(
-        para(
-          contactParts.join('  |  '),
-          false,
-          false,
-          18,
-          '666666',
-          contactAlign,
-        ),
+        new Paragraph({
+          children: [],
+          spacing: { before: 40, after: 80 },
+          border: {
+            bottom: {
+              style: BorderStyle.SINGLE,
+              size: 10,
+              color: '334155',
+            },
+          },
+        }),
+      );
+    } else if (templateId === 'minimal') {
+      children.push(
+        new Paragraph({
+          children: [],
+          spacing: { before: 40, after: 80 },
+          border: {
+            bottom: {
+              style: BorderStyle.SINGLE,
+              size: 6,
+              color: 'E2E8F0',
+            },
+          },
+        }),
+      );
+    } else if (templateId === 'impact') {
+      children.push(
+        new Paragraph({
+          children: [],
+          spacing: { before: 40, after: 80 },
+          border: {
+            bottom: {
+              style: BorderStyle.SINGLE,
+              size: 24,
+              color: '0F172A',
+            },
+          },
+        }),
       );
     }
 
     // ── Summary ──────────────────────────────────────────────────────────────
     if (cv.summary) {
-      children.push(heading('Professional Summary'));
+      children.push(...heading('Professional Summary'));
       children.push(para(cv.summary));
     }
 
     // ── Experience ───────────────────────────────────────────────────────────
     if (cv.experience.length > 0) {
-      children.push(heading('Work Experience'));
+      children.push(...heading('Work Experience'));
       for (const exp of cv.experience) {
-        const titleLine = [exp.title, exp.company].filter(Boolean).join(' — ');
-        if (titleLine) children.push(para(titleLine, true));
-
+        const titleLine = [exp.title, exp.company].filter(Boolean).join(' - ');
         const dateStr = exp.current
-          ? `${exp.startDate ?? ''} – Present`
-          : [exp.startDate, exp.endDate].filter(Boolean).join(' – ');
-        if (exp.location || dateStr.trim()) {
+          ? `${exp.startDate ?? ''} - Present`
+          : [exp.startDate, exp.endDate].filter(Boolean).join(' - ');
+
+        if (
+          (templateId === 'default' ||
+            templateId === 'classic' ||
+            templateId === 'modern' ||
+            templateId === 'corporate' ||
+            templateId === 'minimal' ||
+            templateId === 'impact') &&
+          titleLine
+        ) {
           children.push(
-            para(
-              [exp.location, dateStr].filter(Boolean).join('  ·  '),
-              false,
-              true,
-              18,
-              '666666',
-            ),
+            new Paragraph({
+              tabStops: [{ type: TabStopType.RIGHT, position: 9026 }],
+              children: [
+                new TextRun({
+                  text: titleLine,
+                  bold: true,
+                  font: profile.bodyFont,
+                  size: profile.bodySize,
+                  color: '1A1A1A',
+                }),
+                ...(dateStr.trim()
+                  ? [
+                      new TextRun({
+                        text: '\t' + dateStr,
+                        bold: templateId === 'impact',
+                        italics: templateId !== 'impact',
+                        font: profile.bodyFont,
+                        size: 18,
+                        color: '666666',
+                      }),
+                    ]
+                  : []),
+              ],
+              spacing: { after: 60 },
+            }),
           );
+        } else {
+          if (titleLine) children.push(para(titleLine, true));
+          if (dateStr.trim()) {
+            children.push(para(dateStr, false, true, 18, '666666'));
+          }
+        }
+
+        if (exp.location) {
+          children.push(para(exp.location, false, true, 18, '666666'));
         }
 
         for (const b of exp.bullets) {
           children.push(bullet(b));
         }
+        children.push(new Paragraph({ spacing: { after: 60 } }));
       }
     }
 
     // ── Education ────────────────────────────────────────────────────────────
     if (cv.education.length > 0) {
-      children.push(heading('Education'));
+      children.push(...heading('Education'));
       for (const edu of cv.education) {
         const line = [edu.degree, edu.field].filter(Boolean).join(', ');
         if (line) children.push(para(line, true));
-        if (edu.institution) children.push(para(edu.institution));
         const dateStr = [edu.startDate, edu.endDate]
           .filter(Boolean)
           .join(' – ');
-        if (dateStr) children.push(para(dateStr, false, true, 18, '666666'));
+        if (
+          templateId === 'classic' ||
+          templateId === 'modern' ||
+          templateId === 'corporate' ||
+          templateId === 'minimal' ||
+          templateId === 'impact'
+        ) {
+          const institutionLine = [edu.institution, dateStr]
+            .filter(Boolean)
+            .join(' | ');
+          if (institutionLine) children.push(para(institutionLine));
+        } else {
+          if (edu.institution) children.push(para(edu.institution));
+          if (dateStr) children.push(para(dateStr, false, true, 18, '666666'));
+        }
       }
     }
 
     // ── Skills ───────────────────────────────────────────────────────────────
     if (cv.skills.length > 0) {
-      children.push(heading('Skills'));
+      children.push(...heading('Skills'));
+      const skillsSeparator = profile.skillsStyle === 'chips' ? ' • ' : ', ';
       children.push(
         para(
-          cv.skills.join(', '),
+          cv.skills.join(skillsSeparator),
           false,
           false,
           profile.bodySize,
-          profile.accentHex,
+          templateId === 'corporate' || templateId === 'minimal'
+            ? '1A1A1A'
+            : profile.accentHex,
         ),
       );
     }
 
     // ── Certifications ───────────────────────────────────────────────────────
     if (cv.certifications.length > 0) {
-      children.push(heading('Certifications'));
+      children.push(...heading('Certifications'));
       for (const cert of cv.certifications) {
         const parts = [cert.name, cert.issuer, cert.date]
           .filter(Boolean)
@@ -966,7 +1303,7 @@ export class CvExportService {
 
     // ── Projects ─────────────────────────────────────────────────────────────
     if (cv.projects.length > 0) {
-      children.push(heading('Projects'));
+      children.push(...heading('Projects'));
       for (const proj of cv.projects) {
         children.push(para(proj.name, true));
         if (proj.description) children.push(para(proj.description));
@@ -980,12 +1317,12 @@ export class CvExportService {
 
     // ── Languages ────────────────────────────────────────────────────────────
     if (cv.languages.length > 0) {
-      children.push(heading('Languages'));
+      children.push(...heading('Languages'));
       const langLine = cv.languages
         .map((l) =>
           l.proficiency ? `${l.language} (${l.proficiency})` : l.language,
         )
-        .join(', ');
+        .join(' · ');
       children.push(para(langLine));
     }
 

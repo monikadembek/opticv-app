@@ -45,6 +45,8 @@
       <div>{{ cv()!.contact.location }}</div>
       } @if (cv()!.contact.linkedin) {
       <div>{{ cv()!.contact.linkedin }}</div>
+      } @if (cv()!.contact.website) {
+      <div>{{ cv()!.contact.website }}</div>
       }
     </div>
   </div>
@@ -80,13 +82,25 @@
         style="position: absolute; left: 0; top: 1px; font-size: 13px"
         >•</span
       >
-      <div style="font-weight: bold; font-size: 11px">{{ exp.title }}</div>
-      @if (exp.company || exp.location || exp.startDate || exp.endDate) {
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: baseline;
+          margin-bottom: 2px;
+        "
+      >
+        <div style="font-weight: bold; font-size: 11px">{{ exp.title }}</div>
+        @if (exp.startDate || exp.endDate || exp.current) {
+        <div style="font-size: 10px; color: #666; white-space: nowrap">
+          @if (exp.current) { {{ exp.startDate ?? '' }} – Present } @else { {{
+          [exp.startDate, exp.endDate] | dateRange }} }
+        </div>
+        }
+      </div>
+      @if (exp.company || exp.location) {
       <div style="font-size: 10px; color: #666; margin-bottom: 4px">
-        {{ exp.company }}@if (exp.location) { | {{ exp.location }} }@if
-        (exp.startDate || exp.endDate || exp.current) { | @if (exp.current) { {{
-        exp.startDate ?? '' }} – Present } @else { {{ [exp.startDate,
-        exp.endDate] | dateRange }} } }
+        {{ exp.company }}@if (exp.location) { | {{ exp.location }} }
       </div>
       } @for (bullet of exp.bullets; track bullet) {
       <div style="margin-left: 10px; line-height: 1.5; margin-bottom: 2px">
@@ -1136,7 +1150,7 @@
     Education
   </div>
   @for (edu of cv()!.education; track edu.institution) {
-  <div style="margin-bottom: 8px; text-align: center">
+  <div style="margin-bottom: 8px; text-align: left">
     @if (edu.degree || edu.field) {
     <div style="font-weight: 700; color: #1e293b">
       {{ [edu.degree, edu.field] | degreeField }}
@@ -1167,7 +1181,7 @@
   </div>
   <p
     style="
-      text-align: center;
+      text-align: left;
       font-size: 10px;
       color: #475569;
       line-height: 1.6;
@@ -1194,7 +1208,7 @@
     Certifications
   </div>
   @for (cert of cv()!.certifications; track cert.name) {
-  <div style="text-align: center; line-height: 1.6">
+  <div style="text-align: left; line-height: 1.6">
     • {{ cert.name }}@if (cert.issuer) { · {{ cert.issuer }} }@if (cert.date) {
     · {{ cert.date }} }
   </div>
@@ -1216,7 +1230,7 @@
     Projects
   </div>
   @for (proj of cv()!.projects; track proj.name) {
-  <div style="margin-bottom: 8px; text-align: center">
+  <div style="margin-bottom: 8px; text-align: left">
     <div style="font-weight: 700; color: #1e293b">{{ proj.name }}</div>
     @if (proj.description) {
     <div style="line-height: 1.5">{{ proj.description }}</div>
@@ -1243,7 +1257,7 @@
   >
     Languages
   </div>
-  <div style="text-align: center">
+  <div style="text-align: left">
     @for (lang of cv()!.languages; track lang.language) {
     <span
       >{{ lang.language }}@if (lang.proficiency) { ({{ lang.proficiency }}) }@if
@@ -1303,7 +1317,7 @@
       margin-top: 16px;
       margin-bottom: 8px;
       border-radius: 2px;
-      display: inline-block;
+      display: block;
     "
   >
     Professional Summary
@@ -1325,7 +1339,7 @@
       margin-top: 16px;
       margin-bottom: 8px;
       border-radius: 2px;
-      display: inline-block;
+      display: block;
     "
   >
     Work Experience
@@ -1399,7 +1413,7 @@
       margin-top: 16px;
       margin-bottom: 8px;
       border-radius: 2px;
-      display: inline-block;
+      display: block;
     "
   >
     Skills
@@ -1433,7 +1447,7 @@
       margin-top: 16px;
       margin-bottom: 8px;
       border-radius: 2px;
-      display: inline-block;
+      display: block;
     "
   >
     Education
@@ -1465,7 +1479,7 @@
       margin-top: 16px;
       margin-bottom: 8px;
       border-radius: 2px;
-      display: inline-block;
+      display: block;
     "
   >
     Certifications
@@ -1489,7 +1503,7 @@
       margin-top: 16px;
       margin-bottom: 8px;
       border-radius: 2px;
-      display: inline-block;
+      display: block;
     "
   >
     Projects
@@ -1527,7 +1541,7 @@
       margin-top: 16px;
       margin-bottom: 8px;
       border-radius: 2px;
-      display: inline-block;
+      display: block;
     "
   >
     Languages
