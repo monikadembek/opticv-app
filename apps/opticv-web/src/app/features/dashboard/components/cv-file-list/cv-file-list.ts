@@ -87,7 +87,8 @@ export class CvFileList implements OnInit {
 
   deleteCv(file: CvDocumentListItem): void {
     this.confirmationService.confirm({
-      message: 'Are you sure you want to delete this file?',
+      message:
+        'Are you sure you want to delete this file? This will also remove all associated optimizations.',
       header: 'Confirm deletion',
       icon: 'pi pi-exclamation-triangle',
       acceptButtonStyleClass: 'p-button-danger',
