@@ -633,6 +633,18 @@ Frontend:
 
 ---
 
+### 56. Small visual improvements
+
+**status: in progress**
+**time: 29.06.2026**
+
+- Display link to cv optimization page after user successfully uploads cv file
+- Define width and maxwidth of confirmation dialogs
+- Change text on confirmation dialog when user deletes uploaded cv, add info that it will also remove all associated optimizations
+- On first page add images to the 3-step process of using the app
+
+---
+
 ### Keyword Gap - Acronym issues and underweighted keywords
 
 - think of what we can do with those sections, are tey mportant, should we display them, how we could apply the acronym issues

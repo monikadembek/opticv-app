@@ -13,10 +13,11 @@ import type { UploadCvResponse } from '@opticv/datatypes';
 import { CvDropzone } from './components/cv-dropzone/cv-dropzone';
 import { CvUploadApiService } from './services/cv-upload-api.service';
 import { formatFileSize } from '../../shared/utils';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-upload-cv',
-  imports: [CvDropzone, ButtonModule, DatePipe],
+  imports: [CvDropzone, ButtonModule, DatePipe, RouterLink],
   templateUrl: './upload-cv.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
