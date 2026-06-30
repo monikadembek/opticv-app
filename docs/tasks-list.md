@@ -635,13 +635,33 @@ Frontend:
 
 ### 56. Small visual improvements
 
-**status: in progress**
+**status: done**
 **time: 29.06.2026**
 
 - Display link to cv optimization page after user successfully uploads cv file
 - Define width and maxwidth of confirmation dialogs
 - Change text on confirmation dialog when user deletes uploaded cv, add info that it will also remove all associated optimizations
 - On first page add images to the 3-step process of using the app
+
+---
+
+### 57. LinkedIn Rewrite - prepare new prompt (BE)
+
+**status: in progress**
+**time: 30.06.2026**
+
+- prepare new version of prompt for the LINKEDIN_REWRITE that will allow generating linkedIn profile informations based on uploaded cv and provided job description/job position, and will not require user to provede their current linkedin profile informations
+
+---
+
+### 58. LinkedIn Rewrite - display results, allow export to pdf and docx (FE)
+
+**status: todo**
+**time: 30.06.2026**
+
+- run process of preparing linkedIn informations based on uploaded cv and provided job description
+- display results in ui
+- allow exporting linkedin profile data to pdf and docx
 
 ---
 
