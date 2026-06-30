@@ -647,10 +647,11 @@ Frontend:
 
 ### 57. LinkedIn Rewrite - prepare new prompt (BE)
 
-**status: in progress**
+**status: done**
 **time: 30.06.2026**
 
 - prepare new version of prompt for the LINKEDIN_REWRITE that will allow generating linkedIn profile informations based on uploaded cv and provided job description/job position, and will not require user to provede their current linkedin profile informations
+- run npx prisma db seed
 
 ---
 
