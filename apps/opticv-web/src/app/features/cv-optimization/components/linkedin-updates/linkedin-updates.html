@@ -232,7 +232,7 @@
     </h3>
     @if (sortedRecommendations().length) {
     <div class="space-y-3">
-      @for (rec of sortedRecommendations(); track rec.section) {
+      @for (rec of sortedRecommendations(); track rec.section + rec.recommendation) {
       <div
         class="flex items-start gap-3 rounded-lg border border-(--border-subtle) p-3"
       >
