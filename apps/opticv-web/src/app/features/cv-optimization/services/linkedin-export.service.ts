@@ -5,6 +5,7 @@ import type {
   LinkedInProfileRecommendation,
   LinkedInRecommendationSection,
   LinkedInRewriteResult,
+  RecommendedSkill,
 } from '@opticv/datatypes';
 
 export const LINKEDIN_ANGLE_LABELS: Record<LinkedInHeadlineAngle, string> = {
@@ -146,13 +147,21 @@ export class LinkedInExportService {
     }
     y += 8;
 
-    // Section 3: Skills to Add
-    addSectionTitle('Skills to Add');
-    const skills = result.skillsToAdd ?? [];
+    // Section 3: Recommended LinkedIn Skills
+    addSectionTitle('Recommended LinkedIn Skills');
+    const skills = result.recommendedSkills ?? [];
     if (skills.length > 0) {
-      addWrappedText(skills.join(', '), 10, false, false, 8);
+      addWrappedText(
+        skills
+          .map((s: RecommendedSkill) => (s.isNew ? `${s.name} (new)` : s.name))
+          .join(', '),
+        10,
+        false,
+        false,
+        8,
+      );
     } else {
-      addWrappedText('None suggested', 10, false, false, 8);
+      addWrappedText('No skills recommended', 10, false, false, 8);
     }
 
     // Section 4: Profile Recommendations
@@ -281,15 +290,15 @@ export class LinkedInExportService {
     }
     paragraphs.push(spacer());
 
-    // Section 3: Skills to Add
-    paragraphs.push(heading1('Skills to Add'));
-    const skills = result.skillsToAdd ?? [];
+    // Section 3: Recommended LinkedIn Skills
+    paragraphs.push(heading1('Recommended LinkedIn Skills'));
+    const skills = result.recommendedSkills ?? [];
     if (skills.length > 0) {
-      for (const skill of skills) {
-        paragraphs.push(bullet(skill));
+      for (const s of skills) {
+        paragraphs.push(bullet(s.isNew ? `${s.name} (new)` : s.name));
       }
     } else {
-      paragraphs.push(body('None suggested'));
+      paragraphs.push(body('No skills recommended'));
     }
     paragraphs.push(spacer());
 

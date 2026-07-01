@@ -688,6 +688,16 @@ Frontend:
 
 ---
 
+### 61. LinkedIn Skills section - replace skills to add with list of recommended skills (BE and FE)
+
+**status: done**
+**time: 1.07.2026**
+
+- add version 3 of prompt for LINKEDIN.REWRITE, changes include replacing skillsToAdd with list of recommended skills ranked by recruter-search relevance, returns skills that are already included in cv and new skills to add,
+- display list of recommended skills containing skills from CV and suggested new skills, maximum of 50 skills allowed.
+
+---
+
 ### Keyword Gap - Acronym issues and underweighted keywords
 
 - think of what we can do with those sections, are tey mportant, should we display them, how we could apply the acronym issues

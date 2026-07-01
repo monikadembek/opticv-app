@@ -9,7 +9,10 @@ import {
 import { PanelModule } from 'primeng/panel';
 import { Button } from 'primeng/button';
 import { MessageService } from 'primeng/api';
-import type { LinkedInRewriteResult } from '@opticv/datatypes';
+import type {
+  LinkedInRewriteResult,
+  RecommendedSkill,
+} from '@opticv/datatypes';
 import {
   LINKEDIN_ANGLE_LABELS,
   LINKEDIN_SECTION_LABELS,
@@ -41,8 +44,16 @@ export class LinkedInUpdates {
     );
   });
 
+  protected readonly recommendedSkills = computed<RecommendedSkill[]>(
+    () => this.result().recommendedSkills?.slice(0, 50) ?? [],
+  );
+
   protected readonly hasSkills = computed(
-    () => (this.result().skillsToAdd?.length ?? 0) > 0,
+    () => this.recommendedSkills().length > 0,
+  );
+
+  protected readonly skillsCount = computed(
+    () => this.recommendedSkills().length,
   );
 
   async onExportPdf(): Promise<void> {
@@ -98,5 +109,13 @@ export class LinkedInUpdates {
         detail: 'Could not copy text to clipboard.',
       });
     });
+  }
+
+  protected copyAllSkills(): void {
+    this.copyToClipboard(
+      this.recommendedSkills()
+        .map((s) => s.name)
+        .join(', '),
+    );
   }
 }
