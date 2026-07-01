@@ -207,13 +207,9 @@ describe('LinkedInUpdates', () => {
       expect(text).toContain('RxJS');
     });
 
-    it('shows new badge on new skills', () => {
+    it('shows legend label for new skills', () => {
       const host = fixture.nativeElement as HTMLElement;
-      const greenChips = Array.from(host.querySelectorAll('span.bg-green-100'));
-      const rxjsChip = greenChips.find((el) =>
-        el.textContent?.includes('RxJS'),
-      );
-      expect(rxjsChip?.textContent).toContain('new');
+      expect(host.textContent).toContain('Suggested new skills');
     });
 
     it('shows "No skills recommended" when recommendedSkills is empty', () => {

@@ -688,13 +688,13 @@ Frontend:
 
 ---
 
-### 61. LinkedIn - Skills section improvements (BE and FE)
+### 61. LinkedIn Skills section - replace skills to add with list of recommended skills (BE and FE)
 
-**status: in progress**
+**status: done**
 **time: 1.07.2026**
 
-- add version 3 of prompt for LINKEDIN.REWRITE, changes include returning list of recommended skills ranked by recruter-search relevance, returning skills that are include in cv and new skills to add
-- display list of recommended skills containing skills from CV and suggested new skills, maximum of 50 skills allowed
+- add version 3 of prompt for LINKEDIN.REWRITE, changes include replacing skillsToAdd with list of recommended skills ranked by recruter-search relevance, returns skills that are already included in cv and new skills to add,
+- display list of recommended skills containing skills from CV and suggested new skills, maximum of 50 skills allowed.
 
 ---
 
