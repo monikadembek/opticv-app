@@ -72,7 +72,11 @@ export type User = {
 
 export type SubscriptionTier = 'FREE' | 'PRO' | 'PRO_ANNUAL' | 'SPRINT';
 
-export type SubscriptionStatus = 'ACTIVE' | 'CANCELED' | 'PAST_DUE' | 'TRIALING';
+export type SubscriptionStatus =
+  | 'ACTIVE'
+  | 'CANCELED'
+  | 'PAST_DUE'
+  | 'TRIALING';
 
 export type UserProfile = {
   id: string;
@@ -435,12 +439,17 @@ export type LinkedInProfileRecommendation = {
   priority: 'high' | 'medium' | 'low';
 };
 
+export type RecommendedSkill = {
+  name: string;
+  isNew: boolean;
+};
+
 export type LinkedInRewriteResult = {
   headlineVariants: LinkedInHeadlineVariant[];
   recommendedHeadline?: LinkedInHeadlineAngle;
   aboutRewrite: LinkedInAboutRewrite;
   additionalRecommendations: LinkedInProfileRecommendation[];
-  skillsToAdd?: string[];
+  recommendedSkills?: RecommendedSkill[];
   targetSearchQueries: string[];
 };
 

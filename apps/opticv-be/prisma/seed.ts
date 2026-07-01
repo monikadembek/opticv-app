@@ -1127,7 +1127,7 @@ Provide:
   {
     promptType: PromptType.LINKEDIN_REWRITE,
     version: '2.0.0',
-    isActive: true,
+    isActive: false,
     modelPreference: 'gpt-4o-mini',
     maxTokens: null,
     notes:
@@ -1267,6 +1267,174 @@ Provide:
             },
           },
           skillsToAdd: { type: 'array', items: { type: 'string' } },
+          targetSearchQueries: { type: 'array', items: { type: 'string' } },
+        },
+      },
+    },
+  },
+  {
+    promptType: PromptType.LINKEDIN_REWRITE,
+    version: '3.0.0',
+    isActive: true,
+    modelPreference: 'gpt-4o-mini',
+    maxTokens: null,
+    notes:
+      'v3.0.0: merged, ranked, deduplicated recommended skills list (CV + gap), max 50, isNew flag',
+    systemPrompt: `You are an expert LinkedIn strategist who builds high-impact LinkedIn profiles from scratch. You have helped hundreds of candidates land interviews at top companies by crafting profiles that rank in recruiter searches and compel click-throughs.
+
+Your task is to create a complete, optimised LinkedIn presence for the candidate using only their CV and target role information. No existing LinkedIn profile is provided — you are building from the ground up.
+
+LinkedIn-specific principles:
+- LinkedIn search prioritises the headline heavily — every word matters.
+- The About section's first 2-3 lines are visible before "see more" — front-load impact there.
+- LinkedIn allows more personality than a resume; first-person voice works.
+- Recruiters search for specific keywords — include them in the headline, About, and skills.
+- LinkedIn isn't an ATS — natural keyword integration matters more than density.
+- Profile completeness signals credibility: recommend custom URL, all sections filled, current role clear.
+
+Headline principles (max 220 chars):
+- Format options: "[Title] | [Specialty] | [Value Prop]" or "Helping [audience] [achieve outcome] through [approach]"
+- Include 2-3 high-volume search keywords
+- Avoid empty phrases like "Open to opportunities" alone — pair with specifics
+
+About section principles (max 2600 chars, recommend 1500-2000):
+- Hook in the first 2-3 lines — the "preview" before "see more"
+- Use first person
+- Include a brief professional story arc drawn from the CV
+- 3-5 bullet points of specific achievements taken directly from the CV
+- End with a clear CTA — what should viewers do? (DM you, check work, follow, etc.)
+- Add specialty keywords naturally throughout
+
+Skills section strategy:
+- Start from the candidate's existing CV skills present in <parsed_resume_sections>.
+- Add target-role skills that are missing from the CV, identified from the job description.
+- Deduplicate case-insensitively.
+- Rank all skills by recruiter-search relevance for the target role (most valuable first).
+- Cap the list at 50 skills.
+- Set isNew: true for newly-suggested gap skills; isNew: false for skills already present in the CV.
+- Never invent skills the candidate does not have and that the job description does not call for.
+
+Derive all content strictly from the candidate's CV and target role. Do not invent credentials, job titles, skills, or achievements that are not present in the provided data.
+
+Output using the submit_linkedin_sync tool. Do not output anything else.`,
+    userPromptTemplate: `Build an optimised LinkedIn profile for the following candidate.
+
+{{SHARED_CONTEXT}}
+
+Provide:
+1. Three headline variants with different positioning angles
+2. A complete About section written from scratch based on the CV and target role
+3. A complete, ranked recommended skills list that merges CV skills with target-role gap skills (deduplicated, ranked by recruiter-search relevance, max 50, each flagged isNew: true if newly suggested or isNew: false if already on the CV)
+4. Recommendations for completing other profile sections (featured, certifications, URL, banner, etc.)
+5. Recruiter search queries this profile should rank for`,
+    outputSchema: {
+      name: 'submit_linkedin_sync',
+      description:
+        'Submit LinkedIn profile content generated from CV and job description',
+      input_schema: {
+        type: 'object',
+        required: [
+          'headlineVariants',
+          'aboutRewrite',
+          'additionalRecommendations',
+          'targetSearchQueries',
+        ],
+        properties: {
+          headlineVariants: {
+            type: 'array',
+            minItems: 3,
+            maxItems: 3,
+            items: {
+              type: 'object',
+              required: ['angle', 'text', 'characterCount', 'keywordsTargeted'],
+              properties: {
+                angle: {
+                  type: 'string',
+                  enum: [
+                    'title_specialty_value',
+                    'outcome_focused',
+                    'story_focused',
+                  ],
+                },
+                text: { type: 'string' },
+                characterCount: { type: 'integer', maximum: 220 },
+                keywordsTargeted: { type: 'array', items: { type: 'string' } },
+                rationale: { type: 'string' },
+              },
+            },
+          },
+          recommendedHeadline: {
+            type: 'string',
+            enum: ['title_specialty_value', 'outcome_focused', 'story_focused'],
+          },
+          aboutRewrite: {
+            type: 'object',
+            required: ['fullText', 'characterCount', 'preview', 'structure'],
+            properties: {
+              fullText: {
+                type: 'string',
+                description: 'The complete About section',
+              },
+              characterCount: { type: 'integer', maximum: 2600 },
+              preview: {
+                type: 'string',
+                description:
+                  "The first ~210 characters that show before 'see more'",
+              },
+              structure: {
+                type: 'object',
+                required: ['hook', 'story', 'achievements', 'cta'],
+                properties: {
+                  hook: { type: 'string' },
+                  story: { type: 'string' },
+                  achievements: { type: 'array', items: { type: 'string' } },
+                  cta: { type: 'string' },
+                },
+              },
+              keywordsIncorporated: {
+                type: 'array',
+                items: { type: 'string' },
+              },
+            },
+          },
+          additionalRecommendations: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['section', 'recommendation', 'priority'],
+              properties: {
+                section: {
+                  type: 'string',
+                  enum: [
+                    'skills',
+                    'featured',
+                    'experience',
+                    'education',
+                    'certifications',
+                    'url',
+                    'photo',
+                    'banner',
+                    'recommendations',
+                    'activity',
+                  ],
+                },
+                recommendation: { type: 'string' },
+                priority: { type: 'string', enum: ['high', 'medium', 'low'] },
+              },
+            },
+          },
+          recommendedSkills: {
+            type: 'array',
+            maxItems: 50,
+            items: {
+              type: 'object',
+              required: ['name', 'isNew'],
+              properties: {
+                name: { type: 'string' },
+                isNew: { type: 'boolean' },
+              },
+            },
+          },
           targetSearchQueries: { type: 'array', items: { type: 'string' } },
         },
       },

@@ -89,7 +89,10 @@ const MOCK_RESULT: LinkedInRewriteResult = {
       priority: 'medium',
     },
   ],
-  skillsToAdd: ['TypeScript', 'RxJS'],
+  recommendedSkills: [
+    { name: 'TypeScript', isNew: false },
+    { name: 'RxJS', isNew: true },
+  ],
   targetSearchQueries: ['Angular developer', 'Frontend engineer remote'],
 };
 
@@ -123,54 +126,95 @@ describe('LinkedInExportService (browser)', () => {
       await service.exportToPdf(MOCK_RESULT);
       const allTextArgs = textMock.mock.calls.map((c: unknown[]) => c[0]);
       expect(
-        allTextArgs.some((t: unknown) =>
-          typeof t === 'string' &&
-          t.includes('Senior Frontend Engineer | Angular | Building Scalable UIs'),
+        allTextArgs.some(
+          (t: unknown) =>
+            typeof t === 'string' &&
+            t.includes(
+              'Senior Frontend Engineer | Angular | Building Scalable UIs',
+            ),
         ),
       ).toBe(true);
     });
 
     it('marks the recommended headline with a star prefix', async () => {
       await service.exportToPdf(MOCK_RESULT);
-      const allTextArgs = textMock.mock.calls.map((c: unknown[]) => c[0] as string);
-      expect(
-        allTextArgs.some((t) => t.includes('★ Recommended')),
-      ).toBe(true);
+      const allTextArgs = textMock.mock.calls.map(
+        (c: unknown[]) => c[0] as string,
+      );
+      expect(allTextArgs.some((t) => t.includes('★ Recommended'))).toBe(true);
     });
 
     it('renders about section preview text', async () => {
       await service.exportToPdf(MOCK_RESULT);
-      const allTextArgs = textMock.mock.calls.map((c: unknown[]) => c[0] as string);
+      const allTextArgs = textMock.mock.calls.map(
+        (c: unknown[]) => c[0] as string,
+      );
       expect(
         allTextArgs.some((t) =>
-          t.includes('Frontend engineer with 8 years delivering scalable Angular apps.'),
+          t.includes(
+            'Frontend engineer with 8 years delivering scalable Angular apps.',
+          ),
         ),
       ).toBe(true);
     });
 
-    it('renders skills to add when present', async () => {
+    it('renders recommended skills section title', async () => {
       await service.exportToPdf(MOCK_RESULT);
-      const allTextArgs = textMock.mock.calls.map((c: unknown[]) => c[0] as string);
-      expect(allTextArgs.some((t) => t.includes('TypeScript'))).toBe(true);
+      const allTextArgs = textMock.mock.calls.map(
+        (c: unknown[]) => c[0] as string,
+      );
+      expect(
+        allTextArgs.some((t) => t.includes('Recommended LinkedIn Skills')),
+      ).toBe(true);
     });
 
-    it('renders "None suggested" when skillsToAdd is empty', async () => {
-      const result = { ...MOCK_RESULT, skillsToAdd: [] };
-      await service.exportToPdf(result);
-      const allTextArgs = textMock.mock.calls.map((c: unknown[]) => c[0] as string);
-      expect(allTextArgs.some((t) => t.includes('None suggested'))).toBe(true);
+    it('renders CV skill without (new) marker', async () => {
+      await service.exportToPdf(MOCK_RESULT);
+      const allTextArgs = textMock.mock.calls.map(
+        (c: unknown[]) => c[0] as string,
+      );
+      expect(
+        allTextArgs.some(
+          (t) => t.includes('TypeScript') && !t.includes('TypeScript (new)'),
+        ),
+      ).toBe(true);
     });
 
-    it('renders "None suggested" when skillsToAdd is undefined', async () => {
-      const result = { ...MOCK_RESULT, skillsToAdd: undefined };
+    it('renders new skill with (new) marker', async () => {
+      await service.exportToPdf(MOCK_RESULT);
+      const allTextArgs = textMock.mock.calls.map(
+        (c: unknown[]) => c[0] as string,
+      );
+      expect(allTextArgs.some((t) => t.includes('RxJS (new)'))).toBe(true);
+    });
+
+    it('renders "No skills recommended" when recommendedSkills is empty', async () => {
+      const result = { ...MOCK_RESULT, recommendedSkills: [] };
       await service.exportToPdf(result);
-      const allTextArgs = textMock.mock.calls.map((c: unknown[]) => c[0] as string);
-      expect(allTextArgs.some((t) => t.includes('None suggested'))).toBe(true);
+      const allTextArgs = textMock.mock.calls.map(
+        (c: unknown[]) => c[0] as string,
+      );
+      expect(allTextArgs.some((t) => t.includes('No skills recommended'))).toBe(
+        true,
+      );
+    });
+
+    it('renders "No skills recommended" when recommendedSkills is undefined', async () => {
+      const result = { ...MOCK_RESULT, recommendedSkills: undefined };
+      await service.exportToPdf(result);
+      const allTextArgs = textMock.mock.calls.map(
+        (c: unknown[]) => c[0] as string,
+      );
+      expect(allTextArgs.some((t) => t.includes('No skills recommended'))).toBe(
+        true,
+      );
     });
 
     it('renders profile recommendations sorted by priority (high before low)', async () => {
       await service.exportToPdf(MOCK_RESULT);
-      const allTextArgs = textMock.mock.calls.map((c: unknown[]) => c[0] as string);
+      const allTextArgs = textMock.mock.calls.map(
+        (c: unknown[]) => c[0] as string,
+      );
       const highIdx = allTextArgs.findIndex((t) => t.includes('[HIGH]'));
       const lowIdx = allTextArgs.findIndex((t) => t.includes('[LOW]'));
       expect(highIdx).toBeGreaterThanOrEqual(0);
@@ -180,17 +224,23 @@ describe('LinkedInExportService (browser)', () => {
 
     it('renders target search queries', async () => {
       await service.exportToPdf(MOCK_RESULT);
-      const allTextArgs = textMock.mock.calls.map((c: unknown[]) => c[0] as string);
-      expect(
-        allTextArgs.some((t) => t.includes('• Angular developer')),
-      ).toBe(true);
+      const allTextArgs = textMock.mock.calls.map(
+        (c: unknown[]) => c[0] as string,
+      );
+      expect(allTextArgs.some((t) => t.includes('• Angular developer'))).toBe(
+        true,
+      );
     });
 
     it('renders keywords incorporated in about section when present', async () => {
       await service.exportToPdf(MOCK_RESULT);
-      const allTextArgs = textMock.mock.calls.map((c: unknown[]) => c[0] as string);
+      const allTextArgs = textMock.mock.calls.map(
+        (c: unknown[]) => c[0] as string,
+      );
       expect(
-        allTextArgs.some((t) => t.includes('Keywords incorporated: Angular, Frontend')),
+        allTextArgs.some((t) =>
+          t.includes('Keywords incorporated: Angular, Frontend'),
+        ),
       ).toBe(true);
     });
 
@@ -200,7 +250,9 @@ describe('LinkedInExportService (browser)', () => {
         aboutRewrite: { ...MOCK_RESULT.aboutRewrite, keywordsIncorporated: [] },
       };
       await service.exportToPdf(result);
-      const allTextArgs = textMock.mock.calls.map((c: unknown[]) => c[0] as string);
+      const allTextArgs = textMock.mock.calls.map(
+        (c: unknown[]) => c[0] as string,
+      );
       expect(
         allTextArgs.some((t) => t.includes('Keywords incorporated:')),
       ).toBe(false);
@@ -227,8 +279,12 @@ describe('LinkedInExportService (browser)', () => {
         download: '',
         click: clickSpy,
       } as unknown as HTMLAnchorElement;
-      vi.spyOn(window.document.body, 'appendChild').mockImplementation(() => anchor);
-      vi.spyOn(window.document.body, 'removeChild').mockImplementation(() => anchor);
+      vi.spyOn(window.document.body, 'appendChild').mockImplementation(
+        () => anchor,
+      );
+      vi.spyOn(window.document.body, 'removeChild').mockImplementation(
+        () => anchor,
+      );
       vi.spyOn(window.document, 'createElement').mockReturnValue(anchor);
 
       await service.exportToDocx(MOCK_RESULT);
@@ -244,9 +300,17 @@ describe('LinkedInExportService (browser)', () => {
 
     it('revokes the object URL after download', async () => {
       const clickSpy = vi.fn();
-      const anchor = { href: '', download: '', click: clickSpy } as unknown as HTMLAnchorElement;
-      vi.spyOn(window.document.body, 'appendChild').mockImplementation(() => anchor);
-      vi.spyOn(window.document.body, 'removeChild').mockImplementation(() => anchor);
+      const anchor = {
+        href: '',
+        download: '',
+        click: clickSpy,
+      } as unknown as HTMLAnchorElement;
+      vi.spyOn(window.document.body, 'appendChild').mockImplementation(
+        () => anchor,
+      );
+      vi.spyOn(window.document.body, 'removeChild').mockImplementation(
+        () => anchor,
+      );
       vi.spyOn(window.document, 'createElement').mockReturnValue(anchor);
 
       await service.exportToDocx(MOCK_RESULT);
@@ -254,13 +318,12 @@ describe('LinkedInExportService (browser)', () => {
       expect(globalThis.URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock');
     });
 
-    it('uses bullet paragraphs for skillsToAdd items', async () => {
+    it('uses bullet paragraphs for recommendedSkills items', async () => {
       await service.exportToDocx(MOCK_RESULT);
       const docArg = toBlob.mock.calls[0][0] as {
         _d: { sections: Array<{ children: Array<Record<string, unknown>> }> };
       };
       const children = docArg._d.sections[0].children;
-      // Each bullet() call produces a paragraph with a `bullet` key in the opts
       const hasBulletParagraph = children.some((c) => {
         const pOpts = c['_p'] as Record<string, unknown> | undefined;
         return pOpts?.['bullet'] !== undefined;
@@ -268,8 +331,33 @@ describe('LinkedInExportService (browser)', () => {
       expect(hasBulletParagraph).toBe(true);
     });
 
-    it('uses body paragraph for "None suggested" when skillsToAdd is empty', async () => {
-      const result = { ...MOCK_RESULT, skillsToAdd: [] };
+    it('renders new skill with (new) suffix in DOCX bullets', async () => {
+      await service.exportToDocx(MOCK_RESULT);
+      const docArg = toBlob.mock.calls[0][0] as {
+        _d: { sections: Array<{ children: Array<Record<string, unknown>> }> };
+      };
+      const children = docArg._d.sections[0].children;
+      const bulletTexts = children
+        .filter((c) => {
+          const pOpts = c['_p'] as Record<string, unknown> | undefined;
+          return pOpts?.['bullet'] !== undefined;
+        })
+        .map((c) => {
+          const pOpts = c['_p'] as Record<string, unknown> | undefined;
+          const runs = pOpts?.['children'] as
+            | Array<Record<string, unknown>>
+            | undefined;
+          return (
+            runs
+              ?.map((r) => (r['_r'] as Record<string, unknown>)?.['text'])
+              .join('') ?? ''
+          );
+        });
+      expect(bulletTexts.some((t) => t.includes('RxJS (new)'))).toBe(true);
+    });
+
+    it('uses body paragraph for "No skills recommended" when recommendedSkills is empty', async () => {
+      const result = { ...MOCK_RESULT, recommendedSkills: [] };
       await service.exportToDocx(result);
       expect(toBlob).toHaveBeenCalled();
     });
@@ -284,7 +372,9 @@ describe('LinkedInExportService (browser)', () => {
       const runTexts = children
         .flatMap((c) => {
           const pOpts = c['_p'] as Record<string, unknown> | undefined;
-          const runs = pOpts?.['children'] as Array<Record<string, unknown>> | undefined;
+          const runs = pOpts?.['children'] as
+            | Array<Record<string, unknown>>
+            | undefined;
           return runs ?? [];
         })
         .map((r) => {

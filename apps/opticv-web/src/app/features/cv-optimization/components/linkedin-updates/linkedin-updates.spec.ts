@@ -52,7 +52,10 @@ const MOCK_RESULT: LinkedInRewriteResult = {
       priority: 'medium',
     },
   ],
-  skillsToAdd: ['TypeScript', 'RxJS'],
+  recommendedSkills: [
+    { name: 'TypeScript', isNew: false },
+    { name: 'RxJS', isNew: true },
+  ],
   targetSearchQueries: ['Angular developer', 'Frontend engineer remote'],
 };
 
@@ -114,7 +117,7 @@ describe('LinkedInUpdates', () => {
     });
 
     it('shows Recommended badge on the recommended headline', () => {
-      expect(fixture.nativeElement.textContent).toContain('Recommended');
+      expect(fixture.nativeElement.textContent).toContain('★ Recommended');
     });
 
     it('does not show Recommended badge when no headline is recommended', () => {
@@ -123,7 +126,7 @@ describe('LinkedInUpdates', () => {
         recommendedHeadline: undefined,
       });
       fixture.detectChanges();
-      expect(fixture.nativeElement.textContent).not.toContain('Recommended');
+      expect(fixture.nativeElement.textContent).not.toContain('★ Recommended');
     });
 
     it('renders keyword tags for variants with keywordsTargeted', () => {
@@ -150,7 +153,9 @@ describe('LinkedInUpdates', () => {
     });
 
     it('renders full text', () => {
-      expect(fixture.nativeElement.textContent).toContain('Open to senior IC roles.');
+      expect(fixture.nativeElement.textContent).toContain(
+        'Open to senior IC roles.',
+      );
     });
 
     it('renders character count for about section', () => {
@@ -172,36 +177,64 @@ describe('LinkedInUpdates', () => {
       fixture.detectChanges();
       const text = fixture.nativeElement.textContent as string;
       const firstOccurrence = text.indexOf('Keywords used:');
-      const secondOccurrence = text.indexOf('Keywords used:', firstOccurrence + 1);
+      const secondOccurrence = text.indexOf(
+        'Keywords used:',
+        firstOccurrence + 1,
+      );
       expect(secondOccurrence).toBe(-1);
     });
   });
 
-  describe('skills to add', () => {
-    it('renders skill badges when skillsToAdd is non-empty', () => {
+  describe('recommended skills', () => {
+    it('renders skill chips when recommendedSkills is non-empty', () => {
       expect(fixture.nativeElement.textContent).toContain('TypeScript');
       expect(fixture.nativeElement.textContent).toContain('RxJS');
     });
 
-    it('shows "No new skills suggested" when skillsToAdd is empty', () => {
+    it('renders blue chip for CV skill (isNew: false)', () => {
+      const chips = fixture.nativeElement.querySelectorAll('span.bg-blue-100');
+      const names = Array.from(chips).map((el) =>
+        (el as HTMLElement).textContent?.trim(),
+      );
+      expect(names).toContain('TypeScript');
+    });
+
+    it('renders green chip for new skill (isNew: true)', () => {
+      const chips = fixture.nativeElement.querySelectorAll('span.bg-green-100');
+      const text = Array.from(chips)
+        .map((el) => (el as HTMLElement).textContent)
+        .join('');
+      expect(text).toContain('RxJS');
+    });
+
+    it('shows new badge on new skills', () => {
+      const host = fixture.nativeElement as HTMLElement;
+      const greenChips = Array.from(host.querySelectorAll('span.bg-green-100'));
+      const rxjsChip = greenChips.find((el) =>
+        el.textContent?.includes('RxJS'),
+      );
+      expect(rxjsChip?.textContent).toContain('new');
+    });
+
+    it('shows "No skills recommended" when recommendedSkills is empty', () => {
       fixture.componentRef.setInput('result', {
         ...MOCK_RESULT,
-        skillsToAdd: [],
+        recommendedSkills: [],
       });
       fixture.detectChanges();
       expect(fixture.nativeElement.textContent).toContain(
-        'No new skills suggested',
+        'No skills recommended',
       );
     });
 
-    it('shows "No new skills suggested" when skillsToAdd is undefined', () => {
+    it('shows "No skills recommended" when recommendedSkills is undefined', () => {
       fixture.componentRef.setInput('result', {
         ...MOCK_RESULT,
-        skillsToAdd: undefined,
+        recommendedSkills: undefined,
       });
       fixture.detectChanges();
       expect(fixture.nativeElement.textContent).toContain(
-        'No new skills suggested',
+        'No skills recommended',
       );
     });
   });
@@ -269,26 +302,90 @@ describe('LinkedInUpdates', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const comp = () => fixture.componentInstance as any;
 
-    it('returns true when skillsToAdd is non-empty', () => {
+    it('returns true when recommendedSkills is non-empty', () => {
       expect(comp().hasSkills()).toBe(true);
     });
 
-    it('returns false when skillsToAdd is empty', () => {
+    it('returns false when recommendedSkills is empty', () => {
       fixture.componentRef.setInput('result', {
         ...MOCK_RESULT,
-        skillsToAdd: [],
+        recommendedSkills: [],
       });
       fixture.detectChanges();
       expect(comp().hasSkills()).toBe(false);
     });
 
-    it('returns false when skillsToAdd is undefined', () => {
+    it('returns false when recommendedSkills is undefined', () => {
       fixture.componentRef.setInput('result', {
         ...MOCK_RESULT,
-        skillsToAdd: undefined,
+        recommendedSkills: undefined,
       });
       fixture.detectChanges();
       expect(comp().hasSkills()).toBe(false);
+    });
+  });
+
+  describe('skillsCount', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const comp = () => fixture.componentInstance as any;
+
+    it('returns the number of recommendedSkills', () => {
+      expect(comp().skillsCount()).toBe(2);
+    });
+
+    it('returns 0 when recommendedSkills is undefined', () => {
+      fixture.componentRef.setInput('result', {
+        ...MOCK_RESULT,
+        recommendedSkills: undefined,
+      });
+      fixture.detectChanges();
+      expect(comp().skillsCount()).toBe(0);
+    });
+  });
+
+  describe('recommendedSkills computed', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const comp = () => fixture.componentInstance as any;
+
+    it('slices to 50 entries when more than 50 are provided', () => {
+      const manySkills = Array.from({ length: 51 }, (_, i) => ({
+        name: `Skill${i}`,
+        isNew: false,
+      }));
+      fixture.componentRef.setInput('result', {
+        ...MOCK_RESULT,
+        recommendedSkills: manySkills,
+      });
+      fixture.detectChanges();
+      expect(comp().recommendedSkills().length).toBe(50);
+    });
+
+    it('preserves array order', () => {
+      const ordered = [
+        { name: 'First', isNew: false },
+        { name: 'Second', isNew: true },
+      ];
+      fixture.componentRef.setInput('result', {
+        ...MOCK_RESULT,
+        recommendedSkills: ordered,
+      });
+      fixture.detectChanges();
+      const result = comp().recommendedSkills();
+      expect(result[0].name).toBe('First');
+      expect(result[1].name).toBe('Second');
+    });
+  });
+
+  describe('copyAllSkills', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const comp = () => fixture.componentInstance as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clipboardWriteText = () =>
+      (navigator as any).clipboard.writeText as ReturnType<typeof vi.fn>;
+
+    it('copies comma-joined skill names to clipboard', () => {
+      comp().copyAllSkills();
+      expect(clipboardWriteText()).toHaveBeenCalledWith('TypeScript, RxJS');
     });
   });
 
@@ -338,7 +435,8 @@ describe('LinkedInUpdates', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const comp = () => fixture.componentInstance as any;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const clipboardWriteText = () => (navigator as any).clipboard.writeText as ReturnType<typeof vi.fn>;
+    const clipboardWriteText = () =>
+      (navigator as any).clipboard.writeText as ReturnType<typeof vi.fn>;
 
     it('calls navigator.clipboard.writeText with the provided text', () => {
       comp().copyToClipboard('Copy this text');
@@ -406,7 +504,9 @@ describe('LinkedInUpdates', () => {
     });
 
     it('calls messageService.add with error severity when PDF export throws', async () => {
-      vi.spyOn(exportService, 'exportToPdf').mockRejectedValue(new Error('fail'));
+      vi.spyOn(exportService, 'exportToPdf').mockRejectedValue(
+        new Error('fail'),
+      );
       const addSpy = vi.spyOn(messageService, 'add');
 
       await comp().onExportPdf();

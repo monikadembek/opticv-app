@@ -207,21 +207,58 @@
     </div>
   </div>
 
-  <!-- Section C: Skills to Add -->
+  <!-- Section C: Recommended LinkedIn Skills -->
   <div>
-    <h3 class="text-lg font-semibold text-surface-800 mb-3">Skills to Add</h3>
+    <div class="flex items-center justify-between gap-2 mb-3">
+      <h3 class="text-lg font-semibold text-surface-800">
+        Recommended LinkedIn Skills
+      </h3>
+      <span class="text-sm text-gray-500">{{ skillsCount() }} / 50</span>
+    </div>
     @if (hasSkills()) {
+    <p class="text-sm mb-4">
+      Skills are ranked by recruiter-search relevance for the target role (most
+      valuable first).
+    </p>
     <div class="flex flex-wrap gap-2">
-      @for (skill of result().skillsToAdd!; track skill) {
+      @for (skill of recommendedSkills(); track skill.name) { @if (!skill.isNew)
+      {
       <span
         class="inline-flex items-center rounded-full px-3 py-1 text-sm bg-blue-100 text-blue-800"
       >
-        {{ skill }}
+        {{ skill.name }}
       </span>
-      }
+      } @else {
+      <span
+        class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm bg-green-100 text-green-800"
+      >
+        {{ skill.name }}
+      </span>
+      } }
+    </div>
+    <div class="flex gap-5 justify-between flex-wrap mt-4">
+      <div class="flex gap-5">
+        <p class="text-sm flex items-center gap-2">
+          <span class="inline-block w-4 h-4 bg-blue-100 rounded-full"></span
+          >Skills from CV
+        </p>
+        <p class="text-sm flex items-center gap-2">
+          <span class="inline-block w-4 h-4 bg-green-100 rounded-full"></span
+          >Suggested new skills
+        </p>
+      </div>
+      <p-button
+        icon="pi pi-copy"
+        label="Copy all"
+        size="small"
+        severity="secondary"
+        [text]="true"
+        ariaLabel="Copy all skills"
+        (onClick)="copyAllSkills()"
+      />
     </div>
     } @else {
-    <p class="text-sm text-gray-500">No new skills suggested</p>
+    <p class="text-sm text-gray-500">No skills recommended</p>
     }
   </div>
 
@@ -232,7 +269,8 @@
     </h3>
     @if (sortedRecommendations().length) {
     <div class="space-y-3">
-      @for (rec of sortedRecommendations(); track rec.section + rec.recommendation) {
+      @for (rec of sortedRecommendations(); track rec.section +
+      rec.recommendation) {
       <div
         class="flex items-start gap-3 rounded-lg border border-(--border-subtle) p-3"
       >
