@@ -41,7 +41,6 @@
         <p-button
           label="New Optimization"
           icon="pi pi-plus"
-          severity="success"
           size="small"
           routerLink="/cv-optimization"
           ariaLabel="Start a new optimization"
@@ -281,14 +280,25 @@
       <!-- LinkedIn Updates -->
       <app-section-card
         [sectionId]="PromptType.LINKEDIN_REWRITE"
-        icon="pi-link"
-        title="LinkedIn Updates"
+        icon="pi-linkedin"
+        title="LinkedIn Profile"
+        [status]="sectionStatus(PromptType.LINKEDIN_REWRITE)"
       >
-        <span
-          class="text-sm bg-yellow-100 text-(--text-muted) uppercase m-0 rounded-full px-2 py-1"
-        >
-          Coming soon
-        </span>
+        @if (linkedInResult()) {
+        <app-linkedin-updates [result]="linkedInResult()!" />
+        } @if (retryablePromptTypes().has(PromptType.LINKEDIN_REWRITE)) {
+        <div class="retry-action">
+          <p-button
+            label="Retry"
+            ariaLabel="Retry LinkedIn Updates"
+            icon="pi pi-refresh"
+            severity="warn"
+            size="small"
+            [disabled]="isProcessing().get(PromptType.LINKEDIN_REWRITE) ?? false"
+            (onClick)="retryOptimization(PromptType.LINKEDIN_REWRITE)"
+          />
+        </div>
+        }
       </app-section-card>
       }
     </div>

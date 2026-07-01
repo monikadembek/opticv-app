@@ -657,8 +657,8 @@ Frontend:
 
 ### 58. LinkedIn Rewrite - display results, allow export to pdf and docx (FE)
 
-**status: todo**
-**time: 30.06.2026**
+**status: in progress**
+**time: 30.06.2026 - 1.07.2026**
 
 - run process of preparing linkedIn informations based on uploaded cv and provided job description
 - display results in ui

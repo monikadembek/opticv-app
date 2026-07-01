@@ -57,8 +57,8 @@ export const NAV_GROUPS: {
       },
       {
         id: PromptType.LINKEDIN_REWRITE,
-        icon: 'pi-link',
-        label: 'LinkedIn Updates',
+        icon: 'pi-linkedin',
+        label: 'LinkedIn Profile',
       },
     ],
   },

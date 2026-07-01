@@ -391,6 +391,59 @@ export type InterviewPrepResult = {
   preparationTips: string[];
 };
 
+export type LinkedInHeadlineAngle =
+  | 'title_specialty_value'
+  | 'outcome_focused'
+  | 'story_focused';
+
+export type LinkedInHeadlineVariant = {
+  angle: LinkedInHeadlineAngle;
+  text: string;
+  characterCount: number;
+  keywordsTargeted: string[];
+  rationale?: string;
+};
+
+export type LinkedInAboutRewrite = {
+  fullText: string;
+  characterCount: number;
+  preview: string;
+  structure: {
+    hook: string;
+    story: string;
+    achievements: string[];
+    cta: string;
+  };
+  keywordsIncorporated?: string[];
+};
+
+export type LinkedInRecommendationSection =
+  | 'skills'
+  | 'featured'
+  | 'experience'
+  | 'education'
+  | 'certifications'
+  | 'url'
+  | 'photo'
+  | 'banner'
+  | 'recommendations'
+  | 'activity';
+
+export type LinkedInProfileRecommendation = {
+  section: LinkedInRecommendationSection;
+  recommendation: string;
+  priority: 'high' | 'medium' | 'low';
+};
+
+export type LinkedInRewriteResult = {
+  headlineVariants: LinkedInHeadlineVariant[];
+  recommendedHeadline?: LinkedInHeadlineAngle;
+  aboutRewrite: LinkedInAboutRewrite;
+  additionalRecommendations: LinkedInProfileRecommendation[];
+  skillsToAdd?: string[];
+  targetSearchQueries: string[];
+};
+
 export type OptimizationResultSummary = {
   id: string;
   promptType: PromptType;

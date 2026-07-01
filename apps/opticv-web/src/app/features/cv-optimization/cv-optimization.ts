@@ -33,6 +33,7 @@ import {
   JobApplication,
   JobApplicationWithCv,
   KeywordGapResult,
+  LinkedInRewriteResult,
   PromptType,
   ResumeAutopsyResult,
   SummaryRewriteResult,
@@ -55,6 +56,7 @@ import { SummaryRewrite } from './components/summary-rewrite/summary-rewrite';
 import { BulletRewriter } from './components/bullet-rewriter/bullet-rewriter';
 import { CoverLetterEditor } from './components/cover-letter-editor/cover-letter-editor';
 import { InterviewPrep } from './components/interview-prep/interview-prep';
+import { LinkedInUpdates } from './components/linkedin-updates/linkedin-updates';
 import { CvTemplateId, DEFAULT_ACCENT_COLOR } from './cv-templates';
 import { applySelectionsToCV } from './utils/apply-selections';
 import {
@@ -127,6 +129,20 @@ function isInterviewPrepResult(value: unknown): value is InterviewPrepResult {
   return Array.isArray(v['questions']) && Array.isArray(v['preparationTips']);
 }
 
+function isLinkedInRewriteResult(
+  value: unknown,
+): value is LinkedInRewriteResult {
+  if (typeof value !== 'object' || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    Array.isArray(v['headlineVariants']) &&
+    typeof v['aboutRewrite'] === 'object' &&
+    v['aboutRewrite'] !== null &&
+    Array.isArray(v['additionalRecommendations']) &&
+    Array.isArray(v['targetSearchQueries'])
+  );
+}
+
 const ActivePrompts = [
   PromptType.RESUME_AUTOPSY,
   PromptType.KEYWORD_GAP,
@@ -134,6 +150,7 @@ const ActivePrompts = [
   PromptType.SUMMARY_REWRITE,
   PromptType.COVER_LETTER,
   PromptType.INTERVIEW_PREP,
+  PromptType.LINKEDIN_REWRITE,
 ];
 
 @Component({
@@ -148,6 +165,7 @@ const ActivePrompts = [
     BulletRewriter,
     CoverLetterEditor,
     InterviewPrep,
+    LinkedInUpdates,
     OptimSidebar,
     SectionCard,
     JobInfoBanner,
@@ -242,6 +260,11 @@ export class CvOptimization implements OnInit {
     return isInterviewPrepResult(r) ? r : null;
   });
 
+  readonly linkedInResult = computed<LinkedInRewriteResult | null>(() => {
+    const r = this.results().get(PromptType.LINKEDIN_REWRITE)?.result;
+    return isLinkedInRewriteResult(r) ? r : null;
+  });
+
   readonly mergedCv = computed<CvStructuredData | null>(() => {
     const cv = this.cvStructuredData();
     if (!cv) return null;
@@ -330,6 +353,7 @@ export class CvOptimization implements OnInit {
       [PromptType.BULLET_UPGRADE, this.bulletUpgradeResult()],
       [PromptType.COVER_LETTER, this.coverLetterResult()],
       [PromptType.INTERVIEW_PREP, this.interviewPrepResult()],
+      [PromptType.LINKEDIN_REWRITE, this.linkedInResult()],
     ];
 
     for (const [promptType, computedResult] of promptResultPairs) {
