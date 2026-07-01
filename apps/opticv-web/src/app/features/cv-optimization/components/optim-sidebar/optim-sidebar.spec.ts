@@ -34,7 +34,9 @@ describe('OptimSidebar', () => {
       fixture.componentRef.setInput('pageState', 'completed');
       fixture.componentRef.setInput('activeSection', PromptType.KEYWORD_GAP);
       fixture.detectChanges();
-      const activeBtn = fixture.nativeElement.querySelector('button.nav-item.active');
+      const activeBtn = fixture.nativeElement.querySelector(
+        'button.nav-item.active',
+      );
       expect(activeBtn).toBeTruthy();
       expect(activeBtn.textContent).toContain('Keyword Gap');
     });
@@ -67,22 +69,30 @@ describe('OptimSidebar', () => {
     it('shows group labels when expanded', () => {
       fixture.componentRef.setInput('expanded', true);
       fixture.detectChanges();
-      const labels = fixture.nativeElement.querySelectorAll('.sidebar-group-label');
+      const labels = fixture.nativeElement.querySelectorAll(
+        '.sidebar-group-label',
+      );
       expect(labels.length).toBe(NAV_GROUPS.length);
     });
 
     it('hides group labels and shows dividers when collapsed', () => {
       fixture.componentRef.setInput('expanded', false);
       fixture.detectChanges();
-      const labels = fixture.nativeElement.querySelectorAll('.sidebar-group-label');
-      const dividers = fixture.nativeElement.querySelectorAll('.sidebar-divider');
+      const labels = fixture.nativeElement.querySelectorAll(
+        '.sidebar-group-label',
+      );
+      const dividers =
+        fixture.nativeElement.querySelectorAll('.sidebar-divider');
       expect(labels.length).toBe(0);
       expect(dividers.length).toBe(NAV_GROUPS.length);
     });
 
     it('shows spinner icon for items in processingSet', () => {
       fixture.componentRef.setInput('pageState', 'completed');
-      fixture.componentRef.setInput('processingSet', new Set([PromptType.KEYWORD_GAP]));
+      fixture.componentRef.setInput(
+        'processingSet',
+        new Set([PromptType.KEYWORD_GAP]),
+      );
       fixture.detectChanges();
       const spinner = fixture.nativeElement.querySelector('.pi-spinner');
       expect(spinner).toBeTruthy();
@@ -114,7 +124,9 @@ describe('OptimSidebar', () => {
   describe('toggle button', () => {
     it('emits toggleClicked when toggle button is clicked', () => {
       const emitSpy = vi.spyOn(component.toggleClicked, 'emit');
-      const toggleBtn = fixture.debugElement.query(By.css('.sidebar-toggle button'));
+      const toggleBtn = fixture.debugElement.query(
+        By.css('.sidebar-toggle button'),
+      );
       toggleBtn.triggerEventHandler('click');
       expect(emitSpy).toHaveBeenCalledOnce();
     });
@@ -122,13 +134,17 @@ describe('OptimSidebar', () => {
     it('shows chevron-left icon when expanded', () => {
       fixture.componentRef.setInput('expanded', true);
       fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.pi-chevron-left')).toBeTruthy();
+      expect(
+        fixture.nativeElement.querySelector('.pi-chevron-left'),
+      ).toBeTruthy();
     });
 
     it('shows chevron-right icon when collapsed', () => {
       fixture.componentRef.setInput('expanded', false);
       fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.pi-chevron-right')).toBeTruthy();
+      expect(
+        fixture.nativeElement.querySelector('.pi-chevron-right'),
+      ).toBeTruthy();
     });
   });
 
@@ -166,7 +182,9 @@ describe('OptimSidebar', () => {
       fixture.componentRef.setInput('atsScore', 75);
       fixture.componentRef.setInput('expanded', true);
       fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.sidebar-scores')).toBeTruthy();
+      expect(
+        fixture.nativeElement.querySelector('.sidebar-scores'),
+      ).toBeTruthy();
     });
   });
 
@@ -176,7 +194,9 @@ describe('OptimSidebar', () => {
     });
 
     it('scoreDash returns full circumference for score 100', () => {
-      expect(component.scoreDash(100, 22)).toBeCloseTo(component.scoreCircumference(22));
+      expect(component.scoreDash(100, 22)).toBeCloseTo(
+        component.scoreCircumference(22),
+      );
     });
 
     it('scoreDash returns 0 for score 0', () => {
@@ -184,7 +204,9 @@ describe('OptimSidebar', () => {
     });
 
     it('scoreDash returns half circumference for score 50', () => {
-      expect(component.scoreDash(50, 22)).toBeCloseTo(component.scoreCircumference(22) / 2);
+      expect(component.scoreDash(50, 22)).toBeCloseTo(
+        component.scoreCircumference(22) / 2,
+      );
     });
 
     it('scoreDash treats null score as 0', () => {

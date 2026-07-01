@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { of, throwError } from 'rxjs';
 import type { UploadCvResponse } from '@opticv/datatypes';
@@ -31,6 +32,7 @@ describe('UploadCv', () => {
     await TestBed.configureTestingModule({
       imports: [UploadCv],
       providers: [
+        provideRouter([]),
         { provide: CvUploadApiService, useValue: cvUploadApiService },
         { provide: MessageService, useValue: messageService },
       ],
