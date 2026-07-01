@@ -494,6 +494,93 @@ describe('CvOptimization', () => {
       );
       expect(component.interviewPrepResult()).toBeNull();
     });
+
+    it('linkedInResult returns null when no result exists', () => {
+      expect(component.linkedInResult()).toBeNull();
+    });
+
+    it('linkedInResult returns typed result when valid LinkedInRewriteResult is stored', () => {
+      const result = {
+        headlineVariants: [],
+        aboutRewrite: {
+          fullText: 'Full text',
+          characterCount: 9,
+          preview: 'Preview',
+          structure: { hook: '', story: '', achievements: [], cta: '' },
+        },
+        additionalRecommendations: [],
+        targetSearchQueries: [],
+      };
+      component.results.set(
+        new Map([
+          [
+            PromptType.LINKEDIN_REWRITE,
+            {
+              promptType: PromptType.LINKEDIN_REWRITE,
+              status: 'completed',
+              result,
+            },
+          ],
+        ]),
+      );
+      expect(component.linkedInResult()).toEqual(result);
+    });
+
+    it('linkedInResult returns null when stored result has wrong shape', () => {
+      component.results.set(
+        new Map([
+          [
+            PromptType.LINKEDIN_REWRITE,
+            {
+              promptType: PromptType.LINKEDIN_REWRITE,
+              status: 'completed',
+              result: { foo: 'bar' },
+            },
+          ],
+        ]),
+      );
+      expect(component.linkedInResult()).toBeNull();
+    });
+
+    it('linkedInResult returns null when headlineVariants is missing', () => {
+      component.results.set(
+        new Map([
+          [
+            PromptType.LINKEDIN_REWRITE,
+            {
+              promptType: PromptType.LINKEDIN_REWRITE,
+              status: 'completed',
+              result: {
+                aboutRewrite: {},
+                additionalRecommendations: [],
+                targetSearchQueries: [],
+              },
+            },
+          ],
+        ]),
+      );
+      expect(component.linkedInResult()).toBeNull();
+    });
+
+    it('linkedInResult returns null when aboutRewrite is missing', () => {
+      component.results.set(
+        new Map([
+          [
+            PromptType.LINKEDIN_REWRITE,
+            {
+              promptType: PromptType.LINKEDIN_REWRITE,
+              status: 'completed',
+              result: {
+                headlineVariants: [],
+                additionalRecommendations: [],
+                targetSearchQueries: [],
+              },
+            },
+          ],
+        ]),
+      );
+      expect(component.linkedInResult()).toBeNull();
+    });
   });
 
   describe('runOptimization', () => {
@@ -517,7 +604,7 @@ describe('CvOptimization', () => {
     it('calls runSingleOptimizationProcess for each active PromptType', () => {
       component.runOptimization(mockJobSubmittedData);
 
-      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledTimes(6);
+      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledTimes(7);
       expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
         mockJobApplication.id,
         PromptType.RESUME_AUTOPSY,
@@ -541,6 +628,10 @@ describe('CvOptimization', () => {
       expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
         mockJobApplication.id,
         PromptType.INTERVIEW_PREP,
+      );
+      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
+        mockJobApplication.id,
+        PromptType.LINKEDIN_REWRITE,
       );
     });
 
@@ -747,6 +838,49 @@ describe('CvOptimization', () => {
       expect(component.retryablePromptTypes().has(PromptType.KEYWORD_GAP)).toBe(
         false,
       );
+    });
+
+    it('includes LINKEDIN_REWRITE when its SSE event had status failed', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      component.results.set(
+        new Map([
+          [
+            PromptType.LINKEDIN_REWRITE,
+            {
+              promptType: PromptType.LINKEDIN_REWRITE,
+              status: 'failed',
+              error: 'timeout',
+            },
+          ],
+        ]),
+      );
+      expect(
+        component.retryablePromptTypes().has(PromptType.LINKEDIN_REWRITE),
+      ).toBe(true);
+    });
+
+    it('does not include LINKEDIN_REWRITE when it completed with a valid result', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      component.results.set(
+        new Map([
+          [
+            PromptType.LINKEDIN_REWRITE,
+            {
+              promptType: PromptType.LINKEDIN_REWRITE,
+              status: 'completed',
+              result: {
+                headlineVariants: [],
+                aboutRewrite: { fullText: '', characterCount: 0, preview: '', structure: { hook: '', story: '', achievements: [], cta: '' } },
+                additionalRecommendations: [],
+                targetSearchQueries: [],
+              },
+            },
+          ],
+        ]),
+      );
+      expect(
+        component.retryablePromptTypes().has(PromptType.LINKEDIN_REWRITE),
+      ).toBe(false);
     });
   });
 
@@ -1069,9 +1203,25 @@ describe('CvOptimization', () => {
           [PromptType.SUMMARY_REWRITE, { promptType: PromptType.SUMMARY_REWRITE, status: 'completed' }],
           [PromptType.COVER_LETTER, { promptType: PromptType.COVER_LETTER, status: 'completed' }],
           [PromptType.INTERVIEW_PREP, { promptType: PromptType.INTERVIEW_PREP, status: 'completed' }],
+          [PromptType.LINKEDIN_REWRITE, { promptType: PromptType.LINKEDIN_REWRITE, status: 'completed' }],
         ]),
       );
       expect(component.hasPartialStoredResults()).toBe(false);
+    });
+
+    it('returns true in stored mode when only LINKEDIN_REWRITE result is missing', () => {
+      component.isStoredMode.set(true);
+      component.results.set(
+        new Map([
+          [PromptType.RESUME_AUTOPSY, { promptType: PromptType.RESUME_AUTOPSY, status: 'completed' }],
+          [PromptType.KEYWORD_GAP, { promptType: PromptType.KEYWORD_GAP, status: 'completed' }],
+          [PromptType.BULLET_UPGRADE, { promptType: PromptType.BULLET_UPGRADE, status: 'completed' }],
+          [PromptType.SUMMARY_REWRITE, { promptType: PromptType.SUMMARY_REWRITE, status: 'completed' }],
+          [PromptType.COVER_LETTER, { promptType: PromptType.COVER_LETTER, status: 'completed' }],
+          [PromptType.INTERVIEW_PREP, { promptType: PromptType.INTERVIEW_PREP, status: 'completed' }],
+        ]),
+      );
+      expect(component.hasPartialStoredResults()).toBe(true);
     });
   });
 

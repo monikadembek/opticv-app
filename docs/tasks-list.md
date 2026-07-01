@@ -657,12 +657,34 @@ Frontend:
 
 ### 58. LinkedIn Rewrite - display results, allow export to pdf and docx (FE)
 
-**status: todo**
-**time: 30.06.2026**
+**status: done**
+**time: 30.06.2026 - 1.07.2026**
 
 - run process of preparing linkedIn informations based on uploaded cv and provided job description
 - display results in ui
-- allow exporting linkedin profile data to pdf and docx
+- export linkedin profile data to pdf and docx
+- add information about linkedin feature on the home page
+
+---
+
+### 59. Landing Page - add information about the linkedin profile boost feature
+
+**status: todo**
+**time: 1.07.2026**
+
+- add card with information about the linkedin profile boost feature on home page,
+- update pricing tables (home page and pricing page) with linkedin feature, remove the coming soon info,
+- update features page inforamtion regarding the linkedin feature,
+- add blog post about how important it is to have optimized linkedin page
+
+---
+
+### 60. Landing Page - add images displaying app's features
+
+**status: todo**
+**time:**
+
+- add images - screenshots from the app with available features
 
 ---
 
@@ -690,7 +712,7 @@ When user deletes its account, gets logged out, but account is already deleted s
 
 ### Bug - Fix issue with selecting template card with keyboard
 
-**status: todo**
+**status: cancelled - no longer relevant, this is no longer used**
 
 ---
 
