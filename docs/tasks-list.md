@@ -712,12 +712,13 @@ File to edit: apps/opticv-web/src/app/features/cv-optimization/cv-optimization.h
 
 ---
 
-### 60. Landing Page - add images displaying app's features
+### 60. Add Sentry to monitor app
 
-**status: todo**
-**time:**
+**status: in progress**
+**time: 02.07.2026**
 
-- add images - screenshots from the app with available features
+- add Sentry to frontend app
+- add Sentry to backend app
 
 ---
 
