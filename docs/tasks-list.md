@@ -667,15 +667,48 @@ Frontend:
 
 ---
 
-### 59. Landing Page - add information about the linkedin profile boost feature
+### 59. Bug - Missing scores in sidebar
 
-**status: todo**
-**time: 1.07.2026**
+**status: done**
+**time: 2.07.2026**
 
-- add card with information about the linkedin profile boost feature on home page,
-- update pricing tables (home page and pricing page) with linkedin feature, remove the coming soon info,
-- update features page inforamtion regarding the linkedin feature,
-- add blog post about how important it is to have optimized linkedin page
+- When user runs optimization process, after it finishes in the sidebar should appear section with scores, but it is not displayed.
+- When user opens saved optimization the section with scores is also not displayed.
+  Check why this is happening and suggest a fix.
+
+---
+
+Root Cause
+
+The sidebar's showScores condition requires atsScore() !== null (line 94 of optim-sidebar.ts). The template passes projectedAtsScore() as the atsScore input (line 28 of cv-optimization.html).
+
+projectedAtsScore() returns null in two situations (from recompute-scores.ts):
+
+1. No selections have been made yet (lines 83–90)
+2. Even after selections, if the projected score equals the original score (line 127–128)
+
+So scores never show in the sidebar because:
+
+- After running optimization: No selections made yet → projectedAtsScore() is null → showScores is false
+- When opening saved optimization: Same problem — no selections active on load → null
+
+The sidebar should show the baseline ATS score always (once results are available), and only switch to the projected score when it exists.
+
+The Fix
+
+In cv-optimization.html, change what's passed to the sidebar from projectedAtsScore() to a fallback:
+
+[atsScore]="projectedAtsScore() ?? atsScore()"
+[keywordScore]="liveKeywordScore()"
+
+This way:
+
+- If no selections have been made, projectedAtsScore() is null and it falls back to the raw atsScore() from the autopsy result
+- Once the user makes selections that change the score, the projected score takes over
+
+The liveKeywordScore() already handles this correctly because recomputeKeywordGapResult() returns the original score when no keywords are selected (it returns a clone with no changes on line 14 of recompute-scores.ts), so liveKeywordScore() will be non-null as soon as keywordGapResult is available. No change needed there.
+
+File to edit: apps/opticv-web/src/app/features/cv-optimization/cv-optimization.html, line 28
 
 ---
 
