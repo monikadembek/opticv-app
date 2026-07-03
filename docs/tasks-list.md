@@ -712,13 +712,13 @@ File to edit: apps/opticv-web/src/app/features/cv-optimization/cv-optimization.h
 
 ---
 
-### 60. Add Sentry to monitor app
+### 60. Add Sentry to monitor errors in app
 
-**status: in progress**
-**time: 02.07.2026**
+**status: done**
+**time: 02.07.2026 - 03.07.2026**
 
-- add Sentry to frontend app
-- add Sentry to backend app
+- add Sentry to frontend app - https://docs.sentry.io/platforms/javascript/guides/angular/manual-setup/
+- add Sentry to backend app - https://docs.sentry.io/platforms/javascript/guides/nestjs/
 
 ---
 
