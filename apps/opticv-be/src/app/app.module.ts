@@ -15,9 +15,13 @@ import { CvModule } from './cv/cv.module';
 import { JobApplicationModule } from './job-application/job-application.module';
 import { OptimizationModule } from './optimization/optimization.module';
 import { ApiThrottlerGuard } from './throttler/api-throttler.guard';
+import { SentryModule } from '@sentry/nestjs/setup';
+import { APP_FILTER } from '@nestjs/core';
+import { SentryGlobalFilter } from '@sentry/nestjs/setup';
 
 @Module({
   imports: [
+    SentryModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `${process.cwd()}/apps/opticv-be/config/env/${process.env.NODE_ENV}.env`,
@@ -79,6 +83,10 @@ import { ApiThrottlerGuard } from './throttler/api-throttler.guard';
   providers: [
     AppService,
     { provide: APP_GUARD, useClass: ApiThrottlerGuard },
+    {
+      provide: APP_FILTER,
+      useClass: SentryGlobalFilter,
+    },
   ],
 })
 export class AppModule {}

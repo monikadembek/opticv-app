@@ -5,7 +5,8 @@
   "scripts": {
     "start-be:dev": "cross-env NODE_ENV=development nx serve opticv-be",
     "start-web": "nx serve opticv-web",
-    "build-datatypes": "nx build datatypes"
+    "build-datatypes": "nx build datatypes && npm run sentry:sourcemaps",
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org opticv --project javascript-angular ./dist && sentry-cli sourcemaps upload --org opticv --project javascript-angular ./dist"
   },
   "private": true,
   "prisma": {
@@ -96,6 +97,9 @@
     "@primeuix/themes": "^2.0.3",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "@sentry/angular": "^10.63.0",
+    "@sentry/cli": "^2.58.6",
+    "@sentry/nestjs": "^10.63.0",
     "@supabase/supabase-js": "^2.105.4",
     "@tailwindcss/postcss": "^4.3.0",
     "axios": "^1.6.0",

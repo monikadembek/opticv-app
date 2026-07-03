@@ -46,7 +46,11 @@
               "maximumError": "8kb"
             }
           ],
-          "outputHashing": "all"
+          "outputHashing": "all",
+          "sourceMap": {
+            "scripts": true,
+            "hidden": true
+          }
         },
         "staging": {
           "fileReplacements": [
@@ -56,7 +60,11 @@
             }
           ],
           "optimization": true,
-          "outputHashing": "all"
+          "outputHashing": "all",
+          "sourceMap": {
+            "scripts": true,
+            "hidden": true
+          }
         },
         "development": {
           "optimization": false,

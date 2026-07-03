@@ -54,3 +54,5 @@ test-output
 __screenshots__/
 
 vitest.config.*.timestamp*
+# Sentry Config File
+.sentryclirc
