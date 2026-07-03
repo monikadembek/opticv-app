@@ -732,6 +732,15 @@ File to edit: apps/opticv-web/src/app/features/cv-optimization/cv-optimization.h
 
 ---
 
+### 62. Posthog integration
+
+**status: in progress**
+**time: 3.07.2026**
+
+- integrate app with Posthog
+
+---
+
 ### Keyword Gap - Acronym issues and underweighted keywords
 
 - think of what we can do with those sections, are tey mportant, should we display them, how we could apply the acronym issues
