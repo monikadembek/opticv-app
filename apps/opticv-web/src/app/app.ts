@@ -9,6 +9,7 @@ import { TopHeader } from './layout/top-header/top-header';
 import { Footer } from './layout/footer/footer';
 import { Supabase } from './core/auth/services/supabase';
 import { ToastModule } from 'primeng/toast';
+import { PosthogService } from './core/services/posthog.service';
 
 @Component({
   imports: [RouterModule, TopHeader, Footer, ToastModule],
@@ -20,6 +21,7 @@ import { ToastModule } from 'primeng/toast';
 export class App {
   private readonly supabaseService = inject(Supabase);
   private readonly router = inject(Router);
+  readonly _posthog = inject(PosthogService);
 
   isUserLoggedIn = computed(() =>
     this.supabaseService.currentSession() ? true : false,
