@@ -17,6 +17,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import posthog from 'posthog-js';
 
 @Component({
   selector: 'app-cv-file-list',
@@ -71,6 +72,13 @@ export class CvFileList implements OnInit {
       next: ({ url }) => {
         if (isPlatformBrowser(this.platformId)) {
           window.open(url, '_blank');
+
+          posthog.capture('original_cv_downloaded', {
+            page: 'dashboard',
+            button_icon: 'download',
+            file_id: file.id,
+            file_name: file.fileName,
+          });
         }
       },
       error: (err) => {
@@ -93,6 +101,12 @@ export class CvFileList implements OnInit {
       icon: 'pi pi-exclamation-triangle',
       acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
+        posthog.capture('cv_deleted', {
+          page: 'dashboard',
+          button_icon: 'trash',
+          file_id: file.id,
+          file_name: file.fileName,
+        });
         this.cvApiService
           .deleteCv(file.id)
           .pipe(takeUntilDestroyed(this.destroyRef))

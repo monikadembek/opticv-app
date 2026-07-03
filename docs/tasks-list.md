@@ -732,12 +732,23 @@ File to edit: apps/opticv-web/src/app/features/cv-optimization/cv-optimization.h
 
 ---
 
-### 62. Posthog integration
+### 62. Posthog integration (FE)
 
 **status: in progress**
 **time: 3.07.2026**
 
-- integrate app with Posthog
+- integrate Angular app with Posthog
+- capture custom events:
+  - cv uploaded
+  - cv deleted
+  - optimization deleted
+  - cv optimization run
+  - export cv pdf and docv
+  - export cover letter pdf and docx
+  - export interview prep pdf and docx
+  - export linkedin materials pdf and docx
+  - sign in and sign out buttons
+  - account deleted
 
 ---
 

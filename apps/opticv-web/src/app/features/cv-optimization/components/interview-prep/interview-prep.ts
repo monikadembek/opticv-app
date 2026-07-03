@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { PanelModule } from 'primeng/panel';
 import { MessageModule } from 'primeng/message';
 import { Button } from 'primeng/button';
@@ -8,6 +14,7 @@ import type {
   InterviewPrepResult,
 } from '@opticv/datatypes';
 import { InterviewPrepExportService } from '../../services/interview-prep-export.service';
+import posthog from 'posthog-js';
 
 @Component({
   selector: 'app-interview-prep',
@@ -27,6 +34,10 @@ export class InterviewPrep {
     this.isBusyPdf.set(true);
     try {
       await this.exportService.exportToPdf(this.result());
+      posthog.capture('interview_prep_exported', {
+        page: 'cv_optimization',
+        format: 'pdf',
+      });
     } catch {
       this.messageService.add({
         severity: 'error',
@@ -42,6 +53,10 @@ export class InterviewPrep {
     this.isBusyDocx.set(true);
     try {
       await this.exportService.exportToDocx(this.result());
+      posthog.capture('interview_prep_exported', {
+        page: 'cv_optimization',
+        format: 'docx',
+      });
     } catch {
       this.messageService.add({
         severity: 'error',

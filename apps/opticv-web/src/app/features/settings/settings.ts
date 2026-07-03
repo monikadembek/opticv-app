@@ -14,6 +14,7 @@ import type { UserProfile } from '@opticv/datatypes';
 import { Supabase } from '../../core/auth/services/supabase';
 import { UserSettingsApiService } from './services/user-settings-api.service';
 import { catchError, EMPTY, tap } from 'rxjs';
+import posthog from 'posthog-js';
 
 @Component({
   selector: 'app-settings',
@@ -61,6 +62,10 @@ export class Settings {
                 detail: message,
               });
               this.isDeleting.set(false);
+              posthog.capture('account_deleted', {
+                page: 'settings',
+                button_name: 'Delete account',
+              });
               return EMPTY;
             }),
             tap(async () => {
