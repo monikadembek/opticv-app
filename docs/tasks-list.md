@@ -734,7 +734,7 @@ File to edit: apps/opticv-web/src/app/features/cv-optimization/cv-optimization.h
 
 ### 62. Posthog integration (FE)
 
-**status: in progress**
+**status: done**
 **time: 3.07.2026**
 
 - integrate Angular app with Posthog
