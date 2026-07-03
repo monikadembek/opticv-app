@@ -14,6 +14,7 @@ import { MessageModule } from 'primeng/message';
 import { MessageService } from 'primeng/api';
 import type { CoverLetterResult } from '@opticv/datatypes';
 import { CoverLetterExportService } from '../../services/cover-letter-export.service';
+import posthog from 'posthog-js';
 
 function plainTextToHtml(text: string): string {
   return text
@@ -79,6 +80,10 @@ export class CoverLetterEditor {
     this.isBusyPdf.set(true);
     try {
       await this.exportService.exportToPdf(this.editorContent());
+      posthog.capture('cover_letter_exported', {
+        page: 'cv_optimization',
+        format: 'pdf',
+      });
     } catch {
       this.messageService.add({
         severity: 'error',
@@ -94,6 +99,10 @@ export class CoverLetterEditor {
     this.isBusyDocx.set(true);
     try {
       await this.exportService.exportToDocx(this.editorContent());
+      posthog.capture('cover_letter_exported', {
+        page: 'cv_optimization',
+        format: 'docx',
+      });
     } catch {
       this.messageService.add({
         severity: 'error',

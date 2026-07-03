@@ -12,6 +12,7 @@ import { FloatLabelModule } from 'primeng/floatlabel';
 import { InputTextModule } from 'primeng/inputtext';
 import { Supabase } from '../../services/supabase';
 import { Router } from '@angular/router';
+import posthog from 'posthog-js';
 
 @Component({
   selector: 'app-login',
@@ -43,6 +44,9 @@ export class Login {
     if (loginForm.valid && email.length > 0) {
       const { error } = await this.supabase.signInWithOtp(email);
       if (!error) {
+        posthog.capture('supabase_signinwithotp_executed', {
+          page: 'login',
+        });
         this.supabase.setPendingEmail(email);
         this.router.navigate(['/verify']);
       }

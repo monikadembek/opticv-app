@@ -732,6 +732,26 @@ File to edit: apps/opticv-web/src/app/features/cv-optimization/cv-optimization.h
 
 ---
 
+### 62. Posthog integration (FE)
+
+**status: done**
+**time: 3.07.2026**
+
+- integrate Angular app with Posthog
+- capture custom events:
+  - cv uploaded
+  - cv deleted
+  - optimization deleted
+  - cv optimization run
+  - export cv pdf and docv
+  - export cover letter pdf and docx
+  - export interview prep pdf and docx
+  - export linkedin materials pdf and docx
+  - sign in and sign out buttons
+  - account deleted
+
+---
+
 ### Keyword Gap - Acronym issues and underweighted keywords
 
 - think of what we can do with those sections, are tey mportant, should we display them, how we could apply the acronym issues

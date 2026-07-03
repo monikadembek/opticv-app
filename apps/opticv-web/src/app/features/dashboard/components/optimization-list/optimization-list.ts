@@ -15,6 +15,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import type { JobApplicationListItem } from '@opticv/datatypes';
 import { JobApplicationApiService } from '../../../../core/services/job-application-api.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import posthog from 'posthog-js';
 
 @Component({
   selector: 'app-optimization-list',
@@ -87,6 +88,12 @@ export class OptimizationList implements OnInit {
                 severity: 'success',
                 summary: 'Deleted',
                 detail: 'Optimization deleted successfully.',
+              });
+
+              posthog.capture('optimization_deleted', {
+                page: 'dashboard',
+                button_icon: 'trash',
+                id: item.id,
               });
             },
             error: (err) => {

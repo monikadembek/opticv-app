@@ -29,6 +29,7 @@ import {
   JobApplication,
   JobApplicationResponse,
 } from '@opticv/datatypes';
+import posthog from 'posthog-js';
 
 export interface JobSubmittedData {
   jobApplication: JobApplication;
@@ -145,6 +146,11 @@ export class JobUpload {
 
     if (!payload) return;
 
+    posthog.capture('start_optimization_process_button_clicked', {
+      page: 'cv_optimization',
+      button_title: 'Start Optimization Process',
+    });
+
     this.cvOptimizationApiService
       .createJobApplication(payload)
       .pipe(
@@ -180,6 +186,11 @@ export class JobUpload {
               extractedData: extractedData.data,
             });
           }
+
+          posthog.capture('cv_and_job_description_submitted_and_cv_parsed', {
+            page: 'cv_optimization',
+            job_application: this.jobApplication,
+          });
         },
         error: (err) => {
           console.log('error when extracting data from cv: ', err);

@@ -11,6 +11,7 @@ import { MenuItem } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { MenubarModule } from 'primeng/menubar';
 import { ButtonModule } from 'primeng/button';
+import posthog from 'posthog-js';
 
 @Component({
   selector: 'app-top-header',
@@ -63,9 +64,17 @@ export class TopHeader {
 
   navigateToLoginPage(): void {
     this.router.navigate(['/login']);
+    posthog.capture('signin_button_clicked', {
+      place: 'top header',
+      button_title: 'Sign In',
+    });
   }
 
   emitSignOut() {
     this.signOut.emit();
+    posthog.capture('signout_button_clicked', {
+      place: 'top header',
+      button_title: 'Sign Out',
+    });
   }
 }

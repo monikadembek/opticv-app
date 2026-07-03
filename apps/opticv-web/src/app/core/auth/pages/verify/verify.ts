@@ -12,10 +12,17 @@ import { InputOtpModule } from 'primeng/inputotp';
 import { MessageModule } from 'primeng/message';
 import { ButtonModule } from 'primeng/button';
 import { Router, RouterLink } from '@angular/router';
+import posthog from 'posthog-js';
 
 @Component({
   selector: 'app-verify',
-  imports: [InputOtpModule, FormsModule, ButtonModule, MessageModule, RouterLink],
+  imports: [
+    InputOtpModule,
+    FormsModule,
+    ButtonModule,
+    MessageModule,
+    RouterLink,
+  ],
   templateUrl: './verify.html',
   styleUrl: './verify.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,6 +48,7 @@ export class Verify implements OnInit {
     const { code } = form.form.value;
 
     if (form.valid) {
+      posthog.capture('supabase_verifyotp_executed', { page: 'verify' });
       const {
         data: { session },
         error,

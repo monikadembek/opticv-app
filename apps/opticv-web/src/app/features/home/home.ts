@@ -7,6 +7,7 @@ import {
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { Supabase } from '../../core/auth/services/supabase';
+import posthog from 'posthog-js';
 
 @Component({
   selector: 'app-home',
@@ -25,6 +26,10 @@ export class Home {
 
   goToCreator(): void {
     this.router.navigate(['cv-optimization']);
+    posthog.capture('optimize_my_cv_button_clicked', {
+      page: 'Home',
+      button_name: 'Optimize my CV',
+    });
   }
 
   signIn(): void {

@@ -18,6 +18,7 @@ import {
   LINKEDIN_SECTION_LABELS,
   LinkedInExportService,
 } from '../../services/linkedin-export.service';
+import posthog from 'posthog-js';
 
 @Component({
   selector: 'app-linkedin-updates',
@@ -60,6 +61,10 @@ export class LinkedInUpdates {
     this.isBusyPdf.set(true);
     try {
       await this.exportService.exportToPdf(this.result());
+      posthog.capture('linkedin_content_exported', {
+        page: 'cv_optimization',
+        format: 'pdf',
+      });
     } catch {
       this.messageService.add({
         severity: 'error',
@@ -75,6 +80,10 @@ export class LinkedInUpdates {
     this.isBusyDocx.set(true);
     try {
       await this.exportService.exportToDocx(this.result());
+      posthog.capture('linkedin_content_exported', {
+        page: 'cv_optimization',
+        format: 'docx',
+      });
     } catch {
       this.messageService.add({
         severity: 'error',

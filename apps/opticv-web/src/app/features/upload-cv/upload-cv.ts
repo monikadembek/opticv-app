@@ -14,6 +14,7 @@ import { CvDropzone } from './components/cv-dropzone/cv-dropzone';
 import { CvUploadApiService } from './services/cv-upload-api.service';
 import { formatFileSize } from '../../shared/utils';
 import { RouterLink } from '@angular/router';
+import posthog from 'posthog-js';
 
 @Component({
   selector: 'app-upload-cv',
@@ -48,6 +49,11 @@ export class UploadCv {
           severity: 'success',
           summary: 'Success',
           detail: 'CV file uploaded successfully.',
+        });
+
+        posthog.capture('cv_file_uploaded', {
+          page: 'upload-cv',
+          filename: file.name,
         });
       },
       error: (err) => {

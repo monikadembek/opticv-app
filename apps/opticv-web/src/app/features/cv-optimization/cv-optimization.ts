@@ -70,6 +70,7 @@ import { JobInfoBanner } from './components/job-info-banner/job-info-banner';
 import { ExportFooter } from './components/export-footer/export-footer';
 import { MobileTabs } from './components/mobile-tabs/mobile-tabs';
 import { SectionStatus } from './models';
+import posthog from 'posthog-js';
 
 function isResumeAutopsyResult(value: unknown): value is ResumeAutopsyResult {
   if (typeof value !== 'object' || value === null) return false;
@@ -588,6 +589,8 @@ export class CvOptimization implements OnInit {
     this.submittedJobApplication.set(jobApplication);
     this.cvStructuredData.set(extractedData);
 
+    posthog.capture('optimization_started');
+
     from(Object.values(PromptType))
       .pipe(
         filter((prompt) => ActivePrompts.includes(prompt)),
@@ -613,6 +616,9 @@ export class CvOptimization implements OnInit {
       .subscribe({
         next: (event: SseJobCompleteEvent) => {
           console.log('SSE - job complete event:', event);
+          posthog.capture('optimization_job_complete_event', {
+            event: event,
+          });
           this.isProcessing.update((map) =>
             new Map(map).set(event.promptType, false),
           );
@@ -994,6 +1000,12 @@ export class CvOptimization implements OnInit {
     const cv = this.mergedCv();
     if (!cv) return;
     this.isExportingPdf.set(true);
+    posthog.capture('optimized_cv_exported', {
+      page: 'cv_optimization',
+      format: 'pdf',
+      template: this.selectedTemplate(),
+      accentColor: this.accentColor(),
+    });
     this.cvExportService
       .exportToPdf(cv, this.selectedTemplate(), this.accentColor())
       .finally(() => {
@@ -1006,6 +1018,12 @@ export class CvOptimization implements OnInit {
     const cv = this.mergedCv();
     if (!cv) return;
     this.isExportingDocx.set(true);
+    posthog.capture('optimized_cv_exported', {
+      page: 'cv_optimization',
+      format: 'docx',
+      template: this.selectedTemplate(),
+      accentColor: this.accentColor(),
+    });
     this.cvExportService
       .exportToDocx(cv, this.selectedTemplate(), this.accentColor())
       .finally(() => {
