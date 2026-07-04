@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { UsersService } from './users.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { R2Service } from '../storage/r2.service';
 
 const mockUser = { id: 'user-id', supabaseId: 'sb-id', email: 'test@example.com' };
 
@@ -19,6 +21,14 @@ const mockPrisma = {
   ),
 };
 
+const mockR2 = {
+  delete: jest.fn().mockResolvedValue(undefined),
+};
+
+const mockConfig = {
+  getOrThrow: jest.fn(),
+};
+
 describe('UsersService', () => {
   let service: UsersService;
 
@@ -28,6 +38,8 @@ describe('UsersService', () => {
       providers: [
         UsersService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: R2Service, useValue: mockR2 },
+        { provide: ConfigService, useValue: mockConfig },
       ],
     }).compile();
 
