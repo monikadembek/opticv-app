@@ -752,6 +752,21 @@ File to edit: apps/opticv-web/src/app/features/cv-optimization/cv-optimization.h
 
 ---
 
+### 63. Bugfix - fix issue when uploading cv - duplicate email bug
+
+**status: done**
+**time: 5.07.2026**
+
+Root cause: apps/opticv-be/src/app/users/users.service.ts:29-33 — upsertUser matched on where: { supabaseId }, but email is also @unique on the User model (schema.prisma:63). Since SupabaseGuard.canActivate calls upsertUser on every authenticated request, any time a request came in with an email that already had a user row but a supabaseId Prisma hadn't seen yet (e.g. a Supabase auth identity was re-created/re-verified for the same email, or two first-time requests raced), the upsert tried to create a duplicate row and hit the email unique constraint — crashing the guard and returning a 500 on POST /api/cv/upload (and any other authenticated route).
+
+Fix applied: changed the upsert's where to key on email (the stable identity) and update supabaseId on match, so re-authentication under a changed Supabase ID updates the existing row instead of trying to insert a duplicate.
+
+Note: this narrows the race but doesn't eliminate it for two truly concurrent first-ever requests for a brand-new email — Postgres could still throw the same unique violation if two transactions insert the same new email simultaneously. If uploads are frequently fired in parallel right after signup, consider wrapping the upsert in a catch for the P2002 (unique constraint) Prisma error code and falling back to a plain findUnique, or moving to ON CONFLICT DO UPDATE via raw SQL.
+
+Also fixed the corresponding test expectation in users.service.spec.ts. Found 27 pre-existing test failures in the opticv-be suite unrelated to this change (missing test providers like R2Service/ConfigService) — same failures exist on unmodified dev, so I left those alone.
+
+---
+
 ### Keyword Gap - Acronym issues and underweighted keywords
 
 - think of what we can do with those sections, are tey mportant, should we display them, how we could apply the acronym issues

@@ -8,7 +8,7 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 import { CvService } from './cv.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { R2Service } from './services/r2.service';
+import { R2Service } from '../storage/r2.service';
 import { CvParserService } from './services/cv-parser.service';
 
 const mockDoc = {

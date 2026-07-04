@@ -27,9 +27,9 @@ export class UsersService {
   }): Promise<UserModel> {
     return this.prisma.$transaction(async (tx) => {
       const user = await tx.user.upsert({
-        where: { supabaseId: data.supabaseId },
+        where: { email: data.email },
         create: { supabaseId: data.supabaseId, email: data.email },
-        update: {},
+        update: { supabaseId: data.supabaseId },
       });
 
       await tx.subscription.upsert({
