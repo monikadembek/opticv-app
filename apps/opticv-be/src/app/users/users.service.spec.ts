@@ -41,9 +41,9 @@ describe('UsersService', () => {
     });
 
     expect(mockTx.user.upsert).toHaveBeenCalledWith({
-      where: { supabaseId: 'sb-id' },
+      where: { email: 'test@example.com' },
       create: { supabaseId: 'sb-id', email: 'test@example.com' },
-      update: {},
+      update: { supabaseId: 'sb-id' },
     });
     expect(mockTx.subscription.upsert).toHaveBeenCalledWith({
       where: { userId: 'user-id' },
