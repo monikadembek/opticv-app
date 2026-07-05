@@ -37,15 +37,13 @@
     <i class="pi pi-check-circle" aria-hidden="true"></i>
     CV uploaded and parsed successfully.
   </p>
-  <div class="mt-4 flex items-start gap-2 text-sm">
-    <i class="pi pi-info-circle text-green-600" aria-hidden="true"></i>
-    <p>
-      To start optimization process go to
-      <span class="text-green-600 font-bold"
-        ><a routerLink="/cv-optimization">Optimize CV</a></span
-      >
-      page, select uploaded CV and upload job description.
-    </p>
+  <div class="mt-6">
+    <p-button
+      label="Optimize your CV"
+      icon="pi pi-bolt"
+      size="small"
+      routerLink="/cv-optimization"
+    />
   </div>
   }
 </div>
