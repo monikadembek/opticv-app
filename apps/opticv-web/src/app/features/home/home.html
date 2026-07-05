@@ -6,7 +6,7 @@
         <br />one tailored CV at a time.
       </h1>
       <p class="text-2xl text-center mb-8">
-        <span class="font-bold">75% of CVs never reach a recruiter</span><br />
+        <span class="font-bold">75% of CVs never reach a recruiter</span>,
         they're rejected by ATS software first.
       </p>
       <p class="text-center text-xl mb-2">
@@ -16,16 +16,28 @@
         write your <span class="font-bold">cover letter</span> and prepare you
         for <span class="font-bold">the interview</span>.
       </p>
-      <p class="text-center text-xl mb-10">
+      <p class="text-center text-xl mb-2">
         All tailored to the specific job you're applying for.
       </p>
+      <p class="text-center text-xl mb-10">
+        It will also help you prepare content for your
+        <span class="font-bold">LinkedIn profile</span>.
+      </p>
+
       <div class="flex justify-center gap-4 mt-8 mb-2">
-        <p-button label="Optimize my CV" (onClick)="goToCreator()"></p-button>
         @if (!isUserLoggedIn()) {
         <p-button
           label="Sign In"
           [outlined]="true"
           (onClick)="signIn()"
+        ></p-button>
+        } @if(cvStore.hasCv()) {
+        <p-button label="Optimize my CV" (onClick)="goToCreator()"></p-button>
+        } @else {
+        <p-button
+          label="Upload your first CV"
+          icon="pi pi-upload"
+          (onClick)="goToUpload()"
         ></p-button>
         }
       </div>

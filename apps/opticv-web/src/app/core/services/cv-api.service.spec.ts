@@ -6,7 +6,7 @@ import {
 import { provideHttpClient } from '@angular/common/http';
 import type { CvDocumentListItem } from '@opticv/datatypes';
 import { CvApiService } from './cv-api.service';
-import { environment } from '../../../../environments/environment';
+import { environment } from '../../../environments/environment';
 
 const API = environment.apiUrl;
 
@@ -97,7 +97,9 @@ describe('CvApiService', () => {
     it('DELETEs /api/cv/:id', () => {
       let completed = false;
 
-      service.deleteCv('doc-id').subscribe({ complete: () => (completed = true) });
+      service
+        .deleteCv('doc-id')
+        .subscribe({ complete: () => (completed = true) });
 
       const req = httpMock.expectOne(`${API}/cv/doc-id`);
       expect(req.request.method).toBe('DELETE');
@@ -109,7 +111,9 @@ describe('CvApiService', () => {
     it('propagates HTTP errors', () => {
       let errorReceived = false;
 
-      service.deleteCv('doc-id').subscribe({ error: () => (errorReceived = true) });
+      service
+        .deleteCv('doc-id')
+        .subscribe({ error: () => (errorReceived = true) });
 
       const req = httpMock.expectOne(`${API}/cv/doc-id`);
       req.flush('Forbidden', { status: 403, statusText: 'Forbidden' });
