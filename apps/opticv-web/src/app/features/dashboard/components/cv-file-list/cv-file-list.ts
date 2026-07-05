@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import type { CvDocumentListItem } from '@opticv/datatypes';
 import { CvFileListItem } from '../cv-file-list-item/cv-file-list-item';
-import { CvApiService } from '../../services/cv-api.service';
+import { CvApiService } from '../../../../core/services/cv-api.service';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';

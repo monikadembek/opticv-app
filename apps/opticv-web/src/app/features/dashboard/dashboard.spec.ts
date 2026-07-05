@@ -3,7 +3,7 @@ import { provideRouter } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { of } from 'rxjs';
 import { Dashboard } from './dashboard';
-import { CvApiService } from './services/cv-api.service';
+import { CvApiService } from '../../core/services/cv-api.service';
 import { JobApplicationApiService } from '../../core/services/job-application-api.service';
 
 describe('Dashboard', () => {
@@ -15,7 +15,12 @@ describe('Dashboard', () => {
   });
 
   beforeEach(async () => {
-    vi.stubGlobal('ResizeObserver', vi.fn(function () { return { observe: vi.fn(), unobserve: vi.fn(), disconnect: vi.fn() }; }));
+    vi.stubGlobal(
+      'ResizeObserver',
+      vi.fn(function () {
+        return { observe: vi.fn(), unobserve: vi.fn(), disconnect: vi.fn() };
+      }),
+    );
     TestBed.resetTestingModule();
 
     await TestBed.configureTestingModule({
@@ -32,7 +37,9 @@ describe('Dashboard', () => {
         {
           provide: JobApplicationApiService,
           useValue: {
-            getJobApplications: vi.fn().mockReturnValue(of({ data: [], total: 0 })),
+            getJobApplications: vi
+              .fn()
+              .mockReturnValue(of({ data: [], total: 0 })),
             deleteJobApplication: vi.fn().mockReturnValue(of(undefined)),
           },
         },
@@ -58,13 +65,17 @@ describe('Dashboard', () => {
 
   it('should render the My CVs tab', () => {
     const tabs = fixture.nativeElement.querySelectorAll('p-tab');
-    const labels = Array.from(tabs as NodeListOf<Element>).map((t) => t.textContent?.trim());
+    const labels = Array.from(tabs as NodeListOf<Element>).map((t) =>
+      t.textContent?.trim(),
+    );
     expect(labels).toContain('My CVs');
   });
 
   it('should render the My Optimizations tab', () => {
     const tabs = fixture.nativeElement.querySelectorAll('p-tab');
-    const labels = Array.from(tabs as NodeListOf<Element>).map((t) => t.textContent?.trim());
+    const labels = Array.from(tabs as NodeListOf<Element>).map((t) =>
+      t.textContent?.trim(),
+    );
     expect(labels).toContain('My Optimizations');
   });
 

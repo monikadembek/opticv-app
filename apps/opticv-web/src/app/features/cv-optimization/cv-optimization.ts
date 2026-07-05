@@ -45,7 +45,7 @@ import {
   SseJobCompleteEvent,
 } from './services/cv-optimization-api.service';
 import { CvExportService } from './services/cv-export.service';
-import { CvApiService } from '../dashboard/services/cv-api.service';
+import { CvApiService } from '../../core/services/cv-api.service';
 import {
   JobUpload,
   JobSubmittedData,

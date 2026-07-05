@@ -19,7 +19,7 @@ import {
   SseJobCompleteEvent,
 } from './services/cv-optimization-api.service';
 import { JobApplicationApiService } from '../../core/services/job-application-api.service';
-import { CvApiService } from '../dashboard/services/cv-api.service';
+import { CvApiService } from '../../core/services/cv-api.service';
 import { CvExportService } from './services/cv-export.service';
 
 const mockCv: CvDocumentListItem = {
@@ -870,7 +870,12 @@ describe('CvOptimization', () => {
               status: 'completed',
               result: {
                 headlineVariants: [],
-                aboutRewrite: { fullText: '', characterCount: 0, preview: '', structure: { hook: '', story: '', achievements: [], cta: '' } },
+                aboutRewrite: {
+                  fullText: '',
+                  characterCount: 0,
+                  preview: '',
+                  structure: { hook: '', story: '', achievements: [], cta: '' },
+                },
                 additionalRecommendations: [],
                 targetSearchQueries: [],
               },
@@ -1197,13 +1202,34 @@ describe('CvOptimization', () => {
       component.isStoredMode.set(true);
       component.results.set(
         new Map([
-          [PromptType.RESUME_AUTOPSY, { promptType: PromptType.RESUME_AUTOPSY, status: 'completed' }],
-          [PromptType.KEYWORD_GAP, { promptType: PromptType.KEYWORD_GAP, status: 'completed' }],
-          [PromptType.BULLET_UPGRADE, { promptType: PromptType.BULLET_UPGRADE, status: 'completed' }],
-          [PromptType.SUMMARY_REWRITE, { promptType: PromptType.SUMMARY_REWRITE, status: 'completed' }],
-          [PromptType.COVER_LETTER, { promptType: PromptType.COVER_LETTER, status: 'completed' }],
-          [PromptType.INTERVIEW_PREP, { promptType: PromptType.INTERVIEW_PREP, status: 'completed' }],
-          [PromptType.LINKEDIN_REWRITE, { promptType: PromptType.LINKEDIN_REWRITE, status: 'completed' }],
+          [
+            PromptType.RESUME_AUTOPSY,
+            { promptType: PromptType.RESUME_AUTOPSY, status: 'completed' },
+          ],
+          [
+            PromptType.KEYWORD_GAP,
+            { promptType: PromptType.KEYWORD_GAP, status: 'completed' },
+          ],
+          [
+            PromptType.BULLET_UPGRADE,
+            { promptType: PromptType.BULLET_UPGRADE, status: 'completed' },
+          ],
+          [
+            PromptType.SUMMARY_REWRITE,
+            { promptType: PromptType.SUMMARY_REWRITE, status: 'completed' },
+          ],
+          [
+            PromptType.COVER_LETTER,
+            { promptType: PromptType.COVER_LETTER, status: 'completed' },
+          ],
+          [
+            PromptType.INTERVIEW_PREP,
+            { promptType: PromptType.INTERVIEW_PREP, status: 'completed' },
+          ],
+          [
+            PromptType.LINKEDIN_REWRITE,
+            { promptType: PromptType.LINKEDIN_REWRITE, status: 'completed' },
+          ],
         ]),
       );
       expect(component.hasPartialStoredResults()).toBe(false);
@@ -1213,12 +1239,30 @@ describe('CvOptimization', () => {
       component.isStoredMode.set(true);
       component.results.set(
         new Map([
-          [PromptType.RESUME_AUTOPSY, { promptType: PromptType.RESUME_AUTOPSY, status: 'completed' }],
-          [PromptType.KEYWORD_GAP, { promptType: PromptType.KEYWORD_GAP, status: 'completed' }],
-          [PromptType.BULLET_UPGRADE, { promptType: PromptType.BULLET_UPGRADE, status: 'completed' }],
-          [PromptType.SUMMARY_REWRITE, { promptType: PromptType.SUMMARY_REWRITE, status: 'completed' }],
-          [PromptType.COVER_LETTER, { promptType: PromptType.COVER_LETTER, status: 'completed' }],
-          [PromptType.INTERVIEW_PREP, { promptType: PromptType.INTERVIEW_PREP, status: 'completed' }],
+          [
+            PromptType.RESUME_AUTOPSY,
+            { promptType: PromptType.RESUME_AUTOPSY, status: 'completed' },
+          ],
+          [
+            PromptType.KEYWORD_GAP,
+            { promptType: PromptType.KEYWORD_GAP, status: 'completed' },
+          ],
+          [
+            PromptType.BULLET_UPGRADE,
+            { promptType: PromptType.BULLET_UPGRADE, status: 'completed' },
+          ],
+          [
+            PromptType.SUMMARY_REWRITE,
+            { promptType: PromptType.SUMMARY_REWRITE, status: 'completed' },
+          ],
+          [
+            PromptType.COVER_LETTER,
+            { promptType: PromptType.COVER_LETTER, status: 'completed' },
+          ],
+          [
+            PromptType.INTERVIEW_PREP,
+            { promptType: PromptType.INTERVIEW_PREP, status: 'completed' },
+          ],
         ]),
       );
       expect(component.hasPartialStoredResults()).toBe(true);

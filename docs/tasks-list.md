@@ -767,6 +767,47 @@ Also fixed the corresponding test expectation in users.service.spec.ts. Found 27
 
 ---
 
+### 64. UX - user doesn't know that must upload cv first before running cv optimization
+
+**status: done**
+**time: 5.07.2026**
+
+Problem:
+User logs in the app, clicks the Optimize my CV button in the hero section, gets navigated to optimize-cv page, pastes job offer and then it turns out thatthere is no cv uploaded and user doesn't know what to do, didn't know that cv must be uploaded first before any optimization can run.
+
+Solution:
+On homepage when user is logged in check if has any cv's already uploaded, if not, display button to Upload CV, otherwise display button to Optimize my CV.
+On the upload page after successful upload replace link to Optimize Cv page with button to make it more obvious for the user as to what his next step should be.
+
+Todo:
+
+1. Add cvs signal store
+2. Add to cvs signal store methods regarding getting user cvs
+3. On homepage get user user cvs via signal store method and depending if user has cvs or not display either 'Upload your first CV' button or 'Optimize CV' button.
+4. On upload page after successful upload replace link to Optimize Cv page with button
+
+---
+
+### 65. Use cv signal store for operations related to cvs
+
+**status: todo**
+**time: 6.07.2026**
+
+- in cv signal store add method to delete cv
+- in the dashboard page replace current methods related to cvs with methods from cv signals store (get list and delete)
+- on cv optimizations tab display button to go to upload page if user doesn't have any cvs uploaded yet instead of Run your first optimization button
+
+---
+
+### 66. UX - user uploads cv in language different than english, but OptiCV currently supports english cvs
+
+**status: todo**
+**time: 5.07.2026**
+
+- add warning or iformation on the upload page that OptiCV currently supports only english language cvs and the optimization results are prepared and displayed in English
+
+---
+
 ### Keyword Gap - Acronym issues and underweighted keywords
 
 - think of what we can do with those sections, are tey mportant, should we display them, how we could apply the acronym issues

@@ -5,7 +5,7 @@ import { of, throwError } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import type { CvDocumentListItem } from '@opticv/datatypes';
 import { CvFileList } from './cv-file-list';
-import { CvApiService } from '../../services/cv-api.service';
+import { CvApiService } from '../../../../core/services/cv-api.service';
 
 const mockFiles: CvDocumentListItem[] = [
   {
@@ -21,7 +21,8 @@ const mockFiles: CvDocumentListItem[] = [
     id: 'id-2',
     fileName: 'cv2.docx',
     fileSize: 2048,
-    mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    mimeType:
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     createdAt: '2024-02-01T00:00:00.000Z',
     parsedText: null,
     parseStatus: 'PENDING',
@@ -74,7 +75,9 @@ describe('CvFileList', () => {
     });
 
     it('renders one list item per file', () => {
-      const items = fixture.debugElement.queryAll(By.css('app-cv-file-list-item'));
+      const items = fixture.debugElement.queryAll(
+        By.css('app-cv-file-list-item'),
+      );
       expect(items.length).toBe(mockFiles.length);
     });
 
@@ -82,7 +85,9 @@ describe('CvFileList', () => {
       cvApiService.getUserCvs.mockReturnValue(of([]));
       component.loadFiles();
       fixture.detectChanges();
-      const items = fixture.debugElement.queryAll(By.css('app-cv-file-list-item'));
+      const items = fixture.debugElement.queryAll(
+        By.css('app-cv-file-list-item'),
+      );
       expect(items.length).toBe(0);
     });
 
@@ -98,7 +103,9 @@ describe('CvFileList', () => {
     it('uses fallback error message when error has no message', () => {
       cvApiService.getUserCvs.mockReturnValue(throwError(() => ({})));
       component.loadFiles();
-      expect(component.cvsError()).toBe('Failed to load files. Please try again.');
+      expect(component.cvsError()).toBe(
+        'Failed to load files. Please try again.',
+      );
     });
   });
 
@@ -114,7 +121,10 @@ describe('CvFileList', () => {
       );
       component.downloadCv(mockFiles[0]);
       expect(messageService.add).toHaveBeenCalledWith(
-        expect.objectContaining({ severity: 'error', summary: 'Download failed' }),
+        expect.objectContaining({
+          severity: 'error',
+          summary: 'Download failed',
+        }),
       );
     });
 
@@ -122,14 +132,17 @@ describe('CvFileList', () => {
       cvApiService.downloadCv.mockReturnValue(throwError(() => ({})));
       component.downloadCv(mockFiles[0]);
       expect(messageService.add).toHaveBeenCalledWith(
-        expect.objectContaining({ detail: 'Downloading CV failed. Please try again.' }),
+        expect.objectContaining({
+          detail: 'Downloading CV failed. Please try again.',
+        }),
       );
     });
   });
 
   describe('deleteCv', () => {
     it('removes the file from cvFiles after successful deletion', () => {
-      const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
+      const confirmationService =
+        fixture.debugElement.injector.get(ConfirmationService);
       vi.spyOn(confirmationService, 'confirm').mockImplementation((opts) => {
         opts.accept?.();
         return confirmationService;
@@ -142,7 +155,8 @@ describe('CvFileList', () => {
     });
 
     it('shows a success toast after deletion', () => {
-      const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
+      const confirmationService =
+        fixture.debugElement.injector.get(ConfirmationService);
       vi.spyOn(confirmationService, 'confirm').mockImplementation((opts) => {
         opts.accept?.();
         return confirmationService;
@@ -159,7 +173,8 @@ describe('CvFileList', () => {
       cvApiService.deleteCv.mockReturnValue(
         throwError(() => ({ error: { message: 'Delete error' } })),
       );
-      const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
+      const confirmationService =
+        fixture.debugElement.injector.get(ConfirmationService);
       vi.spyOn(confirmationService, 'confirm').mockImplementation((opts) => {
         opts.accept?.();
         return confirmationService;
@@ -168,12 +183,16 @@ describe('CvFileList', () => {
       component.deleteCv(mockFiles[0]);
 
       expect(messageService.add).toHaveBeenCalledWith(
-        expect.objectContaining({ severity: 'error', summary: 'Delete failed' }),
+        expect.objectContaining({
+          severity: 'error',
+          summary: 'Delete failed',
+        }),
       );
     });
 
     it('does not call deleteCv when confirmation is rejected', () => {
-      const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
+      const confirmationService =
+        fixture.debugElement.injector.get(ConfirmationService);
       vi.spyOn(confirmationService, 'confirm').mockImplementation(
         () => confirmationService,
       );
