@@ -37,18 +37,26 @@ export const CvStore = signalStore(
       updateCvList(cvs: CvDocumentListItem[]): void {
         patchState(store, { cvList: cvs });
       },
-      loadUserCVs(): void {
+      loadUserCVs(force = false): void {
+        // use force parameter to refresh store
+        // Fixes the redundant CV list fetch by making CvStore skip reloading when data already exists
+        if (!force && (store.loading() || store.cvList().length > 0)) return;
+
         patchState(store, { loading: true });
         cvApiService
           .getUserCvs()
           .pipe(takeUntilDestroyed(destroyRef))
           .subscribe({
             next: (cvs) => {
-              console.log(cvs);
-              patchState(store, { cvList: cvs });
+              patchState(store, { cvList: cvs, loading: false, error: null });
             },
             error: (error) =>
-              patchState(store, { loading: false, error: error }),
+              patchState(store, {
+                loading: false,
+                error:
+                  error?.error?.message ??
+                  'Failed to load files. Please try again.',
+              }),
           });
       },
     }),

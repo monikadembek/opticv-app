@@ -30,6 +30,7 @@ import {
   JobApplicationResponse,
 } from '@opticv/datatypes';
 import posthog from 'posthog-js';
+import { CvStore } from '../../../../core/stores/cv.store';
 
 export interface JobSubmittedData {
   jobApplication: JobApplication;
@@ -53,6 +54,7 @@ export class JobUpload {
   private readonly cvOptimizationApiService = inject(CvOptimizationApiService);
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
+  readonly cvStore = inject(CvStore);
 
   isReadonly = input<boolean>(false);
   prefillData = input<JobApplication | null>(null);
@@ -60,7 +62,7 @@ export class JobUpload {
   jobSubmitted = output<JobSubmittedData>();
   jobApplication: JobApplicationResponse | null = null;
 
-  cvList = this.cvOptimizationApiService.cvList;
+  cvList = this.cvStore.cvList;
   isSubmitting = signal(false);
   submitError = signal<string | null>(null);
 
@@ -95,8 +97,6 @@ export class JobUpload {
   }
 
   constructor() {
-    this.reloadCvs();
-
     effect(() => {
       const data = this.prefillData();
       if (data) {
@@ -118,7 +118,7 @@ export class JobUpload {
   }
 
   reloadCvs(): void {
-    this.cvOptimizationApiService.reloadCvList();
+    this.cvStore.loadUserCVs(true);
   }
 
   onSubmit(): void {

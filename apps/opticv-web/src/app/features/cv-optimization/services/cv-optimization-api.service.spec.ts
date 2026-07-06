@@ -5,7 +5,7 @@ import {
 } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { PLATFORM_ID } from '@angular/core';
-import type { CvDocumentListItem, JobApplicationResponse } from '@opticv/datatypes';
+import type { JobApplicationResponse } from '@opticv/datatypes';
 import { PromptType } from '@opticv/datatypes';
 import {
   CvOptimizationApiService,
@@ -15,7 +15,6 @@ import {
 import { environment } from '../../../../environments/environment';
 import { Supabase } from '../../../core/auth/services/supabase';
 
-const CV_URL = `${environment.apiUrl}/cv`;
 const JOB_APPS_URL = `${environment.apiUrl}/job-applications`;
 const CV_EXTRACT_URL = (id: string) => `${environment.apiUrl}/cv/${id}/extract`;
 const CV_STRUCTURED_DATA_URL = (id: string) => `${environment.apiUrl}/cv/${id}/structured-data`;
@@ -25,16 +24,6 @@ const RUN_SINGLE_URL = (jobAppId: string, promptType: string) =>
   `${environment.apiUrl}/optimizations/job-applications/${jobAppId}/run/${promptType}`;
 const STREAM_URL = (jobAppId: string, runId: string, token: string) =>
   `${environment.apiUrl}/optimizations/job-applications/${jobAppId}/stream?runId=${runId}&token=${token}`;
-
-const mockCv: CvDocumentListItem = {
-  id: 'cv-id-1',
-  fileName: 'my-cv.pdf',
-  fileSize: 2048,
-  mimeType: 'application/pdf',
-  createdAt: new Date('2024-01-01').toISOString(),
-  parsedText: null,
-  parseStatus: 'COMPLETED',
-};
 
 const mockPayload: CreateJobApplicationPayload = {
   cvDocumentId: 'cv-id-1',
@@ -83,36 +72,10 @@ describe('CvOptimizationApiService', () => {
   });
 
   it('should be created', () => {
-    httpMock.expectOne(CV_URL).flush([]);
     expect(service).toBeTruthy();
   });
 
-  describe('cvList (httpResource)', () => {
-    it('GETs the cv endpoint on initialization', () => {
-      const req = httpMock.expectOne(CV_URL);
-      expect(req.request.method).toBe('GET');
-      req.flush([mockCv]);
-    });
-
-    it('exposes cvList as readonly resource', () => {
-      httpMock.expectOne(CV_URL).flush([mockCv]);
-      expect(service.cvList).toBeDefined();
-    });
-  });
-
-  describe('reloadCvList', () => {
-    it('can be called without throwing', () => {
-      httpMock.expectOne(CV_URL).flush([mockCv]);
-      expect(() => service.reloadCvList()).not.toThrow();
-      httpMock.match(CV_URL).forEach((r) => r.flush([mockCv]));
-    });
-  });
-
   describe('createJobApplication', () => {
-    beforeEach(() => {
-      httpMock.expectOne(CV_URL).flush([]);
-    });
-
     it('POSTs to the job-applications endpoint with the payload', () => {
       let result: JobApplicationResponse | undefined;
 
@@ -158,10 +121,6 @@ describe('CvOptimizationApiService', () => {
   describe('extractCvData', () => {
     const cvId = 'cv-id-1';
 
-    beforeEach(() => {
-      httpMock.expectOne(CV_URL).flush([]);
-    });
-
     it('POSTs to /api/cv/:id/extract with an empty body', () => {
       service.extractCvData(cvId).subscribe();
 
@@ -203,10 +162,6 @@ describe('CvOptimizationApiService', () => {
   describe('getStructuredData', () => {
     const cvId = 'cv-id-1';
 
-    beforeEach(() => {
-      httpMock.expectOne(CV_URL).flush([]);
-    });
-
     it('GETs /cv/:id/structured-data', () => {
       service.getStructuredData(cvId).subscribe();
 
@@ -247,10 +202,6 @@ describe('CvOptimizationApiService', () => {
   describe('runFullOptimizationProcess', () => {
     const jobAppId = 'job-app-id-1';
 
-    beforeEach(() => {
-      httpMock.expectOne(CV_URL).flush([]);
-    });
-
     it('POSTs to the run endpoint with an empty body', () => {
       service.runFullOptimizationProcess(jobAppId).subscribe();
 
@@ -288,10 +239,6 @@ describe('CvOptimizationApiService', () => {
   describe('runSingleOptimizationProcess', () => {
     const jobAppId = 'job-app-id-1';
     const promptType = PromptType.RESUME_AUTOPSY;
-
-    beforeEach(() => {
-      httpMock.expectOne(CV_URL).flush([]);
-    });
 
     it('POSTs to the run/:promptType endpoint with an empty body', () => {
       service.runSingleOptimizationProcess(jobAppId, promptType).subscribe();
@@ -344,8 +291,6 @@ describe('CvOptimizationApiService', () => {
     let EventSourceSpy: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
-      httpMock.expectOne(CV_URL).flush([]);
-
       mockEventSource = {
         addEventListener: vi.fn(),
         onerror: null,
@@ -378,7 +323,6 @@ describe('CvOptimizationApiService', () => {
       });
       const serverService = TestBed.inject(CvOptimizationApiService);
       TestBed.flushEffects();
-      TestBed.inject(HttpTestingController).expectOne(CV_URL).flush([]);
 
       let completed = false;
       serverService

@@ -6,6 +6,7 @@ import { TopHeader } from './layout/top-header/top-header';
 import { Footer } from './layout/footer/footer';
 import { Supabase } from './core/auth/services/supabase';
 import { ToastModule } from 'primeng/toast';
+import { CvStore } from './core/stores/cv.store';
 
 @Component({ selector: 'app-top-header', template: '', standalone: true })
 class TopHeaderStub {
@@ -23,25 +24,38 @@ class ToastStub {}
 const mockSession = { user: { email: 'test@example.com' } } as any;
 
 function createSupabaseMock(sessionValue: any = null, userValue: any = null) {
+  const sessionSignal = signal(sessionValue);
+  const userSignal = signal(userValue);
   return {
-    currentSession: signal(sessionValue).asReadonly(),
-    currentUser: signal(userValue).asReadonly(),
+    currentSession: sessionSignal,
+    currentUser: userSignal,
     signOut: vi.fn().mockResolvedValue(undefined),
+    setSession: (session: any, user: any) => {
+      sessionSignal.set(session);
+      userSignal.set(user);
+    },
   };
+}
+
+function createCvStoreMock() {
+  return { loadUserCVs: vi.fn() };
 }
 
 describe('App', () => {
   let supabaseMock: ReturnType<typeof createSupabaseMock>;
+  let cvStoreMock: ReturnType<typeof createCvStoreMock>;
 
   beforeEach(async () => {
     TestBed.resetTestingModule();
     supabaseMock = createSupabaseMock();
+    cvStoreMock = createCvStoreMock();
 
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [
         provideRouter([]),
         { provide: Supabase, useValue: supabaseMock },
+        { provide: CvStore, useValue: cvStoreMock },
       ],
     })
       .overrideComponent(App, {
@@ -107,5 +121,43 @@ describe('App', () => {
 
     expect(supabaseMock.signOut).toHaveBeenCalled();
     expect(navigateSpy).toHaveBeenCalledWith(['login']);
+  });
+
+  describe('cv store loading', () => {
+    it('does not call loadUserCVs when the user starts out logged out', () => {
+      TestBed.createComponent(App).detectChanges();
+      expect(cvStoreMock.loadUserCVs).not.toHaveBeenCalled();
+    });
+
+    it('calls loadUserCVs once when the user transitions to logged in', () => {
+      const fixture = TestBed.createComponent(App);
+      fixture.detectChanges();
+
+      supabaseMock.setSession(mockSession, mockSession.user);
+      fixture.detectChanges();
+
+      expect(cvStoreMock.loadUserCVs).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not call loadUserCVs again on a subsequent re-emission while still logged in', () => {
+      const fixture = TestBed.createComponent(App);
+      fixture.detectChanges();
+
+      supabaseMock.setSession(mockSession, mockSession.user);
+      fixture.detectChanges();
+      supabaseMock.setSession(mockSession, mockSession.user);
+      fixture.detectChanges();
+
+      expect(cvStoreMock.loadUserCVs).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls loadUserCVs immediately when the user is already logged in on creation', () => {
+      supabaseMock = createSupabaseMock(mockSession, mockSession.user);
+      TestBed.overrideProvider(Supabase, { useValue: supabaseMock });
+      const fixture = TestBed.createComponent(App);
+      fixture.detectChanges();
+
+      expect(cvStoreMock.loadUserCVs).toHaveBeenCalledTimes(1);
+    });
   });
 });

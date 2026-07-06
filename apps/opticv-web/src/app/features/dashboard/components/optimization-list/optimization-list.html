@@ -15,14 +15,25 @@
 </div>
 } @else if (items().length === 0) {
 <div class="flex flex-col items-center gap-4 py-16 text-center">
-  <span class="text-surface-500 text-lg"
-    >You haven't run any CV optimizations yet.</span
-  >
+  @if(cvStore.hasCv()) {
+  <span class="text-surface-500 text-lg">
+    You haven't run any CV optimizations yet.
+  </span>
   <p-button
     label="Run your first optimization"
     icon="pi pi-bolt"
     routerLink="/cv-optimization"
   />
+  } @else {
+  <span class="text-surface-500 text-lg">
+    To run CV optimization you must first upload a file with your CV.
+  </span>
+  <p-button
+    label="Upload your first CV"
+    icon="pi pi-upload"
+    routerLink="/upload-cv"
+  />
+  }
 </div>
 } @else {
 <div class="flex flex-col gap-4">

@@ -83,7 +83,7 @@ describe('CvFileList', () => {
 
     it('renders no items when the list is empty', () => {
       cvApiService.getUserCvs.mockReturnValue(of([]));
-      component.loadFiles();
+      component.cvStore.loadUserCVs(true);
       fixture.detectChanges();
       const items = fixture.debugElement.queryAll(
         By.css('app-cv-file-list-item'),
@@ -95,14 +95,14 @@ describe('CvFileList', () => {
       cvApiService.getUserCvs.mockReturnValue(
         throwError(() => ({ error: { message: 'Load error' } })),
       );
-      component.loadFiles();
+      component.cvStore.loadUserCVs(true);
       expect(component.cvsError()).toBe('Load error');
       expect(component.isCvsLoading()).toBe(false);
     });
 
     it('uses fallback error message when error has no message', () => {
       cvApiService.getUserCvs.mockReturnValue(throwError(() => ({})));
-      component.loadFiles();
+      component.cvStore.loadUserCVs(true);
       expect(component.cvsError()).toBe(
         'Failed to load files. Please try again.',
       );

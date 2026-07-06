@@ -7,6 +7,7 @@ import type { UploadCvResponse } from '@opticv/datatypes';
 import { UploadCv } from './upload-cv';
 import { CvUploadApiService } from './services/cv-upload-api.service';
 import { CvDropzone } from './components/cv-dropzone/cv-dropzone';
+import { CvStore } from '../../core/stores/cv.store';
 
 const mockResponse: UploadCvResponse = {
   id: 'cv-1',
@@ -23,11 +24,13 @@ describe('UploadCv', () => {
   let component: UploadCv;
   let cvUploadApiService: { uploadCv: ReturnType<typeof vi.fn> };
   let messageService: { add: ReturnType<typeof vi.fn> };
+  let cvStore: { loadUserCVs: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
     TestBed.resetTestingModule();
     cvUploadApiService = { uploadCv: vi.fn() };
     messageService = { add: vi.fn() };
+    cvStore = { loadUserCVs: vi.fn() };
 
     await TestBed.configureTestingModule({
       imports: [UploadCv],
@@ -35,6 +38,7 @@ describe('UploadCv', () => {
         provideRouter([]),
         { provide: CvUploadApiService, useValue: cvUploadApiService },
         { provide: MessageService, useValue: messageService },
+        { provide: CvStore, useValue: cvStore },
       ],
     }).compileComponents();
 
@@ -136,6 +140,26 @@ describe('UploadCv', () => {
       );
 
       expect(dropzone.selectedFile()).toBeNull();
+    });
+
+    it('should force-refresh the cv store on successful upload', () => {
+      cvUploadApiService.uploadCv.mockReturnValue(of(mockResponse));
+
+      component.onFileSelected(
+        new File([''], 'resume.pdf', { type: 'application/pdf' }),
+      );
+
+      expect(cvStore.loadUserCVs).toHaveBeenCalledWith(true);
+    });
+
+    it('should not refresh the cv store on failed upload', () => {
+      cvUploadApiService.uploadCv.mockReturnValue(throwError(() => ({})));
+
+      component.onFileSelected(
+        new File([''], 'resume.pdf', { type: 'application/pdf' }),
+      );
+
+      expect(cvStore.loadUserCVs).not.toHaveBeenCalled();
     });
   });
 

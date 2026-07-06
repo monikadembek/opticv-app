@@ -9,6 +9,7 @@ import type {
 } from '@opticv/datatypes';
 import { JobUpload } from './job-upload';
 import { CvOptimizationApiService } from '../../services/cv-optimization-api.service';
+import { CvStore } from '../../../../core/stores/cv.store';
 
 const mockCv: CvDocumentListItem = {
   id: 'cv-id-1',
@@ -33,15 +34,16 @@ const mockJobApplicationResponse: JobApplicationResponse = {
   updatedAt: new Date('2024-01-01').toISOString(),
 };
 
-function makeCvListResource(overrides: {
-  value?: CvDocumentListItem[];
-  isLoading?: boolean;
-  error?: unknown;
+function makeCvStore(overrides: {
+  cvList?: CvDocumentListItem[];
+  loading?: boolean;
+  error?: string | null;
 }) {
   return {
-    value: signal(overrides.value ?? [mockCv]),
-    isLoading: signal(overrides.isLoading ?? false),
+    cvList: signal(overrides.cvList ?? [mockCv]),
+    loading: signal(overrides.loading ?? false),
     error: signal(overrides.error ?? null),
+    loadUserCVs: vi.fn(),
   };
 }
 
@@ -49,29 +51,19 @@ describe('JobUpload', () => {
   let fixture: ComponentFixture<JobUpload>;
   let component: JobUpload;
   let apiService: {
-    cvList: ReturnType<typeof makeCvListResource>;
-    reloadCvList: ReturnType<typeof vi.fn>;
     createJobApplication: ReturnType<typeof vi.fn>;
     extractCvData: ReturnType<typeof vi.fn>;
   };
+  let cvStore: ReturnType<typeof makeCvStore>;
   let messageService: { add: ReturnType<typeof vi.fn> };
 
-  beforeEach(async () => {
+  async function recreateComponent() {
     TestBed.resetTestingModule();
-    apiService = {
-      cvList: makeCvListResource({}),
-      reloadCvList: vi.fn(),
-      createJobApplication: vi
-        .fn()
-        .mockReturnValue(of(mockJobApplicationResponse)),
-      extractCvData: vi.fn().mockReturnValue(of({ data: {} })),
-    };
-    messageService = { add: vi.fn() };
-
     await TestBed.configureTestingModule({
       imports: [JobUpload],
       providers: [
         { provide: CvOptimizationApiService, useValue: apiService },
+        { provide: CvStore, useValue: cvStore },
         { provide: MessageService, useValue: messageService },
       ],
     }).compileComponents();
@@ -79,6 +71,19 @@ describe('JobUpload', () => {
     fixture = TestBed.createComponent(JobUpload);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  }
+
+  beforeEach(async () => {
+    apiService = {
+      createJobApplication: vi
+        .fn()
+        .mockReturnValue(of(mockJobApplicationResponse)),
+      extractCvData: vi.fn().mockReturnValue(of({ data: {} })),
+    };
+    cvStore = makeCvStore({});
+    messageService = { add: vi.fn() };
+
+    await recreateComponent();
   });
 
   it('should create', () => {
@@ -281,21 +286,16 @@ describe('JobUpload', () => {
   });
 
   describe('reloadCvs', () => {
-    it('should call reloadCvList on the api service', () => {
+    it('should call loadUserCVs with force on the cv store', () => {
       component.reloadCvs();
-      expect(apiService.reloadCvList).toHaveBeenCalled();
+      expect(cvStore.loadUserCVs).toHaveBeenCalledWith(true);
     });
   });
 
   describe('template', () => {
-    it('should show a reload button when cvList has an error', () => {
-      apiService.cvList = makeCvListResource({
-        value: [],
-        error: 'Network error',
-      });
-      fixture = TestBed.createComponent(JobUpload);
-      component = fixture.componentInstance;
-      fixture.detectChanges();
+    it('should show a reload button when cvList has an error', async () => {
+      cvStore = makeCvStore({ cvList: [], error: 'Network error' });
+      await recreateComponent();
 
       const reloadBtn = fixture.debugElement.query(
         By.css('p-button[label="Reload"]'),
@@ -303,14 +303,20 @@ describe('JobUpload', () => {
       expect(reloadBtn).toBeTruthy();
     });
 
-    it('should show "No CVs available" message when cv list is empty and not loading', () => {
-      apiService.cvList = makeCvListResource({ value: [] });
-      fixture = TestBed.createComponent(JobUpload);
-      component = fixture.componentInstance;
-      fixture.detectChanges();
+    it('should show "No CVs available" message when cv list is empty and not loading', async () => {
+      cvStore = makeCvStore({ cvList: [] });
+      await recreateComponent();
 
       const nativeEl: HTMLElement = fixture.nativeElement;
       expect(nativeEl.textContent).toContain('No CVs available');
+    });
+
+    it('should show "Loading CV list" placeholder when the store is loading', async () => {
+      cvStore = makeCvStore({ cvList: [], loading: true });
+      await recreateComponent();
+
+      const nativeEl: HTMLElement = fixture.nativeElement;
+      expect(nativeEl.textContent).toContain('Loading CV list');
     });
 
     it('should show submitError in the template when present', () => {
