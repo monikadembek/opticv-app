@@ -1,11 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { By } from '@angular/platform-browser';
+import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import type { JobApplicationListItem } from '@opticv/datatypes';
 import { OptimizationList } from './optimization-list';
 import { JobApplicationApiService } from '../../../../core/services/job-application-api.service';
+import { CvStore } from '../../../../core/stores/cv.store';
 
 const mockItems: JobApplicationListItem[] = [
   {
@@ -40,6 +42,7 @@ describe('OptimizationList', () => {
     deleteJobApplication: ReturnType<typeof vi.fn>;
   };
   let messageService: { add: ReturnType<typeof vi.fn> };
+  let cvStore: { hasCv: ReturnType<typeof signal<boolean>> };
   let router: Router;
 
   beforeEach(async () => {
@@ -49,12 +52,14 @@ describe('OptimizationList', () => {
       deleteJobApplication: vi.fn().mockReturnValue(of(undefined)),
     };
     messageService = { add: vi.fn() };
+    cvStore = { hasCv: signal(true) };
 
     await TestBed.configureTestingModule({
       imports: [OptimizationList],
       providers: [
         { provide: JobApplicationApiService, useValue: jobApplicationApiService },
         { provide: MessageService, useValue: messageService },
+        { provide: CvStore, useValue: cvStore },
         provideRouter([]),
       ],
     }).compileComponents();
@@ -106,6 +111,34 @@ describe('OptimizationList', () => {
       fixture.detectChanges();
       const rows = fixture.debugElement.queryAll(By.css('.border.border-surface-200'));
       expect(rows.length).toBe(0);
+    });
+  });
+
+  describe('empty state', () => {
+    beforeEach(() => {
+      jobApplicationApiService.getJobApplications.mockReturnValue(
+        of({ data: [], total: 0 }),
+      );
+      component.loadOptimizations();
+      fixture.detectChanges();
+    });
+
+    it('shows "Run your first optimization" when the user has a CV', () => {
+      cvStore.hasCv.set(true);
+      fixture.detectChanges();
+      const button = fixture.nativeElement.querySelector(
+        'p-button[label="Run your first optimization"]',
+      );
+      expect(button).toBeTruthy();
+    });
+
+    it('shows "Upload your first CV" when the user has no CV', () => {
+      cvStore.hasCv.set(false);
+      fixture.detectChanges();
+      const button = fixture.nativeElement.querySelector(
+        'p-button[label="Upload your first CV"]',
+      );
+      expect(button).toBeTruthy();
     });
   });
 

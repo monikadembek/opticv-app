@@ -1,8 +1,22 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { signal } from '@angular/core';
+import { of } from 'rxjs';
+import type { CvDocumentListItem } from '@opticv/datatypes';
 import { Home } from './home';
 import { Supabase } from '../../core/auth/services/supabase';
+import { CvApiService } from '../../core/services/cv-api.service';
+import { CvStore } from '../../core/stores/cv.store';
+
+const mockCv: CvDocumentListItem = {
+  id: 'cv-id-1',
+  fileName: 'my-cv.pdf',
+  fileSize: 2048,
+  mimeType: 'application/pdf',
+  createdAt: new Date('2024-01-01').toISOString(),
+  parsedText: null,
+  parseStatus: 'COMPLETED',
+};
 
 function makeSupabaseMock(loggedIn = false) {
   return {
@@ -14,21 +28,27 @@ describe('Home', () => {
   let component: Home;
   let fixture: ComponentFixture<Home>;
   let router: Router;
+  let cvApiService: { getUserCvs: ReturnType<typeof vi.fn> };
 
-  async function createComponent(loggedIn = false) {
+  async function createComponent(loggedIn = false, cvList: CvDocumentListItem[] = [mockCv]) {
     TestBed.resetTestingModule();
+    cvApiService = { getUserCvs: vi.fn().mockReturnValue(of(cvList)) };
+
     await TestBed.configureTestingModule({
       imports: [Home],
       providers: [
         { provide: Supabase, useValue: makeSupabaseMock(loggedIn) },
+        { provide: CvApiService, useValue: cvApiService },
       ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Home);
     component = fixture.componentInstance;
     router = TestBed.inject(Router);
+    TestBed.inject(CvStore).loadUserCVs();
     fixture.detectChanges();
     await fixture.whenStable();
+    fixture.detectChanges();
   }
 
   beforeEach(async () => {
@@ -50,6 +70,24 @@ describe('Home', () => {
       'p-button[label="Optimize my CV"]',
     );
     expect(button).not.toBeNull();
+  });
+
+  describe('Optimize / Upload button', () => {
+    it('renders "Optimize my CV" when the user has a CV', async () => {
+      await createComponent(false, [mockCv]);
+      const button = fixture.nativeElement.querySelector(
+        'p-button[label="Optimize my CV"]',
+      );
+      expect(button).not.toBeNull();
+    });
+
+    it('renders "Upload your first CV" when the user has no CV', async () => {
+      await createComponent(false, []);
+      const button = fixture.nativeElement.querySelector(
+        'p-button[label="Upload your first CV"]',
+      );
+      expect(button).not.toBeNull();
+    });
   });
 
   describe('Sign In button', () => {
