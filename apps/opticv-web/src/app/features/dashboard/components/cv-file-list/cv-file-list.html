@@ -5,7 +5,11 @@
 } @else if (cvsError()) {
 <div class="flex flex-col items-center gap-4 py-16 text-center">
   <span class="text-red-500">{{ cvsError() }}</span>
-  <p-button label="Retry" icon="pi pi-refresh" (onClick)="loadFiles()" />
+  <p-button
+    label="Retry"
+    icon="pi pi-refresh"
+    (onClick)="cvStore.loadUserCVs()"
+  />
 </div>
 } @else if (cvFiles().length === 0) {
 <div class="flex flex-col items-center gap-4 py-16 text-center">

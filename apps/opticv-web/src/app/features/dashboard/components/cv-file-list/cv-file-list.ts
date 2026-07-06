@@ -5,7 +5,6 @@ import {
   inject,
   OnInit,
   PLATFORM_ID,
-  signal,
 } from '@angular/core';
 import type { CvDocumentListItem } from '@opticv/datatypes';
 import { CvFileListItem } from '../cv-file-list-item/cv-file-list-item';
@@ -18,6 +17,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import posthog from 'posthog-js';
+import { CvStore } from '../../../../core/stores/cv.store';
 
 @Component({
   selector: 'app-cv-file-list',
@@ -38,33 +38,16 @@ export class CvFileList implements OnInit {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly messageService = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
+  readonly cvStore = inject(CvStore);
 
-  readonly cvFiles = signal<CvDocumentListItem[]>([]);
-  readonly isCvsLoading = signal(false);
-  readonly cvsError = signal<string | null>(null);
+  readonly cvFiles = this.cvStore.cvList;
+  readonly isCvsLoading = this.cvStore.loading;
+  readonly cvsError = this.cvStore.error;
 
   ngOnInit(): void {
-    this.loadFiles();
-  }
-
-  loadFiles(): void {
-    this.isCvsLoading.set(true);
-    this.cvsError.set(null);
-    this.cvApiService
-      .getUserCvs()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (files) => {
-          this.cvFiles.set(files);
-          this.isCvsLoading.set(false);
-        },
-        error: (err) => {
-          this.cvsError.set(
-            err?.error?.message ?? 'Failed to load files. Please try again.',
-          );
-          this.isCvsLoading.set(false);
-        },
-      });
+    if (this.cvStore.cvList().length === 0 || this.cvStore.error()) {
+      this.cvStore.loadUserCVs();
+    }
   }
 
   downloadCv(file: CvDocumentListItem): void {
@@ -112,9 +95,8 @@ export class CvFileList implements OnInit {
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe({
             next: () => {
-              this.cvFiles.update((list) =>
-                list.filter((f) => f.id !== file.id),
-              );
+              const newCvList = this.cvFiles().filter((f) => f.id !== file.id);
+              this.cvStore.updateCvList(newCvList);
               this.messageService.add({
                 severity: 'success',
                 summary: 'Success',

@@ -16,6 +16,7 @@ import type { JobApplicationListItem } from '@opticv/datatypes';
 import { JobApplicationApiService } from '../../../../core/services/job-application-api.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import posthog from 'posthog-js';
+import { CvStore } from '../../../../core/stores/cv.store';
 
 @Component({
   selector: 'app-optimization-list',
@@ -36,6 +37,7 @@ export class OptimizationList implements OnInit {
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
+  readonly cvStore = inject(CvStore);
 
   readonly items = signal<JobApplicationListItem[]>([]);
   readonly isLoading = signal(false);
