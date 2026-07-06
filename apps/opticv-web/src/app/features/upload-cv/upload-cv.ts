@@ -75,7 +75,7 @@ export class UploadCv {
           return response;
         }),
         switchMap((result) => {
-          this.cvStore.loadUserCVs();
+          this.cvStore.loadUserCVs(true);
           return of(result);
         }),
       )

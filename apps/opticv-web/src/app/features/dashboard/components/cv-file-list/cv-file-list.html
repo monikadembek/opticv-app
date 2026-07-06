@@ -8,7 +8,7 @@
   <p-button
     label="Retry"
     icon="pi pi-refresh"
-    (onClick)="cvStore.loadUserCVs()"
+    (onClick)="cvStore.loadUserCVs(true)"
   />
 </div>
 } @else if (cvFiles().length === 0) {

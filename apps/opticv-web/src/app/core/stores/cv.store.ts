@@ -37,7 +37,11 @@ export const CvStore = signalStore(
       updateCvList(cvs: CvDocumentListItem[]): void {
         patchState(store, { cvList: cvs });
       },
-      loadUserCVs(): void {
+      loadUserCVs(force = false): void {
+        // use force parameter to refresh store
+        // Fixes the redundant CV list fetch by making CvStore skip reloading when data already exists
+        if (!force && (store.loading() || store.cvList().length > 0)) return;
+
         patchState(store, { loading: true });
         cvApiService
           .getUserCvs()

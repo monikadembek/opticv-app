@@ -45,9 +45,7 @@ export class CvFileList implements OnInit {
   readonly cvsError = this.cvStore.error;
 
   ngOnInit(): void {
-    if (this.cvStore.cvList().length === 0 || this.cvStore.error()) {
-      this.cvStore.loadUserCVs();
-    }
+    this.cvStore.loadUserCVs();
   }
 
   downloadCv(file: CvDocumentListItem): void {
