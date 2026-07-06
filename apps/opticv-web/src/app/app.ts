@@ -35,10 +35,13 @@ export class App {
   );
 
   constructor() {
+    let wasLoggedIn = false;
     effect(() => {
-      if (this.isUserLoggedIn()) {
+      const isLoggedIn = this.isUserLoggedIn();
+      if (isLoggedIn && !wasLoggedIn) {
         this.cvStore.loadUserCVs();
       }
+      wasLoggedIn = isLoggedIn;
     });
   }
 

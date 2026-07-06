@@ -1,9 +1,8 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { HttpClient, httpResource } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { EMPTY, Observable } from 'rxjs';
 import type {
-  CvDocumentListItem,
   CvStructuredData,
   JobApplicationResponse,
   OptimizationResultSummary,
@@ -32,19 +31,6 @@ export class CvOptimizationApiService {
   private readonly http = inject(HttpClient);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly supabase = inject(Supabase);
-
-  #cvList = httpResource<CvDocumentListItem[]>(
-    () => ({
-      url: `${environment.apiUrl}/cv`,
-    }),
-    { defaultValue: [] },
-  );
-
-  cvList = this.#cvList.asReadonly();
-
-  reloadCvList(): void {
-    this.#cvList.reload();
-  }
 
   createJobApplication(
     payload: CreateJobApplicationPayload,
