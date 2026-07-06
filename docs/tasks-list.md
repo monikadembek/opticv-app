@@ -810,13 +810,31 @@ Todo:
 
 ---
 
-### UX - homepage changes
+### 67. UX - homepage changes
+
+**status: in progress**
+**time: 06.07.2026**
+
+- remove photo with woman below the hero section
+- put section with 3 step process below the hero section
+
+---
+
+### 68. UX - user uploads cv in language different than english, but OptiCV currently supports english cvs
+
+**status: todo**
+**time: 06.07.2026**
+
+- add warning or information on the upload page that OptiCV currently supports only english language cvs and the optimization results are prepared and displayed in English
+
+---
+
+### 69. UX - Cv optimization page - allow collapsing/expanding section cards
 
 **status: todo**
 **time:**
 
-- remove photo with woman
-- section with 3 step process put below the hero section
+- sections with optimizations are usually very long, add functionality to collapse/expand sections
 
 ---
 
@@ -827,15 +845,6 @@ Todo:
 
 - create animations or video with the process of using the app - from upload to pasting job offer to running optimization process and then exporting cv
 - put it on the homepage
-
----
-
-### UX - user uploads cv in language different than english, but OptiCV currently supports english cvs
-
-**status: todo**
-**time: 5.07.2026**
-
-- add warning or information on the upload page that OptiCV currently supports only english language cvs and the optimization results are prepared and displayed in English
 
 ---
 

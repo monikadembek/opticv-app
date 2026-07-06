@@ -32,7 +32,11 @@
           (onClick)="signIn()"
         ></p-button>
         } @if(cvStore.hasCv()) {
-        <p-button label="Optimize my CV" (onClick)="goToCreator()"></p-button>
+        <p-button
+          label="Optimize my CV"
+          icon="pi pi-bolt"
+          (onClick)="goToCreator()"
+        ></p-button>
         } @else {
         <p-button
           label="Upload your first CV"
@@ -42,12 +46,71 @@
         }
       </div>
     </div>
-    <div class="hero__image-container">
-      <img
-        src="/images/13467.jpg"
-        alt="girl sitting with laptop happy with her hands up"
-        class="hero__image"
-      />
+  </section>
+
+  <section class="how-it-works">
+    <div class="main-container responsive-horizontal-padding py-16">
+      <h2 class="heading-2 text-center mb-6">
+        How to use <span class="text-green">OptiCV</span>
+      </h2>
+      <p class="features-subtitle text-center mb-10">
+        From upload to optimized CV in 3 simple steps.
+      </p>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div>
+            <img
+              src="/images/step-1-upload.png"
+              alt="screenshot of cv upload page"
+              class="mb-4"
+            />
+          </div>
+          <h3 class="step-card__title">
+            <span class="step-number">1.</span>
+            Upload your CV
+          </h3>
+          <p class="step-card__text">
+            Import your existing CV once (PDF or DOCX format). We parse it and
+            resue it across every feature in this app.
+          </p>
+        </div>
+        <div class="step-card">
+          <div>
+            <img
+              src="/images/step-2-job-description.png"
+              alt="screenshot of job application form"
+              class="mb-4"
+            />
+          </div>
+          <h3 class="step-card__title">
+            <span class="step-number">2.</span>
+            Paste job description
+          </h3>
+          <p class="step-card__text">
+            Paste job posting and run optimization process - OptiCV goes to
+            work: scoring, rewriting, and flagging gaps against that specific
+            role, not a generic template.
+          </p>
+        </div>
+        <div class="step-card">
+          <div>
+            <img
+              src="/images/step-3-optimization.png"
+              alt="screenshot of optimize-cv page"
+              class="mb-4"
+            />
+          </div>
+          <h3 class="step-card__title">
+            <span class="step-number">3.</span>
+            Get your optimized CV
+          </h3>
+          <p class="step-card__text">
+            Review AI suggestions, apply changes or edit inline, then export
+            your tailored, ATS friendly CV, along with a cover letter, interview
+            prep and information to put on your Linkedin profile page.
+          </p>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -160,72 +223,6 @@
           <p class="feature-card__text">
             Download your finished CV and cover letter as PDF or DOCX with a
             single click.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="how-it-works">
-    <div class="main-container responsive-horizontal-padding py-16">
-      <h2 class="heading-2 text-center mb-6">
-        How to use <span class="text-green">OptiCV</span>
-      </h2>
-      <p class="features-subtitle text-center mb-10">
-        From upload to optimized CV in three simple steps.
-      </p>
-      <div class="steps-grid">
-        <div class="step-card">
-          <div>
-            <img
-              src="/images/step-1-upload.png"
-              alt="screenshot of cv upload page"
-              class="mb-4"
-            />
-          </div>
-          <h3 class="step-card__title">
-            <span class="step-number">1.</span>
-            Upload your CV
-          </h3>
-          <p class="step-card__text">
-            Import your existing CV once (PDF or DOCX format). We parse it and
-            resue it across every feature in this app.
-          </p>
-        </div>
-        <div class="step-card">
-          <div>
-            <img
-              src="/images/step-2-job-description.png"
-              alt="screenshot of job application form"
-              class="mb-4"
-            />
-          </div>
-          <h3 class="step-card__title">
-            <span class="step-number">2.</span>
-            Paste the job description
-          </h3>
-          <p class="step-card__text">
-            Paste job posting and run optimization process - OptiCV goes to
-            work: scoring, rewriting, and flagging gaps against that specific
-            role, not a generic template.
-          </p>
-        </div>
-        <div class="step-card">
-          <div>
-            <img
-              src="/images/step-3-optimization.png"
-              alt="screenshot of optimize-cv page"
-              class="mb-4"
-            />
-          </div>
-          <h3 class="step-card__title">
-            <span class="step-number">3.</span>
-            Get your optimized CV
-          </h3>
-          <p class="step-card__text">
-            Review AI suggestions, apply changes or edit inline, then export
-            your tailored, ATS friendly CV, along with a cover letter, interview
-            prep and information to put on your Linkedin profile page.
           </p>
         </div>
       </div>
