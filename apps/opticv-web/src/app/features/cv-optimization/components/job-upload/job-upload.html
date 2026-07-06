@@ -4,14 +4,14 @@
       <label for="cvDocumentId" class="font-semibold text-surface-900"
         >Select CV</label
       >
-      @if (!cvList.error()) {
+      @if (!cvStore.error()) {
       <p-select
         formControlName="cvDocumentId"
         id="cvDocumentId"
-        [options]="cvList.value()"
+        [options]="cvList()"
         optionLabel="fileName"
         optionValue="id"
-        [placeholder]="cvList.isLoading() ? 'Loading CV list': 'Select a CV'"
+        [placeholder]="cvStore.loading() ? 'Loading CV list': 'Select a CV'"
         class="w-full"
         [invalid]="cvDocumentIdControl.invalid && cvDocumentIdControl.touched"
         [attr.aria-invalid]="cvDocumentIdControl.invalid && cvDocumentIdControl.touched"
@@ -22,7 +22,7 @@
       <p id="cvDocumentId-error" class="text-sm text-red-600" role="alert">
         CV is required.
       </p>
-      } } } @if(cvList.error()) {
+      } } } @if(cvStore.error()) {
       <div>
         <p class="text-sm text-red-600" role="alert">
           Couldn't get list of your cv's
@@ -35,8 +35,7 @@
         ></p-button>
         }
       </div>
-      } @if (!cvList.isLoading() && !cvList.error() && cvList.value().length ===
-      0) {
+      } @if (!cvStore.loading() && !cvStore.error() && cvList().length === 0) {
       <p class="text-sm text-surface-500">
         No CVs available. Please upload a CV first.
       </p>
