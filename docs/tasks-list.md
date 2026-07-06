@@ -790,7 +790,7 @@ Todo:
 
 ### 65. Use cv signal store for operations related to cvs
 
-**status: in progress**
+**status: done**
 **time: 5.07.2026 - 6.07.2026**
 
 - in the dashboard page incorporate cv store - replace loading cvs with method from cv store and update store state when deleting cv file
