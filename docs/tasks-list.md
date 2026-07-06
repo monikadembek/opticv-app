@@ -803,8 +803,8 @@ Todo:
 
 ### 66. Remove Sentry's 'Report a bug button'
 
-**status: todo**
-**time:**
+**status: done**
+**time: 06.07.2026**
 
 - remove / hide 'Report a bug' button that is placed in bottom right corner of every page and was added when Sentry was integrated
 
