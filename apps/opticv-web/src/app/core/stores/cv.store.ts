@@ -44,11 +44,15 @@ export const CvStore = signalStore(
           .pipe(takeUntilDestroyed(destroyRef))
           .subscribe({
             next: (cvs) => {
-              console.log(cvs);
-              patchState(store, { cvList: cvs });
+              patchState(store, { cvList: cvs, loading: false, error: null });
             },
             error: (error) =>
-              patchState(store, { loading: false, error: error }),
+              patchState(store, {
+                loading: false,
+                error:
+                  error?.error?.message ??
+                  'Failed to load files. Please try again.',
+              }),
           });
       },
     }),

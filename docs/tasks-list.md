@@ -790,21 +790,51 @@ Todo:
 
 ### 65. Use cv signal store for operations related to cvs
 
-**status: todo**
-**time: 6.07.2026**
+**status: in progress**
+**time: 5.07.2026 - 6.07.2026**
 
-- in cv signal store add method to delete cv
-- in the dashboard page replace current methods related to cvs with methods from cv signals store (get list and delete)
-- on cv optimizations tab display button to go to upload page if user doesn't have any cvs uploaded yet instead of Run your first optimization button
+- in the dashboard page incorporate cv store - replace loading cvs with method from cv store and update store state when deleting cv file
+- on cv optimizations tab display button to go to upload page if user doesn't have any cvs uploaded yet instead of 'Run your first optimization' button
+- refresh cv store after user succesfully uploads a cv file
+- on cv-optimization page use cvs from store instead of making request to api to get users cvs
 
 ---
 
-### 66. UX - user uploads cv in language different than english, but OptiCV currently supports english cvs
+### 66. Remove Sentry's 'Report a bug button'
+
+**status: todo**
+**time:**
+
+- remove / hide 'Report a bug' button that is placed in bottom right corner of every page and was added when Sentry was integrated
+
+---
+
+### UX - homepage changes
+
+**status: todo**
+**time:**
+
+- remove photo with woman
+- section with 3 step process put below the hero section
+
+---
+
+### UX - create animations or video on how to use the app
+
+**status: todo**
+**time:**
+
+- create animations or video with the process of using the app - from upload to pasting job offer to running optimization process and then exporting cv
+- put it on the homepage
+
+---
+
+### UX - user uploads cv in language different than english, but OptiCV currently supports english cvs
 
 **status: todo**
 **time: 5.07.2026**
 
-- add warning or iformation on the upload page that OptiCV currently supports only english language cvs and the optimization results are prepared and displayed in English
+- add warning or information on the upload page that OptiCV currently supports only english language cvs and the optimization results are prepared and displayed in English
 
 ---
 

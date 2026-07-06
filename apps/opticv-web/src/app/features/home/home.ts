@@ -26,12 +26,6 @@ export class Home {
     this.supabaseService.currentSession() ? true : false,
   );
 
-  constructor() {
-    if (this.isUserLoggedIn()) {
-      this.cvStore.loadUserCVs();
-    }
-  }
-
   goToCreator(): void {
     this.router.navigate(['cv-optimization']);
     posthog.capture('optimize_my_cv_button_clicked', {
