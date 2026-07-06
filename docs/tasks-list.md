@@ -795,6 +795,7 @@ Todo:
 
 - in the dashboard page incorporate cv store - replace loading cvs with method from cv store and update store state when deleting cv file
 - on cv optimizations tab display button to go to upload page if user doesn't have any cvs uploaded yet instead of 'Run your first optimization' button
+- move loading user cvs and populating store to app component from home component
 - refresh cv store after user succesfully uploads a cv file
 - on cv-optimization page use cvs from store instead of making request to api to get users cvs
 

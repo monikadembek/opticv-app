@@ -15,6 +15,8 @@ import { CvUploadApiService } from './services/cv-upload-api.service';
 import { formatFileSize } from '../../shared/utils';
 import { RouterLink } from '@angular/router';
 import posthog from 'posthog-js';
+import { catchError, EMPTY, map, of, switchMap } from 'rxjs';
+import { CvStore } from '../../core/stores/cv.store';
 
 @Component({
   selector: 'app-upload-cv',
@@ -25,6 +27,7 @@ import posthog from 'posthog-js';
 export class UploadCv {
   private readonly cvUploadApiService = inject(CvUploadApiService);
   private readonly messageService = inject(MessageService);
+  private readonly cvStore = inject(CvStore);
 
   readonly dropZoneComponent = viewChild.required<CvDropzone>(CvDropzone);
 
@@ -38,35 +41,76 @@ export class UploadCv {
     return '';
   });
 
+  // onFileSelected(file: File): void {
+  //   this.isLoading.set(true);
+  //   this.cvUploadApiService.uploadCv(file).subscribe({
+  //     next: (response) => {
+  //       this.uploadedFile.set(response);
+  //       this.isLoading.set(false);
+  //       this.dropZoneComponent().selectedFile.set(null);
+  //       this.messageService.add({
+  //         severity: 'success',
+  //         summary: 'Success',
+  //         detail: 'CV file uploaded successfully.',
+  //       });
+
+  //       posthog.capture('cv_file_uploaded', {
+  //         page: 'upload-cv',
+  //         filename: file.name,
+  //       });
+  //     },
+  //     error: (err) => {
+  //       this.isLoading.set(false);
+  //       this.dropZoneComponent().selectedFile.set(null);
+  //       const message =
+  //         err?.error?.message ?? 'Upload failed. Please try again.';
+  //       this.messageService.add({
+  //         severity: 'error',
+  //         summary: 'Upload failed',
+  //         detail: message,
+  //       });
+  //     },
+  //   });
+  // }
+
   onFileSelected(file: File): void {
     this.isLoading.set(true);
-    this.cvUploadApiService.uploadCv(file).subscribe({
-      next: (response) => {
-        this.uploadedFile.set(response);
-        this.isLoading.set(false);
-        this.dropZoneComponent().selectedFile.set(null);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'CV file uploaded successfully.',
-        });
+    this.cvUploadApiService
+      .uploadCv(file)
+      .pipe(
+        catchError((err) => {
+          this.isLoading.set(false);
+          this.dropZoneComponent().selectedFile.set(null);
+          const message =
+            err?.error?.message ?? 'Upload failed. Please try again.';
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Upload failed',
+            detail: message,
+          });
+          return EMPTY;
+        }),
+        map((response) => {
+          this.uploadedFile.set(response);
+          this.isLoading.set(false);
+          this.dropZoneComponent().selectedFile.set(null);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Success',
+            detail: 'CV file uploaded successfully.',
+          });
 
-        posthog.capture('cv_file_uploaded', {
-          page: 'upload-cv',
-          filename: file.name,
-        });
-      },
-      error: (err) => {
-        this.isLoading.set(false);
-        this.dropZoneComponent().selectedFile.set(null);
-        const message =
-          err?.error?.message ?? 'Upload failed. Please try again.';
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Upload failed',
-          detail: message,
-        });
-      },
-    });
+          posthog.capture('cv_file_uploaded', {
+            page: 'upload-cv',
+            filename: file.name,
+          });
+          return response;
+        }),
+        switchMap((result) => {
+          this.cvStore.loadUserCVs();
+          return of(result);
+        }),
+      )
+      .subscribe({});
   }
 }
