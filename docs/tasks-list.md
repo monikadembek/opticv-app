@@ -812,7 +812,7 @@ Todo:
 
 ### 67. UX - homepage changes
 
-**status: in progress**
+**status: done**
 **time: 06.07.2026**
 
 - remove photo with woman below the hero section
@@ -822,10 +822,11 @@ Todo:
 
 ### 68. UX - user uploads cv in language different than english, but OptiCV currently supports english cvs
 
-**status: todo**
+**status: done**
 **time: 06.07.2026**
 
-- add warning or information on the upload page that OptiCV currently supports only english language cvs and the optimization results are prepared and displayed in English
+- add warning or information on the upload page that OptiCV currently supports only English language cvs
+- display it on the upload page and on homepage - step 1 upload
 
 ---
 
