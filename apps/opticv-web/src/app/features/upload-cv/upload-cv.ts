@@ -41,38 +41,6 @@ export class UploadCv {
     return '';
   });
 
-  // onFileSelected(file: File): void {
-  //   this.isLoading.set(true);
-  //   this.cvUploadApiService.uploadCv(file).subscribe({
-  //     next: (response) => {
-  //       this.uploadedFile.set(response);
-  //       this.isLoading.set(false);
-  //       this.dropZoneComponent().selectedFile.set(null);
-  //       this.messageService.add({
-  //         severity: 'success',
-  //         summary: 'Success',
-  //         detail: 'CV file uploaded successfully.',
-  //       });
-
-  //       posthog.capture('cv_file_uploaded', {
-  //         page: 'upload-cv',
-  //         filename: file.name,
-  //       });
-  //     },
-  //     error: (err) => {
-  //       this.isLoading.set(false);
-  //       this.dropZoneComponent().selectedFile.set(null);
-  //       const message =
-  //         err?.error?.message ?? 'Upload failed. Please try again.';
-  //       this.messageService.add({
-  //         severity: 'error',
-  //         summary: 'Upload failed',
-  //         detail: message,
-  //       });
-  //     },
-  //   });
-  // }
-
   onFileSelected(file: File): void {
     this.isLoading.set(true);
     this.cvUploadApiService
