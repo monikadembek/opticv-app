@@ -840,9 +840,21 @@ Todo:
 
 ---
 
-### 70. UX - When user is not logged in on the home page hide button to upload first cv
+### 70. UX - on the home page when user is not logged in hide button to upload cv
 
-- homepage hero section displays button to sign in and button to upload cv even though user is not logged in - hide upload button for not signed in users
+**status: done**
+**time: 7.07.2026**
+
+- homepage hero section displays button to sign in and button to upload cv or optimize cv even though user is not logged in - hide upload/optimize button for not signed in users
+
+---
+
+## 71. UX - add information about checking spam folder for email with 6-digit code
+
+**status: todo**
+**time: 7.07.2026**
+
+- sometimes emails from auth.opticv.net land in spam folder, add information for the user to check spam folder for email with login code
 
 ---
 

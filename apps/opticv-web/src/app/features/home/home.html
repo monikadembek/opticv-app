@@ -31,7 +31,7 @@
           [outlined]="true"
           (onClick)="signIn()"
         ></p-button>
-        } @if(cvStore.hasCv()) {
+        } @else { @if(cvStore.hasCv()) {
         <p-button
           label="Optimize my CV"
           icon="pi pi-bolt"
@@ -43,7 +43,7 @@
           icon="pi pi-upload"
           (onClick)="goToUpload()"
         ></p-button>
-        }
+        } }
       </div>
     </div>
   </section>
