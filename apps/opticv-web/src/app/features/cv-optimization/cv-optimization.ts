@@ -377,6 +377,18 @@ export class CvOptimization implements OnInit {
     return ActivePrompts.some((p) => !this.results().has(p));
   });
 
+  readonly allSectionIds = computed<string[]>(() => {
+    const ids: string[] = [...ActivePrompts];
+    if (!this.isStoredMode() && this.submittedJobApplication()) {
+      ids.push('JOB_POSTING');
+    }
+    return ids;
+  });
+
+  readonly allSectionsCollapsed = computed(() =>
+    this.allSectionIds().every((id) => this.collapsedSections().has(id)),
+  );
+
   constructor() {
     effect(() => {
       const state = this.pageState();
@@ -462,6 +474,14 @@ export class CvOptimization implements OnInit {
       next.delete(id);
     }
     this.collapsedSections.set(next);
+  }
+
+  toggleAllSections(): void {
+    if (this.allSectionsCollapsed()) {
+      this.collapsedSections.set(new Set());
+    } else {
+      this.collapsedSections.set(new Set(this.allSectionIds()));
+    }
   }
 
   handleSectionClick(id: string): void {

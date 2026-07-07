@@ -1583,6 +1583,61 @@ describe('CvOptimization', () => {
     });
   });
 
+  describe('allSectionsCollapsed / toggleAllSections', () => {
+    it('is false by default when no sections are collapsed', () => {
+      expect(component.allSectionsCollapsed()).toBe(false);
+    });
+
+    it('is false when only some sections are collapsed', () => {
+      component.onSectionCollapsedChange(PromptType.RESUME_AUTOPSY, true);
+      expect(component.allSectionsCollapsed()).toBe(false);
+    });
+
+    it('is true once every active section is collapsed', () => {
+      for (const id of component.allSectionIds()) {
+        component.onSectionCollapsedChange(id, true);
+      }
+      expect(component.allSectionsCollapsed()).toBe(true);
+    });
+
+    it('collapses every active section when none are collapsed', () => {
+      component.toggleAllSections();
+
+      for (const id of component.allSectionIds()) {
+        expect(component.isSectionCollapsed(id)).toBe(true);
+      }
+      expect(component.allSectionsCollapsed()).toBe(true);
+    });
+
+    it('expands every section when all are collapsed', () => {
+      component.toggleAllSections();
+      component.toggleAllSections();
+
+      for (const id of component.allSectionIds()) {
+        expect(component.isSectionCollapsed(id)).toBe(false);
+      }
+      expect(component.allSectionsCollapsed()).toBe(false);
+    });
+
+    it('collapses all sections when toggled from a partially collapsed state', () => {
+      component.onSectionCollapsedChange(PromptType.RESUME_AUTOPSY, true);
+      component.toggleAllSections();
+
+      for (const id of component.allSectionIds()) {
+        expect(component.isSectionCollapsed(id)).toBe(true);
+      }
+    });
+
+    it('includes JOB_POSTING in live mode once a job application is submitted', () => {
+      component.runOptimization(mockJobSubmittedData);
+      expect(component.allSectionIds()).toContain('JOB_POSTING');
+    });
+
+    it('does not include JOB_POSTING before a job application is submitted', () => {
+      expect(component.allSectionIds()).not.toContain('JOB_POSTING');
+    });
+  });
+
   describe('atsScore', () => {
     it('returns null when no autopsy result exists', () => {
       expect(component.atsScore()).toBeNull();

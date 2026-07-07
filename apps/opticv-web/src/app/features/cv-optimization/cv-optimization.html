@@ -36,15 +36,32 @@
   <main class="optim-main">
     <div class="optim-content">
       @if (pageState() === 'processing' || pageState() === 'completed') {
-      <div class="optim-heading-wrap mb-8">
+      <div
+        class="mb-8 flex flex-col md:flex-row items-start md:items-center justify-between"
+      >
         <h2 class="optim-heading">CV Optimization</h2>
-        <p-button
-          label="New Optimization"
-          icon="pi pi-plus"
-          size="small"
-          routerLink="/cv-optimization"
-          ariaLabel="Start a new optimization"
-        />
+        <div class="optim-heading-actions">
+          <p-button
+            [label]="allSectionsCollapsed() ? 'Expand All' : 'Collapse All'"
+            [icon]="allSectionsCollapsed() ? 'pi pi-angle-down' : 'pi pi-angle-up'"
+            size="small"
+            severity="secondary"
+            outlined="true"
+            [ariaLabel]="
+              allSectionsCollapsed()
+                ? 'Expand all sections'
+                : 'Collapse all sections'
+            "
+            (onClick)="toggleAllSections()"
+          />
+          <p-button
+            label="New Optimization"
+            icon="pi pi-plus"
+            size="small"
+            routerLink="/cv-optimization"
+            ariaLabel="Start a new optimization"
+          />
+        </div>
       </div>
       } @if (pageState() === 'initial') {
       <!-- Initial upload form -->
