@@ -42,6 +42,29 @@
   padding: var(--space-6);
 }
 
+.section-card__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-full);
+  color: var(--text-strong);
+  cursor: pointer;
+}
+
+.section-card__toggle:hover {
+  background: var(--primary-50);
+}
+
+.section-card__toggle:focus-visible {
+  outline: 2px solid var(--primary-700);
+  outline-offset: 2px;
+}
+
 .status-completed {
   display: inline-flex;
   align-items: center;

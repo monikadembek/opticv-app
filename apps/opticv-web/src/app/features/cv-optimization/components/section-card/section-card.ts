@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  input,
+  model,
+} from '@angular/core';
 import { ProcessingPlaceholder } from '../processing-placeholder/processing-placeholder';
 import { SectionStatus } from '../../models';
 
@@ -14,4 +19,9 @@ export class SectionCard {
   readonly icon = input.required<string>();
   readonly title = input.required<string>();
   readonly status = input<SectionStatus>(undefined);
+  readonly collapsed = model<boolean>(false);
+
+  toggleCollapsed(): void {
+    this.collapsed.update((c) => !c);
+  }
 }

@@ -39,14 +39,18 @@ describe('SectionCard', () => {
     fixture.componentRef.setInput('status', 'completed');
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Completed');
-    expect(fixture.nativeElement.querySelector('.status-completed')).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector('.status-completed'),
+    ).toBeTruthy();
   });
 
   it('renders processing status badge when status is processing', () => {
     fixture.componentRef.setInput('status', 'processing');
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Processing');
-    expect(fixture.nativeElement.querySelector('.status-processing')).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelector('.status-processing'),
+    ).toBeTruthy();
   });
 
   it('renders error status badge when status is error', () => {
@@ -59,25 +63,72 @@ describe('SectionCard', () => {
   it('shows processing placeholder when status is processing', () => {
     fixture.componentRef.setInput('status', 'processing');
     fixture.detectChanges();
-    const placeholder = fixture.nativeElement.querySelector('app-processing-placeholder');
+    const placeholder = fixture.nativeElement.querySelector(
+      'app-processing-placeholder',
+    );
     expect(placeholder).toBeTruthy();
   });
 
   it('does not render status badge when status is undefined', () => {
     expect(fixture.nativeElement.querySelector('.status-completed')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.status-processing')).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('.status-processing'),
+    ).toBeNull();
     expect(fixture.nativeElement.querySelector('.status-error')).toBeNull();
   });
 
   it('does not render processing placeholder when status is undefined', () => {
-    const placeholder = fixture.nativeElement.querySelector('app-processing-placeholder');
+    const placeholder = fixture.nativeElement.querySelector(
+      'app-processing-placeholder',
+    );
     expect(placeholder).toBeNull();
   });
 
   it('does not render processing placeholder when status is pending', () => {
     fixture.componentRef.setInput('status', 'pending');
     fixture.detectChanges();
-    const placeholder = fixture.nativeElement.querySelector('app-processing-placeholder');
+    const placeholder = fixture.nativeElement.querySelector(
+      'app-processing-placeholder',
+    );
     expect(placeholder).toBeNull();
+  });
+
+  it('renders the toggle button expanded by default', () => {
+    const toggle = fixture.nativeElement.querySelector('.section-card__toggle');
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('has an accessible name that includes the section title', () => {
+    const toggle = fixture.nativeElement.querySelector('.section-card__toggle');
+    expect(toggle.getAttribute('aria-label')).toContain('Test Section');
+  });
+
+  it('collapses the body and updates aria-expanded when the toggle is clicked', () => {
+    const toggle = fixture.nativeElement.querySelector('.section-card__toggle');
+    toggle.click();
+    fixture.detectChanges();
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    const body = fixture.nativeElement.querySelector('.section-card__body');
+    expect(body.hasAttribute('hidden')).toBe(true);
+  });
+
+  it('expands the body again when the toggle is clicked twice', () => {
+    const toggle = fixture.nativeElement.querySelector('.section-card__toggle');
+    toggle.click();
+    fixture.detectChanges();
+    toggle.click();
+    fixture.detectChanges();
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    const body = fixture.nativeElement.querySelector('.section-card__body');
+    expect(body.hasAttribute('hidden')).toBe(false);
+  });
+
+  it('collapses when the collapsed input is set externally', () => {
+    fixture.componentRef.setInput('collapsed', true);
+    fixture.detectChanges();
+    const toggle = fixture.nativeElement.querySelector('.section-card__toggle');
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    const body = fixture.nativeElement.querySelector('.section-card__body');
+    expect(body.hasAttribute('hidden')).toBe(true);
   });
 });

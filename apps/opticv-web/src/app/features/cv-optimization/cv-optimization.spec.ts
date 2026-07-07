@@ -1521,6 +1521,121 @@ describe('CvOptimization', () => {
       component.handleSectionClick(PromptType.KEYWORD_GAP);
       expect(component.activeSection()).toBe(PromptType.KEYWORD_GAP);
     });
+
+    it('expands the section when it was collapsed', () => {
+      component.onSectionCollapsedChange(PromptType.KEYWORD_GAP, true);
+      component.handleSectionClick(PromptType.KEYWORD_GAP);
+      expect(component.isSectionCollapsed(PromptType.KEYWORD_GAP)).toBe(false);
+    });
+
+    it('leaves other collapsed sections untouched', () => {
+      component.onSectionCollapsedChange(PromptType.KEYWORD_GAP, true);
+      component.onSectionCollapsedChange(PromptType.BULLET_UPGRADE, true);
+      component.handleSectionClick(PromptType.KEYWORD_GAP);
+      expect(component.isSectionCollapsed(PromptType.BULLET_UPGRADE)).toBe(
+        true,
+      );
+    });
+
+    it('does not throw when clicking a section that is already expanded', () => {
+      expect(() =>
+        component.handleSectionClick(PromptType.RESUME_AUTOPSY),
+      ).not.toThrow();
+      expect(component.isSectionCollapsed(PromptType.RESUME_AUTOPSY)).toBe(
+        false,
+      );
+    });
+  });
+
+  describe('collapsedSections / isSectionCollapsed / onSectionCollapsedChange', () => {
+    it('no section is collapsed by default', () => {
+      expect(component.isSectionCollapsed(PromptType.RESUME_AUTOPSY)).toBe(
+        false,
+      );
+    });
+
+    it('marks a section as collapsed', () => {
+      component.onSectionCollapsedChange(PromptType.RESUME_AUTOPSY, true);
+      expect(component.isSectionCollapsed(PromptType.RESUME_AUTOPSY)).toBe(
+        true,
+      );
+    });
+
+    it('marks a section as expanded again', () => {
+      component.onSectionCollapsedChange(PromptType.RESUME_AUTOPSY, true);
+      component.onSectionCollapsedChange(PromptType.RESUME_AUTOPSY, false);
+      expect(component.isSectionCollapsed(PromptType.RESUME_AUTOPSY)).toBe(
+        false,
+      );
+    });
+
+    it('tracks multiple collapsed sections independently', () => {
+      component.onSectionCollapsedChange(PromptType.RESUME_AUTOPSY, true);
+      component.onSectionCollapsedChange(PromptType.KEYWORD_GAP, true);
+
+      expect(component.isSectionCollapsed(PromptType.RESUME_AUTOPSY)).toBe(
+        true,
+      );
+      expect(component.isSectionCollapsed(PromptType.KEYWORD_GAP)).toBe(true);
+      expect(component.isSectionCollapsed(PromptType.BULLET_UPGRADE)).toBe(
+        false,
+      );
+    });
+  });
+
+  describe('allSectionsCollapsed / toggleAllSections', () => {
+    it('is false by default when no sections are collapsed', () => {
+      expect(component.allSectionsCollapsed()).toBe(false);
+    });
+
+    it('is false when only some sections are collapsed', () => {
+      component.onSectionCollapsedChange(PromptType.RESUME_AUTOPSY, true);
+      expect(component.allSectionsCollapsed()).toBe(false);
+    });
+
+    it('is true once every active section is collapsed', () => {
+      for (const id of component.allSectionIds()) {
+        component.onSectionCollapsedChange(id, true);
+      }
+      expect(component.allSectionsCollapsed()).toBe(true);
+    });
+
+    it('collapses every active section when none are collapsed', () => {
+      component.toggleAllSections();
+
+      for (const id of component.allSectionIds()) {
+        expect(component.isSectionCollapsed(id)).toBe(true);
+      }
+      expect(component.allSectionsCollapsed()).toBe(true);
+    });
+
+    it('expands every section when all are collapsed', () => {
+      component.toggleAllSections();
+      component.toggleAllSections();
+
+      for (const id of component.allSectionIds()) {
+        expect(component.isSectionCollapsed(id)).toBe(false);
+      }
+      expect(component.allSectionsCollapsed()).toBe(false);
+    });
+
+    it('collapses all sections when toggled from a partially collapsed state', () => {
+      component.onSectionCollapsedChange(PromptType.RESUME_AUTOPSY, true);
+      component.toggleAllSections();
+
+      for (const id of component.allSectionIds()) {
+        expect(component.isSectionCollapsed(id)).toBe(true);
+      }
+    });
+
+    it('includes JOB_POSTING in live mode once a job application is submitted', () => {
+      component.runOptimization(mockJobSubmittedData);
+      expect(component.allSectionIds()).toContain('JOB_POSTING');
+    });
+
+    it('does not include JOB_POSTING before a job application is submitted', () => {
+      expect(component.allSectionIds()).not.toContain('JOB_POSTING');
+    });
   });
 
   describe('atsScore', () => {
