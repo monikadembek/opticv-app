@@ -832,7 +832,7 @@ Todo:
 
 ### 69. UX - Cv optimization page - allow collapsing/expanding section cards
 
-**status: in progress**
+**status: done**
 **time: 7.07.2026**
 
 - sections with optimizations are usually very long, add functionality to collapse/expand sections - add button in the header of each section to collapse/expand that section
