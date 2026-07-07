@@ -851,10 +851,11 @@ Todo:
 
 ## 71. UX - add information about checking spam folder for email with 6-digit code
 
-**status: todo**
+**status: done**
 **time: 7.07.2026**
 
-- sometimes emails from auth.opticv.net land in spam folder, add information for the user to check spam folder for email with login code
+- sometimes emails from auth.opticv.net land in spam folder, add information for the user to check spam folder for email with login code - verify page
+- add info that in case of first time login user will receive link instead of code - login page
 
 ---
 
