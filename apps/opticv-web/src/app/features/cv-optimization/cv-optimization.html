@@ -66,6 +66,8 @@
         sectionId="JOB_POSTING"
         icon="pi-folder"
         title="Job Posting"
+        [collapsed]="isSectionCollapsed('JOB_POSTING')"
+        (collapsedChange)="onSectionCollapsedChange('JOB_POSTING', $event)"
       >
         <app-job-upload
           [isReadonly]="true"
@@ -98,6 +100,8 @@
         icon="pi-chart-bar"
         title="ATS Analysis"
         [status]="sectionStatus(PromptType.RESUME_AUTOPSY)"
+        [collapsed]="isSectionCollapsed(PromptType.RESUME_AUTOPSY)"
+        (collapsedChange)="onSectionCollapsedChange(PromptType.RESUME_AUTOPSY, $event)"
       >
         @if (autopsyResult()) {
         <app-ats-score
@@ -125,6 +129,8 @@
         icon="pi-key"
         title="Keyword Gap"
         [status]="sectionStatus(PromptType.KEYWORD_GAP)"
+        [collapsed]="isSectionCollapsed(PromptType.KEYWORD_GAP)"
+        (collapsedChange)="onSectionCollapsedChange(PromptType.KEYWORD_GAP, $event)"
       >
         @if (keywordGapResult()) {
         <app-keyword-gap
@@ -163,6 +169,8 @@
         icon="pi-pen-to-square"
         title="Summary Rewrite"
         [status]="sectionStatus(PromptType.SUMMARY_REWRITE)"
+        [collapsed]="isSectionCollapsed(PromptType.SUMMARY_REWRITE)"
+        (collapsedChange)="onSectionCollapsedChange(PromptType.SUMMARY_REWRITE, $event)"
       >
         @if (summaryRewriteResult()) {
         <app-summary-rewrite
@@ -193,6 +201,8 @@
         icon="pi-list-check"
         title="Bullet Upgrades"
         [status]="sectionStatus(PromptType.BULLET_UPGRADE)"
+        [collapsed]="isSectionCollapsed(PromptType.BULLET_UPGRADE)"
+        (collapsedChange)="onSectionCollapsedChange(PromptType.BULLET_UPGRADE, $event)"
       >
         @if (bulletUpgradeResult()) {
         <app-bullet-rewriter
@@ -235,6 +245,8 @@
         icon="pi-file-edit"
         title="Cover Letter"
         [status]="sectionStatus(PromptType.COVER_LETTER)"
+        [collapsed]="isSectionCollapsed(PromptType.COVER_LETTER)"
+        (collapsedChange)="onSectionCollapsedChange(PromptType.COVER_LETTER, $event)"
       >
         @if (coverLetterResult()) {
         <app-cover-letter-editor [result]="coverLetterResult()!" />
@@ -259,6 +271,8 @@
         icon="pi-comments"
         title="Interview Prep"
         [status]="sectionStatus(PromptType.INTERVIEW_PREP)"
+        [collapsed]="isSectionCollapsed(PromptType.INTERVIEW_PREP)"
+        (collapsedChange)="onSectionCollapsedChange(PromptType.INTERVIEW_PREP, $event)"
       >
         @if (interviewPrepResult()) {
         <app-interview-prep [result]="interviewPrepResult()!" />
@@ -283,6 +297,8 @@
         icon="pi-linkedin"
         title="LinkedIn Profile"
         [status]="sectionStatus(PromptType.LINKEDIN_REWRITE)"
+        [collapsed]="isSectionCollapsed(PromptType.LINKEDIN_REWRITE)"
+        (collapsedChange)="onSectionCollapsedChange(PromptType.LINKEDIN_REWRITE, $event)"
       >
         @if (linkedInResult()) {
         <app-linkedin-updates [result]="linkedInResult()!" />

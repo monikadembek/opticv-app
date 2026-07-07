@@ -832,10 +832,25 @@ Todo:
 
 ### 69. UX - Cv optimization page - allow collapsing/expanding section cards
 
-**status: todo**
-**time:**
+**status: in progress**
+**time: 7.07.2026**
 
-- sections with optimizations are usually very long, add functionality to collapse/expand sections
+- sections with optimizations are usually very long, add functionality to collapse/expand sections - add button in the header of each section to collapse/expand that section
+- add a page-level "collapse all" / "expand all" button to expand/callapse all sections, place it in the top right corner, next to '+ New optimization' button,
+
+---
+
+### 70. UX - When user is not logged in on the home page hide button to upload first cv
+
+- homepage hero section displays button to sign in and button to upload cv even though user is not logged in - hide upload button for not signed in users
+
+---
+
+### Set up social media accounts - Facebook and Instagram
+
+- create account on Facebook for OptiCV - business account
+- create account on Instagram for OptiCV - business account
+- add icons with links to social media in the footer
 
 ---
 

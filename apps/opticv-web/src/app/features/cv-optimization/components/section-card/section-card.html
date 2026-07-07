@@ -15,12 +15,28 @@
       <i class="pi pi-spin pi-spinner"></i>Processing
     </span>
     } @if (status() === 'error') {
-    <span class="status-error">
-      <i class="pi pi-times-circle"></i>Error
-    </span>
+    <span class="status-error"> <i class="pi pi-times-circle"></i>Error </span>
     }
+    <button
+      type="button"
+      class="section-card__toggle"
+      [attr.aria-expanded]="!collapsed()"
+      [attr.aria-label]="(collapsed() ? 'Expand ' : 'Collapse ') + title() + ' section'"
+      [title]="(collapsed() ? 'Expand ' : 'Collapse ') + 'section'"
+      (click)="toggleCollapsed()"
+    >
+      <i
+        class="pi"
+        [class.pi-chevron-down]="collapsed()"
+        [class.pi-chevron-up]="!collapsed()"
+      ></i>
+    </button>
   </div>
-  <div class="section-card__body">
+  <div
+    class="section-card__body"
+    [style.display]="collapsed() ? 'none' : null"
+    [attr.hidden]="collapsed() ? '' : null"
+  >
     @if (status() === 'processing') {
     <app-processing-placeholder />
     } @else if (status() !== 'pending') {

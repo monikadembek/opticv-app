@@ -224,6 +224,7 @@ export class CvOptimization implements OnInit {
   readonly sidebarExpanded = signal(true);
   private readonly breakpointObserver = inject(BreakpointObserver);
   readonly activeSection = signal<string>(PromptType.RESUME_AUTOPSY);
+  readonly collapsedSections = signal<ReadonlySet<string>>(new Set());
 
   readonly autopsyResult = computed<ResumeAutopsyResult | null>(() => {
     const r = this.results().get(PromptType.RESUME_AUTOPSY)?.result;
@@ -449,8 +450,25 @@ export class CvOptimization implements OnInit {
     sections.forEach((el) => this.scrollObserver!.observe(el));
   }
 
+  isSectionCollapsed(id: string): boolean {
+    return this.collapsedSections().has(id);
+  }
+
+  onSectionCollapsedChange(id: string, collapsed: boolean): void {
+    const next = new Set(this.collapsedSections());
+    if (collapsed) {
+      next.add(id);
+    } else {
+      next.delete(id);
+    }
+    this.collapsedSections.set(next);
+  }
+
   handleSectionClick(id: string): void {
     this.activeSection.set(id);
+    if (this.isSectionCollapsed(id)) {
+      this.onSectionCollapsedChange(id, false);
+    }
     const el = document.getElementById(`section-${id}`);
     if (el) {
       const top =
