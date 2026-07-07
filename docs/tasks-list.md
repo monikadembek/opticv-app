@@ -849,7 +849,7 @@ Todo:
 
 ---
 
-## 71. UX - add information about checking spam folder for email with 6-digit code
+### 71. UX - add information about checking spam folder for email with 6-digit code
 
 **status: done**
 **time: 7.07.2026**
@@ -859,7 +859,10 @@ Todo:
 
 ---
 
-### Set up social media accounts - Facebook and Instagram
+### 72. Set up social media accounts - Facebook and Instagram
+
+**status: done**
+**time: 7.07.2026 - 08.07.2026**
 
 - create account on Facebook for OptiCV - business account
 - create account on Instagram for OptiCV - business account
