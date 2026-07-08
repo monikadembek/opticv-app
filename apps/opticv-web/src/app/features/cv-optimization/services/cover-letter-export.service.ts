@@ -1,5 +1,6 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { PDF_FONT, registerPdfFont } from './fonts/register-pdf-font';
 
 interface InlineRun {
   text: string;
@@ -65,6 +66,7 @@ export class CoverLetterExportService {
     const { jsPDF } = await import('jspdf');
 
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    registerPdfFont(doc);
 
     const marginLeft = 56;
     const maxWidth = 503;
@@ -102,7 +104,7 @@ export class CoverLetterExportService {
         }
 
         doc.setFontSize(fontSize);
-        doc.setFont('helvetica', fontStyle(run.bold, run.italic));
+        doc.setFont(PDF_FONT, fontStyle(run.bold, run.italic));
 
         const words = run.text.split(/(\s+)/);
         for (const token of words) {

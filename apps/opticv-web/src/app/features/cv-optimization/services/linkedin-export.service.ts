@@ -7,6 +7,7 @@ import type {
   LinkedInRewriteResult,
   RecommendedSkill,
 } from '@opticv/datatypes';
+import { PDF_FONT, registerPdfFont } from './fonts/register-pdf-font';
 
 export const LINKEDIN_ANGLE_LABELS: Record<LinkedInHeadlineAngle, string> = {
   title_specialty_value: 'Title / Specialty / Value',
@@ -45,6 +46,7 @@ export class LinkedInExportService {
     const { jsPDF } = await import('jspdf');
 
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    registerPdfFont(doc);
 
     const marginLeft = 40;
     const maxWidth = 515;
@@ -69,7 +71,7 @@ export class LinkedInExportService {
     ): void => {
       doc.setFontSize(fontSize);
       doc.setFont(
-        'helvetica',
+        PDF_FONT,
         bold && italic
           ? 'bolditalic'
           : bold
@@ -91,7 +93,7 @@ export class LinkedInExportService {
       y += 6;
       checkPage(20);
       doc.setFontSize(13);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont(PDF_FONT, 'bold');
       doc.text(title, marginLeft, y);
       y += 18;
     };

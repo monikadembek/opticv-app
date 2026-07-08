@@ -19,6 +19,8 @@ const setFillColorMock = vi.fn();
 const setDrawColorMock = vi.fn();
 const setTextColorMock = vi.fn();
 const setLineWidthMock = vi.fn();
+const addFileToVFSMock = vi.fn();
+const addFontMock = vi.fn();
 
 vi.mock('jspdf', () => {
   function jsPDF() {
@@ -37,6 +39,8 @@ vi.mock('jspdf', () => {
       setDrawColor: setDrawColorMock,
       setTextColor: setTextColorMock,
       setLineWidth: setLineWidthMock,
+      addFileToVFS: addFileToVFSMock,
+      addFont: addFontMock,
     };
   }
   return { jsPDF };

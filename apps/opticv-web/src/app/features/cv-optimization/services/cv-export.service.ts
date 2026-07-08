@@ -2,6 +2,7 @@ import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import type { CvStructuredData } from '@opticv/datatypes';
 import { CvTemplateId, DEFAULT_ACCENT_COLOR } from '../cv-templates';
+import { PDF_FONT, registerPdfFont } from './fonts/register-pdf-font';
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
   const normalized = hex.replace('#', '');
@@ -88,10 +89,10 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
     chipsStyle: 'outlined',
     entryCardStyle: false,
     accentBullet: true,
-    nameFont: 'helvetica',
+    nameFont: PDF_FONT,
     nameStyle: 'bold',
-    headingFont: 'helvetica',
-    bodyFont: 'helvetica',
+    headingFont: PDF_FONT,
+    bodyFont: PDF_FONT,
     bodyStyle: 'normal',
     dateStyle: 'italic',
   },
@@ -118,10 +119,10 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
     chipsStyle: 'outlined',
     entryCardStyle: false,
     accentBullet: false,
-    nameFont: 'helvetica',
+    nameFont: PDF_FONT,
     nameStyle: 'bold',
-    headingFont: 'helvetica',
-    bodyFont: 'helvetica',
+    headingFont: PDF_FONT,
+    bodyFont: PDF_FONT,
     bodyStyle: 'normal',
     dateStyle: 'italic',
   },
@@ -143,10 +144,10 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
     chipsStyle: 'outlined',
     entryCardStyle: false,
     accentBullet: true,
-    nameFont: 'helvetica',
+    nameFont: PDF_FONT,
     nameStyle: 'bold',
-    headingFont: 'helvetica',
-    bodyFont: 'helvetica',
+    headingFont: PDF_FONT,
+    bodyFont: PDF_FONT,
     bodyStyle: 'normal',
     dateStyle: 'italic',
   },
@@ -167,10 +168,10 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
     chipsStyle: 'filled',
     entryCardStyle: false,
     accentBullet: false,
-    nameFont: 'helvetica',
+    nameFont: PDF_FONT,
     nameStyle: 'bold',
-    headingFont: 'helvetica',
-    bodyFont: 'helvetica',
+    headingFont: PDF_FONT,
+    bodyFont: PDF_FONT,
     bodyStyle: 'normal',
     dateStyle: 'normal',
   },
@@ -192,10 +193,10 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
     chipsStyle: 'outlined',
     entryCardStyle: false,
     accentBullet: false,
-    nameFont: 'helvetica',
+    nameFont: PDF_FONT,
     nameStyle: 'normal',
-    headingFont: 'helvetica',
-    bodyFont: 'helvetica',
+    headingFont: PDF_FONT,
+    bodyFont: PDF_FONT,
     bodyStyle: 'normal',
     dateStyle: 'normal',
   },
@@ -221,10 +222,10 @@ const PDF_PROFILES: Record<CvTemplateId, PdfStyleProfile> = {
     chipsStyle: 'filled',
     entryCardStyle: false,
     accentBullet: true,
-    nameFont: 'helvetica',
+    nameFont: PDF_FONT,
     nameStyle: 'bold',
-    headingFont: 'helvetica',
-    bodyFont: 'helvetica',
+    headingFont: PDF_FONT,
+    bodyFont: PDF_FONT,
     bodyStyle: 'normal',
     dateStyle: 'bold',
   },
@@ -366,6 +367,7 @@ export class CvExportService {
       ? { ...baseProfile, ...hexToRgbProfile(accentColor) }
       : baseProfile;
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    registerPdfFont(doc);
 
     const marginLeft = 56;
     const marginRight = 56;
@@ -504,7 +506,7 @@ export class CvExportService {
 
       for (const skill of skills) {
         doc.setFontSize(profile.bodySize);
-        doc.setFont('helvetica', 'normal');
+        doc.setFont(PDF_FONT, 'normal');
         const textWidth = doc.getTextWidth(skill);
         const chipWidth = textWidth + chipPadH * 2;
 
@@ -576,7 +578,7 @@ export class CvExportService {
 
       for (const skill of skills) {
         doc.setFontSize(fontSize);
-        doc.setFont('helvetica', 'normal');
+        doc.setFont(PDF_FONT, 'normal');
         const textWidth = doc.getTextWidth(skill);
         const pillWidth = textWidth + padH * 2;
 
