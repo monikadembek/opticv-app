@@ -870,6 +870,39 @@ Todo:
 
 ---
 
+### 73. Bug - exported cv doesn't contain polish letters
+
+**status: in progress**
+**time: 08.07.2026**
+
+- extracted cv doesn't output polish letters in pdf files - helvetica font used in pdf doesn't support polish letters
+
+Root cause: all four PDF export services (cv-export.service.ts, cover-letter-export.service.ts, interview-prep-export.service.ts, linkedin-export.service.ts) used jsPDF's built-in 'helvetica' font, which is a PDF Standard-14 font restricted to WinAnsi/Latin-1 encoding — it has no glyphs for Polish characters (ą, ć, ę, ł, ń, ó, ś, ź, ż and uppercase forms).
+
+Fix:
+
+- Added apps/opticv-web/src/app/features/cv-optimization/services/fonts/roboto-font-base64.ts — static Roboto TTF weights (Regular/Bold/Italic/BoldItalic), base64-encoded, which cover Latin Extended-A (Polish diacritics).
+- Added fonts/register-pdf-font.ts — a registerPdfFont(doc) helper that embeds the font into a jsPDF document via addFileToVFS/addFont, and exports the PDF_FONT constant.
+- Updated all four export services to call registerPdfFont(doc) right after creating the jsPDF instance, and replaced every 'helvetica' reference with PDF_FONT. The DOCX profiles/exports were left untouched — Word resolves fonts against installed system fonts and already handles Unicode correctly.
+- Verified via a standalone Node script that the generated PDF embeds the TrueType font (FontFile2) with a ToUnicode CMap and correctly encodes Polish text.
+- Fixed the three .spec.ts jsPDF mocks (cv-export, cover-letter-export, linkedin-export) to include addFileToVFS/addFont so tests don't break on the new call. Full test suite now passes except one pre-existing, unrelated failure in supabase.spec.ts.
+
+---
+
+### 74. Bug - CV extraction issues
+
+**status: todo**
+**time: 08.07.2026**
+
+- issue with extracting proper data from cvs that may contain columns, tamore graphic elements
+
+Todo:
+
+- test different models for the cv extraction
+- test on various CVs
+
+---
+
 ### UX - create animations or video on how to use the app
 
 **status: todo**

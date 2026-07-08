@@ -9,6 +9,8 @@ const addPageMock = vi.fn();
 const setFontMock = vi.fn();
 const setFontSizeMock = vi.fn();
 const textMock = vi.fn();
+const addFileToVFSMock = vi.fn();
+const addFontMock = vi.fn();
 
 vi.mock('jspdf', () => {
   function jsPDF() {
@@ -19,6 +21,8 @@ vi.mock('jspdf', () => {
       setFont: setFontMock,
       setFontSize: setFontSizeMock,
       text: textMock,
+      addFileToVFS: addFileToVFSMock,
+      addFont: addFontMock,
     };
   }
   return { jsPDF };

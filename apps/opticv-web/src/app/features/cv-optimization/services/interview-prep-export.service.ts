@@ -1,6 +1,7 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import type { InterviewPrepResult } from '@opticv/datatypes';
+import { PDF_FONT, registerPdfFont } from './fonts/register-pdf-font';
 
 @Injectable({ providedIn: 'root' })
 export class InterviewPrepExportService {
@@ -12,6 +13,7 @@ export class InterviewPrepExportService {
     const { jsPDF } = await import('jspdf');
 
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    registerPdfFont(doc);
 
     const marginLeft = 40;
     const maxWidth = 515;
@@ -36,7 +38,7 @@ export class InterviewPrepExportService {
     ): void => {
       doc.setFontSize(fontSize);
       doc.setFont(
-        'helvetica',
+        PDF_FONT,
         bold && italic
           ? 'bolditalic'
           : bold
@@ -58,7 +60,7 @@ export class InterviewPrepExportService {
       y += 6;
       checkPage(20);
       doc.setFontSize(13);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont(PDF_FONT, 'bold');
       doc.text(title, marginLeft, y);
       y += 18;
     };
