@@ -98,9 +98,20 @@ describe('CvService', () => {
       );
     });
 
-    it('accepts PDF files, parses synchronously and returns UploadCvResponse with COMPLETED status', async () => {
+    it('accepts PDF files, skips parsing, and returns UploadCvResponse with COMPLETED status immediately', async () => {
+      const parseSpy = jest.fn().mockResolvedValue('parsed text');
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          CvService,
+          { provide: PrismaService, useValue: mockPrisma },
+          { provide: R2Service, useValue: mockR2 },
+          { provide: CvParserService, useValue: { parse: parseSpy } },
+        ],
+      }).compile();
+      const svc = module.get<CvService>(CvService);
+
       const file = makeFile();
-      const result = await service.uploadCv(file, 'user-id');
+      const result = await svc.uploadCv(file, 'user-id');
 
       expect(mockR2.upload).toHaveBeenCalledTimes(1);
       expect(mockPrisma.cvDocument.create).toHaveBeenCalledWith({
@@ -110,13 +121,12 @@ describe('CvService', () => {
           fileSize: 1024,
           mimeType: 'application/pdf',
           parsedText: null,
+          parseStatus: 'COMPLETED',
           isActive: true,
         }),
       });
-      expect(mockPrisma.cvDocument.update).toHaveBeenCalledWith({
-        where: { id: mockDoc.id },
-        data: { parsedText: 'parsed text', parseStatus: 'COMPLETED' },
-      });
+      expect(mockPrisma.cvDocument.update).not.toHaveBeenCalled();
+      expect(parseSpy).not.toHaveBeenCalled();
       expect(result).toEqual({
         id: mockDoc.id,
         fileName: mockDoc.fileName,
@@ -172,7 +182,11 @@ describe('CvService', () => {
       }).compile();
       const svc = module.get<CvService>(CvService);
 
-      const file = makeFile();
+      const file = makeFile({
+        mimetype:
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        originalname: 'cv.docx',
+      });
       await expect(svc.uploadCv(file, 'user-id')).rejects.toThrow(
         UnprocessableEntityException,
       );

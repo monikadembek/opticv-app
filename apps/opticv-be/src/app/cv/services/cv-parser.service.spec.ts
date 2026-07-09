@@ -1,9 +1,5 @@
 import { CvParserService, UnsupportedMimeTypeError } from './cv-parser.service';
 
-const mockGetText = jest.fn();
-jest.mock('pdf-parse', () => ({
-  PDFParse: jest.fn().mockImplementation(() => ({ getText: mockGetText })),
-}));
 jest.mock('mammoth', () => ({ extractRawText: jest.fn() }));
 
 import * as mammoth from 'mammoth';
@@ -17,12 +13,6 @@ describe('CvParserService', () => {
   beforeEach(() => {
     service = new CvParserService();
     jest.clearAllMocks();
-  });
-
-  it('PDF success — returns extracted text', async () => {
-    mockGetText.mockResolvedValue({ text: 'hello pdf' });
-    const result = await service.parse(buffer, 'application/pdf');
-    expect(result).toBe('hello pdf');
   });
 
   it('DOCX success — returns extracted text', async () => {

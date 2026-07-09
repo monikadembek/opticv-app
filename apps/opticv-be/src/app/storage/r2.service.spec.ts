@@ -1,0 +1,181 @@
+import { InternalServerErrorException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
+import { R2Service } from './r2.service';
+import {
+  PutObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+} from '@aws-sdk/client-s3';
+
+const mockSend = jest.fn();
+const mockGetSignedUrl = jest.fn();
+
+jest.mock('@aws-sdk/client-s3', () => {
+  const actual = jest.requireActual<typeof import('@aws-sdk/client-s3')>(
+    '@aws-sdk/client-s3',
+  );
+  return {
+    ...actual,
+    S3Client: jest.fn().mockImplementation(() => ({ send: mockSend })),
+  };
+});
+
+jest.mock('@aws-sdk/s3-request-presigner', () => ({
+  getSignedUrl: (...args: unknown[]) => mockGetSignedUrl(...args),
+}));
+
+const mockConfig = {
+  getOrThrow: jest.fn((key: string) => {
+    const values: Record<string, string> = {
+      'r2.bucketName': 'test-bucket',
+      'r2.publicUrl': 'https://r2.example.com',
+      'r2.accessKeyId': 'access-key',
+      'r2.secretAccessKey': 'secret-key',
+    };
+    return values[key];
+  }),
+};
+
+function toAsyncIterable(chunks: Buffer[]): NodeJS.ReadableStream {
+  return {
+    [Symbol.asyncIterator]: async function* () {
+      for (const chunk of chunks) {
+        yield chunk;
+      }
+    },
+  } as unknown as NodeJS.ReadableStream;
+}
+
+describe('R2Service', () => {
+  let service: R2Service;
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [{ provide: ConfigService, useValue: mockConfig }, R2Service],
+    }).compile();
+
+    service = module.get<R2Service>(R2Service);
+  });
+
+  describe('upload', () => {
+    it('sends a PutObjectCommand with the correct parameters', async () => {
+      mockSend.mockResolvedValueOnce({});
+      const buffer = Buffer.from('file content');
+
+      await service.upload('uploads/user/file.pdf', buffer, 'application/pdf');
+
+      expect(mockSend).toHaveBeenCalledTimes(1);
+      const command = mockSend.mock.calls[0][0] as PutObjectCommand;
+      expect(command).toBeInstanceOf(PutObjectCommand);
+      expect(command.input).toMatchObject({
+        Bucket: 'test-bucket',
+        Key: 'uploads/user/file.pdf',
+        Body: buffer,
+        ContentType: 'application/pdf',
+        ContentLength: buffer.length,
+      });
+    });
+
+    it('throws InternalServerErrorException when S3Client.send fails', async () => {
+      mockSend.mockRejectedValueOnce(new Error('S3 error'));
+
+      await expect(
+        service.upload('key', Buffer.from(''), 'application/pdf'),
+      ).rejects.toThrow(InternalServerErrorException);
+    });
+  });
+
+  describe('delete', () => {
+    it('sends a DeleteObjectCommand with the correct key', async () => {
+      mockSend.mockResolvedValueOnce({});
+
+      await service.delete('uploads/user/file.pdf');
+
+      expect(mockSend).toHaveBeenCalledTimes(1);
+      const command = mockSend.mock.calls[0][0] as DeleteObjectCommand;
+      expect(command).toBeInstanceOf(DeleteObjectCommand);
+      expect(command.input).toMatchObject({
+        Bucket: 'test-bucket',
+        Key: 'uploads/user/file.pdf',
+      });
+    });
+
+    it('throws InternalServerErrorException when S3Client.send fails', async () => {
+      mockSend.mockRejectedValueOnce(new Error('S3 error'));
+
+      await expect(service.delete('key')).rejects.toThrow(
+        InternalServerErrorException,
+      );
+    });
+  });
+
+  describe('download', () => {
+    it('sends a GetObjectCommand and returns the concatenated buffer', async () => {
+      const body = toAsyncIterable([
+        Buffer.from('hello '),
+        Buffer.from('world'),
+      ]);
+      mockSend.mockResolvedValueOnce({ Body: body });
+
+      const result = await service.download('uploads/user/file.pdf');
+
+      expect(mockSend).toHaveBeenCalledTimes(1);
+      const command = mockSend.mock.calls[0][0] as GetObjectCommand;
+      expect(command).toBeInstanceOf(GetObjectCommand);
+      expect(command.input).toMatchObject({
+        Bucket: 'test-bucket',
+        Key: 'uploads/user/file.pdf',
+      });
+      expect(result).toEqual(Buffer.from('hello world'));
+    });
+
+    it('handles non-Buffer chunks by converting them', async () => {
+      const body = toAsyncIterable([Buffer.from('chunk1'), Buffer.from('chunk2')]);
+      mockSend.mockResolvedValueOnce({ Body: body });
+
+      const result = await service.download('key');
+
+      expect(result).toEqual(Buffer.from('chunk1chunk2'));
+    });
+
+    it('throws InternalServerErrorException when S3Client.send fails', async () => {
+      mockSend.mockRejectedValueOnce(new Error('S3 error'));
+
+      await expect(service.download('key')).rejects.toThrow(
+        InternalServerErrorException,
+      );
+    });
+  });
+
+  describe('getPresignedUrl', () => {
+    it('returns a signed URL for the given key and TTL', async () => {
+      mockGetSignedUrl.mockResolvedValueOnce('https://signed.url/file.pdf');
+
+      const url = await service.getPresignedUrl('uploads/user/file.pdf', 900);
+
+      expect(mockGetSignedUrl).toHaveBeenCalledTimes(1);
+      const [, command, opts] = mockGetSignedUrl.mock.calls[0] as [
+        unknown,
+        GetObjectCommand,
+        { expiresIn: number },
+      ];
+      expect(command).toBeInstanceOf(GetObjectCommand);
+      expect(command.input).toMatchObject({
+        Bucket: 'test-bucket',
+        Key: 'uploads/user/file.pdf',
+      });
+      expect(opts.expiresIn).toBe(900);
+      expect(url).toBe('https://signed.url/file.pdf');
+    });
+
+    it('throws InternalServerErrorException when getSignedUrl fails', async () => {
+      mockGetSignedUrl.mockRejectedValueOnce(new Error('presign error'));
+
+      await expect(service.getPresignedUrl('key', 900)).rejects.toThrow(
+        InternalServerErrorException,
+      );
+    });
+  });
+});

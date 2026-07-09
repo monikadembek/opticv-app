@@ -872,7 +872,7 @@ Todo:
 
 ### 73. Bug - exported cv doesn't contain polish letters
 
-**status: in progress**
+**status: done**
 **time: 08.07.2026**
 
 - extracted cv doesn't output polish letters in pdf files - helvetica font used in pdf doesn't support polish letters
@@ -889,17 +889,28 @@ Fix:
 
 ---
 
-### 74. Bug - CV extraction issues
+### 74. Bug - invalid pdf text parsing
 
-**status: todo**
-**time: 08.07.2026**
+**status: in progress**
+**time: 08.07.2026 - 09.07.2026**
 
-- issue with extracting proper data from cvs that may contain columns, tamore graphic elements
+- issue with extracting proper data from cvs that may contain columns, tables or more graphic elements
 
 Todo:
 
-- test different models for the cv extraction
-- test on various CVs
+- test different models for the cv extraction, for the tests used cv with 2 columns and graphical items:
+  - gpt-4o-mini - failed
+  - gpt-5-mini - failed
+  - gpt-5.4-mini - failed
+  - gpt-5.2 - failed
+  - claude-sonnet-4.5 - ok
+  - gemini-3.5-flash-high - ok
+- run tests on various CVs
+
+Real reason for bug:
+-issue is with pdf-parse library, it parses pdf with 2 columns in invalid way and then the model cannot properly extract data and return it in the given data structure
+
+- consider omitting the pdf-parse library if it doesn't product proper results and instead run prompt with the pdf file attached to extract text content and put it in the defined data structure and then save the structured data in db
 
 ---
 
@@ -924,6 +935,10 @@ Todo:
 ---
 
 ### Setup Stripe
+
+---
+
+### On the backend implement open router service so we can choose different models to run prompts.
 
 ---
 

@@ -56,8 +56,36 @@ export class CvService {
 
     await this.r2.upload(storageKey, file.buffer, file.mimetype);
 
+    const isPdf = file.mimetype === 'application/pdf';
+
     let docId: string | undefined;
     try {
+      if (isPdf) {
+        const doc = await this.prisma.cvDocument.create({
+          data: {
+            userId,
+            fileName: file.originalname,
+            fileSize: file.size,
+            mimeType: file.mimetype,
+            storageKey,
+            parsedText: null,
+            parseStatus: 'COMPLETED',
+            isActive: true,
+          },
+        });
+        docId = doc.id;
+
+        return {
+          id: doc.id,
+          fileName: doc.fileName,
+          fileSize: doc.fileSize,
+          mimeType: doc.mimeType,
+          storageKey: doc.storageKey,
+          createdAt: doc.createdAt,
+          parseStatus: 'COMPLETED',
+        };
+      }
+
       const doc = await this.prisma.cvDocument.create({
         data: {
           userId,
