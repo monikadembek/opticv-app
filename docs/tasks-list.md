@@ -950,12 +950,70 @@ I also added 4 unit tests in cv-optimization.spec.ts covering: saving on toggle-
 
 ---
 
-### 77. Bug - some selected bullet rewrites are not applied to A4 cv template preview and not applied to exported CV
+### 77. Bug - selected cover letter and the eventual edited version is not saved
 
 **status: todo**
 **time: 09.07.2026**
 
-- some selected bullet rewrites are not applied to A4 cv template preview and not applied to exported CV, investigate the issue, it is not happening to all bullet rewrites
+- selected cover letter and the eventual edited version is not saved
+
+---
+
+### 78. Bug - some selected bullet rewrites are not applied to A4 cv template preview and not applied to exported CV
+
+**status: todo**
+**time: 09.07.2026**
+
+- some selected bullet rewrites are not applied to A4 cv template preview and not applied to exported CV, investigate the issue, it happens when missing bullets target position which is not listed on the cv, it may be included in results in 'other' property
+
+---
+
+### 79. Add 'Optimize CV' button in the dashboard to each listed CV
+
+**status: todo**
+**time: 09.07.2026**
+
+- In the dashboard in the tab with uploade cvs, add 'Optimize CV' button to each CV item
+- When user clicks the button it should navigate to cv-optimization page and the given cv should be selected in the select input
+
+---
+
+### Add help informations
+
+**status: todo**
+**time:**
+
+- add help informations which will explain what are keywords and why are they important,
+- what is summary, ats, etc.
+
+---
+
+### UX - Bullet upgrades improvements
+
+**status: todo**
+**time:**
+
+- suggested version and original versions are not very visible, maybe create sth like a diff
+
+---
+
+### UX - Too much informations on cv-optimizations page
+
+**status: todo**
+**time:**
+
+- there is a lot of informations on cv-optimization page, it might be overwhelmig for the user,
+- maybe the additional materials should be moved to new page?
+
+---
+
+### UX - explain user how to use app
+
+**status: todo**
+**time:**
+
+- in the beginning it would be good to have some welcome screen or user guide
+  so we can guide user with how to use the app, how the entire process works
 
 ---
 
