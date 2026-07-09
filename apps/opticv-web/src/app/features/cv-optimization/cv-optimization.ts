@@ -38,6 +38,7 @@ import {
   ResumeAutopsyResult,
   SummaryRewriteResult,
   SummaryRewriteVariantAngle,
+  SummaryUserState,
   UserSelections,
 } from '@opticv/datatypes';
 import {
@@ -186,6 +187,7 @@ export class CvOptimization implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private readonly persistSubject = new Subject<void>();
+  private readonly persistSummarySubject = new Subject<void>();
   private scrollObserver: IntersectionObserver | null = null;
 
   readonly PromptType = PromptType;
@@ -209,6 +211,7 @@ export class CvOptimization implements OnInit {
   readonly submittedJobApplication = signal<JobApplication | null>(null);
   readonly bulletEdits = signal<Map<string, string>>(new Map());
   readonly bulletUpgradeResultId = signal<string | null>(null);
+  readonly summaryRewriteResultId = signal<string | null>(null);
   readonly activeBulletEditKey = signal<string | null>(null);
   readonly editedBulletText = signal<string>('');
   readonly selectedMissingBullets = signal<
@@ -414,6 +417,10 @@ export class CvOptimization implements OnInit {
       .pipe(debounceTime(500), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.persistBulletState());
 
+    this.persistSummarySubject
+      .pipe(debounceTime(500), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.persistSummaryState());
+
     const jobApplicationId =
       this.route.snapshot.paramMap.get('jobApplicationId');
     if (jobApplicationId) {
@@ -528,6 +535,25 @@ export class CvOptimization implements OnInit {
                 result: r.structuredOutput,
               });
             }
+            if (r.promptType === PromptType.SUMMARY_REWRITE) {
+              this.summaryRewriteResultId.set(r.id);
+              if (r.userEditedOutput != null) {
+                try {
+                  const state = JSON.parse(
+                    r.userEditedOutput,
+                  ) as SummaryUserState;
+                  this.selections.update((s) => ({
+                    ...s,
+                    selectedSummaryAngle: state.selectedSummaryAngle,
+                    customSummaryText: state.customSummaryText,
+                  }));
+                } catch {
+                  console.warn(
+                    'Could not parse summary user state from stored optimization',
+                  );
+                }
+              }
+            }
             if (r.promptType === PromptType.BULLET_UPGRADE) {
               this.bulletUpgradeResultId.set(r.id);
               if (r.userEditedOutput != null) {
@@ -614,6 +640,7 @@ export class CvOptimization implements OnInit {
     });
     this.bulletEdits.set(new Map());
     this.bulletUpgradeResultId.set(null);
+    this.summaryRewriteResultId.set(null);
     this.activeBulletEditKey.set(null);
     this.editedBulletText.set('');
     this.selectedMissingBullets.set([]);
@@ -709,6 +736,7 @@ export class CvOptimization implements OnInit {
       selectedSummaryAngle: angle,
       customSummaryText: null,
     }));
+    this.persistSummarySubject.next();
   }
 
   onAngleReset(): void {
@@ -717,10 +745,12 @@ export class CvOptimization implements OnInit {
       selectedSummaryAngle: null,
       customSummaryText: null,
     }));
+    this.persistSummarySubject.next();
   }
 
   onSummaryTextEdited(text: string | null): void {
     this.selections.update((s) => ({ ...s, customSummaryText: text }));
+    this.persistSummarySubject.next();
   }
 
   onBulletToggled(key: BulletSelectionKey): void {
@@ -1012,6 +1042,58 @@ export class CvOptimization implements OnInit {
           if (bulletResult) {
             this.bulletUpgradeResultId.set(bulletResult.id);
             buildAndSave(bulletResult.id);
+          }
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Could not save changes',
+            detail: 'Your edits are still applied locally.',
+          });
+        },
+      });
+  }
+
+  private persistSummaryState(): void {
+    const jobApplicationId = this.jobApplicationId();
+    if (jobApplicationId === null) return;
+
+    const buildAndSave = (resultId: string) => {
+      const state: SummaryUserState = {
+        selectedSummaryAngle: this.selections().selectedSummaryAngle,
+        customSummaryText: this.selections().customSummaryText,
+      };
+      this.cvOptimizationApiService
+        .saveUserOutput(resultId, JSON.stringify(state))
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Could not save changes',
+              detail: 'Your edits are still applied locally.',
+            });
+          },
+        });
+    };
+
+    const knownId = this.summaryRewriteResultId();
+    if (knownId !== null) {
+      buildAndSave(knownId);
+      return;
+    }
+
+    this.cvOptimizationApiService
+      .getOptimizationResults(jobApplicationId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (results) => {
+          const summaryResult = results.find(
+            (r) => r.promptType === PromptType.SUMMARY_REWRITE,
+          );
+          if (summaryResult) {
+            this.summaryRewriteResultId.set(summaryResult.id);
+            buildAndSave(summaryResult.id);
           }
         },
         error: () => {

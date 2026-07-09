@@ -492,3 +492,8 @@ export type BulletUserState = {
   keywordEdits?: Array<{ originalKeyword: string; editedText: string }>;
   keywordBulletPositions?: Array<{ keyword: string; forPosition: string }>;
 };
+
+export type SummaryUserState = {
+  selectedSummaryAngle: SummaryRewriteVariantAngle | null;
+  customSummaryText: string | null;
+};
