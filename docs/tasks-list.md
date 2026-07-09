@@ -918,8 +918,8 @@ To do:
 
 ### 75. Bug - selected summary variant is not saved
 
-**status: in progress**
-**time: 08.07.2026 - 09.07.2026**
+**status: done**
+**time: 09.07.2026**
 
 - Selected summary variant is not persisted
 
