@@ -925,6 +925,40 @@ To do:
 
 ---
 
+### 76. Bug - selected keywords are not saved and reloaded correctly
+
+**status: done**
+**time: 09.07.2026**
+
+- Selected keywords are not saved and then reloaded correctly when user opens stored optimizations
+
+The bug had two parts, both in apps/opticv-web/.../cv-optimization.ts:
+
+1. Toggling a keyword never triggered a save. When you click a keyword to select/deselect it, onKeywordToggled() only updated the in-memory selections signal — it never called the method that sends data to the backend. Every other similar action (editing a keyword, saving a bullet, etc.) called persistBulletState() after updating state; this one didn't.
+2. Even if it had saved, the field didn't exist in the saved data shape. The app persists optimization edits as a JSON blob matching a type called BulletUserState. That type had fields for bullet edits, keyword edits, keyword-bullet positions, etc. — but no field for "which keywords are selected." So the data had nowhere to go, and there was nothing to read back when reloading.
+
+The fix — 4 small changes:
+
+1. packages/shared/datatypes/src/lib/datatypes.ts — added selectedKeywords?: string[] to BulletUserState, so the persisted shape can actually hold this data.
+2. cv-optimization.ts — onKeywordToggled() — added a call to this.persistBulletState() after toggling, so a save is now triggered (matching the pattern used by sibling handlers).
+3. cv-optimization.ts — persistBulletState() — added selectedKeywords: this.selections().selectedKeywords to the object that gets JSON-stringified and sent to the backend, so the current selection is actually included in the save payload.
+4. cv-optimization.ts — loadStoredOptimization() — when reloading a stored optimization, added selectedKeywords: state.selectedKeywords ?? [] to the restore logic, so previously saved selections populate the UI again.
+
+No backend or database changes were needed — the backend just stores this as an opaque JSON string (userEditedOutput), so once the frontend both writes and reads the new field, everything works end-to-end.
+
+I also added 4 unit tests in cv-optimization.spec.ts covering: saving on toggle-on, saving on toggle-off, restoring keywords from stored state, and defaulting to [] when the field is missing (for backward compatibility with older saved data). Full suite passes except for 5 pre-existing, unrelated failures in home.spec.ts/footer.spec.ts.
+
+---
+
+### 77. Bug - some selected bullet rewrites are not applied to A4 cv template preview and not applied to exported CV
+
+**status: todo**
+**time: 09.07.2026**
+
+- some selected bullet rewrites are not applied to A4 cv template preview and not applied to exported CV, investigate the issue, it is not happening to all bullet rewrites
+
+---
+
 ### UX - create animations or video on how to use the app
 
 **status: todo**

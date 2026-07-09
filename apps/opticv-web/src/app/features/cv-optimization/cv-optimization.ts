@@ -572,6 +572,7 @@ export class CvOptimization implements OnInit {
                   this.selections.update((s) => ({
                     ...s,
                     selectedBullets: state.selectedBullets,
+                    selectedKeywords: state.selectedKeywords ?? [],
                   }));
                   this.selectedMissingBullets.set(
                     (state.selectedMissingBullets ?? []).map((s) => ({
@@ -783,6 +784,7 @@ export class CvOptimization implements OnInit {
         : [...s.selectedKeywords, keyword];
       return { ...s, selectedKeywords };
     });
+    this.persistBulletState();
   }
 
   onKeywordEditStarted(keyword: string): void {
@@ -1010,6 +1012,7 @@ export class CvOptimization implements OnInit {
         removedBullets: this.removedBullets(),
         keywordEdits: keywordEditsArr,
         keywordBulletPositions: keywordBulletPositionsArr,
+        selectedKeywords: this.selections().selectedKeywords,
       };
       this.cvOptimizationApiService
         .saveUserOutput(resultId, JSON.stringify(state))

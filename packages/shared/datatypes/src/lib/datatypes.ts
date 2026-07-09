@@ -491,6 +491,7 @@ export type BulletUserState = {
   removedBullets: BulletSelectionKey[];
   keywordEdits?: Array<{ originalKeyword: string; editedText: string }>;
   keywordBulletPositions?: Array<{ keyword: string; forPosition: string }>;
+  selectedKeywords?: string[];
 };
 
 export type SummaryUserState = {
