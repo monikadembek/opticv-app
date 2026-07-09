@@ -2088,4 +2088,91 @@ describe('CvOptimization', () => {
       expect(component.selections().customSummaryText).toBeNull();
     });
   });
+
+  describe('onKeywordToggled — persistence', () => {
+    it('persists selectedKeywords to the known BULLET_UPGRADE result id', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      component.bulletUpgradeResultId.set('bullet-result-1');
+
+      component.onKeywordToggled('TypeScript');
+
+      expect(apiService.saveUserOutput).toHaveBeenCalledWith(
+        'bullet-result-1',
+        JSON.stringify({
+          edits: [],
+          selectedBullets: [],
+          selectedMissingBullets: [],
+          removedBullets: [],
+          keywordEdits: [],
+          keywordBulletPositions: [],
+          selectedKeywords: ['TypeScript'],
+        }),
+      );
+    });
+
+    it('removes a keyword from selectedKeywords when toggled off, and persists', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      component.bulletUpgradeResultId.set('bullet-result-1');
+
+      component.onKeywordToggled('TypeScript');
+      component.onKeywordToggled('TypeScript');
+
+      expect(component.selections().selectedKeywords).toEqual([]);
+      expect(apiService.saveUserOutput).toHaveBeenLastCalledWith(
+        'bullet-result-1',
+        expect.stringContaining('"selectedKeywords":[]'),
+      );
+    });
+  });
+
+  describe('loadStoredOptimization — restores selected keywords', () => {
+    it('restores selectedKeywords from BULLET_UPGRADE userEditedOutput', async () => {
+      const bulletResult: OptimizationResultSummary = {
+        id: 'bullet-result-1',
+        promptType: PromptType.BULLET_UPGRADE,
+        status: 'COMPLETED',
+        userEditedOutput: JSON.stringify({
+          edits: [],
+          selectedBullets: [],
+          selectedMissingBullets: [],
+          removedBullets: [],
+          selectedKeywords: ['TypeScript', 'Angular'],
+        }),
+        structuredOutput: null,
+      };
+
+      await createComponent({
+        jobApplicationId: 'job-app-id-1',
+        getOptimizationResults: vi.fn().mockReturnValue(of([bulletResult])),
+      });
+
+      expect(component.selections().selectedKeywords).toEqual([
+        'TypeScript',
+        'Angular',
+      ]);
+      expect(component.bulletUpgradeResultId()).toBe('bullet-result-1');
+    });
+
+    it('defaults selectedKeywords to an empty array when absent from stored state', async () => {
+      const bulletResult: OptimizationResultSummary = {
+        id: 'bullet-result-1',
+        promptType: PromptType.BULLET_UPGRADE,
+        status: 'COMPLETED',
+        userEditedOutput: JSON.stringify({
+          edits: [],
+          selectedBullets: [],
+          selectedMissingBullets: [],
+          removedBullets: [],
+        }),
+        structuredOutput: null,
+      };
+
+      await createComponent({
+        jobApplicationId: 'job-app-id-1',
+        getOptimizationResults: vi.fn().mockReturnValue(of([bulletResult])),
+      });
+
+      expect(component.selections().selectedKeywords).toEqual([]);
+    });
+  });
 });
