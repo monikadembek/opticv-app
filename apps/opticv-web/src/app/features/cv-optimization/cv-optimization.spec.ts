@@ -119,6 +119,7 @@ describe('CvOptimization', () => {
     runSingleOptimizationProcess: ReturnType<typeof vi.fn>;
     streamOptimizationEvents: ReturnType<typeof vi.fn>;
     retryOptimization: ReturnType<typeof vi.fn>;
+    saveUserOutput: ReturnType<typeof vi.fn>;
   };
   let jobApplicationApiService: {
     getJobApplication: ReturnType<typeof vi.fn>;
@@ -159,6 +160,9 @@ describe('CvOptimization', () => {
         .mockReturnValue(of({ runId: 'run-id-1' })),
       streamOptimizationEvents: vi.fn().mockReturnValue(of()),
       retryOptimization: vi.fn(),
+      saveUserOutput: vi
+        .fn()
+        .mockReturnValue(of({ userEditedOutput: '{}' })),
     };
     jobApplicationApiService = {
       getJobApplication: vi.fn().mockReturnValue(of(mockJobApplicationWithCv)),
@@ -1868,6 +1872,220 @@ describe('CvOptimization', () => {
       component.onAngleReset();
       expect(component.selections().selectedBullets).toEqual([bullet]);
       expect(component.selections().selectedKeywords).toEqual(['Angular']);
+    });
+  });
+
+  describe('summary selection persistence', () => {
+    const g = globalThis as Record<string, unknown>;
+    let originalIntersectionObserver: unknown;
+
+    beforeEach(() => {
+      originalIntersectionObserver = g['IntersectionObserver'];
+      g['IntersectionObserver'] = class {
+        observe = vi.fn();
+        disconnect = vi.fn();
+      };
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+      g['IntersectionObserver'] = originalIntersectionObserver;
+    });
+
+    it('onAngleSelected persists the selection to the known SUMMARY_REWRITE result id', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      component.summaryRewriteResultId.set('summary-result-1');
+
+      component.onAngleSelected('achievement_led');
+      vi.advanceTimersByTime(500);
+
+      expect(apiService.saveUserOutput).toHaveBeenCalledWith(
+        'summary-result-1',
+        JSON.stringify({
+          selectedSummaryAngle: 'achievement_led',
+          customSummaryText: null,
+        }),
+      );
+    });
+
+    it('onAngleReset persists a cleared selection', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      component.summaryRewriteResultId.set('summary-result-1');
+
+      component.onAngleSelected('mission_led');
+      vi.advanceTimersByTime(500);
+      component.onAngleReset();
+      vi.advanceTimersByTime(500);
+
+      expect(apiService.saveUserOutput).toHaveBeenLastCalledWith(
+        'summary-result-1',
+        JSON.stringify({
+          selectedSummaryAngle: null,
+          customSummaryText: null,
+        }),
+      );
+    });
+
+    it('onSummaryTextEdited persists the custom text alongside the selected angle', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      component.summaryRewriteResultId.set('summary-result-1');
+
+      component.onAngleSelected('identity_led');
+      component.onSummaryTextEdited('My custom summary');
+      vi.advanceTimersByTime(500);
+
+      expect(apiService.saveUserOutput).toHaveBeenLastCalledWith(
+        'summary-result-1',
+        JSON.stringify({
+          selectedSummaryAngle: 'identity_led',
+          customSummaryText: 'My custom summary',
+        }),
+      );
+    });
+
+    it('debounces rapid selection changes into a single save', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      component.summaryRewriteResultId.set('summary-result-1');
+
+      component.onAngleSelected('achievement_led');
+      vi.advanceTimersByTime(100);
+      component.onAngleSelected('mission_led');
+      vi.advanceTimersByTime(500);
+
+      expect(apiService.saveUserOutput).toHaveBeenCalledTimes(1);
+      expect(apiService.saveUserOutput).toHaveBeenCalledWith(
+        'summary-result-1',
+        JSON.stringify({
+          selectedSummaryAngle: 'mission_led',
+          customSummaryText: null,
+        }),
+      );
+    });
+
+    it('fetches the SUMMARY_REWRITE result id when not already known, then saves', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      apiService.getOptimizationResults.mockReturnValue(
+        of([
+          {
+            id: 'summary-result-fetched',
+            promptType: PromptType.SUMMARY_REWRITE,
+            status: 'COMPLETED',
+            userEditedOutput: null,
+            structuredOutput: null,
+          },
+        ]),
+      );
+
+      component.onAngleSelected('achievement_led');
+      vi.advanceTimersByTime(500);
+
+      expect(apiService.getOptimizationResults).toHaveBeenCalledWith(
+        mockJobApplication.id,
+      );
+      expect(apiService.saveUserOutput).toHaveBeenCalledWith(
+        'summary-result-fetched',
+        JSON.stringify({
+          selectedSummaryAngle: 'achievement_led',
+          customSummaryText: null,
+        }),
+      );
+    });
+
+    it('does not save when jobApplicationId is null', () => {
+      component.onAngleSelected('achievement_led');
+      vi.advanceTimersByTime(500);
+
+      expect(apiService.saveUserOutput).not.toHaveBeenCalled();
+    });
+
+    it('shows an error toast when saving fails', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      component.summaryRewriteResultId.set('summary-result-1');
+      apiService.saveUserOutput.mockReturnValue(
+        throwError(() => new Error('network error')),
+      );
+      const messageService = TestBed.inject(MessageService);
+      const addSpy = vi.spyOn(messageService, 'add');
+
+      component.onAngleSelected('achievement_led');
+      vi.advanceTimersByTime(500);
+
+      expect(addSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ severity: 'error' }),
+      );
+    });
+  });
+
+  describe('loadStoredOptimization — restores summary selection', () => {
+    it('restores selectedSummaryAngle and customSummaryText from userEditedOutput', async () => {
+      const summaryResult: OptimizationResultSummary = {
+        id: 'summary-result-1',
+        promptType: PromptType.SUMMARY_REWRITE,
+        status: 'COMPLETED',
+        userEditedOutput: JSON.stringify({
+          selectedSummaryAngle: 'mission_led',
+          customSummaryText: 'Saved custom text',
+        }),
+        structuredOutput: {
+          originalSummary: 'Old summary',
+          variants: [],
+          recommendedVariant: 'mission_led',
+          keywordsIncorporated: [],
+        },
+      };
+
+      await createComponent({
+        jobApplicationId: 'job-app-id-1',
+        getOptimizationResults: vi.fn().mockReturnValue(of([summaryResult])),
+      });
+
+      expect(component.selections().selectedSummaryAngle).toBe('mission_led');
+      expect(component.selections().customSummaryText).toBe(
+        'Saved custom text',
+      );
+      expect(component.summaryRewriteResultId()).toBe('summary-result-1');
+    });
+
+    it('leaves selections untouched when userEditedOutput is null', async () => {
+      const summaryResult: OptimizationResultSummary = {
+        id: 'summary-result-1',
+        promptType: PromptType.SUMMARY_REWRITE,
+        status: 'COMPLETED',
+        userEditedOutput: null,
+        structuredOutput: {
+          originalSummary: 'Old summary',
+          variants: [],
+          recommendedVariant: 'mission_led',
+          keywordsIncorporated: [],
+        },
+      };
+
+      await createComponent({
+        jobApplicationId: 'job-app-id-1',
+        getOptimizationResults: vi.fn().mockReturnValue(of([summaryResult])),
+      });
+
+      expect(component.selections().selectedSummaryAngle).toBeNull();
+      expect(component.selections().customSummaryText).toBeNull();
+    });
+
+    it('does not throw and leaves selections untouched when userEditedOutput is malformed JSON', async () => {
+      const summaryResult: OptimizationResultSummary = {
+        id: 'summary-result-1',
+        promptType: PromptType.SUMMARY_REWRITE,
+        status: 'COMPLETED',
+        userEditedOutput: 'not valid json',
+        structuredOutput: null,
+      };
+
+      await createComponent({
+        jobApplicationId: 'job-app-id-1',
+        getOptimizationResults: vi.fn().mockReturnValue(of([summaryResult])),
+      });
+
+      expect(component.selections().selectedSummaryAngle).toBeNull();
+      expect(component.selections().customSummaryText).toBeNull();
     });
   });
 });

@@ -916,6 +916,15 @@ To do:
 
 ---
 
+### 75. Bug - selected summary variant is not saved
+
+**status: done**
+**time: 09.07.2026**
+
+- Selected summary variant is not persisted
+
+---
+
 ### UX - create animations or video on how to use the app
 
 **status: todo**
