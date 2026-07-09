@@ -16,7 +16,7 @@ export class CvExtractionService {
 
   constructor(
     private readonly prisma: PrismaService,
-    readonly openAiService: OpenAiService,
+    private readonly openAiService: OpenAiService,
     private readonly r2: R2Service,
   ) {}
 

@@ -75,15 +75,7 @@ export class CvService {
         });
         docId = doc.id;
 
-        return {
-          id: doc.id,
-          fileName: doc.fileName,
-          fileSize: doc.fileSize,
-          mimeType: doc.mimeType,
-          storageKey: doc.storageKey,
-          createdAt: doc.createdAt,
-          parseStatus: 'COMPLETED',
-        };
+        return this.toUploadCvResponse(doc);
       }
 
       const doc = await this.prisma.cvDocument.create({
@@ -131,15 +123,7 @@ export class CvService {
         data: { parsedText, parseStatus: 'COMPLETED' },
       });
 
-      return {
-        id: doc.id,
-        fileName: doc.fileName,
-        fileSize: doc.fileSize,
-        mimeType: doc.mimeType,
-        storageKey: doc.storageKey,
-        createdAt: doc.createdAt,
-        parseStatus: 'COMPLETED',
-      };
+      return this.toUploadCvResponse(doc);
     } catch (error) {
       if (error instanceof UnprocessableEntityException) throw error;
       this.logger.error(error);
@@ -154,6 +138,25 @@ export class CvService {
       }
       throw new InternalServerErrorException('Failed to save file record.');
     }
+  }
+
+  private toUploadCvResponse(doc: {
+    id: string;
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+    storageKey: string;
+    createdAt: Date;
+  }): UploadCvResponse {
+    return {
+      id: doc.id,
+      fileName: doc.fileName,
+      fileSize: doc.fileSize,
+      mimeType: doc.mimeType,
+      storageKey: doc.storageKey,
+      createdAt: doc.createdAt,
+      parseStatus: 'COMPLETED',
+    };
   }
 
   async getUserCvs(userId: string): Promise<CvDocumentListItem[]> {
