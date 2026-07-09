@@ -891,12 +891,12 @@ Fix:
 
 ### 74. Bug - invalid pdf text parsing
 
-**status: in progress**
+**status: done**
 **time: 08.07.2026 - 09.07.2026**
 
 - issue with extracting proper data from cvs that may contain columns, tables or more graphic elements
 
-Todo:
+To test:
 
 - test different models for the cv extraction, for the tests used cv with 2 columns and graphical items:
   - gpt-4o-mini - failed
@@ -909,6 +909,8 @@ Todo:
 
 Real reason for bug:
 -issue is with pdf-parse library, it parses pdf with 2 columns in invalid way and then the model cannot properly extract data and return it in the given data structure
+
+To do:
 
 - consider omitting the pdf-parse library if it doesn't product proper results and instead run prompt with the pdf file attached to extract text content and put it in the defined data structure and then save the structured data in db
 
