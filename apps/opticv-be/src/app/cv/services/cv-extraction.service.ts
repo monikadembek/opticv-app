@@ -8,6 +8,7 @@ import {
 import type { CvStructuredData } from '@opticv/datatypes';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OpenAiService } from '../../ai/services/openai.service';
+import { R2Service } from '../../storage/r2.service';
 
 @Injectable()
 export class CvExtractionService {
@@ -15,7 +16,8 @@ export class CvExtractionService {
 
   constructor(
     private readonly prisma: PrismaService,
-    readonly openAiService: OpenAiService,
+    private readonly openAiService: OpenAiService,
+    private readonly r2: R2Service,
   ) {}
 
   async extractStructuredData(
@@ -37,7 +39,9 @@ export class CvExtractionService {
       return doc.structuredData as unknown as CvStructuredData;
     }
 
-    if (!doc.parsedText || doc.parsedText.trim() === '') {
+    const isPdf = doc.mimeType === 'application/pdf';
+
+    if (!isPdf && (!doc.parsedText || doc.parsedText.trim() === '')) {
       throw new BadRequestException(
         'CV text not available for extraction. Please re-upload the file.',
       );
@@ -51,7 +55,12 @@ export class CvExtractionService {
     }
 
     try {
-      const result = await this.openAiService.extractCvData(doc.parsedText);
+      const result = isPdf
+        ? await this.openAiService.extractCvDataFromFile(
+            await this.r2.download(doc.storageKey),
+            doc.fileName,
+          )
+        : await this.openAiService.extractCvData(doc.parsedText as string);
       await this.prisma.cvDocument.update({
         where: { id: cvId },
         data: { structuredData: result, extractionStatus: 'COMPLETED' },

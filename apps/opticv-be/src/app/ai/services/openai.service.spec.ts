@@ -2,12 +2,16 @@ import { ConfigService } from '@nestjs/config';
 import { OpenAiService } from './openai.service.js';
 
 const mockCreate = jest.fn();
+const mockResponsesCreate = jest.fn();
 
 const mockOpenAIClient = {
   chat: {
     completions: {
       create: mockCreate,
     },
+  },
+  responses: {
+    create: mockResponsesCreate,
   },
 };
 
@@ -115,6 +119,68 @@ describe('OpenAiService', () => {
       await expect(service.generateCompletion('sys', 'user', 'gpt-4o')).rejects.toThrow(
         'OpenAI returned an empty response',
       );
+    });
+  });
+
+  describe('extractCvDataFromFile', () => {
+    const makeResponsesResult = (outputText: string | null) => ({
+      output_text: outputText,
+    });
+
+    it('calls responses.create with the file as input_file and requests json_object format', async () => {
+      mockResponsesCreate.mockResolvedValue(makeResponsesResult('{"contact":{}}'));
+
+      await service.extractCvDataFromFile(Buffer.from('pdf bytes'), 'cv.pdf');
+
+      expect(mockResponsesCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          model: 'gpt-4o',
+          text: { format: { type: 'json_object' } },
+          input: [
+            expect.objectContaining({
+              role: 'user',
+              content: expect.arrayContaining([
+                expect.objectContaining({
+                  type: 'input_file',
+                  filename: 'cv.pdf',
+                }),
+              ]),
+            }),
+          ],
+        }),
+      );
+    });
+
+    it('returns parsed JSON object on success', async () => {
+      mockResponsesCreate.mockResolvedValue(makeResponsesResult('{"contact":{"name":"Jane"}}'));
+
+      const result = await service.extractCvDataFromFile(Buffer.from('pdf bytes'), 'cv.pdf');
+
+      expect(result).toEqual({ contact: { name: 'Jane' } });
+    });
+
+    it('throws when OpenAI returns an empty output_text', async () => {
+      mockResponsesCreate.mockResolvedValue(makeResponsesResult(''));
+
+      await expect(
+        service.extractCvDataFromFile(Buffer.from('pdf bytes'), 'cv.pdf'),
+      ).rejects.toThrow('OpenAI returned an empty response');
+    });
+
+    it('throws when OpenAI returns non-JSON content', async () => {
+      mockResponsesCreate.mockResolvedValue(makeResponsesResult('not json'));
+
+      await expect(
+        service.extractCvDataFromFile(Buffer.from('pdf bytes'), 'cv.pdf'),
+      ).rejects.toThrow('OpenAI returned non-JSON content');
+    });
+
+    it('throws when OpenAI returns a non-object JSON value', async () => {
+      mockResponsesCreate.mockResolvedValue(makeResponsesResult('"just a string"'));
+
+      await expect(
+        service.extractCvDataFromFile(Buffer.from('pdf bytes'), 'cv.pdf'),
+      ).rejects.toThrow('OpenAI returned a non-object JSON value');
     });
   });
 });

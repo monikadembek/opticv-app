@@ -1,5 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CV_EXTRACTION_OPENAI_MODEL } from '../../constants';
+import {
+  CV_EXTRACTION_OPENAI_MODEL,
+  CV_EXTRACTION_FILE_OPENAI_MODEL,
+} from '../../constants';
 import OpenAI from 'openai';
 import { ConfigService } from '@nestjs/config';
 import { EXTRACTION_SYSTEM_PROMPT } from '../prompts/extract-cv-data.prompt';
@@ -28,7 +31,45 @@ export class OpenAiService {
       ],
     });
 
-    const content = response.choices[0]?.message?.content;
+    return this.parseExtractionResponse(response.choices[0]?.message?.content);
+  }
+
+  async extractCvDataFromFile(
+    buffer: Buffer,
+    fileName: string,
+  ): Promise<CvStructuredData> {
+    this.logger.log('Calling OpenAI gpt-4o for CV file extraction');
+
+    const fileData = `data:application/pdf;base64,${buffer.toString('base64')}`;
+
+    const response = await this.client.responses.create({
+      model: CV_EXTRACTION_FILE_OPENAI_MODEL,
+      instructions: EXTRACTION_SYSTEM_PROMPT,
+      input: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'input_file',
+              file_data: fileData,
+              filename: fileName,
+            },
+            {
+              type: 'input_text',
+              text: 'Extract structured CV data as JSON.',
+            },
+          ],
+        },
+      ],
+      text: { format: { type: 'json_object' } },
+    });
+
+    return this.parseExtractionResponse(response.output_text);
+  }
+
+  private parseExtractionResponse(
+    content: string | null | undefined,
+  ): CvStructuredData {
     if (!content) {
       throw new Error('OpenAI returned an empty response');
     }
@@ -51,8 +92,15 @@ export class OpenAiService {
     systemPrompt: string,
     userPrompt: string,
     model: string,
-    outputSchema?: { name: string; input_schema: Record<string, unknown> } | null,
-  ): Promise<{ content: string; promptTokens: number; completionTokens: number }> {
+    outputSchema?: {
+      name: string;
+      input_schema: Record<string, unknown>;
+    } | null,
+  ): Promise<{
+    content: string;
+    promptTokens: number;
+    completionTokens: number;
+  }> {
     const responseFormat = outputSchema
       ? ({
           type: 'json_schema' as const,

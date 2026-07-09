@@ -7,6 +7,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CvExtractionService } from './cv-extraction.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OpenAiService } from '../../ai/services/openai.service';
+import { R2Service } from '../../storage/r2.service';
 import type { CvStructuredData } from '@opticv/datatypes';
 
 const mockStructuredData: CvStructuredData = {
@@ -31,6 +32,10 @@ const mockStructuredData: CvStructuredData = {
 const makeDoc = (overrides: Record<string, unknown> = {}) => ({
   id: 'cv-id',
   userId: 'user-id',
+  mimeType:
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  fileName: 'cv.docx',
+  storageKey: 'uploads/user-id/uuid.docx',
   parsedText: 'John Doe, Software Engineer...',
   extractionStatus: 'PENDING',
   structuredData: null,
@@ -46,6 +51,11 @@ const mockPrisma = {
 
 const mockOpenAiService = {
   extractCvData: jest.fn().mockResolvedValue(mockStructuredData),
+  extractCvDataFromFile: jest.fn().mockResolvedValue(mockStructuredData),
+};
+
+const mockR2Service = {
+  download: jest.fn(),
 };
 
 describe('CvExtractionService', () => {
@@ -58,6 +68,7 @@ describe('CvExtractionService', () => {
         CvExtractionService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: OpenAiService, useValue: mockOpenAiService },
+        { provide: R2Service, useValue: mockR2Service },
       ],
     }).compile();
 
@@ -184,6 +195,81 @@ describe('CvExtractionService', () => {
         where: { id: 'cv-id' },
         data: { extractionStatus: 'FAILED' },
       });
+    });
+
+    it('skips the parsedText check and calls extractCvDataFromFile for PDF documents', async () => {
+      const buffer = Buffer.from('pdf bytes');
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(
+        makeDoc({
+          mimeType: 'application/pdf',
+          parsedText: null,
+          storageKey: 'uploads/user-id/uuid.pdf',
+          fileName: 'cv.pdf',
+        }),
+      );
+      mockR2Service.download.mockResolvedValueOnce(buffer);
+
+      const result = await service.extractStructuredData('cv-id', 'user-id');
+
+      expect(mockR2Service.download).toHaveBeenCalledWith(
+        'uploads/user-id/uuid.pdf',
+      );
+      expect(mockOpenAiService.extractCvDataFromFile).toHaveBeenCalledWith(
+        buffer,
+        'cv.pdf',
+      );
+      expect(mockPrisma.cvDocument.update).toHaveBeenCalledWith({
+        where: { id: 'cv-id' },
+        data: {
+          structuredData: mockStructuredData,
+          extractionStatus: 'COMPLETED',
+        },
+      });
+      expect(result).toEqual(mockStructuredData);
+    });
+
+    it('sets extractionStatus to FAILED and throws BadGatewayException when R2 download fails for a PDF', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(
+        makeDoc({ mimeType: 'application/pdf', parsedText: null }),
+      );
+      mockR2Service.download.mockRejectedValueOnce(new Error('R2 error'));
+
+      await expect(
+        service.extractStructuredData('cv-id', 'user-id'),
+      ).rejects.toThrow(BadGatewayException);
+      expect(mockPrisma.cvDocument.update).toHaveBeenCalledWith({
+        where: { id: 'cv-id' },
+        data: { extractionStatus: 'FAILED' },
+      });
+    });
+
+    it('sets extractionStatus to FAILED and throws BadGatewayException when extractCvDataFromFile fails for a PDF', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(
+        makeDoc({ mimeType: 'application/pdf', parsedText: null }),
+      );
+      mockR2Service.download.mockResolvedValueOnce(Buffer.from('pdf bytes'));
+      mockOpenAiService.extractCvDataFromFile.mockRejectedValueOnce(
+        new Error('OpenAI error'),
+      );
+
+      await expect(
+        service.extractStructuredData('cv-id', 'user-id'),
+      ).rejects.toThrow(BadGatewayException);
+      expect(mockPrisma.cvDocument.update).toHaveBeenCalledWith({
+        where: { id: 'cv-id' },
+        data: { extractionStatus: 'FAILED' },
+      });
+    });
+
+    it('does not throw BadRequestException for a PDF with null parsedText', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(
+        makeDoc({ mimeType: 'application/pdf', parsedText: null }),
+      );
+      mockR2Service.download.mockResolvedValueOnce(Buffer.from('pdf bytes'));
+
+      await expect(
+        service.extractStructuredData('cv-id', 'user-id'),
+      ).resolves.toEqual(mockStructuredData);
     });
   });
 });

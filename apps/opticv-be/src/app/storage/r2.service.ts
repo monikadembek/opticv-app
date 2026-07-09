@@ -67,6 +67,23 @@ export class R2Service {
     }
   }
 
+  async download(key: string): Promise<Buffer> {
+    try {
+      const response = await this.client.send(
+        new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+      );
+      const stream = response.Body as NodeJS.ReadableStream;
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream) {
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+      }
+      return Buffer.concat(chunks);
+    } catch (error) {
+      this.logger.error(error);
+      throw new InternalServerErrorException('File download failed.');
+    }
+  }
+
   async getPresignedUrl(key: string, ttlSeconds: number): Promise<string> {
     try {
       const command = new GetObjectCommand({ Bucket: this.bucket, Key: key });
