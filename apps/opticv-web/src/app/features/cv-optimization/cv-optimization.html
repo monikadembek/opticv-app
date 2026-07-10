@@ -73,7 +73,10 @@
           </p>
         </div>
         <div class="job-banner">
-          <app-job-upload (jobSubmitted)="runOptimization($event)" />
+          <app-job-upload
+            [preselectedCvId]="preselectedCvId()"
+            (jobSubmitted)="runOptimization($event)"
+          />
         </div>
       </div>
       } @else {

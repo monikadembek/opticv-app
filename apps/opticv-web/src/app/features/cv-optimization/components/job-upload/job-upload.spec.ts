@@ -285,6 +285,40 @@ describe('JobUpload', () => {
     });
   });
 
+  describe('preselectedCvId', () => {
+    it('patches cvDocumentId when the id is present in cvList', () => {
+      fixture.componentRef.setInput('preselectedCvId', mockCv.id);
+      fixture.detectChanges();
+
+      expect(component.cvDocumentIdControl.value).toBe(mockCv.id);
+    });
+
+    it('leaves cvDocumentId unset when the id is not present in cvList', () => {
+      fixture.componentRef.setInput('preselectedCvId', 'nonexistent-id');
+      fixture.detectChanges();
+
+      expect(component.cvDocumentIdControl.value).toBe('');
+    });
+
+    it('pre-fills reactively once cvList loads after the id is set', async () => {
+      cvStore = makeCvStore({ cvList: [] });
+      await recreateComponent();
+
+      fixture.componentRef.setInput('preselectedCvId', mockCv.id);
+      fixture.detectChanges();
+      expect(component.cvDocumentIdControl.value).toBe('');
+
+      cvStore.cvList.set([mockCv]);
+      fixture.detectChanges();
+      expect(component.cvDocumentIdControl.value).toBe(mockCv.id);
+    });
+
+    it('has no effect when left at its default (null)', () => {
+      fixture.detectChanges();
+      expect(component.cvDocumentIdControl.value).toBe('');
+    });
+  });
+
   describe('reloadCvs', () => {
     it('should call loadUserCVs with force on the cv store', () => {
       component.reloadCvs();

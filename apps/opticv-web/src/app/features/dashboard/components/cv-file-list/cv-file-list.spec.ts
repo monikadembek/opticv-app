@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -106,6 +106,19 @@ describe('CvFileList', () => {
       expect(component.cvsError()).toBe(
         'Failed to load files. Please try again.',
       );
+    });
+  });
+
+  describe('optimizeCv', () => {
+    it('navigates to cv-optimization with the CV id as a query param', () => {
+      const router = TestBed.inject(Router);
+      const navigateSpy = vi.spyOn(router, 'navigate');
+
+      component.optimizeCv(mockFiles[0]);
+
+      expect(navigateSpy).toHaveBeenCalledWith(['/cv-optimization'], {
+        queryParams: { cvId: mockFiles[0].id },
+      });
     });
   });
 

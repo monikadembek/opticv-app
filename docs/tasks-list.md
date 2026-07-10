@@ -962,11 +962,12 @@ I also added 4 unit tests in cv-optimization.spec.ts covering: saving on toggle-
 
 ### 78. Add 'Optimize CV' button in the dashboard to each listed CV
 
-**status: todo**
-**time: 09.07.2026**
+**status: done**
+**time: 10.07.2026**
 
-- In the dashboard in the tab with uploade cvs, add 'Optimize CV' button to each CV item
-- When user clicks the button it should navigate to cv-optimization page and the given cv should be selected in the select input
+- In the dashboard in the tab with uploaded cvs, add 'Optimize CV' button to each CV item, place it before the download icon button,
+- When user clicks the button it should navigate to cv-optimization page and the given cv should be selected in the select input,
+- remove 'Parsed' text as we no longer parse the pdf files.
 
 ---
 

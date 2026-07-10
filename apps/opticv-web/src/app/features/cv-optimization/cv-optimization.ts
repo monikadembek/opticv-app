@@ -197,6 +197,7 @@ export class CvOptimization implements OnInit {
   readonly results = signal<Map<PromptType, SseJobCompleteEvent>>(new Map());
   readonly isProcessing = signal<Map<PromptType, boolean>>(new Map());
   readonly jobApplicationId = signal<string | null>(null);
+  readonly preselectedCvId = signal<string | null>(null);
   readonly cvStructuredData = signal<CvStructuredData | null>(null);
   readonly selections = signal<UserSelections>({
     selectedSummaryAngle: null,
@@ -440,6 +441,11 @@ export class CvOptimization implements OnInit {
       history.scrollRestoration = 'manual';
       window.scrollTo({ top: 0 });
       this.loadStoredOptimization(jobApplicationId);
+    }
+
+    const cvId = this.route.snapshot.queryParamMap.get('cvId');
+    if (cvId) {
+      this.preselectedCvId.set(cvId);
     }
 
     this.breakpointObserver

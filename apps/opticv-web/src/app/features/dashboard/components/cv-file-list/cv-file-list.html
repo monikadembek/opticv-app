@@ -27,6 +27,7 @@
   @for (file of cvFiles(); track file.id) {
   <app-cv-file-list-item
     [file]="file"
+    (optimize)="optimizeCv($event)"
     (download)="downloadCv($event)"
     (delete)="deleteCv($event)"
   />

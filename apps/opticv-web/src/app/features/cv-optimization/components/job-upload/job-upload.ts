@@ -58,6 +58,7 @@ export class JobUpload {
 
   isReadonly = input<boolean>(false);
   prefillData = input<JobApplication | null>(null);
+  preselectedCvId = input<string | null>(null);
 
   jobSubmitted = output<JobSubmittedData>();
   jobApplication: JobApplicationResponse | null = null;
@@ -113,6 +114,15 @@ export class JobUpload {
         this.form.disable();
       } else {
         this.form.enable();
+      }
+    });
+
+    effect(() => {
+      const cvId = this.preselectedCvId();
+      if (!cvId) return;
+      const cvExists = this.cvStore.cvList().some((cv) => cv.id === cvId);
+      if (cvExists) {
+        this.form.controls.cvDocumentId.setValue(cvId);
       }
     });
   }
