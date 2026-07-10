@@ -2089,6 +2089,226 @@ describe('CvOptimization', () => {
     });
   });
 
+  describe('cover letter selection persistence', () => {
+    const g = globalThis as Record<string, unknown>;
+    let originalIntersectionObserver: unknown;
+
+    beforeEach(() => {
+      originalIntersectionObserver = g['IntersectionObserver'];
+      g['IntersectionObserver'] = class {
+        observe = vi.fn();
+        disconnect = vi.fn();
+      };
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+      g['IntersectionObserver'] = originalIntersectionObserver;
+    });
+
+    it('onCoverLetterVariantSelected persists the selection to the known COVER_LETTER result id', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      component.coverLetterResultId.set('cover-letter-result-1');
+
+      component.onCoverLetterVariantSelected('achievement');
+      vi.advanceTimersByTime(500);
+
+      expect(apiService.saveUserOutput).toHaveBeenCalledWith(
+        'cover-letter-result-1',
+        JSON.stringify({
+          selectedVariant: 'achievement',
+          editedContent: null,
+        }),
+      );
+    });
+
+    it('onCoverLetterTextEdited persists the edited content alongside the selected variant', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      component.coverLetterResultId.set('cover-letter-result-1');
+
+      component.onCoverLetterVariantSelected('insight');
+      component.onCoverLetterTextEdited('<p>Edited letter</p>');
+      vi.advanceTimersByTime(500);
+
+      expect(apiService.saveUserOutput).toHaveBeenLastCalledWith(
+        'cover-letter-result-1',
+        JSON.stringify({
+          selectedVariant: 'insight',
+          editedContent: '<p>Edited letter</p>',
+        }),
+      );
+    });
+
+    it('debounces rapid edits into a single save', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      component.coverLetterResultId.set('cover-letter-result-1');
+
+      component.onCoverLetterTextEdited('<p>First</p>');
+      vi.advanceTimersByTime(100);
+      component.onCoverLetterTextEdited('<p>Second</p>');
+      vi.advanceTimersByTime(500);
+
+      expect(apiService.saveUserOutput).toHaveBeenCalledTimes(1);
+      expect(apiService.saveUserOutput).toHaveBeenCalledWith(
+        'cover-letter-result-1',
+        JSON.stringify({
+          selectedVariant: null,
+          editedContent: '<p>Second</p>',
+        }),
+      );
+    });
+
+    it('fetches the COVER_LETTER result id when not already known, then saves', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      apiService.getOptimizationResults.mockReturnValue(
+        of([
+          {
+            id: 'cover-letter-result-fetched',
+            promptType: PromptType.COVER_LETTER,
+            status: 'COMPLETED',
+            userEditedOutput: null,
+            structuredOutput: null,
+          },
+        ]),
+      );
+
+      component.onCoverLetterVariantSelected('story');
+      vi.advanceTimersByTime(500);
+
+      expect(apiService.getOptimizationResults).toHaveBeenCalledWith(
+        mockJobApplication.id,
+      );
+      expect(apiService.saveUserOutput).toHaveBeenCalledWith(
+        'cover-letter-result-fetched',
+        JSON.stringify({
+          selectedVariant: 'story',
+          editedContent: null,
+        }),
+      );
+    });
+
+    it('does not save when jobApplicationId is null', () => {
+      component.onCoverLetterVariantSelected('achievement');
+      vi.advanceTimersByTime(500);
+
+      expect(apiService.saveUserOutput).not.toHaveBeenCalled();
+    });
+
+    it('shows an error toast when saving fails', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      component.coverLetterResultId.set('cover-letter-result-1');
+      apiService.saveUserOutput.mockReturnValue(
+        throwError(() => new Error('network error')),
+      );
+      const messageService = TestBed.inject(MessageService);
+      const addSpy = vi.spyOn(messageService, 'add');
+
+      component.onCoverLetterVariantSelected('achievement');
+      vi.advanceTimersByTime(500);
+
+      expect(addSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ severity: 'error' }),
+      );
+    });
+  });
+
+  describe('loadStoredOptimization — restores cover letter selection', () => {
+    it('restores selectedCoverLetterVariant and editedCoverLetterContent from userEditedOutput', async () => {
+      const coverLetterResult: OptimizationResultSummary = {
+        id: 'cover-letter-result-1',
+        promptType: PromptType.COVER_LETTER,
+        status: 'COMPLETED',
+        userEditedOutput: JSON.stringify({
+          selectedVariant: 'story',
+          editedContent: '<p>Saved edited content</p>',
+        }),
+        structuredOutput: {
+          salutation: 'Dear Hiring Manager,',
+          signoff: 'Yours sincerely,',
+          variants: [],
+          recommendedVariant: 'insight',
+          recommendationReason: '',
+          warnings: [],
+        },
+      };
+
+      await createComponent({
+        jobApplicationId: 'job-app-id-1',
+        getOptimizationResults: vi
+          .fn()
+          .mockReturnValue(of([coverLetterResult])),
+      });
+
+      expect(component.selectedCoverLetterVariant()).toBe('story');
+      expect(component.editedCoverLetterContent()).toBe(
+        '<p>Saved edited content</p>',
+      );
+      expect(component.coverLetterResultId()).toBe('cover-letter-result-1');
+    });
+
+    it('leaves selection state untouched when userEditedOutput is null', async () => {
+      const coverLetterResult: OptimizationResultSummary = {
+        id: 'cover-letter-result-1',
+        promptType: PromptType.COVER_LETTER,
+        status: 'COMPLETED',
+        userEditedOutput: null,
+        structuredOutput: {
+          salutation: 'Dear Hiring Manager,',
+          signoff: 'Yours sincerely,',
+          variants: [],
+          recommendedVariant: 'insight',
+          recommendationReason: '',
+          warnings: [],
+        },
+      };
+
+      await createComponent({
+        jobApplicationId: 'job-app-id-1',
+        getOptimizationResults: vi
+          .fn()
+          .mockReturnValue(of([coverLetterResult])),
+      });
+
+      expect(component.selectedCoverLetterVariant()).toBeNull();
+      expect(component.editedCoverLetterContent()).toBeNull();
+    });
+
+    it('does not throw and leaves selection state untouched when userEditedOutput is malformed JSON', async () => {
+      const coverLetterResult: OptimizationResultSummary = {
+        id: 'cover-letter-result-1',
+        promptType: PromptType.COVER_LETTER,
+        status: 'COMPLETED',
+        userEditedOutput: 'not valid json',
+        structuredOutput: null,
+      };
+
+      await createComponent({
+        jobApplicationId: 'job-app-id-1',
+        getOptimizationResults: vi
+          .fn()
+          .mockReturnValue(of([coverLetterResult])),
+      });
+
+      expect(component.selectedCoverLetterVariant()).toBeNull();
+      expect(component.editedCoverLetterContent()).toBeNull();
+    });
+  });
+
+  describe('runOptimization — resets cover letter state', () => {
+    it('clears coverLetterResultId, selectedCoverLetterVariant, and editedCoverLetterContent on a new run', () => {
+      component.coverLetterResultId.set('cover-letter-result-1');
+      component.selectedCoverLetterVariant.set('story');
+      component.editedCoverLetterContent.set('<p>Edited</p>');
+
+      component.runOptimization(mockJobSubmittedData);
+
+      expect(component.coverLetterResultId()).toBeNull();
+      expect(component.selectedCoverLetterVariant()).toBeNull();
+      expect(component.editedCoverLetterContent()).toBeNull();
+    });
+  });
+
   describe('onKeywordToggled — persistence', () => {
     it('persists selectedKeywords to the known BULLET_UPGRADE result id', () => {
       component.jobApplicationId.set(mockJobApplication.id);

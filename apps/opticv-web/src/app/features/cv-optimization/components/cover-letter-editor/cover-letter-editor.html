@@ -117,7 +117,7 @@
     </h3>
     <p-editor
       [ngModel]="editorContent()"
-      (ngModelChange)="editorContent.set($event)"
+      (ngModelChange)="onEditorContentChange($event)"
       [style]="{ height: '400px' }"
       (onInit)="onEditorInit($event)"
     >

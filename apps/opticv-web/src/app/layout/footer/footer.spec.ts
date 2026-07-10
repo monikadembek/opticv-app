@@ -33,15 +33,15 @@ describe('Footer', () => {
 
   it('should render a Facebook link', () => {
     const link = fixture.debugElement.query(
-      By.css('a[href="https://www.facebook.com"]'),
+      By.css(
+        'a[href="https://www.facebook.com/profile.php?id=61591526651342"]',
+      ),
     );
     expect(link).toBeTruthy();
   });
 
-  it('should render a Facebook SVG icon with correct title', () => {
-    const svg = fixture.debugElement.query(By.css('svg[role="img"]'));
-    expect(svg).toBeTruthy();
-    const title = svg.nativeElement.querySelector('title');
-    expect(title?.textContent).toBe('Facebook');
+  it('should render a Facebook icon', () => {
+    const icon = fixture.debugElement.query(By.css('a i.pi-facebook'));
+    expect(icon).toBeTruthy();
   });
 });

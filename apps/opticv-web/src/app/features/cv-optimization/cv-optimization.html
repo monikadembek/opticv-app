@@ -266,7 +266,13 @@
         (collapsedChange)="onSectionCollapsedChange(PromptType.COVER_LETTER, $event)"
       >
         @if (coverLetterResult()) {
-        <app-cover-letter-editor [result]="coverLetterResult()!" />
+        <app-cover-letter-editor
+          [result]="coverLetterResult()!"
+          [initialSelectedVariant]="selectedCoverLetterVariant()"
+          [initialEditedContent]="editedCoverLetterContent()"
+          (variantSelected)="onCoverLetterVariantSelected($event)"
+          (contentEdited)="onCoverLetterTextEdited($event)"
+        />
         } @if (retryablePromptTypes().has(PromptType.COVER_LETTER)) {
         <div class="retry-action">
           <p-button

@@ -498,3 +498,8 @@ export type SummaryUserState = {
   selectedSummaryAngle: SummaryRewriteVariantAngle | null;
   customSummaryText: string | null;
 };
+
+export type CoverLetterUserState = {
+  selectedVariant: CoverLetterHookType | null;
+  editedContent: string | null;
+};
