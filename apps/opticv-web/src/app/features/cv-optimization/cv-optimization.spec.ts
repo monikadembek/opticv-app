@@ -74,10 +74,14 @@ const mockJobApplicationWithCv: JobApplicationWithCv = {
   cvDocument: { id: 'cv-id-1', fileName: 'my-cv.pdf' },
 };
 
-function makeActivatedRoute(jobApplicationId: string | null = null) {
+function makeActivatedRoute(
+  jobApplicationId: string | null = null,
+  cvId: string | null = null,
+) {
   return {
     snapshot: {
       paramMap: convertToParamMap(jobApplicationId ? { jobApplicationId } : {}),
+      queryParamMap: convertToParamMap(cvId ? { cvId } : {}),
     },
   };
 }

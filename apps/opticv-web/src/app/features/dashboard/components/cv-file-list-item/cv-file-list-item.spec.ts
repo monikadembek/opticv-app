@@ -66,12 +66,32 @@ describe('CvFileListItem', () => {
     expect(emitted).toEqual(mockFile);
   });
 
+  it('should emit optimize output when onOptimize is called', () => {
+    let emitted: CvDocumentListItem | undefined;
+    component.optimize.subscribe((f) => (emitted = f));
+
+    component.onOptimize();
+
+    expect(emitted).toEqual(mockFile);
+  });
+
+  it('should emit optimize when the optimize button is clicked', () => {
+    let emitted: CvDocumentListItem | undefined;
+    component.optimize.subscribe((f) => (emitted = f));
+
+    const buttons = fixture.debugElement.queryAll(By.css('p-button'));
+    const optimizeButton = buttons[0];
+    optimizeButton.triggerEventHandler('onClick', null);
+
+    expect(emitted).toEqual(mockFile);
+  });
+
   it('should emit download when the download button is clicked', () => {
     let emitted: CvDocumentListItem | undefined;
     component.download.subscribe((f) => (emitted = f));
 
     const buttons = fixture.debugElement.queryAll(By.css('p-button'));
-    const downloadButton = buttons[0];
+    const downloadButton = buttons[1];
     downloadButton.triggerEventHandler('onClick', null);
 
     expect(emitted).toEqual(mockFile);
@@ -82,17 +102,17 @@ describe('CvFileListItem', () => {
     component.delete.subscribe((f) => (emitted = f));
 
     const buttons = fixture.debugElement.queryAll(By.css('p-button'));
-    const deleteButton = buttons[1];
+    const deleteButton = buttons[2];
     deleteButton.triggerEventHandler('onClick', null);
 
     expect(emitted).toEqual(mockFile);
   });
 
-  it('should show "Parsed" status for COMPLETED', () => {
+  it('should NOT show "Parsed" status for COMPLETED', () => {
     fixture.componentRef.setInput('file', { ...mockFile, parseStatus: 'COMPLETED' });
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
-    expect(el.textContent).toContain('Parsed');
+    expect(el.textContent).not.toContain('Parsed');
   });
 
   it('should show "Parsing…" status for PENDING', () => {

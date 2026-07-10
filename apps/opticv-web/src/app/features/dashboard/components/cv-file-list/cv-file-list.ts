@@ -14,7 +14,7 @@ import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { isPlatformBrowser } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import posthog from 'posthog-js';
 import { CvStore } from '../../../../core/stores/cv.store';
@@ -38,6 +38,7 @@ export class CvFileList implements OnInit {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly messageService = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
   readonly cvStore = inject(CvStore);
 
   readonly cvFiles = this.cvStore.cvList;
@@ -46,6 +47,12 @@ export class CvFileList implements OnInit {
 
   ngOnInit(): void {
     this.cvStore.loadUserCVs();
+  }
+
+  optimizeCv(file: CvDocumentListItem): void {
+    this.router.navigate(['/cv-optimization'], {
+      queryParams: { cvId: file.id },
+    });
   }
 
   downloadCv(file: CvDocumentListItem): void {

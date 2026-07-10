@@ -17,11 +17,16 @@ import { formatFileSize, getMimeLabel } from '../../../../shared/utils';
 })
 export class CvFileListItem {
   file = input.required<CvDocumentListItem>();
+  optimize = output<CvDocumentListItem>();
   download = output<CvDocumentListItem>();
   delete = output<CvDocumentListItem>();
 
   readonly formatFileSize = formatFileSize;
   readonly getMimeLabel = getMimeLabel;
+
+  onOptimize(): void {
+    this.optimize.emit(this.file());
+  }
 
   onDownload(): void {
     this.download.emit(this.file());
