@@ -952,7 +952,7 @@ I also added 4 unit tests in cv-optimization.spec.ts covering: saving on toggle-
 
 ### 77. Bug - selected cover letter and the eventual edited version is not saved
 
-**status: in progress**
+**status: done**
 **time: 09.07.2026 - 10.07.2026**
 
 - perist selected cover letter and edited content in database
