@@ -138,6 +138,7 @@ describe('CvOptimization', () => {
 
   interface CreateComponentOptions {
     jobApplicationId?: string | null;
+    cvId?: string | null;
     getOptimizationResults?: ReturnType<typeof vi.fn>;
     getStructuredData?: ReturnType<typeof vi.fn>;
   }
@@ -145,6 +146,7 @@ describe('CvOptimization', () => {
   async function createComponent(options: CreateComponentOptions = {}) {
     const {
       jobApplicationId = null,
+      cvId = null,
       getOptimizationResults = vi.fn().mockReturnValue(of([])),
       getStructuredData = vi
         .fn()
@@ -191,7 +193,7 @@ describe('CvOptimization', () => {
         { provide: CvExportService, useValue: cvExportService },
         {
           provide: ActivatedRoute,
-          useValue: makeActivatedRoute(jobApplicationId),
+          useValue: makeActivatedRoute(jobApplicationId, cvId),
         },
         MessageService,
       ],
@@ -218,6 +220,17 @@ describe('CvOptimization', () => {
   it('should render the job-upload component', () => {
     const jobUpload = fixture.nativeElement.querySelector('app-job-upload');
     expect(jobUpload).toBeTruthy();
+  });
+
+  describe('preselectedCvId', () => {
+    it('is set from the cvId query param on init', async () => {
+      await createComponent({ cvId: 'cv-id-1' });
+      expect(component.preselectedCvId()).toBe('cv-id-1');
+    });
+
+    it('stays null when no cvId query param is present', () => {
+      expect(component.preselectedCvId()).toBeNull();
+    });
   });
 
   describe('computed signals', () => {
