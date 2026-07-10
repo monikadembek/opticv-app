@@ -3,6 +3,7 @@ import {
   Component,
   input,
   output,
+  signal,
 } from '@angular/core';
 import type {
   BulletSelectionKey,
@@ -38,6 +39,8 @@ export class BulletRewriter {
   readonly missingBulletEditStarted = output<string>();
   readonly missingBulletEditSaved = output<{ key: string; text: string }>();
   readonly removedBulletToggled = output<BulletSelectionKey>();
+
+  private readonly expandedWhyKeys = signal<Set<string>>(new Set());
 
   isSelected(company: string, title: string, originalText: string): boolean {
     return this.selectedBullets().some(
@@ -122,5 +125,24 @@ export class BulletRewriter {
         b.title === title &&
         b.originalText === originalText,
     );
+  }
+
+  isWhyExpanded(company: string, title: string, originalText: string): boolean {
+    return this.expandedWhyKeys().has(
+      this.bulletKey(company, title, originalText),
+    );
+  }
+
+  toggleWhy(company: string, title: string, originalText: string): void {
+    const key = this.bulletKey(company, title, originalText);
+    this.expandedWhyKeys.update((keys) => {
+      const next = new Set(keys);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
   }
 }

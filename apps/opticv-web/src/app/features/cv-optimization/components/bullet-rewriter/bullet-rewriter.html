@@ -31,120 +31,167 @@
       <li
         class="rounded-lg border border-(--border-subtle) p-3"
         [class.border-green-400]="bullet.action === 'rewrite' && bullet.rewrittenText && isSelected(position.company, position.title, bullet.originalText)"
+        [class.bg-green-50]="bullet.action === 'rewrite' && bullet.rewrittenText && isSelected(position.company, position.title, bullet.originalText)"
         [class.border-red-400]="bullet.action === 'recommend_cut' && isRemovedBullet(position.company, position.title, bullet.originalText)"
       >
         @switch (bullet.action) { @case ('rewrite') { @if (bullet.rewrittenText)
         {
         <div class="space-y-3">
-          <!-- Checkbox selection -->
-          <label class="flex items-start gap-3 cursor-pointer">
+          <!-- Header row -->
+          <div class="flex items-center gap-3">
             <input
               type="checkbox"
               [checked]="isSelected(position.company, position.title, bullet.originalText)"
               (change)="toggleBullet(position.company, position.title, bullet.originalText)"
-              class="accent-primary-500 mt-3 shrink-0"
+              class="accent-primary-500 shrink-0"
               [attr.aria-label]="'Select AI rewrite for bullet at ' + position.title + ' — ' + position.company"
             />
-            <div class="space-y-2 flex-1">
-              <div class="flex items-center gap-2">
-                <span class="font-semibold text-sm">Rewritten version:</span>
-                @if (isEdited(position.company, position.title,
-                bullet.originalText)) {
-                <span
-                  class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 font-medium"
-                  >Edited</span
-                >
-                } @if (!isEditing(position.company, position.title,
-                bullet.originalText)) {
-                <p-button
-                  type="button"
-                  variant="outlined"
-                  severity="success"
-                  size="small"
-                  class="ml-auto py-0!"
-                  (click)="editStarted.emit(bulletKey(position.company, position.title, bullet.originalText))"
-                  aria-label="Edit rewritten bullet"
-                >
-                  <i class="pi pi-pencil text-xs!"></i> Edit
-                </p-button>
-                }
-              </div>
-              @if (isEditing(position.company, position.title,
-              bullet.originalText)) {
-              <div class="space-y-2">
-                <textarea
-                  pTextarea
-                  [autoResize]="true"
-                  [value]="editedBulletText()"
-                  (input)="editTextChanged.emit($any($event.target).value)"
-                  class="w-full text-sm"
-                  rows="3"
-                  aria-label="Edit rewritten bullet text"
-                ></textarea>
-                <div class="flex gap-2">
-                  <p-button
-                    label="Save"
-                    size="small"
-                    (onClick)="editSaved.emit({ key: bulletKey(position.company, position.title, bullet.originalText), text: editedBulletText() })"
-                  />
-                  <p-button
-                    label="Cancel"
-                    size="small"
-                    severity="secondary"
-                    [text]="true"
-                    (onClick)="editCancelled.emit()"
-                  />
-                </div>
-              </div>
-              } @else {
-              <p class="text-sm text-surface-800 m-0">
-                {{ getDisplayText(position.company, position.title,
-                bullet.originalText, bullet.rewrittenText) }}
-              </p>
-              } @if (bullet.needsUserInput && bullet.placeholdersToFill.length >
-              0) {
-              <div
-                class="mt-3 rounded bg-amber-50 border border-amber-200 p-2 text-xs text-amber-700"
-              >
-                <span class="font-medium">Placeholders to fill:</span>
-                <span class="ml-1">
-                  @for (ph of bullet.placeholdersToFill; track ph) {
-                  <span
-                    class="inline-flex items-center rounded bg-amber-100 px-1.5 py-0.5 mr-1"
-                    >{{ ph }}</span
-                  >
-                  }
-                </span>
-              </div>
-              }
+            <span class="font-semibold text-sm">Bullet {{ bi + 1 }}</span>
+            @if (isEdited(position.company, position.title,
+            bullet.originalText)) {
+            <span
+              class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 font-medium"
+              >Edited</span
+            >
+            } @if (!isEditing(position.company, position.title,
+            bullet.originalText)) {
+            <p-button
+              type="button"
+              variant="outlined"
+              severity="success"
+              size="small"
+              class="ml-auto py-0!"
+              (click)="editStarted.emit(bulletKey(position.company, position.title, bullet.originalText))"
+              aria-label="Edit rewritten bullet"
+            >
+              <i class="pi pi-pencil text-xs!"></i> Edit
+            </p-button>
+            }
+          </div>
 
-              <p class="text-sm text-surface-400 mt-3">
-                <span class="font-semibold">Original:</span>
-                {{ bullet.originalText }}
-              </p>
-              @if (bullet.weakness) {
-              <p class="text-sm text-surface-500">
-                <span class="font-semibold">Weakness:</span> {{ bullet.weakness
-                }}
-              </p>
-              } @if (bullet.rewriteRationale) {
-              <p class="text-sm text-surface-500">
-                <span class="font-semibold">Reason for rewrite:</span> {{
-                bullet.rewriteRationale }}
-              </p>
-              } @if (bullet.keywordsIncorporated.length > 0) {
-              <div class="flex items-center flex-wrap gap-1">
-                <span class="font-semibold text-xs">Keywords:</span>
-                @for (kw of bullet.keywordsIncorporated; track kw) {
-                <span
-                  class="inline-flex items-center rounded-sm bg-(--neutral-100) px-2 py-0.5 text-xs text-surface-600"
-                  >{{ kw }}</span
-                >
-                }
-              </div>
-              }
+          <!-- BEFORE -->
+          <div
+            class="flex items-center gap-1.5 text-xs font-medium text-surface-400 uppercase tracking-wide"
+          >
+            <i class="pi pi-file text-[10px]"></i> Original
+          </div>
+          <div
+            class="rounded-md border border-(--border-subtle) bg-white p-2.5 text-sm text-surface-700"
+          >
+            {{ bullet.originalText }}
+          </div>
+
+          <!-- Arrow divider -->
+          <div class="flex justify-center">
+            <i
+              class="pi pi-arrow-down text-(--text-muted)"
+              aria-hidden="true"
+            ></i>
+          </div>
+
+          <!-- AFTER -->
+          <div
+            class="flex items-center gap-1.5 text-xs font-medium text-green-700 uppercase tracking-wide"
+          >
+            <i class="pi pi-check-circle text-[10px]"></i> Rewritten
+          </div>
+          @if (isEditing(position.company, position.title, bullet.originalText))
+          {
+          <div class="space-y-2">
+            <textarea
+              pTextarea
+              [autoResize]="true"
+              [value]="editedBulletText()"
+              (input)="editTextChanged.emit($any($event.target).value)"
+              class="w-full text-sm"
+              rows="3"
+              aria-label="Edit rewritten bullet text"
+            ></textarea>
+            <div class="flex gap-2">
+              <p-button
+                label="Save"
+                size="small"
+                (onClick)="editSaved.emit({ key: bulletKey(position.company, position.title, bullet.originalText), text: editedBulletText() })"
+              />
+              <p-button
+                label="Cancel"
+                size="small"
+                severity="secondary"
+                [text]="true"
+                (onClick)="editCancelled.emit()"
+              />
             </div>
-          </label>
+          </div>
+          } @else {
+          <div
+            class="rounded-md border-l-4 border-green-500 bg-white p-4 text-sm font-bold text-surface-900"
+          >
+            {{ getDisplayText(position.company, position.title,
+            bullet.originalText, bullet.rewrittenText) }}
+          </div>
+          } @if (bullet.needsUserInput && bullet.placeholdersToFill.length > 0)
+          {
+          <div class="text-xs text-amber-700 flex items-center">
+            <i class="pi pi-exclamation-circle mr-2"></i>
+            <span class="font-medium">Placeholders to fill:</span>
+            <span class="ml-1">
+              @for (ph of bullet.placeholdersToFill; track ph) {
+              <!-- <span
+                class="inline-flex items-center rounded bg-amber-100 px-1.5 py-0.5 mr-1"
+                >{{ ph }}</span
+              > -->
+              <span class="inline-flex items-center font-semibold mr-1"
+                >{{ ph }}</span
+              >
+              }
+            </span>
+          </div>
+          }
+
+          <!-- Why this works -->
+          @if (bullet.weakness || bullet.rewriteRationale) {
+          <button
+            type="button"
+            class="flex items-center gap-1.5 text-sm font-medium text-green-700"
+            [attr.aria-expanded]="isWhyExpanded(position.company, position.title, bullet.originalText)"
+            [attr.aria-controls]="'why-' + bulletKey(position.company, position.title, bullet.originalText)"
+            (click)="toggleWhy(position.company, position.title, bullet.originalText)"
+          >
+            <i
+              class="pi"
+              [class.pi-chevron-down]="!isWhyExpanded(position.company, position.title, bullet.originalText)"
+              [class.pi-chevron-up]="isWhyExpanded(position.company, position.title, bullet.originalText)"
+            ></i>
+            Why this works
+          </button>
+          @if (isWhyExpanded(position.company, position.title,
+          bullet.originalText)) {
+          <div
+            [id]="'why-' + bulletKey(position.company, position.title, bullet.originalText)"
+            class="space-y-1"
+          >
+            @if (bullet.weakness) {
+            <p class="text-xs text-surface-500 mb-2 ml-6">
+              <span class="font-semibold">Weakness:</span> {{ bullet.weakness }}
+            </p>
+            } @if (bullet.rewriteRationale) {
+            <p class="text-xs text-surface-500 mb-2 ml-6">
+              <span class="font-semibold">Reason for rewrite:</span> {{
+              bullet.rewriteRationale }}
+            </p>
+            }
+          </div>
+          } } @if (bullet.keywordsIncorporated.length > 0) {
+          <div class="flex items-center flex-wrap gap-1">
+            <span class="font-semibold text-xs">Keywords:</span>
+            @for (kw of bullet.keywordsIncorporated; track kw) {
+            <span
+              class="inline-flex items-center rounded-sm bg-(--neutral-100) px-2 py-0.5 text-xs text-surface-600"
+              >{{ kw }}</span
+            >
+            }
+          </div>
+          }
         </div>
         } @else {
         <!-- rewrite action but no rewrittenText — display original read-only -->

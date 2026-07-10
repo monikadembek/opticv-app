@@ -971,6 +971,16 @@ I also added 4 unit tests in cv-optimization.spec.ts covering: saving on toggle-
 
 ---
 
+### 79. UX/UI - Bullet upgrades visual improvements
+
+**status: in progress**
+**time: 10.07.2026**
+
+- suggested version and original versions are not very visible, maybe create sth like a diff or make the rewritten bullet more stand out
+- collapse information for weakness and reason for rewrite,
+
+---
+
 ### Bug - some selected bullet rewrites are not applied to A4 cv template preview and not applied to exported CV
 
 **status: todo**
@@ -987,15 +997,6 @@ I also added 4 unit tests in cv-optimization.spec.ts covering: saving on toggle-
 
 - add help informations which will explain what are keywords and why are they important,
 - what is summary, ats, etc.
-
----
-
-### UX - Bullet upgrades visual improvements
-
-**status: todo**
-**time:**
-
-- suggested version and original versions are not very visible, maybe create sth like a diff
 
 ---
 

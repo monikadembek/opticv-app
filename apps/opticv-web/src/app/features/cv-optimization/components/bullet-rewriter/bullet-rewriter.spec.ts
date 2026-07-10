@@ -107,7 +107,12 @@ describe('BulletRewriter', () => {
       );
     });
 
-    it('renders the rewrite rationale', () => {
+    it('renders the rewrite rationale after expanding "Why this works"', () => {
+      const toggle: HTMLButtonElement = fixture.nativeElement.querySelector(
+        'button[aria-controls^="why-"]',
+      );
+      toggle.click();
+      fixture.detectChanges();
       expect(fixture.nativeElement.textContent).toContain('Added measurable impact.');
     });
 
@@ -139,6 +144,133 @@ describe('BulletRewriter', () => {
 
     it('hides placeholder warning when needsUserInput is false', () => {
       expect(fixture.nativeElement.textContent).not.toContain('Placeholders to fill');
+    });
+
+    it('renders "Bullet 1" for the first bullet in a position\'s list', () => {
+      expect(fixture.nativeElement.textContent).toContain('Bullet 1');
+    });
+  });
+
+  describe('selected state background', () => {
+    const REWRITE_BULLET = MOCK_RESULT.positions[0].bullets[0];
+    const company = MOCK_RESULT.positions[0].company;
+    const title = MOCK_RESULT.positions[0].title;
+
+    it('applies the selected background class when the rewrite bullet is selected', () => {
+      fixture.componentRef.setInput('selectedBullets', [
+        { company, title, originalText: REWRITE_BULLET.originalText },
+      ]);
+      fixture.detectChanges();
+      const item: HTMLElement = fixture.nativeElement.querySelector('li');
+      expect(item.classList.contains('bg-green-50')).toBe(true);
+    });
+
+    it('does not apply the selected background class when the rewrite bullet is not selected', () => {
+      fixture.componentRef.setInput('selectedBullets', []);
+      fixture.detectChanges();
+      const item: HTMLElement = fixture.nativeElement.querySelector('li');
+      expect(item.classList.contains('bg-green-50')).toBe(false);
+    });
+  });
+
+  describe('"Why this works" toggle', () => {
+    const REWRITE_BULLET = MOCK_RESULT.positions[0].bullets[0];
+
+    it('is collapsed by default', () => {
+      expect(fixture.nativeElement.textContent).not.toContain(REWRITE_BULLET.weakness);
+      expect(fixture.nativeElement.textContent).not.toContain(REWRITE_BULLET.rewriteRationale);
+      const toggle: HTMLButtonElement = fixture.nativeElement.querySelector(
+        'button[aria-controls^="why-"]',
+      );
+      expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('expands and collapses the weakness/reason text on click', () => {
+      const toggle: HTMLButtonElement = fixture.nativeElement.querySelector(
+        'button[aria-controls^="why-"]',
+      );
+      toggle.click();
+      fixture.detectChanges();
+      expect(toggle.getAttribute('aria-expanded')).toBe('true');
+      expect(fixture.nativeElement.textContent).toContain(REWRITE_BULLET.weakness);
+      expect(fixture.nativeElement.textContent).toContain(REWRITE_BULLET.rewriteRationale);
+
+      toggle.click();
+      fixture.detectChanges();
+      expect(toggle.getAttribute('aria-expanded')).toBe('false');
+      expect(fixture.nativeElement.textContent).not.toContain(REWRITE_BULLET.weakness);
+    });
+
+    it('does not render when both weakness and rewriteRationale are absent', () => {
+      fixture.componentRef.setInput('result', {
+        ...MOCK_RESULT,
+        positions: [
+          {
+            ...MOCK_RESULT.positions[0],
+            bullets: [
+              { ...REWRITE_BULLET, weakness: '', rewriteRationale: undefined },
+            ],
+          },
+        ],
+      });
+      fixture.detectChanges();
+      const toggle = fixture.nativeElement.querySelector('button[aria-controls^="why-"]');
+      expect(toggle).toBeNull();
+    });
+
+    it('toggles independently per bullet', () => {
+      fixture.componentRef.setInput('result', {
+        ...MOCK_RESULT,
+        positions: [
+          {
+            ...MOCK_RESULT.positions[0],
+            bullets: [
+              REWRITE_BULLET,
+              {
+                ...REWRITE_BULLET,
+                originalText: 'Wrote some tests occasionally.',
+                rewrittenText: 'Authored a comprehensive automated test suite.',
+                weakness: 'No mention of coverage.',
+                rewriteRationale: 'Quantifies testing effort.',
+              },
+            ],
+          },
+        ],
+      });
+      fixture.detectChanges();
+
+      const toggles: NodeListOf<HTMLButtonElement> =
+        fixture.nativeElement.querySelectorAll('button[aria-controls^="why-"]');
+      expect(toggles.length).toBe(2);
+
+      toggles[0].click();
+      fixture.detectChanges();
+
+      expect(toggles[0].getAttribute('aria-expanded')).toBe('true');
+      expect(toggles[1].getAttribute('aria-expanded')).toBe('false');
+      expect(fixture.nativeElement.textContent).not.toContain('No mention of coverage.');
+    });
+
+    it('restarts "Bullet {n}" numbering at 1 for each position\'s bullet list', () => {
+      fixture.componentRef.setInput('result', {
+        ...MOCK_RESULT,
+        positions: [
+          {
+            ...MOCK_RESULT.positions[0],
+            bullets: [
+              REWRITE_BULLET,
+              {
+                ...REWRITE_BULLET,
+                originalText: 'Wrote some tests occasionally.',
+                rewrittenText: 'Authored a comprehensive automated test suite.',
+              },
+            ],
+          },
+        ],
+      });
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain('Bullet 1');
+      expect(fixture.nativeElement.textContent).toContain('Bullet 2');
     });
   });
 
