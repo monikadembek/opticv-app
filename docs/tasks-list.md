@@ -962,7 +962,7 @@ I also added 4 unit tests in cv-optimization.spec.ts covering: saving on toggle-
 
 ### 78. Add 'Optimize CV' button in the dashboard to each listed CV
 
-**status: in progress**
+**status: done**
 **time: 10.07.2026**
 
 - In the dashboard in the tab with uploaded cvs, add 'Optimize CV' button to each CV item, place it before the download icon button,
