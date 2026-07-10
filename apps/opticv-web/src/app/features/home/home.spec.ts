@@ -65,7 +65,8 @@ describe('Home', () => {
     expect(h1.textContent.trim()).toContain('one tailored CV at a time.');
   });
 
-  it('should render the "Optimize my CV" button', () => {
+  it('should render the "Optimize my CV" button when logged in with a CV', async () => {
+    await createComponent(true, [mockCv]);
     const button = fixture.nativeElement.querySelector(
       'p-button[label="Optimize my CV"]',
     );
@@ -74,7 +75,7 @@ describe('Home', () => {
 
   describe('Optimize / Upload button', () => {
     it('renders "Optimize my CV" when the user has a CV', async () => {
-      await createComponent(false, [mockCv]);
+      await createComponent(true, [mockCv]);
       const button = fixture.nativeElement.querySelector(
         'p-button[label="Optimize my CV"]',
       );
@@ -82,7 +83,7 @@ describe('Home', () => {
     });
 
     it('renders "Upload your first CV" when the user has no CV', async () => {
-      await createComponent(false, []);
+      await createComponent(true, []);
       const button = fixture.nativeElement.querySelector(
         'p-button[label="Upload your first CV"]',
       );

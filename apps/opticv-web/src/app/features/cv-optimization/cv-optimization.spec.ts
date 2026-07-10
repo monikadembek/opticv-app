@@ -2090,12 +2090,21 @@ describe('CvOptimization', () => {
   });
 
   describe('cover letter selection persistence', () => {
+    const g = globalThis as Record<string, unknown>;
+    let originalIntersectionObserver: unknown;
+
     beforeEach(() => {
+      originalIntersectionObserver = g['IntersectionObserver'];
+      g['IntersectionObserver'] = class {
+        observe = vi.fn();
+        disconnect = vi.fn();
+      };
       vi.useFakeTimers();
     });
 
     afterEach(() => {
       vi.useRealTimers();
+      g['IntersectionObserver'] = originalIntersectionObserver;
     });
 
     it('onCoverLetterVariantSelected persists the selection to the known COVER_LETTER result id', () => {
