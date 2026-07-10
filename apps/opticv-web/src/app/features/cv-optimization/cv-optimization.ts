@@ -27,7 +27,9 @@ import {
   BulletSelectionKey,
   BulletUpgradeResult,
   BulletUserState,
+  CoverLetterHookType,
   CoverLetterResult,
+  CoverLetterUserState,
   CvStructuredData,
   InterviewPrepResult,
   JobApplication,
@@ -188,6 +190,7 @@ export class CvOptimization implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly persistSubject = new Subject<void>();
   private readonly persistSummarySubject = new Subject<void>();
+  private readonly persistCoverLetterSubject = new Subject<void>();
   private scrollObserver: IntersectionObserver | null = null;
 
   readonly PromptType = PromptType;
@@ -212,6 +215,11 @@ export class CvOptimization implements OnInit {
   readonly bulletEdits = signal<Map<string, string>>(new Map());
   readonly bulletUpgradeResultId = signal<string | null>(null);
   readonly summaryRewriteResultId = signal<string | null>(null);
+  readonly coverLetterResultId = signal<string | null>(null);
+  readonly selectedCoverLetterVariant = signal<CoverLetterHookType | null>(
+    null,
+  );
+  readonly editedCoverLetterContent = signal<string | null>(null);
   readonly activeBulletEditKey = signal<string | null>(null);
   readonly editedBulletText = signal<string>('');
   readonly selectedMissingBullets = signal<
@@ -421,6 +429,10 @@ export class CvOptimization implements OnInit {
       .pipe(debounceTime(500), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.persistSummaryState());
 
+    this.persistCoverLetterSubject
+      .pipe(debounceTime(500), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.persistCoverLetterState());
+
     const jobApplicationId =
       this.route.snapshot.paramMap.get('jobApplicationId');
     if (jobApplicationId) {
@@ -608,6 +620,22 @@ export class CvOptimization implements OnInit {
                 }
               }
             }
+            if (r.promptType === PromptType.COVER_LETTER) {
+              this.coverLetterResultId.set(r.id);
+              if (r.userEditedOutput != null) {
+                try {
+                  const state = JSON.parse(
+                    r.userEditedOutput,
+                  ) as CoverLetterUserState;
+                  this.selectedCoverLetterVariant.set(state.selectedVariant);
+                  this.editedCoverLetterContent.set(state.editedContent);
+                } catch {
+                  console.warn(
+                    'Could not parse cover letter user state from stored optimization',
+                  );
+                }
+              }
+            }
           }
           this.results.set(resultMap);
 
@@ -642,6 +670,9 @@ export class CvOptimization implements OnInit {
     this.bulletEdits.set(new Map());
     this.bulletUpgradeResultId.set(null);
     this.summaryRewriteResultId.set(null);
+    this.coverLetterResultId.set(null);
+    this.selectedCoverLetterVariant.set(null);
+    this.editedCoverLetterContent.set(null);
     this.activeBulletEditKey.set(null);
     this.editedBulletText.set('');
     this.selectedMissingBullets.set([]);
@@ -752,6 +783,16 @@ export class CvOptimization implements OnInit {
   onSummaryTextEdited(text: string | null): void {
     this.selections.update((s) => ({ ...s, customSummaryText: text }));
     this.persistSummarySubject.next();
+  }
+
+  onCoverLetterVariantSelected(hookType: CoverLetterHookType): void {
+    this.selectedCoverLetterVariant.set(hookType);
+    this.persistCoverLetterSubject.next();
+  }
+
+  onCoverLetterTextEdited(content: string): void {
+    this.editedCoverLetterContent.set(content);
+    this.persistCoverLetterSubject.next();
   }
 
   onBulletToggled(key: BulletSelectionKey): void {
@@ -1097,6 +1138,58 @@ export class CvOptimization implements OnInit {
           if (summaryResult) {
             this.summaryRewriteResultId.set(summaryResult.id);
             buildAndSave(summaryResult.id);
+          }
+        },
+        error: () => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Could not save changes',
+            detail: 'Your edits are still applied locally.',
+          });
+        },
+      });
+  }
+
+  private persistCoverLetterState(): void {
+    const jobApplicationId = this.jobApplicationId();
+    if (jobApplicationId === null) return;
+
+    const buildAndSave = (resultId: string) => {
+      const state: CoverLetterUserState = {
+        selectedVariant: this.selectedCoverLetterVariant(),
+        editedContent: this.editedCoverLetterContent(),
+      };
+      this.cvOptimizationApiService
+        .saveUserOutput(resultId, JSON.stringify(state))
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          error: () => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Could not save changes',
+              detail: 'Your edits are still applied locally.',
+            });
+          },
+        });
+    };
+
+    const knownId = this.coverLetterResultId();
+    if (knownId !== null) {
+      buildAndSave(knownId);
+      return;
+    }
+
+    this.cvOptimizationApiService
+      .getOptimizationResults(jobApplicationId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (results) => {
+          const coverLetterResult = results.find(
+            (r) => r.promptType === PromptType.COVER_LETTER,
+          );
+          if (coverLetterResult) {
+            this.coverLetterResultId.set(coverLetterResult.id);
+            buildAndSave(coverLetterResult.id);
           }
         },
         error: () => {

@@ -5,6 +5,7 @@ import {
   effect,
   inject,
   input,
+  output,
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -12,7 +13,7 @@ import { EditorModule } from 'primeng/editor';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { MessageService } from 'primeng/api';
-import type { CoverLetterResult } from '@opticv/datatypes';
+import type { CoverLetterHookType, CoverLetterResult } from '@opticv/datatypes';
 import { CoverLetterExportService } from '../../services/cover-letter-export.service';
 import posthog from 'posthog-js';
 
@@ -33,8 +34,14 @@ export class CoverLetterEditor {
   private readonly exportService = inject(CoverLetterExportService);
   private readonly messageService = inject(MessageService);
   private userHasInteracted = false;
+  private hasAppliedInitialState = false;
 
   readonly result = input.required<CoverLetterResult>();
+  readonly initialSelectedVariant = input<CoverLetterHookType | null>(null);
+  readonly initialEditedContent = input<string | null>(null);
+
+  readonly variantSelected = output<CoverLetterHookType>();
+  readonly contentEdited = output<string>();
 
   readonly safeIndex = computed<number>(() => {
     const idx = this.result().variants.findIndex(
@@ -50,9 +57,31 @@ export class CoverLetterEditor {
 
   constructor() {
     effect(() => {
-      const idx = this.safeIndex();
+      const isFirstApplication = !this.hasAppliedInitialState;
+      let idx = this.safeIndex();
+
+      if (isFirstApplication) {
+        const restoredVariant = this.initialSelectedVariant();
+        if (restoredVariant !== null) {
+          const restoredIdx = this.result().variants.findIndex(
+            (v) => v.hookType === restoredVariant,
+          );
+          if (restoredIdx !== -1) {
+            idx = restoredIdx;
+          }
+        }
+      }
+
       this.selectedVariantIndex.set(idx);
-      this.editorContent.set(this.buildContent(idx));
+
+      const restoredContent = this.initialEditedContent();
+      if (isFirstApplication && restoredContent !== null) {
+        this.editorContent.set(restoredContent);
+      } else {
+        this.editorContent.set(this.buildContent(idx));
+      }
+
+      this.hasAppliedInitialState = true;
     });
   }
 
@@ -74,6 +103,12 @@ export class CoverLetterEditor {
   selectVariant(index: number): void {
     this.selectedVariantIndex.set(index);
     this.editorContent.set(this.buildContent(index));
+    this.variantSelected.emit(this.result().variants[index].hookType);
+  }
+
+  onEditorContentChange(html: string): void {
+    this.editorContent.set(html);
+    this.contentEdited.emit(html);
   }
 
   async onExportPdf(): Promise<void> {

@@ -952,23 +952,15 @@ I also added 4 unit tests in cv-optimization.spec.ts covering: saving on toggle-
 
 ### 77. Bug - selected cover letter and the eventual edited version is not saved
 
-**status: todo**
-**time: 09.07.2026**
+**status: in progress**
+**time: 09.07.2026 - 10.07.2026**
 
-- selected cover letter and the eventual edited version is not saved
-
----
-
-### 78. Bug - some selected bullet rewrites are not applied to A4 cv template preview and not applied to exported CV
-
-**status: todo**
-**time: 09.07.2026**
-
-- some selected bullet rewrites are not applied to A4 cv template preview and not applied to exported CV, investigate the issue, it happens when missing bullets target position which is not listed on the cv, it may be included in results in 'other' property
+- perist selected cover letter and edited content in database
+- reload saved cover letter and edited content when user opens stored cv optimization
 
 ---
 
-### 79. Add 'Optimize CV' button in the dashboard to each listed CV
+### 78. Add 'Optimize CV' button in the dashboard to each listed CV
 
 **status: todo**
 **time: 09.07.2026**
@@ -978,7 +970,16 @@ I also added 4 unit tests in cv-optimization.spec.ts covering: saving on toggle-
 
 ---
 
-### Add help informations
+### Bug - some selected bullet rewrites are not applied to A4 cv template preview and not applied to exported CV
+
+**status: todo**
+**time:**
+
+- some selected bullet rewrites are not applied to A4 cv template preview and not applied to exported CV, investigate the issue, it happens when missing bullets target position which is not listed on the cv, it may be included in results in 'other' property
+
+---
+
+### UX - Add help informations
 
 **status: todo**
 **time:**
@@ -988,7 +989,7 @@ I also added 4 unit tests in cv-optimization.spec.ts covering: saving on toggle-
 
 ---
 
-### UX - Bullet upgrades improvements
+### UX - Bullet upgrades visual improvements
 
 **status: todo**
 **time:**

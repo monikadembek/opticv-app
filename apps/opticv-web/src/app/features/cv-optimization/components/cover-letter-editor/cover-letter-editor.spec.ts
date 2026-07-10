@@ -204,6 +204,88 @@ describe('CoverLetterEditor', () => {
     });
   });
 
+  describe('restoring initial state', () => {
+    it('falls back to AI-recommended variant and generated content when initial inputs are null', () => {
+      const expectedIndex = MOCK_RESULT.variants.findIndex(
+        (v) => v.hookType === MOCK_RESULT.recommendedVariant,
+      );
+      expect(component.selectedVariantIndex()).toBe(expectedIndex);
+      const recommended = MOCK_RESULT.variants[expectedIndex];
+      expect(component.editorContent()).toBe(
+        `<p>${MOCK_RESULT.salutation}</p><p>${recommended.fullLetter}</p>`,
+      );
+    });
+
+    it('restores selectedVariantIndex and editorContent from initial inputs when they match a variant', async () => {
+      fixture = TestBed.createComponent(CoverLetterEditor);
+      component = fixture.componentInstance;
+      fixture.componentRef.setInput('result', MOCK_RESULT);
+      fixture.componentRef.setInput('initialSelectedVariant', 'story');
+      fixture.componentRef.setInput('initialEditedContent', '<p>Edited</p>');
+      fixture.detectChanges();
+
+      const expectedIndex = MOCK_RESULT.variants.findIndex(
+        (v) => v.hookType === 'story',
+      );
+      expect(component.selectedVariantIndex()).toBe(expectedIndex);
+      expect(component.editorContent()).toBe('<p>Edited</p>');
+    });
+
+    it('falls back to AI-recommended variant when initialSelectedVariant does not match any hookType', async () => {
+      const unknownVariant = 'unknown' as unknown as CoverLetterResult['variants'][number]['hookType'];
+      fixture = TestBed.createComponent(CoverLetterEditor);
+      component = fixture.componentInstance;
+      fixture.componentRef.setInput('result', MOCK_RESULT);
+      fixture.componentRef.setInput('initialSelectedVariant', unknownVariant);
+      fixture.detectChanges();
+
+      const expectedIndex = MOCK_RESULT.variants.findIndex(
+        (v) => v.hookType === MOCK_RESULT.recommendedVariant,
+      );
+      expect(component.selectedVariantIndex()).toBe(expectedIndex);
+    });
+
+    it('only applies initialSelectedVariant/initialEditedContent on the first effect run, not on later result() changes', async () => {
+      fixture = TestBed.createComponent(CoverLetterEditor);
+      component = fixture.componentInstance;
+      fixture.componentRef.setInput('result', MOCK_RESULT);
+      fixture.componentRef.setInput('initialSelectedVariant', 'story');
+      fixture.componentRef.setInput('initialEditedContent', '<p>Edited</p>');
+      fixture.detectChanges();
+
+      const restoredIndex = MOCK_RESULT.variants.findIndex(
+        (v) => v.hookType === 'story',
+      );
+      expect(component.selectedVariantIndex()).toBe(restoredIndex);
+      expect(component.editorContent()).toBe('<p>Edited</p>');
+
+      fixture.componentRef.setInput('result', { ...MOCK_RESULT });
+      fixture.detectChanges();
+
+      const recommendedIndex = MOCK_RESULT.variants.findIndex(
+        (v) => v.hookType === MOCK_RESULT.recommendedVariant,
+      );
+      expect(component.selectedVariantIndex()).toBe(recommendedIndex);
+    });
+  });
+
+  describe('output emissions', () => {
+    it('emits variantSelected with the newly selected variant hookType', () => {
+      const emitted: string[] = [];
+      component.variantSelected.subscribe((v) => emitted.push(v));
+      component.selectVariant(0);
+      expect(emitted).toEqual([MOCK_RESULT.variants[0].hookType]);
+    });
+
+    it('emits contentEdited with the new HTML string when editor content changes', () => {
+      const emitted: string[] = [];
+      component.contentEdited.subscribe((v) => emitted.push(v));
+      component.onEditorContentChange('<p>New content</p>');
+      expect(emitted).toEqual(['<p>New content</p>']);
+      expect(component.editorContent()).toBe('<p>New content</p>');
+    });
+  });
+
   describe('export handlers', () => {
     it('calls exportService.exportToPdf with current editorContent', async () => {
       await component.onExportPdf();
