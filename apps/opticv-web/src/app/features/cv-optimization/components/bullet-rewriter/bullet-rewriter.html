@@ -290,6 +290,7 @@
       <div
         class="rounded-lg border border-(--border-subtle) p-4"
         [class.border-green-400]="isMissingSelected(suggestion.forPosition, suggestion.suggestedBullet)"
+        [class.bg-green-50]="isMissingSelected(suggestion.forPosition, suggestion.suggestedBullet)"
       >
         <label class="flex items-start gap-3 cursor-pointer">
           <input
@@ -300,20 +301,11 @@
             [attr.aria-label]="'Add suggested bullet for ' + suggestion.forPosition"
           />
           <div class="space-y-2 flex-1">
-            <p class="mb-2 text-sm font-semibold text-surface-700">
-              {{ suggestion.forPosition }}
-            </p>
             <div class="flex items-center gap-2">
-              <span class="font-semibold text-sm">Suggested bullet:</span>
-              @if (isMissingEdited(suggestion.forPosition,
-              suggestion.suggestedBullet)) {
-              <span
-                class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 font-medium"
-                >Edited</span
-              >
-              } @if (isMissingSelected(suggestion.forPosition,
-              suggestion.suggestedBullet) &&
-              !isMissingEditing(suggestion.forPosition,
+              <p class="mb-2 text-sm font-semibold text-surface-700">
+                {{ suggestion.forPosition }}
+              </p>
+              @if (!isMissingEditing(suggestion.forPosition,
               suggestion.suggestedBullet)) {
               <p-button
                 type="button"
@@ -326,6 +318,18 @@
               >
                 <i class="pi pi-pencil text-xs"></i> Edit
               </p-button>
+              }
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-(--text-subtle) uppercase font-semibold"
+                >Suggested bullet</span
+              >
+              @if (isMissingEdited(suggestion.forPosition,
+              suggestion.suggestedBullet)) {
+              <span
+                class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 font-medium"
+                >Edited</span
+              >
               }
             </div>
             @if (isMissingEditing(suggestion.forPosition,
@@ -356,7 +360,9 @@
               </div>
             </div>
             } @else {
-            <p class="text-sm text-surface-800 mb-3">
+            <p
+              class="rounded-md border-l-4 border-green-500 bg-white p-4 text-sm font-bold text-surface-900"
+            >
               {{ getMissingDisplayText(suggestion.forPosition,
               suggestion.suggestedBullet) }}
             </p>
@@ -366,8 +372,9 @@
             </p>
             }
             <div
-              class="rounded-md bg-blue-50 border border-blue-200 p-2 text-sm text-blue-700"
+              class="rounded-md bg-blue-50 border border-blue-200 p-2 text-sm text-blue-700 flex gap-2 items-start"
             >
+              <i class="pi pi-question-circle mt-0.5"></i>
               {{ suggestion.questionToAskUser }}
             </div>
           </div>

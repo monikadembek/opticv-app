@@ -440,6 +440,28 @@ describe('BulletRewriter', () => {
       ).toBe(false);
     });
 
+    it('applies the selected border and background classes when the missing bullet is selected', () => {
+      fixture.componentRef.setInput('selectedMissingBullets', [
+        { forPosition: SUGGESTION.forPosition, suggestedBullet: SUGGESTION.suggestedBullet },
+      ]);
+      fixture.detectChanges();
+      const card: HTMLElement = fixture.nativeElement.querySelector(
+        '.rounded-lg.border.border-\\(--border-subtle\\).p-4',
+      );
+      expect(card.classList.contains('border-green-400')).toBe(true);
+      expect(card.classList.contains('bg-green-50')).toBe(true);
+    });
+
+    it('does not apply the selected border and background classes when the missing bullet is not selected', () => {
+      fixture.componentRef.setInput('selectedMissingBullets', []);
+      fixture.detectChanges();
+      const card: HTMLElement = fixture.nativeElement.querySelector(
+        '.rounded-lg.border.border-\\(--border-subtle\\).p-4',
+      );
+      expect(card.classList.contains('border-green-400')).toBe(false);
+      expect(card.classList.contains('bg-green-50')).toBe(false);
+    });
+
     it('shows the edit button for a selected missing bullet', () => {
       fixture.componentRef.setInput('selectedMissingBullets', [
         { forPosition: SUGGESTION.forPosition, suggestedBullet: SUGGESTION.suggestedBullet },
@@ -449,8 +471,15 @@ describe('BulletRewriter', () => {
       expect(btn).toBeTruthy();
     });
 
-    it('does not show the edit button for an unselected missing bullet', () => {
+    it('shows the edit button for an unselected missing bullet', () => {
       fixture.componentRef.setInput('selectedMissingBullets', []);
+      fixture.detectChanges();
+      const btn = fixture.nativeElement.querySelector('[aria-label="Edit suggested bullet"]');
+      expect(btn).toBeTruthy();
+    });
+
+    it('does not show the edit button while the missing bullet is being edited', () => {
+      fixture.componentRef.setInput('activeBulletEditKey', missingKey);
       fixture.detectChanges();
       const btn = fixture.nativeElement.querySelector('[aria-label="Edit suggested bullet"]');
       expect(btn).toBeNull();
