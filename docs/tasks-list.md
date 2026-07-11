@@ -973,10 +973,11 @@ I also added 4 unit tests in cv-optimization.spec.ts covering: saving on toggle-
 
 ### 79. UX/UI - Bullet upgrades visual improvements
 
-**status: in progress**
-**time: 10.07.2026**
+**status: done**
+**time: 10.07.2026 - 11.07.2026**
 
 - suggested version and original versions are not very visible, maybe create sth like a diff or make the rewritten bullet more stand out
+- display original version next to the rewritten version of bullet point
 - collapse information for weakness and reason for rewrite,
 
 ---

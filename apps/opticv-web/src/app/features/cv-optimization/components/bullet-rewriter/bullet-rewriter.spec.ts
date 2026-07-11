@@ -146,8 +146,10 @@ describe('BulletRewriter', () => {
       expect(fixture.nativeElement.textContent).not.toContain('Placeholders to fill');
     });
 
-    it('renders "Bullet 1" for the first bullet in a position\'s list', () => {
-      expect(fixture.nativeElement.textContent).toContain('Bullet 1');
+    it('renders the position title/company header for a rewrite bullet', () => {
+      expect(fixture.nativeElement.textContent).toContain(
+        'Frontend Developer at Acme Corp - bullet point rewrite',
+      );
     });
   });
 
@@ -251,7 +253,7 @@ describe('BulletRewriter', () => {
       expect(fixture.nativeElement.textContent).not.toContain('No mention of coverage.');
     });
 
-    it('restarts "Bullet {n}" numbering at 1 for each position\'s bullet list', () => {
+    it('renders each bullet in a position\'s list with its own original/rewritten text', () => {
       fixture.componentRef.setInput('result', {
         ...MOCK_RESULT,
         positions: [
@@ -269,8 +271,14 @@ describe('BulletRewriter', () => {
         ],
       });
       fixture.detectChanges();
-      expect(fixture.nativeElement.textContent).toContain('Bullet 1');
-      expect(fixture.nativeElement.textContent).toContain('Bullet 2');
+      expect(fixture.nativeElement.textContent).toContain('Did things with React.');
+      expect(fixture.nativeElement.textContent).toContain('Wrote some tests occasionally.');
+      expect(fixture.nativeElement.textContent).toContain(
+        'Built React dashboards reducing load time by 40%.',
+      );
+      expect(fixture.nativeElement.textContent).toContain(
+        'Authored a comprehensive automated test suite.',
+      );
     });
   });
 
