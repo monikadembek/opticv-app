@@ -982,6 +982,25 @@ I also added 4 unit tests in cv-optimization.spec.ts covering: saving on toggle-
 
 ---
 
+### 80. UX/UI - Bullet upgrades - missing bullet points visual improvements
+
+**status: done**
+**time: 11.07.2026**
+
+- ui changes: selected mising bullet card should have light green background
+- display edit button always not only when missing bullet isselected
+
+---
+
+### 81. UX/UI - Dashboard redesing
+
+**status: todo**
+**time: 12.07.2026**
+
+- implement new designs for the dashboard
+
+---
+
 ### Bug - some selected bullet rewrites are not applied to A4 cv template preview and not applied to exported CV
 
 **status: todo**
