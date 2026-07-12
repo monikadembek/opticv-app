@@ -11,10 +11,25 @@ import { ButtonModule } from 'primeng/button';
 import type { JobApplicationListItem } from '@opticv/datatypes';
 import { CvStore } from '../../../../core/stores/cv.store';
 import { TableModule } from 'primeng/table';
+import { FormsModule } from '@angular/forms';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
+import { Search } from '@primeicons/angular/search';
 
 @Component({
   selector: 'app-optimization-list',
-  imports: [DatePipe, RouterLink, ButtonModule, TableModule],
+  imports: [
+    DatePipe,
+    RouterLink,
+    ButtonModule,
+    TableModule,
+    IconFieldModule,
+    InputIconModule,
+    InputTextModule,
+    FormsModule,
+    Search,
+  ],
   templateUrl: './optimization-list.html',
   styleUrl: './optimization-list.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -15,10 +15,27 @@
   />
 </div>
 } @else {
+<div class="mb-3 flex justify-end">
+  <p-iconfield iconPosition="left">
+    <p-inputicon>
+      <svg data-p-icon="search" />
+    </p-inputicon>
+    <input
+      pInputText
+      pSize="small"
+      type="text"
+      (input)="dt.filterGlobal($event.target.value, 'contains')"
+      placeholder="Search"
+    />
+  </p-iconfield>
+</div>
+
 <p-table
+  #dt
   [value]="cvFiles()"
   [loading]="isCvsLoading()"
   [pt]="{ loadingIcon: { class: 'w-auto! h-auto!' } }"
+  [globalFilterFields]="['fileName']"
   [tableStyle]="{ 'border': '1px solid #e2e8f0'}"
   class="optim-table mt-4"
 >

@@ -12,10 +12,25 @@ import { Router, RouterLink } from '@angular/router';
 import { TableModule } from 'primeng/table';
 import { DatePipe } from '@angular/common';
 import { formatFileSize, getMimeLabel } from '../../../../shared/utils';
+import { FormsModule } from '@angular/forms';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { InputTextModule } from 'primeng/inputtext';
+import { Search } from '@primeicons/angular/search';
 
 @Component({
   selector: 'app-cv-file-list',
-  imports: [RouterLink, ButtonModule, TableModule, DatePipe],
+  imports: [
+    RouterLink,
+    ButtonModule,
+    TableModule,
+    DatePipe,
+    IconFieldModule,
+    InputIconModule,
+    InputTextModule,
+    FormsModule,
+    Search,
+  ],
   templateUrl: './cv-file-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [ConfirmationService],
