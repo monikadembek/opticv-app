@@ -50,7 +50,7 @@
   [loading]="isLoading()"
   [pt]="{ loadingIcon: { class: 'w-auto! h-auto!' } }"
   [globalFilterFields]="['jobTitle', 'companyName', 'fileName']"
-  [tableStyle]="{ 'border': '1px solid #e2e8f0'}"
+  [tableStyle]="{ 'border': '1px solid var(--border-subtle)' }"
   class="optim-table mt-4"
 >
   <ng-template #header>
@@ -85,6 +85,7 @@
             size="small"
             severity="danger"
             [text]="true"
+            styleClass="action-icon-btn"
             title="Delete"
             (onClick)="onDelete(item)"
             ariaLabel="Delete optimization for {{ item.jobTitle ?? 'this position' }}"

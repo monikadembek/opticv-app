@@ -36,7 +36,7 @@
   [loading]="isCvsLoading()"
   [pt]="{ loadingIcon: { class: 'w-auto! h-auto!' } }"
   [globalFilterFields]="['fileName']"
-  [tableStyle]="{ 'border': '1px solid #e2e8f0'}"
+  [tableStyle]="{ 'border': '1px solid var(--border-subtle)' }"
   class="optim-table mt-4"
 >
   <ng-template #header>
@@ -52,9 +52,9 @@
     <tr>
       <td class="font-semibold">
         @if(getMimeLabel(file.mimeType) === 'PDF') {
-        <i class="pi pi-file-pdf text-(--text-subtle) mr-0.5"></i>
+        <i class="pi pi-file-pdf text-(--critical) mr-0.5"></i>
         } @else {
-        <i class="pi pi-file-word text-(--text-subtle) mr-0.5"></i>
+        <i class="pi pi-file-word text-(--info) mr-0.5"></i>
         } {{ file.fileName}}
         <span class="flex items-center gap-1 text-xs ml-0.5 mt-0.5">
           @switch (file.parseStatus) { @case ('PENDING') {
@@ -72,7 +72,12 @@
           } }
         </span>
       </td>
-      <td class="uppercase">{{ getMimeLabel(file.mimeType) }}</td>
+      <td>
+        <span
+          class="uppercase text-sm px-3 py-1 bg-(--neutral-100) rounded-full"
+          >{{ getMimeLabel(file.mimeType) }}</span
+        >
+      </td>
       <td>{{ formatFileSize(file.fileSize) }}</td>
       <td>{{ file.createdAt | date: 'MMM d, yyyy'}}</td>
       <td>
@@ -81,7 +86,6 @@
             icon="pi pi-bolt"
             label="Optimize CV"
             size="small"
-            [text]="true"
             title="Optimize CV"
             (onClick)="optimizeCv(file)"
           />
@@ -90,6 +94,7 @@
             severity="secondary"
             size="small"
             [text]="true"
+            styleClass="action-icon-btn"
             title="Download"
             (onClick)="downloadCv(file)"
           />
@@ -98,6 +103,7 @@
             severity="danger"
             size="small"
             [text]="true"
+            styleClass="action-icon-btn"
             title="Delete"
             (onClick)="deleteCv(file)"
           />

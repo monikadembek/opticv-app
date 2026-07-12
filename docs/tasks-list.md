@@ -994,7 +994,7 @@ I also added 4 unit tests in cv-optimization.spec.ts covering: saving on toggle-
 
 ### 81. UX/UI - Dashboard redesing
 
-**status: in progress**
+**status: done**
 **time: 12.07.2026**
 
 - implement new designs for the dashboard

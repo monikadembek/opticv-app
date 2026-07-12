@@ -65,6 +65,7 @@
   --success: #059669;
   --warning: #f59e0b;
   --critical: #b91c1c;
+  --info: #1d4ed8;
   --font-heading: Montserrat, ui-sans-serif, system-ui, sans-serif;
   --font-body: Lato, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
