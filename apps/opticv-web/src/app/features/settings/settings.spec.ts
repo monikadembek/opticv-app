@@ -81,6 +81,26 @@ describe('Settings', () => {
     expect(fixture.componentInstance.isDeleting()).toBe(false);
   });
 
+  // ─── ngOnInit ────────────────────────────────────────────────────────────
+
+  it('reloads the user profile on init', async () => {
+    await setup();
+    const fixture = TestBed.createComponent(Settings);
+
+    fixture.componentInstance.ngOnInit();
+
+    expect(userSettingsMock.reloadUserProfile).toHaveBeenCalledOnce();
+  });
+
+  it('reloads the user profile when the component is created via change detection', async () => {
+    await setup();
+    const fixture = TestBed.createComponent(Settings);
+
+    fixture.detectChanges();
+
+    expect(userSettingsMock.reloadUserProfile).toHaveBeenCalledOnce();
+  });
+
   // ─── getAvatarLabel ──────────────────────────────────────────────────────
 
   describe('getAvatarLabel', () => {

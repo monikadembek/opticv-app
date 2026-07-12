@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   inject,
+  OnInit,
   signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
@@ -28,7 +29,7 @@ import posthog from 'posthog-js';
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [ConfirmationService],
 })
-export class Settings {
+export class Settings implements OnInit {
   private readonly userSettingsApiService = inject(UserSettingsApiService);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
@@ -37,6 +38,10 @@ export class Settings {
 
   readonly userProfile = this.userSettingsApiService.userProfile;
   readonly isDeleting = signal(false);
+
+  ngOnInit() {
+    this.userSettingsApiService.reloadUserProfile();
+  }
 
   onDeleteAccount(): void {
     this.confirmationService.confirm({

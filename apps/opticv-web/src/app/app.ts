@@ -47,6 +47,7 @@ export class App {
 
   async executeSignOut() {
     await this.supabaseService.signOut();
+    this.cvStore.resetStore();
     this.router.navigate(['login']);
   }
 }
