@@ -1,3 +1,28 @@
 .container {
   max-width: 1440px;
 }
+
+/* ::ng-deep .optim-table {
+  border-radius: 0.5rem;
+  overflow: hidden;
+} */
+
+::ng-deep .optim-table .p-datatable-thead > tr > th {
+  background-color: var(--primary-50) !important;
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 14px 20px;
+}
+
+::ng-deep .optim-table .p-datatable-tbody > tr > td {
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 14px 20px;
+}
+
+::ng-deep .optim-table .p-datatable-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+::ng-deep .optim-table .action-icon-btn {
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 0.375rem !important;
+}
