@@ -38,7 +38,7 @@ function createSupabaseMock(sessionValue: any = null, userValue: any = null) {
 }
 
 function createCvStoreMock() {
-  return { loadUserCVs: vi.fn() };
+  return { loadUserCVs: vi.fn(), resetStore: vi.fn() };
 }
 
 describe('App', () => {
@@ -121,6 +121,14 @@ describe('App', () => {
 
     expect(supabaseMock.signOut).toHaveBeenCalled();
     expect(navigateSpy).toHaveBeenCalledWith(['login']);
+  });
+
+  it('executeSignOut should reset the cv store', async () => {
+    const fixture = TestBed.createComponent(App);
+
+    await fixture.componentInstance.executeSignOut();
+
+    expect(cvStoreMock.resetStore).toHaveBeenCalledOnce();
   });
 
   describe('cv store loading', () => {

@@ -34,6 +34,9 @@ export const CvStore = signalStore(
       cvApiService = inject(CvApiService),
       destroyRef = inject(DestroyRef),
     ) => ({
+      resetStore(): void {
+        patchState(store, initialState);
+      },
       updateCvList(cvs: CvDocumentListItem[]): void {
         patchState(store, { cvList: cvs });
       },

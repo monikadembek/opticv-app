@@ -1006,12 +1006,18 @@ I also added 4 unit tests in cv-optimization.spec.ts covering: saving on toggle-
 
 ---
 
-### 82. Bug - Settings page displays data from previously logged in user
+### 82. Bug - Settings page displays data from previously logged in user, the same with list of cvs displayed in dashboard
 
-**status: todo**
-**time: **
+**status: done**
+**time: 12.07.2026 - 13.07.2026**
 
 - user logs out, user logs in with different account, setting page displays data from previous user account and only after page refresh settings page shows correct data
+- cv list is also displayed from previous account
+
+To do:
+
+- clean cv store when user signs out
+- settings page shows old data because httpResource cached data - reload data when user enters settings page
 
 ---
 
