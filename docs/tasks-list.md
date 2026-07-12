@@ -1001,8 +1001,17 @@ I also added 4 unit tests in cv-optimization.spec.ts covering: saving on toggle-
 - add stats above tabs
 - get data in dashboard component and pass to list of cvs and list of optimizations
 - redesign list of cvs - display in table
-- redisign list of optimizations - display in table
+- redesign list of optimizations - display in table
 - add search functionality
+
+---
+
+### 82. Bug - Settings page displays data from previously logged in user
+
+**status: todo**
+**time: **
+
+- user logs out, user logs in with different account, setting page displays data from previous user account and only after page refresh settings page shows correct data
 
 ---
 

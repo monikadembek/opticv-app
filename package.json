@@ -94,6 +94,7 @@
     "@nestjs/swagger": "^11.4.3",
     "@nestjs/throttler": "^6.5.0",
     "@ngrx/signals": "^21.1.0",
+    "@primeicons/angular": "^8.0.0-alpha.1",
     "@primeuix/themes": "^2.0.3",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
