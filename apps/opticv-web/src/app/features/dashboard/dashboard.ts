@@ -5,6 +5,7 @@ import {
   effect,
   inject,
   OnInit,
+  PLATFORM_ID,
   signal,
 } from '@angular/core';
 import { TabsModule } from 'primeng/tabs';
@@ -13,12 +14,13 @@ import { OptimizationList } from './components/optimization-list/optimization-li
 import { CvStore } from '../../core/stores/cv.store';
 import { JobApplicationApiService } from '../../core/services/job-application-api.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { JobApplicationListItem } from '@opticv/datatypes';
+import { CvDocumentListItem, JobApplicationListItem } from '@opticv/datatypes';
 import posthog from 'posthog-js';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { Supabase } from '../../core/auth/services/supabase';
-import { DatePipe } from '@angular/common';
+import { DatePipe, isPlatformBrowser } from '@angular/common';
+import { CvApiService } from '../../core/services/cv-api.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -41,6 +43,12 @@ export class Dashboard implements OnInit {
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
   private readonly supabaseService = inject(Supabase);
+  private readonly cvApiService = inject(CvApiService);
+  private readonly platformId = inject(PLATFORM_ID);
+
+  readonly cvFiles = this.cvStore.cvList;
+  readonly isCvsLoading = this.cvStore.loading;
+  readonly cvsError = this.cvStore.error;
 
   readonly optimizationsItems = signal<JobApplicationListItem[]>([]);
   readonly isLoadingOptimizations = signal(false);
@@ -79,8 +87,78 @@ export class Dashboard implements OnInit {
   }
 
   ngOnInit(): void {
-    // this.cvStore.loadUserCVs();
     this.loadOptimizations();
+  }
+
+  loadUserCvs(): void {
+    this.cvStore.loadUserCVs(true);
+  }
+
+  downloadCv(file: CvDocumentListItem): void {
+    this.cvApiService.downloadCv(file.id).subscribe({
+      next: ({ url }) => {
+        if (isPlatformBrowser(this.platformId)) {
+          window.open(url, '_blank');
+
+          posthog.capture('original_cv_downloaded', {
+            page: 'dashboard',
+            button_icon: 'download',
+            file_id: file.id,
+            file_name: file.fileName,
+          });
+        }
+      },
+      error: (err) => {
+        const message =
+          err?.error?.message ?? 'Downloading CV failed. Please try again.';
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Download failed',
+          detail: message,
+        });
+      },
+    });
+  }
+
+  deleteCv(file: CvDocumentListItem): void {
+    this.confirmationService.confirm({
+      message:
+        'Are you sure you want to delete this file? This will also remove all associated optimizations.',
+      header: 'Confirm deletion',
+      icon: 'pi pi-exclamation-triangle',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => {
+        posthog.capture('cv_deleted', {
+          page: 'dashboard',
+          button_icon: 'trash',
+          file_id: file.id,
+          file_name: file.fileName,
+        });
+        this.cvApiService
+          .deleteCv(file.id)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: () => {
+              const newCvList = this.cvFiles().filter((f) => f.id !== file.id);
+              this.cvStore.updateCvList(newCvList);
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Success',
+                detail: 'CV file deleted successfully.',
+              });
+            },
+            error: (err) => {
+              const message =
+                err?.error?.message ?? 'Deleting CV failed. Please try again.';
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Delete failed',
+                detail: message,
+              });
+            },
+          });
+      },
+    });
   }
 
   loadOptimizations(): void {

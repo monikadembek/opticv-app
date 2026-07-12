@@ -62,7 +62,14 @@
     </p-tablist>
     <p-tabpanels>
       <p-tabpanel value="0">
-        <app-cv-file-list />
+        <app-cv-file-list
+          [cvFiles]="cvFiles()"
+          [isCvsLoading]="isCvsLoading()"
+          [cvsError]="cvsError()"
+          (downloadCvFile)="downloadCv($event)"
+          (deleteCvFile)="deleteCv($event)"
+          (loadCvs)="loadUserCvs()"
+        />
       </p-tabpanel>
       <p-tabpanel value="1">
         <app-optimization-list
