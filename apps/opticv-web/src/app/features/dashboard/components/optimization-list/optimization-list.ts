@@ -10,11 +10,13 @@ import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import type { JobApplicationListItem } from '@opticv/datatypes';
 import { CvStore } from '../../../../core/stores/cv.store';
+import { TableModule } from 'primeng/table';
 
 @Component({
   selector: 'app-optimization-list',
-  imports: [DatePipe, RouterLink, ButtonModule],
+  imports: [DatePipe, RouterLink, ButtonModule, TableModule],
   templateUrl: './optimization-list.html',
+  styleUrl: './optimization-list.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [],
 })
