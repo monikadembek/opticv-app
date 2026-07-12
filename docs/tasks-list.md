@@ -994,10 +994,15 @@ I also added 4 unit tests in cv-optimization.spec.ts covering: saving on toggle-
 
 ### 81. UX/UI - Dashboard redesing
 
-**status: todo**
+**status: in progress**
 **time: 12.07.2026**
 
 - implement new designs for the dashboard
+- add stats above tabs
+- get data in dashboard component and pass to list of cvs and list of optimizations
+- redesign list of cvs - display in table
+- redisign list of optimizations - display in table
+- add search functionality
 
 ---
 

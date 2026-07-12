@@ -1,15 +1,7 @@
-@if (isCvsLoading()) {
-<div class="flex justify-center items-center py-16">
-  <p-progress-spinner />
-</div>
-} @else if (cvsError()) {
+@if (cvsError()) {
 <div class="flex flex-col items-center gap-4 py-16 text-center">
   <span class="text-red-500">{{ cvsError() }}</span>
-  <p-button
-    label="Retry"
-    icon="pi pi-refresh"
-    (onClick)="cvStore.loadUserCVs(true)"
-  />
+  <p-button label="Retry" icon="pi pi-refresh" (onClick)="loadUserCvs()" />
 </div>
 } @else if (cvFiles().length === 0) {
 <div class="flex flex-col items-center gap-4 py-16 text-center">
@@ -23,16 +15,78 @@
   />
 </div>
 } @else {
-<div class="flex flex-col gap-3">
-  @for (file of cvFiles(); track file.id) {
-  <app-cv-file-list-item
-    [file]="file"
-    (optimize)="optimizeCv($event)"
-    (download)="downloadCv($event)"
-    (delete)="deleteCv($event)"
-  />
-  }
-</div>
+<p-table
+  [value]="cvFiles()"
+  [loading]="isCvsLoading()"
+  [pt]="{ loadingIcon: { class: 'w-auto! h-auto!' } }"
+  [tableStyle]="{ 'border': '1px solid #e2e8f0'}"
+  class="optim-table mt-4"
+>
+  <ng-template #header>
+    <tr class="uppercase text-sm text-(--text-muted) bg-(--primary-50)">
+      <th>File</th>
+      <th>Type</th>
+      <th>Size</th>
+      <th>Uploaded</th>
+      <th>Actions</th>
+    </tr>
+  </ng-template>
+  <ng-template #body let-file>
+    <tr>
+      <td class="font-semibold">
+        @if(getMimeLabel(file.mimeType) === 'PDF') {
+        <i class="pi pi-file-pdf text-(--text-subtle) mr-0.5"></i>
+        } @else {
+        <i class="pi pi-file-word text-(--text-subtle) mr-0.5"></i>
+        } {{ file.fileName}}
+        <span class="flex items-center gap-1 text-xs ml-0.5 mt-0.5">
+          @switch (file.parseStatus) { @case ('PENDING') {
+          <i
+            class="pi pi-spin pi-spinner text-surface-400"
+            aria-hidden="true"
+          ></i>
+          <span class="text-surface-400">Parsing&hellip;</span>
+          } @case ('FAILED') {
+          <i
+            class="pi pi-exclamation-triangle text-orange-500"
+            aria-hidden="true"
+          ></i>
+          <span class="text-orange-500">Parsing failed</span>
+          } }
+        </span>
+      </td>
+      <td class="uppercase">{{ getMimeLabel(file.mimeType) }}</td>
+      <td>{{ formatFileSize(file.fileSize) }}</td>
+      <td>{{ file.createdAt | date: 'MMM d, yyyy'}}</td>
+      <td>
+        <div class="flex items-center gap-2 shrink-0">
+          <p-button
+            icon="pi pi-bolt"
+            label="Optimize CV"
+            size="small"
+            [text]="true"
+            title="Optimize CV"
+            (onClick)="optimizeCv(file)"
+          />
+          <p-button
+            icon="pi pi-download"
+            severity="secondary"
+            size="small"
+            [text]="true"
+            title="Download"
+            (onClick)="downloadCv(file)"
+          />
+          <p-button
+            icon="pi pi-trash"
+            severity="danger"
+            size="small"
+            [text]="true"
+            title="Delete"
+            (onClick)="deleteCv(file)"
+          />
+        </div>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
 }
-
-<p-confirmDialog [style]="{ width: '600px', maxWidth: '95vw' }" />

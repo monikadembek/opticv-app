@@ -1,10 +1,4 @@
-<p-confirmDialog [style]="{ width: '600px', maxWidth: '95vw' }" />
-
-@if (isLoading()) {
-<div class="flex justify-center items-center py-16">
-  <p-progress-spinner />
-</div>
-} @else if (error()) {
+@if (error()) {
 <div class="flex flex-col items-center gap-4 py-16 text-center">
   <span class="text-red-500">{{ error() }}</span>
   <p-button
@@ -36,46 +30,52 @@
   }
 </div>
 } @else {
-<div class="flex flex-col gap-4">
-  @for (item of items(); track item.id) {
-  <div
-    class="border border-surface-200 rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
-  >
-    <div class="flex flex-col gap-1 min-w-0">
-      <span class="font-semibold text-surface-900">
-        Position: {{ item.jobTitle ?? 'Untitled position' }}<br />
-        @if (item.companyName) {
-        <span class="font-normal text-surface-500">
-          Company: {{ item.companyName }}</span
-        >
-        }
-      </span>
-      <span class="text-sm text-surface-500 truncate"
-        >CV File: {{ item.cvDocument.fileName }}</span
-      >
-      <span class="text-xs text-surface-400"
-        >Created: {{ item.createdAt | date: 'MMM d, yyyy' }}</span
-      >
-    </div>
-    <div class="flex items-center gap-2 shrink-0">
-      <p-button
-        label="Open"
-        icon="pi pi-external-link"
-        size="small"
-        (onClick)="onOpen(item)"
-        ariaLabel="Open optimization for {{ item.jobTitle ?? 'this position' }}"
-      />
-      <p-button
-        icon="pi pi-trash"
-        size="small"
-        severity="danger"
-        [text]="true"
-        title="Delete"
-        (onClick)="onDelete(item)"
-        ariaLabel="Delete optimization for {{ item.jobTitle ?? 'this position' }}"
-      />
-    </div>
-  </div>
-  }
-</div>
+<p-table
+  [value]="items()"
+  [loading]="isLoading()"
+  [pt]="{ loadingIcon: { class: 'w-auto! h-auto!' } }"
+  [tableStyle]="{ 'border': '1px solid #e2e8f0'}"
+  class="optim-table mt-4"
+>
+  <ng-template #header>
+    <tr class="uppercase text-sm text-(--text-muted) bg-(--primary-50)">
+      <th>Position</th>
+      <th>Company</th>
+      <th>CV file</th>
+      <th>Created</th>
+      <th>Actions</th>
+    </tr>
+  </ng-template>
+  <ng-template #body let-item>
+    <tr>
+      <td class="font-semibold">{{ item.jobTitle }}</td>
+      <td>{{ item.companyName }}</td>
+      <td>
+        <i class="pi pi-file text-(--text-subtle)"></i>
+        {{ item.cvDocument.fileName }}
+      </td>
+      <td>{{ item.createdAt | date: 'MMM d, yyyy'}}</td>
+      <td>
+        <div class="flex items-center gap-2 shrink-0">
+          <p-button
+            label="Open"
+            icon="pi pi-external-link"
+            size="small"
+            (onClick)="onOpen(item)"
+            ariaLabel="Open optimization for {{ item.jobTitle ?? 'this position' }}"
+          />
+          <p-button
+            icon="pi pi-trash"
+            size="small"
+            severity="danger"
+            [text]="true"
+            title="Delete"
+            (onClick)="onDelete(item)"
+            ariaLabel="Delete optimization for {{ item.jobTitle ?? 'this position' }}"
+          />
+        </div>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
 }

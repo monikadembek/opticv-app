@@ -1,0 +1,3 @@
+::ng-deep .optim-table .p-datatable-thead tr {
+  background-color: var(--primary-50) !important;
+}
