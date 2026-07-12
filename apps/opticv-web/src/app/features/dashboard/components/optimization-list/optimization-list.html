@@ -1,10 +1,4 @@
-<p-confirmDialog [style]="{ width: '600px', maxWidth: '95vw' }" />
-
-@if (isLoading()) {
-<div class="flex justify-center items-center py-16">
-  <p-progress-spinner />
-</div>
-} @else if (error()) {
+@if (error()) {
 <div class="flex flex-col items-center gap-4 py-16 text-center">
   <span class="text-red-500">{{ error() }}</span>
   <p-button
