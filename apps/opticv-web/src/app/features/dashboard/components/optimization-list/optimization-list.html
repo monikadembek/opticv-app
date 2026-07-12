@@ -32,6 +32,8 @@
 } @else {
 <p-table
   [value]="items()"
+  [loading]="isLoading()"
+  [pt]="{ loadingIcon: { class: 'w-auto! h-auto!' } }"
   [tableStyle]="{ 'border': '1px solid #e2e8f0'}"
   class="optim-table mt-4"
 >

@@ -7,17 +7,18 @@ import {
   PLATFORM_ID,
 } from '@angular/core';
 import type { CvDocumentListItem } from '@opticv/datatypes';
-import { CvFileListItem } from '../cv-file-list-item/cv-file-list-item';
 import { CvApiService } from '../../../../core/services/cv-api.service';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { isPlatformBrowser } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import posthog from 'posthog-js';
 import { CvStore } from '../../../../core/stores/cv.store';
+import { TableModule } from 'primeng/table';
+import { DatePipe } from '@angular/common';
+import { formatFileSize, getMimeLabel } from '../../../../shared/utils';
 
 @Component({
   selector: 'app-cv-file-list',
@@ -25,8 +26,8 @@ import { CvStore } from '../../../../core/stores/cv.store';
     RouterLink,
     ButtonModule,
     ConfirmDialogModule,
-    ProgressSpinnerModule,
-    CvFileListItem,
+    TableModule,
+    DatePipe,
   ],
   templateUrl: './cv-file-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -44,6 +45,9 @@ export class CvFileList implements OnInit {
   readonly cvFiles = this.cvStore.cvList;
   readonly isCvsLoading = this.cvStore.loading;
   readonly cvsError = this.cvStore.error;
+
+  readonly formatFileSize = formatFileSize;
+  readonly getMimeLabel = getMimeLabel;
 
   ngOnInit(): void {
     this.cvStore.loadUserCVs();
