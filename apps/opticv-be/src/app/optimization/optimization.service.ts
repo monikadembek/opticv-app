@@ -10,16 +10,42 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import type { OptimizationJobPayload } from './optimization.types.js';
 import { PromptType } from '../../generated/prisma/enums.js';
+import type { LimitedFeature, SubscriptionTier } from '@opticv/datatypes';
 import { OptimizationResultSummary } from '@opticv/datatypes';
+import { QuotaService } from '../quota/quota.service.js';
 
-const ALL_PROMPT_TYPES = Object.values(PromptType);
+const CV_SUBSET_PROMPT_TYPES: PromptType[] = [
+  PromptType.RESUME_AUTOPSY,
+  PromptType.KEYWORD_GAP,
+  PromptType.SUMMARY_REWRITE,
+  PromptType.BULLET_UPGRADE,
+];
+
+const PROMPT_TYPE_TO_FEATURE: Record<PromptType, LimitedFeature> = {
+  [PromptType.RESUME_AUTOPSY]: 'CV_OPTIMIZATION',
+  [PromptType.KEYWORD_GAP]: 'CV_OPTIMIZATION',
+  [PromptType.SUMMARY_REWRITE]: 'CV_OPTIMIZATION',
+  [PromptType.BULLET_UPGRADE]: 'CV_OPTIMIZATION',
+  [PromptType.COVER_LETTER]: 'COVER_LETTER',
+  [PromptType.INTERVIEW_PREP]: 'INTERVIEW_PREP',
+  [PromptType.LINKEDIN_REWRITE]: 'LINKEDIN',
+};
 
 @Injectable()
 export class OptimizationService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly quotaService: QuotaService,
     @InjectQueue('optimization') private readonly queue: Queue,
   ) {}
+
+  private async resolveTier(userId: string): Promise<SubscriptionTier> {
+    const subscription = await this.prisma.subscription.findUnique({
+      where: { userId },
+      select: { tier: true },
+    });
+    return (subscription?.tier ?? 'FREE') as SubscriptionTier;
+  }
 
   async triggerOptimization(
     jobApplicationId: string,
@@ -27,6 +53,9 @@ export class OptimizationService {
   ): Promise<{ runId: string }> {
     const { cvText, parsedSections, jobDescription } =
       await this.loadAndValidateApplication(jobApplicationId, userId);
+
+    const tier = await this.resolveTier(userId);
+    await this.quotaService.checkAndConsume(userId, 'CV_OPTIMIZATION', tier);
 
     const runId = randomUUID();
 
@@ -40,7 +69,7 @@ export class OptimizationService {
     };
 
     await Promise.all(
-      ALL_PROMPT_TYPES.map((promptType) =>
+      CV_SUBSET_PROMPT_TYPES.map((promptType) =>
         this.prisma.optimizationResult.upsert({
           where: {
             applicationId_promptType: {
@@ -67,7 +96,7 @@ export class OptimizationService {
     );
 
     await Promise.all(
-      ALL_PROMPT_TYPES.map((promptType) =>
+      CV_SUBSET_PROMPT_TYPES.map((promptType) =>
         this.queue.add(
           'optimize',
           { ...payloadBase, promptType } satisfies OptimizationJobPayload,
@@ -89,6 +118,10 @@ export class OptimizationService {
     const { cvText, parsedSections, jobDescription } =
       await this.loadAndValidateApplication(jobApplicationId, userId);
 
+    const tier = await this.resolveTier(userId);
+    const feature = PROMPT_TYPE_TO_FEATURE[promptType];
+    await this.quotaService.checkAndConsume(userId, feature, tier);
+
     await this.prisma.optimizationResult.upsert({
       where: {
         applicationId_promptType: {
@@ -102,6 +135,61 @@ export class OptimizationService {
         status: 'PENDING',
       },
       update: {
+        status: 'PENDING',
+        structuredOutput: Prisma.DbNull,
+        textOutput: null,
+        errorMessage: null,
+        promptVersionId: null,
+        inputTokens: null,
+        outputTokens: null,
+      },
+    });
+
+    await this.queue.add(
+      'optimize',
+      {
+        runId,
+        jobApplicationId,
+        userId,
+        promptType,
+        cvText,
+        parsedSections,
+        jobDescription,
+      } satisfies OptimizationJobPayload,
+      { attempts: 2, backoff: { type: 'exponential', delay: 2000 } },
+    );
+
+    return { runId };
+  }
+
+  async retryFailedJob(
+    jobApplicationId: string,
+    promptType: PromptType,
+    userId: string,
+  ): Promise<{ runId: string }> {
+    const { cvText, parsedSections, jobDescription } =
+      await this.loadAndValidateApplication(jobApplicationId, userId);
+
+    const existing = await this.prisma.optimizationResult.findUnique({
+      where: {
+        applicationId_promptType: {
+          applicationId: jobApplicationId,
+          promptType,
+        },
+      },
+    });
+
+    if (!existing || existing.status !== 'FAILED') {
+      throw new BadRequestException(
+        'Only a failed result can be retried for free; use the normal trigger endpoint instead.',
+      );
+    }
+
+    const runId = randomUUID();
+
+    await this.prisma.optimizationResult.update({
+      where: { id: existing.id },
+      data: {
         status: 'PENDING',
         structuredOutput: Prisma.DbNull,
         textOutput: null,

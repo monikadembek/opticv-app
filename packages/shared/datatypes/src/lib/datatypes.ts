@@ -70,7 +70,74 @@ export type User = {
   updatedAt: Date | string;
 };
 
-export type SubscriptionTier = 'FREE' | 'PRO' | 'PRO_ANNUAL' | 'SPRINT';
+export type SubscriptionTier = 'FREE' | 'BASIC' | 'PRO';
+
+export type LimitedFeature =
+  | 'CV_OPTIMIZATION'
+  | 'COVER_LETTER'
+  | 'INTERVIEW_PREP'
+  | 'LINKEDIN';
+
+export type TierLimits = {
+  features: Record<LimitedFeature, number>;
+  maxStoredCvs: number;
+  allowedTemplates: 'ALL' | string[];
+};
+
+export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
+  FREE: {
+    features: {
+      CV_OPTIMIZATION: 1,
+      COVER_LETTER: 1,
+      INTERVIEW_PREP: 1,
+      LINKEDIN: 0,
+    },
+    maxStoredCvs: 2,
+    allowedTemplates: ['default', 'classic'],
+  },
+  BASIC: {
+    features: {
+      CV_OPTIMIZATION: 10,
+      COVER_LETTER: 10,
+      INTERVIEW_PREP: 10,
+      LINKEDIN: 10,
+    },
+    maxStoredCvs: 10,
+    allowedTemplates: 'ALL',
+  },
+  PRO: {
+    features: {
+      CV_OPTIMIZATION: 30,
+      COVER_LETTER: 30,
+      INTERVIEW_PREP: 30,
+      LINKEDIN: 30,
+    },
+    maxStoredCvs: 20,
+    allowedTemplates: 'ALL',
+  },
+};
+
+export type QuotaStatus = {
+  feature: LimitedFeature;
+  used: number;
+  limit: number;
+  remaining: number;
+  resetsAt: string;
+};
+
+export type UsageStatus = {
+  quotas: QuotaStatus[];
+  storedCvs: { used: number; limit: number };
+};
+
+export type QuotaErrorPayload =
+  | {
+      code: 'QUOTA_EXCEEDED' | 'FEATURE_NOT_AVAILABLE';
+      feature: LimitedFeature;
+      limit: number;
+      resetsAt: string;
+    }
+  | { code: 'CV_LIMIT_EXCEEDED'; limit: number };
 
 export type SubscriptionStatus =
   | 'ACTIVE'
