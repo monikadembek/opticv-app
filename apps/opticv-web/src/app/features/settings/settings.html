@@ -56,6 +56,33 @@
     </div>
   </section>
 
+  @if (usageStatus.hasValue() && usageStatus.value(); as usage) {
+  <section class="mb-8" aria-label="Usage">
+    <h2
+      class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500"
+    >
+      Usage this month
+    </h2>
+    <ul class="flex flex-col gap-2">
+      @for (quota of usage.quotas; track quota.feature) {
+      <li class="flex items-center justify-between text-sm">
+        <span>{{ featureLabel(quota.feature) }}</span>
+        <span class="text-gray-600">
+          {{ quota.used }} / {{ quota.limit }} used &middot; resets
+          {{ quota.resetsAt | date: 'mediumDate' }}
+        </span>
+      </li>
+      }
+      <li class="flex items-center justify-between text-sm">
+        <span>Stored CV documents</span>
+        <span class="text-gray-600">
+          {{ usage.storedCvs.used }} / {{ usage.storedCvs.limit }} used
+        </span>
+      </li>
+    </ul>
+  </section>
+  }
+
   <section aria-label="Danger zone" class="border-t border-red-200 pt-8">
     <h2 class="mb-2 text-sm font-semibold uppercase tracking-wide text-red-600">
       Danger zone
