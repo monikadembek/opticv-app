@@ -4,9 +4,9 @@ import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Settings } from './settings';
-import { UserSettingsApiService } from './services/user-settings-api.service';
+import { UserSettingsApiService } from '../../core/services/user-settings-api.service';
 import { Supabase } from '../../core/auth/services/supabase';
-import type { UserProfile } from '@opticv/datatypes';
+import type { UsageStatus, UserProfile } from '@opticv/datatypes';
 
 const mockProfile: UserProfile = {
   id: 'user-1',
@@ -16,12 +16,14 @@ const mockProfile: UserProfile = {
   subscription: { tier: 'FREE', status: 'ACTIVE' },
 };
 
-function createUserProfileResource(overrides: Partial<{
-  value: UserProfile | null;
-  isLoading: boolean;
-  error: unknown;
-  hasValue: boolean;
-}> = {}) {
+function createResource<T>(
+  overrides: Partial<{
+    value: T | null;
+    isLoading: boolean;
+    error: unknown;
+    hasValue: boolean;
+  }> = {},
+) {
   return {
     value: signal(overrides.value ?? null).asReadonly(),
     isLoading: signal(overrides.isLoading ?? false).asReadonly(),
@@ -30,11 +32,16 @@ function createUserProfileResource(overrides: Partial<{
   };
 }
 
-function createUserSettingsMock(profileOverrides?: Parameters<typeof createUserProfileResource>[0]) {
+function createUserSettingsMock(
+  profileOverrides?: Parameters<typeof createResource<UserProfile>>[0],
+  usageOverrides?: Parameters<typeof createResource<UsageStatus>>[0],
+) {
   return {
-    userProfile: createUserProfileResource(profileOverrides),
+    userProfile: createResource<UserProfile>(profileOverrides),
+    usageStatus: createResource<UsageStatus>(usageOverrides),
     deleteAccount: vi.fn().mockReturnValue(of(undefined)),
     reloadUserProfile: vi.fn(),
+    reloadUsageStatus: vi.fn(),
   };
 }
 
@@ -49,8 +56,11 @@ describe('Settings', () => {
   let supabaseMock: ReturnType<typeof createSupabaseMock>;
   let messageService: MessageService;
 
-  async function setup(profileOverrides?: Parameters<typeof createUserSettingsMock>[0]) {
-    userSettingsMock = createUserSettingsMock(profileOverrides);
+  async function setup(
+    profileOverrides?: Parameters<typeof createUserSettingsMock>[0],
+    usageOverrides?: Parameters<typeof createUserSettingsMock>[1],
+  ) {
+    userSettingsMock = createUserSettingsMock(profileOverrides, usageOverrides);
     supabaseMock = createSupabaseMock();
 
     TestBed.resetTestingModule();
@@ -90,6 +100,15 @@ describe('Settings', () => {
     fixture.componentInstance.ngOnInit();
 
     expect(userSettingsMock.reloadUserProfile).toHaveBeenCalledOnce();
+  });
+
+  it('reloads the usage status on init', async () => {
+    await setup();
+    const fixture = TestBed.createComponent(Settings);
+
+    fixture.componentInstance.ngOnInit();
+
+    expect(userSettingsMock.reloadUsageStatus).toHaveBeenCalledOnce();
   });
 
   it('reloads the user profile when the component is created via change detection', async () => {
@@ -132,6 +151,58 @@ describe('Settings', () => {
         email: 'alice@example.com',
       };
       expect(componentInstance.getAvatarLabel(lowercase)).toBe('A');
+    });
+  });
+
+  // ─── usage panel ─────────────────────────────────────────────────────────
+
+  describe('usage panel', () => {
+    const usageStatus: UsageStatus = {
+      quotas: [
+        { feature: 'CV_OPTIMIZATION', used: 3, limit: 10, remaining: 7, resetsAt: '2026-08-01T00:00:00.000Z' },
+        { feature: 'COVER_LETTER', used: 1, limit: 10, remaining: 9, resetsAt: '2026-08-01T00:00:00.000Z' },
+        { feature: 'INTERVIEW_PREP', used: 0, limit: 10, remaining: 10, resetsAt: '2026-08-01T00:00:00.000Z' },
+        { feature: 'LINKEDIN', used: 2, limit: 10, remaining: 8, resetsAt: '2026-08-01T00:00:00.000Z' },
+      ],
+      storedCvs: { used: 4, limit: 10 },
+    };
+
+    it('renders per-feature usage for a BASIC tier user', async () => {
+      await setup(
+        { value: { ...mockProfile, subscription: { tier: 'BASIC', status: 'ACTIVE' } }, hasValue: true },
+        { value: usageStatus, hasValue: true },
+      );
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+
+      const text = fixture.nativeElement.textContent as string;
+      expect(text).toContain('LinkedIn content generations');
+      expect(text).toContain('2 / 10');
+      expect(text).toContain('4 / 10');
+    });
+
+    it('renders per-feature usage for a PRO tier user', async () => {
+      const proUsage: UsageStatus = {
+        quotas: usageStatus.quotas.map((q) => ({ ...q, limit: 30, remaining: 30 - q.used })),
+        storedCvs: { used: 4, limit: 20 },
+      };
+      await setup(
+        { value: { ...mockProfile, subscription: { tier: 'PRO', status: 'ACTIVE' } }, hasValue: true },
+        { value: proUsage, hasValue: true },
+      );
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+
+      const text = fixture.nativeElement.textContent as string;
+      expect(text).toContain('/ 30');
+      expect(text).toContain('4 / 20');
+    });
+
+    it('featureLabel returns a human-readable label for each feature', async () => {
+      await setup();
+      const { componentInstance } = TestBed.createComponent(Settings);
+      expect(componentInstance.featureLabel('CV_OPTIMIZATION')).toBe('CV optimization runs');
+      expect(componentInstance.featureLabel('LINKEDIN')).toBe('LinkedIn content generations');
     });
   });
 

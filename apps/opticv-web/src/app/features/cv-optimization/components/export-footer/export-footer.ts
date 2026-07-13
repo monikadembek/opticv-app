@@ -35,14 +35,26 @@ export class ExportFooter {
   readonly isExportingPdf = input<boolean>(false);
   readonly isExportingDocx = input<boolean>(false);
   readonly mergedCv = input<CvStructuredData | null>(null);
+  readonly allowedTemplateIds = input<CvTemplateId[]>(
+    CV_TEMPLATES.map((t) => t.id),
+  );
 
   readonly exportPdf = output<void>();
   readonly exportDocx = output<void>();
 
   readonly previewVisible = signal(false);
   readonly infoDialogVisible = signal(false);
-  readonly templates = CV_TEMPLATES;
   readonly accentColors = CV_ACCENT_COLORS;
+
+  readonly templates = computed(() =>
+    CV_TEMPLATES.map((template) => ({
+      ...template,
+      disabled: !this.allowedTemplateIds().includes(template.id),
+      name: this.allowedTemplateIds().includes(template.id)
+        ? template.name
+        : `${template.name} (Upgrade to unlock)`,
+    })),
+  );
 
   readonly accentColorDisabled = computed(
     () => !ACCENT_AWARE_TEMPLATE_IDS.includes(this.selectedTemplate()),

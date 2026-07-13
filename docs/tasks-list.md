@@ -1021,6 +1021,42 @@ To do:
 
 ---
 
+### 83. Implement limits for different subscription tiers
+
+**status: done**
+**time: 13.07.2026**
+
+We need to implement some limits for different types of subscription tiers that the app will give its users.
+The app will offer 3 tiers: free, basic and pro so we need to change SubscriptionTier enum to hold values: FREE, BASIC, PRO.
+
+FREE tier allows monthly:
+
+- 1 CV otpimization run
+- 1 cover letter generation
+- 1 interview prep generation
+- 2 templates for CV to choose from: default and classic
+
+BASIC tier allows monthly:
+
+- 10 CV otpimizations runs
+- 10 cover letter generations
+- 10 interview prep generation
+- 10 linkedin profile content generations
+- all CV templates available
+
+PRO tier allows monthly:
+
+- 30 CV otpimizations runs
+- 30 cover letter generations
+- 30 interview prep generation
+- 30 linkedin profile content generations
+- all CV templates available
+
+Introduce limits for the number of files with CVs that a user can upload?
+FREE: 2, BASIC: 10, PRO: 20
+
+---
+
 ### Bug - some selected bullet rewrites are not applied to A4 cv template preview and not applied to exported CV
 
 **status: todo**

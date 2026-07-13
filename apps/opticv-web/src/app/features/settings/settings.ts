@@ -5,15 +5,16 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import type { UserProfile } from '@opticv/datatypes';
+import type { LimitedFeature, UserProfile } from '@opticv/datatypes';
 import { Supabase } from '../../core/auth/services/supabase';
-import { UserSettingsApiService } from './services/user-settings-api.service';
+import { UserSettingsApiService } from '../../core/services/user-settings-api.service';
 import { catchError, EMPTY, tap } from 'rxjs';
 import posthog from 'posthog-js';
 
@@ -24,6 +25,7 @@ import posthog from 'posthog-js';
     ButtonModule,
     ConfirmDialogModule,
     ProgressSpinnerModule,
+    DatePipe,
   ],
   templateUrl: './settings.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,10 +39,23 @@ export class Settings implements OnInit {
   private readonly router = inject(Router);
 
   readonly userProfile = this.userSettingsApiService.userProfile;
+  readonly usageStatus = this.userSettingsApiService.usageStatus;
   readonly isDeleting = signal(false);
+
+  private readonly featureLabels: Record<LimitedFeature, string> = {
+    CV_OPTIMIZATION: 'CV optimization runs',
+    COVER_LETTER: 'Cover letter generations',
+    INTERVIEW_PREP: 'Interview prep generations',
+    LINKEDIN: 'LinkedIn content generations',
+  };
 
   ngOnInit() {
     this.userSettingsApiService.reloadUserProfile();
+    this.userSettingsApiService.reloadUsageStatus();
+  }
+
+  featureLabel(feature: LimitedFeature): string {
+    return this.featureLabels[feature];
   }
 
   onDeleteAccount(): void {

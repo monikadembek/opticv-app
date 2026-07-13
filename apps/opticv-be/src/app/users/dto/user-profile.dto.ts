@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { SubscriptionTier, SubscriptionStatus } from '@opticv/datatypes';
 
 class SubscriptionDto {
-  @ApiProperty({ enum: ['FREE', 'PRO', 'PRO_ANNUAL', 'SPRINT'] })
+  @ApiProperty({ enum: ['FREE', 'BASIC', 'PRO'] })
   tier!: SubscriptionTier;
 
   @ApiProperty({ enum: ['ACTIVE', 'CANCELED', 'PAST_DUE', 'TRIALING'] })

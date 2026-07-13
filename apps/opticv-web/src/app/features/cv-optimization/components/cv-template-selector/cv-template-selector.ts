@@ -33,6 +33,9 @@ export class CvTemplateSelector {
   readonly selected = model<CvTemplateId>('default');
   readonly mergedCv = input.required<CvStructuredData | null>();
   readonly accentColor = input<string>(DEFAULT_ACCENT_COLOR);
+  readonly allowedTemplateIds = input<CvTemplateId[]>(
+    CV_TEMPLATES.map((t) => t.id),
+  );
 
   readonly templates: CvTemplate[] = CV_TEMPLATES;
 
@@ -41,7 +44,12 @@ export class CvTemplateSelector {
 
   private templateCards = viewChildren<ElementRef<HTMLElement>>('templateCard');
 
+  isLocked(id: CvTemplateId): boolean {
+    return !this.allowedTemplateIds().includes(id);
+  }
+
   select(id: CvTemplateId): void {
+    if (this.isLocked(id)) return;
     this.selected.set(id);
   }
 
@@ -72,16 +80,16 @@ export class CvTemplateSelector {
     if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
       event.preventDefault();
       const next = ids[(idx + 1) % ids.length];
-      this.selected.set(next);
+      this.select(next);
       this.focusCard(next);
     } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
       event.preventDefault();
       const prev = ids[(idx - 1 + ids.length) % ids.length];
-      this.selected.set(prev);
+      this.select(prev);
       this.focusCard(prev);
     } else if (event.key === ' ' || event.key === 'Enter') {
       event.preventDefault();
-      this.selected.set(id);
+      this.select(id);
     }
   }
 

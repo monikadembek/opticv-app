@@ -19,6 +19,7 @@ const mockUser = {
 const mockOptimizationService = {
   triggerOptimization: jest.fn().mockResolvedValue({ runId: 'run-1' }),
   triggerSingleJob: jest.fn().mockResolvedValue({ runId: 'run-1' }),
+  retryFailedJob: jest.fn().mockResolvedValue({ runId: 'run-1' }),
   validateStreamAccess: jest.fn().mockResolvedValue(undefined),
   saveUserOutput: jest.fn().mockResolvedValue({ userEditedOutput: 'edited' }),
 };
@@ -98,6 +99,39 @@ describe('OptimizationController', () => {
         'run-1',
         mockUser.id,
       );
+    });
+  });
+
+  describe('retryFailedJob', () => {
+    it('delegates to OptimizationService and returns runId', async () => {
+      const result = await controller.retryFailedJob(
+        'app-1',
+        PromptType.RESUME_AUTOPSY,
+        mockUser,
+      );
+
+      expect(mockOptimizationService.retryFailedJob).toHaveBeenCalledWith(
+        'app-1',
+        PromptType.RESUME_AUTOPSY,
+        mockUser.id,
+      );
+      expect(result).toEqual({ runId: 'run-1' });
+    });
+
+    it('throws BadRequestException for an invalid promptType', async () => {
+      await expect(
+        controller.retryFailedJob('app-1', 'INVALID_TYPE', mockUser),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('propagates errors thrown by OptimizationService', async () => {
+      mockOptimizationService.retryFailedJob.mockRejectedValueOnce(
+        new BadRequestException('Only a failed result can be retried for free'),
+      );
+
+      await expect(
+        controller.retryFailedJob('app-1', PromptType.RESUME_AUTOPSY, mockUser),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 

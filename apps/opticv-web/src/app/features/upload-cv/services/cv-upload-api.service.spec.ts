@@ -7,7 +7,7 @@ import { provideHttpClient } from '@angular/common/http';
 import type { UploadCvResponse } from '@opticv/datatypes';
 
 import { CvUploadApiService } from './cv-upload-api.service';
-import { UserSettingsApiService } from '../../../features/settings/services/user-settings-api.service';
+import { UserSettingsApiService } from '../../../core/services/user-settings-api.service';
 import { environment } from '../../../../environments/environment';
 
 const API = environment.apiUrl;

@@ -73,6 +73,16 @@ export class CvOptimizationApiService {
     );
   }
 
+  retryFailedJob(
+    jobApplicationId: string,
+    promptType: string,
+  ): Observable<{ runId: string }> {
+    return this.http.post<{ runId: string }>(
+      `${environment.apiUrl}/optimizations/job-applications/${jobApplicationId}/retry/${promptType}`,
+      {},
+    );
+  }
+
   getOptimizationResults(
     jobApplicationId: string,
   ): Observable<OptimizationResultSummary[]> {

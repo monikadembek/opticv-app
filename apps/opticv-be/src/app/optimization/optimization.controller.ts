@@ -110,6 +110,39 @@ export class OptimizationController {
     );
   }
 
+  @Post('job-applications/:jobApplicationId/retry/:promptType')
+  @HttpCode(202)
+  @UseGuards(AiThrottlerGuard)
+  @ApiOperation({
+    summary: 'Retry a terminally-failed optimization job for free',
+  })
+  @ApiResponse({
+    status: 202,
+    type: RunIdResponseDto,
+    description: 'Retry accepted',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid promptType or the result is not currently FAILED',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Job application not found' })
+  async retryFailedJob(
+    @Param('jobApplicationId') jobApplicationId: string,
+    @Param('promptType') promptType: string,
+    @CurrentUser() user: UserModel,
+  ): Promise<{ runId: string }> {
+    if (!Object.values(PromptType).includes(promptType as PromptType)) {
+      throw new BadRequestException('Invalid promptType.');
+    }
+
+    return this.optimizationService.retryFailedJob(
+      jobApplicationId,
+      promptType as PromptType,
+      user.id,
+    );
+  }
+
   @Patch(':id/user-output')
   @ApiOperation({
     summary: 'Save user-edited output for an optimization result',

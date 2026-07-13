@@ -20,6 +20,7 @@ import { UserProfileDto } from './dto/user-profile.dto';
 import { SupabaseGuard } from '../auth/supabase.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { UserModel } from '../../generated/prisma/models.js';
+import type { UsageStatus } from '@opticv/datatypes';
 
 @ApiTags('users')
 @Controller('users')
@@ -88,6 +89,19 @@ export class UsersController {
   @ApiResponse({ status: 404, description: 'User not found' })
   async getProfile(@CurrentUser() user: UserModel): Promise<UserProfileDto> {
     return this.usersService.getProfile(user.supabaseId);
+  }
+
+  @Get('me/usage')
+  @UseGuards(SupabaseGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get current user usage/quota status' })
+  @ApiResponse({ status: 200, description: 'Usage status' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async getUsageStatus(
+    @CurrentUser() user: UserModel,
+  ): Promise<UsageStatus> {
+    return this.usersService.getUsageStatus(user.supabaseId);
   }
 
   @Delete('me')

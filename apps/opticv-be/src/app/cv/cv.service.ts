@@ -10,7 +10,13 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { R2Service } from '../storage/r2.service';
 import { CvParserService } from './services/cv-parser.service';
-import { CvDocumentListItem, CvStructuredData, UploadCvResponse } from '@opticv/datatypes';
+import {
+  CvDocumentListItem,
+  CvStructuredData,
+  SubscriptionTier,
+  TIER_LIMITS,
+  UploadCvResponse,
+} from '@opticv/datatypes';
 
 const ALLOWED_MIME_TYPES = [
   'application/pdf',
@@ -49,6 +55,23 @@ export class CvService {
 
     if (file.size > MAX_FILE_SIZE) {
       throw new BadRequestException('File must be smaller than 5 MB.');
+    }
+
+    const subscription = await this.prisma.subscription.findUnique({
+      where: { userId },
+      select: { tier: true },
+    });
+    const tier = (subscription?.tier ?? 'FREE') as SubscriptionTier;
+    const maxStoredCvs = TIER_LIMITS[tier].maxStoredCvs;
+    const activeCount = await this.prisma.cvDocument.count({
+      where: { userId, isActive: true },
+    });
+
+    if (activeCount >= maxStoredCvs) {
+      throw new ForbiddenException({
+        code: 'CV_LIMIT_EXCEEDED',
+        limit: maxStoredCvs,
+      });
     }
 
     const ext = MIME_TO_EXT[file.mimetype];

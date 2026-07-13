@@ -147,4 +147,48 @@ describe('CvTemplateSelector', () => {
       expect(component.selected()).toBe('default');
     });
   });
+
+  describe('tier gating', () => {
+    it('allows all templates by default', () => {
+      expect(component.isLocked('modern')).toBe(false);
+      expect(component.isLocked('default')).toBe(false);
+    });
+
+    it('locks templates outside allowedTemplateIds', () => {
+      fixture.componentRef.setInput('allowedTemplateIds', ['default', 'classic']);
+      fixture.detectChanges();
+
+      expect(component.isLocked('default')).toBe(false);
+      expect(component.isLocked('classic')).toBe(false);
+      expect(component.isLocked('modern')).toBe(true);
+    });
+
+    it('select() is a no-op for a locked template', () => {
+      fixture.componentRef.setInput('allowedTemplateIds', ['default', 'classic']);
+      fixture.detectChanges();
+
+      component.select('modern');
+
+      expect(component.selected()).toBe('default');
+    });
+
+    it('select() still works for an allowed template', () => {
+      fixture.componentRef.setInput('allowedTemplateIds', ['default', 'classic']);
+      fixture.detectChanges();
+
+      component.select('classic');
+
+      expect(component.selected()).toBe('classic');
+    });
+
+    it('renders aria-disabled on locked template cards', () => {
+      fixture.componentRef.setInput('allowedTemplateIds', ['default', 'classic']);
+      fixture.detectChanges();
+
+      const modernCard = fixture.nativeElement.querySelector(
+        '[data-template-id="modern"]',
+      );
+      expect(modernCard.getAttribute('aria-disabled')).toBe('true');
+    });
+  });
 });

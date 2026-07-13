@@ -8,9 +8,10 @@
     <p-select
       class="template-select"
       size="small"
-      [options]="templates"
+      [options]="templates()"
       optionLabel="name"
       optionValue="id"
+      optionDisabled="disabled"
       [ngModel]="selectedTemplate()"
       (ngModelChange)="selectedTemplate.set($event)"
     ></p-select>

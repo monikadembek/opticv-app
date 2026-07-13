@@ -38,9 +38,27 @@ describe('ExportFooter', () => {
   });
 
   describe('template selector', () => {
-    it('exposes all CV templates via the templates property', () => {
-      expect(component.templates.length).toBe(CV_TEMPLATES.length);
-      expect(component.templates).toEqual(CV_TEMPLATES);
+    it('exposes all CV templates via the templates computed by default (all tiers allowed)', () => {
+      expect(component.templates().length).toBe(CV_TEMPLATES.length);
+      expect(component.templates().every((t) => !t.disabled)).toBe(true);
+    });
+
+    it('marks templates outside allowedTemplateIds as disabled', () => {
+      fixture.componentRef.setInput('allowedTemplateIds', ['default', 'classic']);
+      fixture.detectChanges();
+
+      const disabledIds = component
+        .templates()
+        .filter((t) => t.disabled)
+        .map((t) => t.id);
+      expect(disabledIds).toEqual(
+        CV_TEMPLATES.filter((t) => !['default', 'classic'].includes(t.id)).map(
+          (t) => t.id,
+        ),
+      );
+      expect(component.templates().find((t) => t.id === 'default')?.disabled).toBe(
+        false,
+      );
     });
 
     it('defaults selectedTemplate to default', () => {
