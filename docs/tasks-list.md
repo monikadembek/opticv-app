@@ -1023,7 +1023,7 @@ To do:
 
 ### 83. Implement limits for different subscription tiers
 
-**status: in progress**
+**status: done**
 **time: 13.07.2026**
 
 We need to implement some limits for different types of subscription tiers that the app will give its users.
