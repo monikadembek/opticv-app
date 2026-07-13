@@ -8,8 +8,10 @@ import { ConfigService } from '@nestjs/config';
 import { createClient } from '@supabase/supabase-js';
 import { PrismaService } from '../prisma/prisma.service';
 import { R2Service } from '../storage/r2.service';
+import { QuotaService } from '../quota/quota.service';
 import { UserModel } from '../../generated/prisma/models.js';
-import type { UserProfile } from '@opticv/datatypes';
+import type { SubscriptionTier, UsageStatus, UserProfile } from '@opticv/datatypes';
+import { TIER_LIMITS } from '@opticv/datatypes';
 
 @Injectable()
 export class UsersService {
@@ -19,6 +21,7 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly r2: R2Service,
     private readonly config: ConfigService,
+    private readonly quotaService: QuotaService,
   ) {}
 
   async upsertUser(data: {
@@ -60,6 +63,29 @@ export class UsersService {
       subscription: user.subscription
         ? { tier: user.subscription.tier, status: user.subscription.status }
         : null,
+    };
+  }
+
+  async getUsageStatus(supabaseId: string): Promise<UsageStatus> {
+    const user = await this.prisma.user.findUnique({
+      where: { supabaseId },
+      include: { subscription: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+
+    const tier = (user.subscription?.tier ?? 'FREE') as SubscriptionTier;
+    const quotas = await this.quotaService.getQuotaStatus(user.id, tier);
+    const maxStoredCvs = TIER_LIMITS[tier].maxStoredCvs;
+    const storedCvsUsed = await this.prisma.cvDocument.count({
+      where: { userId: user.id, isActive: true },
+    });
+
+    return {
+      quotas,
+      storedCvs: { used: storedCvsUsed, limit: maxStoredCvs },
     };
   }
 
