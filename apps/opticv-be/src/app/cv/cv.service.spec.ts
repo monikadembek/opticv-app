@@ -30,6 +30,10 @@ const mockPrisma = {
     findMany: jest.fn().mockResolvedValue([mockDoc]),
     findUnique: jest.fn().mockResolvedValue(mockDoc),
     delete: jest.fn().mockResolvedValue(mockDoc),
+    count: jest.fn().mockResolvedValue(0),
+  },
+  subscription: {
+    findUnique: jest.fn().mockResolvedValue({ tier: 'FREE' }),
   },
 };
 
@@ -213,6 +217,45 @@ describe('CvService', () => {
 
       await expect(service.uploadCv(file, 'user-id')).rejects.toThrow(
         InternalServerErrorException,
+      );
+    });
+
+    it('rejects with CV_LIMIT_EXCEEDED when active CV count is at the tier cap', async () => {
+      mockPrisma.subscription.findUnique.mockResolvedValueOnce({ tier: 'FREE' });
+      mockPrisma.cvDocument.count.mockResolvedValueOnce(2);
+      const file = makeFile();
+
+      await expect(service.uploadCv(file, 'user-id')).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(mockR2.upload).not.toHaveBeenCalled();
+      expect(mockPrisma.cvDocument.create).not.toHaveBeenCalled();
+    });
+
+    it('allows upload when active CV count is under the tier cap', async () => {
+      mockPrisma.subscription.findUnique.mockResolvedValueOnce({ tier: 'FREE' });
+      mockPrisma.cvDocument.count.mockResolvedValueOnce(1);
+      const file = makeFile();
+
+      await expect(service.uploadCv(file, 'user-id')).resolves.toBeDefined();
+      expect(mockPrisma.cvDocument.create).toHaveBeenCalled();
+    });
+
+    it('uses the BASIC tier cap (10) when the user has no FREE-tier limit', async () => {
+      mockPrisma.subscription.findUnique.mockResolvedValueOnce({ tier: 'BASIC' });
+      mockPrisma.cvDocument.count.mockResolvedValueOnce(9);
+      const file = makeFile();
+
+      await expect(service.uploadCv(file, 'user-id')).resolves.toBeDefined();
+    });
+
+    it('defaults to FREE tier limits when no subscription row exists', async () => {
+      mockPrisma.subscription.findUnique.mockResolvedValueOnce(null);
+      mockPrisma.cvDocument.count.mockResolvedValueOnce(2);
+      const file = makeFile();
+
+      await expect(service.uploadCv(file, 'user-id')).rejects.toThrow(
+        ForbiddenException,
       );
     });
   });
