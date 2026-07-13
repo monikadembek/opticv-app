@@ -17,6 +17,7 @@ import { MessageService } from 'primeng/api';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './core/auth/interceptors/auth-interceptor';
 import { rateLimitInterceptor } from './core/interceptors/rate-limit-interceptor';
+import { quotaErrorInterceptor } from './core/interceptors/quota-error-interceptor';
 import { Router } from '@angular/router';
 import * as Sentry from '@sentry/angular';
 
@@ -31,7 +32,11 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(withEventReplay()),
     provideBrowserGlobalErrorListeners(),
     provideHttpClient(
-      withInterceptors([authInterceptor, rateLimitInterceptor]),
+      withInterceptors([
+        authInterceptor,
+        rateLimitInterceptor,
+        quotaErrorInterceptor,
+      ]),
     ),
     provideRouter(appRoutes),
     {
