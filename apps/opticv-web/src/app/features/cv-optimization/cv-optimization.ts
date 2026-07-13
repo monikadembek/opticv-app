@@ -60,7 +60,9 @@ import { BulletRewriter } from './components/bullet-rewriter/bullet-rewriter';
 import { CoverLetterEditor } from './components/cover-letter-editor/cover-letter-editor';
 import { InterviewPrep } from './components/interview-prep/interview-prep';
 import { LinkedInUpdates } from './components/linkedin-updates/linkedin-updates';
-import { CvTemplateId, DEFAULT_ACCENT_COLOR } from './cv-templates';
+import { CV_TEMPLATES, CvTemplateId, DEFAULT_ACCENT_COLOR } from './cv-templates';
+import { SubscriptionTier, TIER_LIMITS } from '@opticv/datatypes';
+import { UserSettingsApiService } from '../../core/services/user-settings-api.service';
 import { applySelectionsToCV } from './utils/apply-selections';
 import {
   recomputeAtsProjection,
@@ -185,6 +187,7 @@ export class CvOptimization implements OnInit {
   private readonly cvExportService = inject(CvExportService);
   private readonly cvApiService = inject(CvApiService);
   private readonly jobApplicationApiService = inject(JobApplicationApiService);
+  private readonly userSettingsApiService = inject(UserSettingsApiService);
   private readonly messageService = inject(MessageService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
@@ -209,6 +212,15 @@ export class CvOptimization implements OnInit {
   readonly isExportingDocx = signal(false);
   readonly selectedTemplate = signal<CvTemplateId>('default');
   readonly accentColor = signal<string>(DEFAULT_ACCENT_COLOR);
+  readonly allowedTemplateIds = computed<CvTemplateId[]>(() => {
+    const tier: SubscriptionTier =
+      this.userSettingsApiService.userProfile.value()?.subscription?.tier ??
+      'FREE';
+    const allowed = TIER_LIMITS[tier].allowedTemplates;
+    return allowed === 'ALL'
+      ? CV_TEMPLATES.map((t) => t.id)
+      : (allowed as CvTemplateId[]);
+  });
   readonly isStoredMode = signal(false);
   readonly loadError = signal<string | null>(null);
   readonly jobApplication = signal<JobApplicationWithCv | null>(null);
@@ -407,6 +419,13 @@ export class CvOptimization implements OnInit {
       if (state !== 'initial') {
         // Defer to after render so section elements exist in DOM
         setTimeout(() => this.setupScrollspy(), 0);
+      }
+    });
+
+    effect(() => {
+      const allowed = this.allowedTemplateIds();
+      if (!allowed.includes(this.selectedTemplate())) {
+        this.selectedTemplate.set(allowed[0] ?? 'default');
       }
     });
 
@@ -740,7 +759,7 @@ export class CvOptimization implements OnInit {
     this.isProcessing.update((map) => new Map(map).set(promptType, true));
 
     this.cvOptimizationApiService
-      .runSingleOptimizationProcess(jobApplicationId, promptType)
+      .retryFailedJob(jobApplicationId, promptType)
       .pipe(
         switchMap(({ runId }) =>
           this.cvOptimizationApiService.streamOptimizationEvents(

@@ -21,6 +21,7 @@ import {
 import { JobApplicationApiService } from '../../core/services/job-application-api.service';
 import { CvApiService } from '../../core/services/cv-api.service';
 import { CvExportService } from './services/cv-export.service';
+import { UserSettingsApiService } from '../../core/services/user-settings-api.service';
 
 const mockCv: CvDocumentListItem = {
   id: 'cv-id-1',
@@ -121,9 +122,13 @@ describe('CvOptimization', () => {
     getStructuredData: ReturnType<typeof vi.fn>;
     getOptimizationResults: ReturnType<typeof vi.fn>;
     runSingleOptimizationProcess: ReturnType<typeof vi.fn>;
+    retryFailedJob: ReturnType<typeof vi.fn>;
     streamOptimizationEvents: ReturnType<typeof vi.fn>;
     retryOptimization: ReturnType<typeof vi.fn>;
     saveUserOutput: ReturnType<typeof vi.fn>;
+  };
+  let userSettingsApiService: {
+    userProfile: { value: ReturnType<typeof signal<{ subscription: { tier: string } } | null>> };
   };
   let jobApplicationApiService: {
     getJobApplication: ReturnType<typeof vi.fn>;
@@ -164,6 +169,7 @@ describe('CvOptimization', () => {
       runSingleOptimizationProcess: vi
         .fn()
         .mockReturnValue(of({ runId: 'run-id-1' })),
+      retryFailedJob: vi.fn().mockReturnValue(of({ runId: 'run-id-1' })),
       streamOptimizationEvents: vi.fn().mockReturnValue(of()),
       retryOptimization: vi.fn(),
       saveUserOutput: vi
@@ -180,6 +186,9 @@ describe('CvOptimization', () => {
       exportToPdf: vi.fn().mockResolvedValue(undefined),
       exportToDocx: vi.fn().mockResolvedValue(undefined),
     };
+    userSettingsApiService = {
+      userProfile: { value: signal(null) },
+    };
 
     await TestBed.configureTestingModule({
       imports: [CvOptimization],
@@ -191,6 +200,7 @@ describe('CvOptimization', () => {
         },
         { provide: CvApiService, useValue: cvApiService },
         { provide: CvExportService, useValue: cvExportService },
+        { provide: UserSettingsApiService, useValue: userSettingsApiService },
         {
           provide: ActivatedRoute,
           useValue: makeActivatedRoute(jobApplicationId, cvId),
@@ -1017,10 +1027,40 @@ describe('CvOptimization', () => {
     });
   });
 
+  describe('allowedTemplateIds', () => {
+    it('defaults to FREE tier templates (default, classic) when no profile is loaded', () => {
+      expect(component.allowedTemplateIds()).toEqual(['default', 'classic']);
+    });
+
+    it('allows all templates for a BASIC tier user', () => {
+      userSettingsApiService.userProfile.value.set({
+        subscription: { tier: 'BASIC' },
+      });
+      expect(component.allowedTemplateIds().length).toBeGreaterThan(2);
+      expect(component.allowedTemplateIds()).toContain('modern');
+    });
+
+    it('resets selectedTemplate away from a now-locked template', () => {
+      userSettingsApiService.userProfile.value.set({
+        subscription: { tier: 'BASIC' },
+      });
+      component.selectedTemplate.set('modern');
+      expect(component.selectedTemplate()).toBe('modern');
+
+      userSettingsApiService.userProfile.value.set({
+        subscription: { tier: 'FREE' },
+      });
+      fixture.detectChanges();
+
+      expect(component.allowedTemplateIds()).not.toContain('modern');
+      expect(component.selectedTemplate()).not.toBe('modern');
+    });
+  });
+
   describe('retryOptimization', () => {
     it('does nothing when jobApplicationId is null', () => {
       component.retryOptimization(PromptType.RESUME_AUTOPSY);
-      expect(apiService.runSingleOptimizationProcess).not.toHaveBeenCalled();
+      expect(apiService.retryFailedJob).not.toHaveBeenCalled();
     });
 
     it('sets isProcessing to true for the retried prompt type immediately', () => {
@@ -1034,16 +1074,17 @@ describe('CvOptimization', () => {
       );
     });
 
-    it('calls runSingleOptimizationProcess with the stored jobApplicationId and promptType', () => {
+    it('calls retryFailedJob (free retry, no quota check) with the stored jobApplicationId and promptType', () => {
       component.jobApplicationId.set(mockJobApplication.id);
       apiService.streamOptimizationEvents.mockReturnValue(NEVER);
 
       component.retryOptimization(PromptType.KEYWORD_GAP);
 
-      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
+      expect(apiService.retryFailedJob).toHaveBeenCalledWith(
         mockJobApplication.id,
         PromptType.KEYWORD_GAP,
       );
+      expect(apiService.runSingleOptimizationProcess).not.toHaveBeenCalled();
     });
 
     it('updates results and clears isProcessing when the retry SSE event arrives', () => {
