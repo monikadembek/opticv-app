@@ -14,9 +14,15 @@ datasource db {
 
 enum SubscriptionTier {
   FREE
+  BASIC
   PRO
-  PRO_ANNUAL
-  SPRINT
+}
+
+enum LimitedFeature {
+  CV_OPTIMIZATION
+  COVER_LETTER
+  INTERVIEW_PREP
+  LINKEDIN
 }
 
 enum SubscriptionStatus {
@@ -70,6 +76,7 @@ model User {
   cvDocuments         CvDocument[]
   applications        JobApplication[]
   usageLogs           UsageLog[]
+  usageQuotas         UsageQuota[]
 
   @@map("users")
 }
@@ -193,6 +200,24 @@ model PromptVersion {
 
   @@unique([promptType, version])
   @@map("prompt_versions")
+}
+
+// ─── Usage Quota ──────────────────────────────────────────────────────────────
+
+model UsageQuota {
+  id          String         @id @default(uuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  feature     LimitedFeature
+  periodStart DateTime
+  count       Int            @default(0)
+
+  updatedAt   DateTime       @updatedAt
+
+  @@unique([userId, feature, periodStart])
+  @@index([userId, periodStart])
+  @@map("usage_quotas")
 }
 
 // ─── Usage Log ────────────────────────────────────────────────────────────────
