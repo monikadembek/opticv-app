@@ -4,7 +4,7 @@ import { signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Settings } from './settings';
-import { UserSettingsApiService } from './services/user-settings-api.service';
+import { UserSettingsApiService } from '../../core/services/user-settings-api.service';
 import { Supabase } from '../../core/auth/services/supabase';
 import type { UsageStatus, UserProfile } from '@opticv/datatypes';
 

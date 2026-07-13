@@ -14,7 +14,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import type { LimitedFeature, UserProfile } from '@opticv/datatypes';
 import { Supabase } from '../../core/auth/services/supabase';
-import { UserSettingsApiService } from './services/user-settings-api.service';
+import { UserSettingsApiService } from '../../core/services/user-settings-api.service';
 import { catchError, EMPTY, tap } from 'rxjs';
 import posthog from 'posthog-js';
 
