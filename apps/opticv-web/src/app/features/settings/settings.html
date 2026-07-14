@@ -1,5 +1,8 @@
 <div class="settings-page mx-auto max-w-2xl px-4 py-10">
-  <h1 class="mb-8 text-2xl font-semibold">Account settings</h1>
+  <h1 class="mb-1 text-2xl font-semibold">Account settings</h1>
+  <p class="mb-8 text-gray-500 text-[15px]">
+    Manage your profile, plan, and preferences
+  </p>
 
   @if (userProfile.isLoading()) {
   <div class="flex justify-center py-16">
@@ -11,38 +14,97 @@
     again.` }}
   </p>
   } @else if (userProfile.hasValue()) {
-  <section class="mb-8 flex items-center gap-4" aria-label="Profile">
-    @if (userProfile.value()?.avatarUrl) {
-    <p-avatar
-      [image]="userProfile.value()?.avatarUrl ?? undefined"
-      shape="circle"
-      size="xlarge"
-    />
-    } @else {
-    <p-avatar
-      [label]="getAvatarLabel(userProfile.value())"
-      shape="circle"
-      size="xlarge"
-      [style]="{ 'background-color': '#10b981', color: '#ffffff' }"
-    />
-    }
-    <div>
-      <p class="text-lg font-medium">
-        {{ userProfile.value()?.displayName ?? userProfile.value()?.email }}
-      </p>
-      @if(userProfile.value()?.displayName) {
-      <p class="text-sm text-gray-500">{{ userProfile.value()?.email }}</p>
+  <section
+    class="mb-6 rounded-lg border border-gray-200 p-6"
+    aria-label="Profile"
+  >
+    <div class="mb-6 flex items-center gap-4">
+      @if (userProfile.value()?.avatarUrl) {
+      <p-avatar
+        [image]="userProfile.value()?.avatarUrl ?? undefined"
+        shape="circle"
+        size="xlarge"
+      />
+      } @else {
+      <p-avatar
+        [label]="getAvatarLabel(userProfile.value())"
+        shape="circle"
+        size="xlarge"
+        [style]="{ 'background-color': '#10b981', color: '#ffffff' }"
+      />
       }
+      <div>
+        <p class="text-lg font-medium">
+          {{ userProfile.value()?.displayName ?? userProfile.value()?.email }}
+        </p>
+        @if(userProfile.value()?.displayName) {
+        <p class="text-sm text-gray-500">{{ userProfile.value()?.email }}</p>
+        }
+      </div>
     </div>
+
+    <form #profileForm="ngForm" class="flex flex-col gap-4">
+      <div>
+        <label for="fullName" class="mb-1 block text-sm font-medium"
+          >Full name</label
+        >
+        <div class="flex items-center gap-3">
+          <input
+            pInputText
+            id="fullName"
+            name="fullName"
+            [ngModel]="userProfile.value()?.displayName ?? ''"
+            class="flex-1"
+          />
+          <button
+            pButton
+            type="button"
+            label="Save name"
+            severity="success"
+            [disabled]="true"
+            aria-label="Save name"
+            class="w-[125px]"
+          ></button>
+        </div>
+      </div>
+
+      <div>
+        <label for="emailAddress" class="mb-1 block text-sm font-medium"
+          >Email address</label
+        >
+        <div class="flex items-center gap-3">
+          <input
+            pInputText
+            id="emailAddress"
+            name="emailAddress"
+            [ngModel]="userProfile.value()?.email ?? ''"
+            class="flex-1"
+          />
+          <button
+            pButton
+            type="button"
+            label="Change email"
+            severity="secondary"
+            [outlined]="true"
+            [disabled]="true"
+            aria-label="Change email"
+            class="w-[125px]"
+          ></button>
+        </div>
+      </div>
+    </form>
   </section>
 
-  <section class="mb-8" aria-label="Subscription">
+  <section
+    class="mb-6 rounded-lg border border-gray-200 p-6"
+    aria-label="Subscription"
+  >
     <h2
       class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500"
     >
       Subscription
     </h2>
-    <div class="flex gap-3">
+    <div class="mb-3 flex gap-3">
       <span
         class="rounded-full bg-emerald-100 px-3 py-1 text-sm font-medium text-emerald-800"
       >
@@ -54,36 +116,123 @@
         {{ userProfile.value()?.subscription?.status ?? 'ACTIVE' }}
       </span>
     </div>
+
+    @if (usageStatus.hasValue() && usageStatus.value(); as subUsage) { @if
+    (subUsage.quotas.length > 0) {
+    <p class="mb-4 text-sm text-gray-600">
+      Your
+      <strong>{{ userProfile.value()?.subscription?.tier ?? 'FREE' }}</strong>
+      plan renews on
+      <strong>{{ subUsage.quotas[0].resetsAt | date: 'mediumDate' }}</strong>
+    </p>
+    } }
+
+    <div class="flex gap-3">
+      <p-button
+        type="button"
+        label="Manage billing"
+        icon="pi pi-credit-card"
+        severity="success"
+        [outlined]="true"
+        [disabled]="true"
+      />
+      <p-button
+        type="button"
+        label="View invoices"
+        severity="success"
+        [text]="true"
+        [disabled]="true"
+      />
+    </div>
   </section>
 
   @if (usageStatus.hasValue() && usageStatus.value(); as usage) {
-  <section class="mb-8" aria-label="Usage">
-    <h2
-      class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500"
-    >
-      Usage this month
-    </h2>
-    <ul class="flex flex-col gap-2">
+  <section
+    class="mb-6 rounded-lg border border-gray-200 p-6"
+    aria-label="Usage"
+  >
+    <div class="mb-3 flex items-center justify-between">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500">
+        Usage this month
+      </h2>
+      @if (usage.quotas.length > 0) {
+      <span class="text-sm text-gray-500">
+        Resets {{ usage.quotas[0].resetsAt | date: 'mediumDate' }}
+      </span>
+      }
+    </div>
+    <ul class="flex flex-col gap-4">
       @for (quota of usage.quotas; track quota.feature) {
-      <li class="flex items-center justify-between text-sm">
-        <span>{{ featureLabel(quota.feature) }}</span>
-        <span class="text-gray-600">
-          {{ quota.used }} / {{ quota.limit }} used &middot; resets
-          {{ quota.resetsAt | date: 'mediumDate' }}
-        </span>
+      <li class="flex flex-col gap-2 text-sm">
+        <div class="flex items-center justify-between">
+          <span>{{ featureLabel(quota.feature) }}</span>
+          <span class="text-gray-600"
+            >{{ quota.used }} / {{ quota.limit }}</span
+          >
+        </div>
+        <p-progressbar
+          [value]="usagePercent(quota.used, quota.limit)"
+          [showValue]="false"
+        />
       </li>
       }
-      <li class="flex items-center justify-between text-sm">
-        <span>Stored CV documents</span>
-        <span class="text-gray-600">
-          {{ usage.storedCvs.used }} / {{ usage.storedCvs.limit }} used
-        </span>
+      <li class="flex flex-col gap-2 text-sm">
+        <div class="flex items-center justify-between">
+          <span>Stored CV documents</span>
+          <span class="text-gray-600">
+            {{ usage.storedCvs.used }} / {{ usage.storedCvs.limit }}
+          </span>
+        </div>
+        <p-progressbar
+          [value]="usagePercent(usage.storedCvs.used, usage.storedCvs.limit)"
+          [showValue]="false"
+        />
       </li>
     </ul>
   </section>
   }
 
-  <section aria-label="Danger zone" class="border-t border-red-200 pt-8">
+  <section
+    class="mb-6 rounded-lg border border-gray-200 p-6"
+    aria-label="Notifications"
+  >
+    <h2
+      class="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-500"
+    >
+      Notifications
+    </h2>
+    <div class="flex flex-col divide-y divide-gray-200">
+      <div class="flex items-center justify-between py-3">
+        <div>
+          <p class="text-sm font-semibold">Product updates</p>
+          <p class="text-sm text-gray-500">New features and improvements.</p>
+        </div>
+        <p-toggleswitch
+          [ngModel]="productUpdatesEnabled()"
+          (ngModelChange)="productUpdatesEnabled.set($event)"
+          [ngModelOptions]="{ standalone: true }"
+          ariaLabel="Product updates"
+        />
+      </div>
+      <div class="flex items-center justify-between py-3">
+        <div>
+          <p class="text-sm font-semibold">Job-search tips</p>
+          <p class="text-sm text-gray-500">A short digest every 2 weeks.</p>
+        </div>
+        <p-toggleswitch
+          [ngModel]="weeklyTipsEnabled()"
+          (ngModelChange)="weeklyTipsEnabled.set($event)"
+          [ngModelOptions]="{ standalone: true }"
+          ariaLabel="Weekly job-search tips"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section
+    aria-label="Danger zone"
+    class="rounded-lg border border-gray-200 border-l-4 border-l-red-500 p-6"
+  >
     <h2 class="mb-2 text-sm font-semibold uppercase tracking-wide text-red-600">
       Danger zone
     </h2>

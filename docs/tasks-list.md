@@ -1057,6 +1057,50 @@ FREE: 2, BASIC: 10, PRO: 20
 
 ---
 
+### 84. Redesign Account Settings page
+
+**status: done**
+
+**time: 14.07.2026**
+
+- implement new design for account settings page
+
+---
+
+### 85. Implement adding user full name (BE & FE)
+
+**status: todo**
+**time: 14.07.2026**
+
+- implement the functionality to add user full name in account settings page
+- add new api endpoint to store user full name in users table in the displayName column,
+- validate the coming display name, allow max length of 100 characters
+- on frontent modify current tempplate driven form to signal form
+
+---
+
+### 86. Implement user email change
+
+**status: todo**
+**time:**
+
+- implement user email change via supabase
+- use the plan from @docs/user-email-change.md
+
+---
+
+### Add notifications (BE & FE)
+
+**status: todo**
+**time:**
+
+- in account setting page user can turn on notification for product updates and job tips
+- add new table Notifications with those options and add relation to user table
+- prepare endpoint where user can send notification type and value true/ false and it would update that data in database
+- on frontend in Account Settings page implement passing notifications values to backend via prepared endpoint
+
+---
+
 ### Bug - some selected bullet rewrites are not applied to A4 cv template preview and not applied to exported CV
 
 **status: todo**
@@ -1073,6 +1117,7 @@ FREE: 2, BASIC: 10, PRO: 20
 
 - add help informations which will explain what are keywords and why are they important,
 - what is summary, ats, etc.
+- why we should rewrite bullet points in a certain way
 
 ---
 

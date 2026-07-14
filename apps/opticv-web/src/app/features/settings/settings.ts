@@ -6,12 +6,16 @@ import {
   signal,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { InputTextModule } from 'primeng/inputtext';
+import { ProgressBarModule } from 'primeng/progressbar';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import type { LimitedFeature, UserProfile } from '@opticv/datatypes';
 import { Supabase } from '../../core/auth/services/supabase';
 import { UserSettingsApiService } from '../../core/services/user-settings-api.service';
@@ -24,7 +28,11 @@ import posthog from 'posthog-js';
     AvatarModule,
     ButtonModule,
     ConfirmDialogModule,
+    ProgressBarModule,
     ProgressSpinnerModule,
+    ToggleSwitchModule,
+    InputTextModule,
+    FormsModule,
     DatePipe,
   ],
   templateUrl: './settings.html',
@@ -41,6 +49,8 @@ export class Settings implements OnInit {
   readonly userProfile = this.userSettingsApiService.userProfile;
   readonly usageStatus = this.userSettingsApiService.usageStatus;
   readonly isDeleting = signal(false);
+  readonly productUpdatesEnabled = signal(true);
+  readonly weeklyTipsEnabled = signal(false);
 
   private readonly featureLabels: Record<LimitedFeature, string> = {
     CV_OPTIMIZATION: 'CV optimization runs',
@@ -56,6 +66,10 @@ export class Settings implements OnInit {
 
   featureLabel(feature: LimitedFeature): string {
     return this.featureLabels[feature];
+  }
+
+  usagePercent(used: number, limit: number): number {
+    return limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
   }
 
   onDeleteAccount(): void {
