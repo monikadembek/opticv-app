@@ -1057,6 +1057,35 @@ FREE: 2, BASIC: 10, PRO: 20
 
 ---
 
+### 84. Redesign Account Settings page
+
+**status: in progress**
+**time: 14.07.2026**
+
+- implement new design for account settings page
+
+---
+
+### Implement user email change
+
+**status: todo**
+**time:**
+
+- implement user email change via supabase
+
+---
+
+### Implement adding user full name
+
+**status: todo**
+**time:**
+
+- implement the functionality to add user full name in account settings page
+- will require changes on freontend and backend
+- add new api endpoint to store user full name in users table displayName column
+
+---
+
 ### Bug - some selected bullet rewrites are not applied to A4 cv template preview and not applied to exported CV
 
 **status: todo**
