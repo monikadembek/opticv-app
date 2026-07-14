@@ -1069,7 +1069,7 @@ FREE: 2, BASIC: 10, PRO: 20
 
 ### 85. Implement adding user full name (BE & FE)
 
-**status: in progress**
+**status: done**
 
 **time: 14.07.2026**
 

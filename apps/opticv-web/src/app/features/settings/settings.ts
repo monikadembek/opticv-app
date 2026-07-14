@@ -173,7 +173,6 @@ export class Settings implements OnInit {
         }),
       )
       .subscribe((res) => {
-        console.log('Update name Result: ', res);
         this.isSavingName.set(false);
         this.messageService.add({
           severity: 'success',
