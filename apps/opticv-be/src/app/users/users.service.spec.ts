@@ -23,6 +23,7 @@ const mockPrisma = {
   ),
   user: {
     findUnique: jest.fn(),
+    update: jest.fn(),
   },
   cvDocument: {
     count: jest.fn().mockResolvedValue(0),
@@ -94,6 +95,68 @@ describe('UsersService', () => {
     await expect(
       service.upsertUser({ supabaseId: 'sb-id', email: 'test@example.com' }),
     ).rejects.toThrow('db error');
+  });
+
+  describe('updateDisplayName', () => {
+    it('throws NotFoundException when user does not exist', async () => {
+      mockPrisma.user.findUnique.mockResolvedValueOnce(null);
+
+      await expect(
+        service.updateDisplayName('sb-id', { displayName: 'Jane Doe' }),
+      ).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('updates the display name and returns the mapped profile', async () => {
+      mockPrisma.user.findUnique.mockResolvedValueOnce({
+        id: 'user-id',
+        subscription: { tier: 'FREE', status: 'ACTIVE' },
+      });
+      mockPrisma.user.update.mockResolvedValueOnce({
+        id: 'user-id',
+        email: 'test@example.com',
+        displayName: 'Jane Doe',
+        avatarUrl: null,
+        subscription: { tier: 'FREE', status: 'ACTIVE' },
+      });
+
+      const result = await service.updateDisplayName('sb-id', {
+        displayName: 'Jane Doe',
+      });
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-id' },
+        data: { displayName: 'Jane Doe' },
+        include: { subscription: true },
+      });
+      expect(result).toEqual({
+        id: 'user-id',
+        email: 'test@example.com',
+        displayName: 'Jane Doe',
+        avatarUrl: null,
+        subscription: { tier: 'FREE', status: 'ACTIVE' },
+      });
+    });
+
+    it('returns a null subscription when the user has none', async () => {
+      mockPrisma.user.findUnique.mockResolvedValueOnce({
+        id: 'user-id',
+        subscription: null,
+      });
+      mockPrisma.user.update.mockResolvedValueOnce({
+        id: 'user-id',
+        email: 'test@example.com',
+        displayName: 'Jane Doe',
+        avatarUrl: null,
+        subscription: null,
+      });
+
+      const result = await service.updateDisplayName('sb-id', {
+        displayName: 'Jane Doe',
+      });
+
+      expect(result.subscription).toBeNull();
+    });
   });
 
   describe('getUsageStatus', () => {

@@ -1069,13 +1069,14 @@ FREE: 2, BASIC: 10, PRO: 20
 
 ### 85. Implement adding user full name (BE & FE)
 
-**status: todo**
+**status: done**
+
 **time: 14.07.2026**
 
 - implement the functionality to add user full name in account settings page
 - add new api endpoint to store user full name in users table in the displayName column,
 - validate the coming display name, allow max length of 100 characters
-- on frontent modify current tempplate driven form to signal form
+- on frontend modify current tempplate driven form to signal form
 
 ---
 

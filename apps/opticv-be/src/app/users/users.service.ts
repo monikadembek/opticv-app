@@ -12,6 +12,7 @@ import { QuotaService } from '../quota/quota.service';
 import { UserModel } from '../../generated/prisma/models.js';
 import type { SubscriptionTier, UsageStatus, UserProfile } from '@opticv/datatypes';
 import { TIER_LIMITS } from '@opticv/datatypes';
+import { UpdateDisplayNameDto } from './dto/update-display-name.dto';
 
 @Injectable()
 export class UsersService {
@@ -62,6 +63,39 @@ export class UsersService {
       avatarUrl: user.avatarUrl,
       subscription: user.subscription
         ? { tier: user.subscription.tier, status: user.subscription.status }
+        : null,
+    };
+  }
+
+  async updateDisplayName(
+    supabaseId: string,
+    dto: UpdateDisplayNameDto,
+  ): Promise<UserProfile> {
+    const user = await this.prisma.user.findUnique({
+      where: { supabaseId },
+      include: { subscription: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: user.id },
+      data: { displayName: dto.displayName },
+      include: { subscription: true },
+    });
+
+    return {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      displayName: updatedUser.displayName,
+      avatarUrl: updatedUser.avatarUrl,
+      subscription: updatedUser.subscription
+        ? {
+            tier: updatedUser.subscription.tier,
+            status: updatedUser.subscription.status,
+          }
         : null,
     };
   }

@@ -34,6 +34,13 @@ export class UserSettingsApiService {
     this.#usageStatus.reload();
   }
 
+  updateDisplayName(displayName: string): Observable<UserProfile> {
+    return this.http.patch<UserProfile>(
+      `${environment.apiUrl}/users/me/display-name`,
+      { displayName },
+    );
+  }
+
   deleteAccount(): Observable<void> {
     return this.http.delete<void>(`${environment.apiUrl}/users/me`);
   }

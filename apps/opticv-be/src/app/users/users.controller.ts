@@ -7,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
   Logger,
+  Patch,
   Post,
   UnauthorizedException,
   UseGuards,
@@ -17,6 +18,7 @@ import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { WebhookPayloadDto } from './dto/webhook-payload.dto';
 import { UserProfileDto } from './dto/user-profile.dto';
+import { UpdateDisplayNameDto } from './dto/update-display-name.dto';
 import { SupabaseGuard } from '../auth/supabase.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { UserModel } from '../../generated/prisma/models.js';
@@ -89,6 +91,25 @@ export class UsersController {
   @ApiResponse({ status: 404, description: 'User not found' })
   async getProfile(@CurrentUser() user: UserModel): Promise<UserProfileDto> {
     return this.usersService.getProfile(user.supabaseId);
+  }
+
+  @Patch('me/display-name')
+  @UseGuards(SupabaseGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update current user display name' })
+  @ApiResponse({
+    status: 200,
+    type: UserProfileDto,
+    description: 'Updated user profile',
+  })
+  @ApiResponse({ status: 400, description: 'Validation failed' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async updateDisplayName(
+    @CurrentUser() user: UserModel,
+    @Body() dto: UpdateDisplayNameDto,
+  ): Promise<UserProfileDto> {
+    return this.usersService.updateDisplayName(user.supabaseId, dto);
   }
 
   @Get('me/usage')

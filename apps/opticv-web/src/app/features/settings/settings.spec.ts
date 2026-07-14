@@ -40,6 +40,7 @@ function createUserSettingsMock(
     userProfile: createResource<UserProfile>(profileOverrides),
     usageStatus: createResource<UsageStatus>(usageOverrides),
     deleteAccount: vi.fn().mockReturnValue(of(undefined)),
+    updateDisplayName: vi.fn().mockReturnValue(of(mockProfile)),
     reloadUserProfile: vi.fn(),
     reloadUsageStatus: vi.fn(),
   };
@@ -338,7 +339,7 @@ describe('Settings', () => {
       expect(input.value).toBe('test@example.com');
     });
 
-    it('disables the Save name button', async () => {
+    it('enables the Save name button by default', async () => {
       await setup({ value: mockProfile, hasValue: true });
       const fixture = TestBed.createComponent(Settings);
       fixture.detectChanges();
@@ -346,7 +347,7 @@ describe('Settings', () => {
       const button = fixture.nativeElement.querySelector(
         'button[aria-label="Save name"]',
       ) as HTMLButtonElement;
-      expect(button.disabled).toBe(true);
+      expect(button.disabled).toBe(false);
     });
 
     it('disables the Change email button', async () => {
@@ -367,6 +368,112 @@ describe('Settings', () => {
 
       const text = fixture.nativeElement.textContent as string;
       expect(text).not.toContain('Save changes');
+    });
+  });
+
+  // ─── full name form (onSubmit) ──────────────────────────────────────────
+
+  function createSubmitEvent(): Event {
+    return { preventDefault: vi.fn() } as unknown as Event;
+  }
+
+  describe('onSubmit', () => {
+    it('calls updateDisplayName with the trimmed value, reloads the profile, and shows a success toast', async () => {
+      await setup({ value: mockProfile, hasValue: true });
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const addSpy = vi.spyOn(messageService, 'add');
+      userSettingsMock.reloadUserProfile.mockClear();
+
+      fixture.componentInstance.fullNameModel.set({ displayName: '  Alice  ' });
+      fixture.componentInstance.onSubmit(createSubmitEvent());
+
+      expect(userSettingsMock.updateDisplayName).toHaveBeenCalledWith('Alice');
+      expect(userSettingsMock.reloadUserProfile).toHaveBeenCalledOnce();
+      expect(addSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Full name updated.',
+        }),
+      );
+    });
+
+    it('shows an inline validation error and does not call updateDisplayName for an empty name', async () => {
+      await setup({ value: mockProfile, hasValue: true });
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      fixture.componentInstance.fullNameModel.set({ displayName: '' });
+      fixture.componentInstance.onSubmit(createSubmitEvent());
+      fixture.detectChanges();
+
+      expect(userSettingsMock.updateDisplayName).not.toHaveBeenCalled();
+      const text = fixture.nativeElement.textContent as string;
+      expect(text).toContain('Full name is required.');
+    });
+
+    it('shows an inline validation error and does not call updateDisplayName for a name over 100 characters', async () => {
+      await setup({ value: mockProfile, hasValue: true });
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      fixture.componentInstance.fullNameModel.set({
+        displayName: 'a'.repeat(101),
+      });
+      fixture.componentInstance.onSubmit(createSubmitEvent());
+      fixture.detectChanges();
+
+      expect(userSettingsMock.updateDisplayName).not.toHaveBeenCalled();
+      const text = fixture.nativeElement.textContent as string;
+      expect(text).toContain('Full name can contain maximum  100 characters.');
+    });
+
+    it('shows an error toast and keeps the entered value on API failure', async () => {
+      await setup({ value: mockProfile, hasValue: true });
+      userSettingsMock.updateDisplayName.mockReturnValue(
+        throwError(() => ({ error: { message: 'Something went wrong' } })),
+      );
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const addSpy = vi.spyOn(messageService, 'add');
+      userSettingsMock.reloadUserProfile.mockClear();
+
+      fixture.componentInstance.fullNameModel.set({ displayName: 'Alice' });
+      fixture.componentInstance.onSubmit(createSubmitEvent());
+
+      expect(addSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          severity: 'error',
+          summary: 'Update Error',
+          detail: 'Something went wrong',
+        }),
+      );
+      expect(userSettingsMock.reloadUserProfile).not.toHaveBeenCalled();
+      expect(fixture.componentInstance.fullNameModel().displayName).toBe(
+        'Alice',
+      );
+    });
+
+    it('sets isSavingName while the request is in flight and resets it after', async () => {
+      await setup({ value: mockProfile, hasValue: true });
+      userSettingsMock.updateDisplayName.mockReturnValue(
+        new (await import('rxjs')).Observable(() => {
+          /* never completes */
+        }),
+      );
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      fixture.componentInstance.fullNameModel.set({ displayName: 'Alice' });
+      fixture.componentInstance.onSubmit(createSubmitEvent());
+
+      expect(fixture.componentInstance.isSavingName()).toBe(true);
     });
   });
 

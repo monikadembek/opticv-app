@@ -43,42 +43,51 @@
       </div>
     </div>
 
-    <form #profileForm="ngForm" class="flex flex-col gap-4">
-      <div>
+    <div class="flex flex-col gap-6">
+      <form (submit)="onSubmit($event)">
         <label for="fullName" class="mb-1 block text-sm font-medium"
           >Full name</label
         >
-        <div class="flex items-center gap-3">
+        <div
+          class="flex flex-col sm:flex-row items-start sm:items-center gap-3"
+        >
           <input
             pInputText
             id="fullName"
-            name="fullName"
-            [ngModel]="userProfile.value()?.displayName ?? ''"
-            class="flex-1"
+            [formField]="fullNameForm.displayName"
+            class="w-full sm:flex-1"
           />
           <button
             pButton
-            type="button"
+            type="submit"
             label="Save name"
-            severity="success"
-            [disabled]="true"
+            [loading]="isSavingName()"
+            [disabled]="isSavingName()"
             aria-label="Save name"
-            class="w-[125px]"
+            class="w-[150px]"
           ></button>
         </div>
-      </div>
+        @if ((fullNameForm.displayName().touched() || nameSubmitted()) &&
+        fullNameForm.displayName().errors().length > 0) {
+        <p class="mt-1 text-sm text-red-600" role="alert">
+          {{ fullNameForm.displayName().errors()[0].message }}
+        </p>
+        }
+      </form>
 
-      <div>
+      <form>
         <label for="emailAddress" class="mb-1 block text-sm font-medium"
           >Email address</label
         >
-        <div class="flex items-center gap-3">
+        <div
+          class="flex flex-col sm:flex-row items-start sm:items-center gap-3"
+        >
           <input
             pInputText
             id="emailAddress"
             name="emailAddress"
             [ngModel]="userProfile.value()?.email ?? ''"
-            class="flex-1"
+            class="w-full sm:flex-1"
           />
           <button
             pButton
@@ -88,11 +97,11 @@
             [outlined]="true"
             [disabled]="true"
             aria-label="Change email"
-            class="w-[125px]"
+            class="w-[150px]"
           ></button>
         </div>
-      </div>
-    </form>
+      </form>
+    </div>
   </section>
 
   <section
