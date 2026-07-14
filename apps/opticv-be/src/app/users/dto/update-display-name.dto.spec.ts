@@ -40,4 +40,39 @@ describe('UpdateDisplayNameDto', () => {
     expect(errors).not.toHaveLength(0);
     expect(errors[0].constraints).toHaveProperty('maxLength');
   });
+
+  it('passes validation for a display name exactly 2 characters long', async () => {
+    const dto = plainToInstance(UpdateDisplayNameDto, { displayName: 'Jo' });
+
+    const errors = await validate(dto);
+
+    expect(errors).toHaveLength(0);
+  });
+
+  it('fails validation for a display name under 2 characters', async () => {
+    const dto = plainToInstance(UpdateDisplayNameDto, { displayName: 'J' });
+
+    const errors = await validate(dto);
+
+    expect(errors).not.toHaveLength(0);
+    expect(errors[0].constraints).toHaveProperty('minLength');
+  });
+
+  it('fails validation for a non-string display name', async () => {
+    const dto = plainToInstance(UpdateDisplayNameDto, { displayName: 123 });
+
+    const errors = await validate(dto);
+
+    expect(errors).not.toHaveLength(0);
+    expect(errors[0].constraints).toHaveProperty('isString');
+  });
+
+  it('fails validation when displayName is missing', async () => {
+    const dto = plainToInstance(UpdateDisplayNameDto, {});
+
+    const errors = await validate(dto);
+
+    expect(errors).not.toHaveLength(0);
+    expect(errors[0].constraints).toHaveProperty('isNotEmpty');
+  });
 });

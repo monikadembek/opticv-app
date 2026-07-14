@@ -1,12 +1,20 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  effect,
   inject,
   OnInit,
   signal,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import {
+  form,
+  FormField,
+  maxLength,
+  minLength,
+  required,
+} from '@angular/forms/signals';
 import { Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
@@ -33,6 +41,7 @@ import posthog from 'posthog-js';
     ToggleSwitchModule,
     InputTextModule,
     FormsModule,
+    FormField,
     DatePipe,
   ],
   templateUrl: './settings.html',
@@ -49,8 +58,21 @@ export class Settings implements OnInit {
   readonly userProfile = this.userSettingsApiService.userProfile;
   readonly usageStatus = this.userSettingsApiService.usageStatus;
   readonly isDeleting = signal(false);
+  readonly isSavingName = signal(false);
+  readonly nameSubmitted = signal(false);
   readonly productUpdatesEnabled = signal(true);
   readonly weeklyTipsEnabled = signal(false);
+
+  readonly fullNameModel = signal({ displayName: '' });
+  readonly fullNameForm = form(this.fullNameModel, (path) => {
+    required(path.displayName, { message: 'Full name is required.' });
+    maxLength(path.displayName, 100, {
+      message: 'Full name can contain maximum  100 characters.',
+    });
+    minLength(path.displayName, 2, {
+      message: 'Name must be at least 2 characters long',
+    });
+  });
 
   private readonly featureLabels: Record<LimitedFeature, string> = {
     CV_OPTIMIZATION: 'CV optimization runs',
@@ -58,6 +80,15 @@ export class Settings implements OnInit {
     INTERVIEW_PREP: 'Interview prep generations',
     LINKEDIN: 'LinkedIn content generations',
   };
+
+  constructor() {
+    effect(() => {
+      const profile = this.userProfile.value();
+      if (profile) {
+        this.fullNameModel.set({ displayName: profile.displayName ?? '' });
+      }
+    });
+  }
 
   ngOnInit() {
     this.userSettingsApiService.reloadUserProfile();
@@ -110,6 +141,47 @@ export class Settings implements OnInit {
           .subscribe();
       },
     });
+  }
+
+  onSubmit(event: Event): void {
+    event.preventDefault();
+
+    this.nameSubmitted.set(true);
+
+    const displayName = this.fullNameForm.displayName().value().trim();
+
+    if (this.fullNameForm().invalid() || !this.fullNameForm().dirty()) {
+      return;
+    }
+
+    this.isSavingName.set(true);
+
+    this.userSettingsApiService
+      .updateDisplayName(displayName)
+      .pipe(
+        catchError((err) => {
+          const message =
+            (err as { error?: { message?: string } })?.error?.message ??
+            'Failed to update full name. Please try again.';
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Update Error',
+            detail: message,
+          });
+          this.isSavingName.set(false);
+          return EMPTY;
+        }),
+      )
+      .subscribe((res) => {
+        console.log('Update name Result: ', res);
+        this.isSavingName.set(false);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Full name updated.',
+        });
+        this.userSettingsApiService.reloadUserProfile();
+      });
   }
 
   getAvatarLabel(profile: UserProfile | null): string {
