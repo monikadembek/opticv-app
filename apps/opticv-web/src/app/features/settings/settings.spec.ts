@@ -49,6 +49,8 @@ function createUserSettingsMock(
 function createSupabaseMock() {
   return {
     signOut: vi.fn().mockResolvedValue(undefined),
+    updateEmail: vi.fn().mockResolvedValue({ data: {}, error: null }),
+    setPendingEmailChange: vi.fn(),
   };
 }
 
@@ -350,7 +352,7 @@ describe('Settings', () => {
       expect(button.disabled).toBe(false);
     });
 
-    it('disables the Change email button', async () => {
+    it('enables the Change email button by default', async () => {
       await setup({ value: mockProfile, hasValue: true });
       const fixture = TestBed.createComponent(Settings);
       fixture.detectChanges();
@@ -358,7 +360,7 @@ describe('Settings', () => {
       const button = fixture.nativeElement.querySelector(
         'button[aria-label="Change email"]',
       ) as HTMLButtonElement;
-      expect(button.disabled).toBe(true);
+      expect(button.disabled).toBe(false);
     });
 
     it('does not render a "Save changes" button', async () => {
@@ -474,6 +476,199 @@ describe('Settings', () => {
       fixture.componentInstance.onSubmit(createSubmitEvent());
 
       expect(fixture.componentInstance.isSavingName()).toBe(true);
+    });
+  });
+
+  // ─── change email form (onChangeEmail) ──────────────────────────────────
+
+  describe('onChangeEmail', () => {
+    it('shows a required error and does not open the confirm dialog for an empty email', async () => {
+      await setup({ value: mockProfile, hasValue: true });
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const componentConfirmService =
+        fixture.debugElement.injector.get(ConfirmationService);
+      const confirmSpy = vi.spyOn(componentConfirmService, 'confirm');
+
+      fixture.componentInstance.newEmailModel.set({ newEmail: '' });
+      fixture.componentInstance.onChangeEmail();
+      fixture.detectChanges();
+
+      expect(confirmSpy).not.toHaveBeenCalled();
+      expect(supabaseMock.updateEmail).not.toHaveBeenCalled();
+      const text = fixture.nativeElement.textContent as string;
+      expect(text).toContain('New email is required.');
+    });
+
+    it('shows a format error and does not open the confirm dialog for an invalid email', async () => {
+      await setup({ value: mockProfile, hasValue: true });
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const componentConfirmService =
+        fixture.debugElement.injector.get(ConfirmationService);
+      const confirmSpy = vi.spyOn(componentConfirmService, 'confirm');
+
+      fixture.componentInstance.newEmailModel.set({ newEmail: 'not-an-email' });
+      fixture.componentInstance.onChangeEmail();
+      fixture.detectChanges();
+
+      expect(confirmSpy).not.toHaveBeenCalled();
+      expect(supabaseMock.updateEmail).not.toHaveBeenCalled();
+      const text = fixture.nativeElement.textContent as string;
+      expect(text).toContain('Enter a valid email address.');
+    });
+
+    it('shows a "must differ" error and does not open the confirm dialog when the email is unchanged', async () => {
+      await setup({ value: mockProfile, hasValue: true });
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const componentConfirmService =
+        fixture.debugElement.injector.get(ConfirmationService);
+      const confirmSpy = vi.spyOn(componentConfirmService, 'confirm');
+
+      fixture.componentInstance.newEmailModel.set({
+        newEmail: mockProfile.email,
+      });
+      fixture.componentInstance.onChangeEmail();
+      fixture.detectChanges();
+
+      expect(confirmSpy).not.toHaveBeenCalled();
+      expect(supabaseMock.updateEmail).not.toHaveBeenCalled();
+      const text = fixture.nativeElement.textContent as string;
+      expect(text).toContain(
+        'New email must be different from your current email.',
+      );
+    });
+
+    it('opens a confirmation dialog for a valid, different email', async () => {
+      await setup({ value: mockProfile, hasValue: true });
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const componentConfirmService =
+        fixture.debugElement.injector.get(ConfirmationService);
+      const confirmSpy = vi.spyOn(componentConfirmService, 'confirm');
+
+      fixture.componentInstance.newEmailModel.set({
+        newEmail: 'new@example.com',
+      });
+      fixture.componentInstance.onChangeEmail();
+
+      expect(confirmSpy).toHaveBeenCalledOnce();
+      expect(confirmSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          header: 'Change email',
+          acceptLabel: 'Send code',
+          rejectLabel: 'Cancel',
+        }),
+      );
+    });
+
+    it('calls updateEmail, setPendingEmailChange, and navigates to /settings/verify-email on confirm success', async () => {
+      await setup({ value: mockProfile, hasValue: true });
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const componentConfirmService =
+        fixture.debugElement.injector.get(ConfirmationService);
+      const confirmSpy = vi.spyOn(componentConfirmService, 'confirm');
+      const router = TestBed.inject(Router);
+      const navigateSpy = vi.spyOn(router, 'navigate');
+
+      fixture.componentInstance.newEmailModel.set({
+        newEmail: 'new@example.com',
+      });
+      fixture.componentInstance.onChangeEmail();
+      const { accept } = confirmSpy.mock.calls[0][0];
+      await accept?.();
+
+      expect(supabaseMock.updateEmail).toHaveBeenCalledWith('new@example.com');
+      expect(supabaseMock.setPendingEmailChange).toHaveBeenCalledWith(
+        'new@example.com',
+      );
+      expect(navigateSpy).toHaveBeenCalledWith(['/settings/verify-email']);
+    });
+
+    it('sets isChangingEmail while the request is in flight', async () => {
+      await setup({ value: mockProfile, hasValue: true });
+      supabaseMock.updateEmail.mockReturnValue(new Promise(() => {
+        /* never resolves */
+      }));
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const componentConfirmService =
+        fixture.debugElement.injector.get(ConfirmationService);
+      const confirmSpy = vi.spyOn(componentConfirmService, 'confirm');
+
+      fixture.componentInstance.newEmailModel.set({
+        newEmail: 'new@example.com',
+      });
+      fixture.componentInstance.onChangeEmail();
+      const { accept } = confirmSpy.mock.calls[0][0];
+      accept?.();
+
+      expect(fixture.componentInstance.isChangingEmail()).toBe(true);
+    });
+
+    it('shows an error toast and preserves the entered value on updateEmail failure', async () => {
+      await setup({ value: mockProfile, hasValue: true });
+      supabaseMock.updateEmail.mockResolvedValue({
+        data: {},
+        error: { message: 'Email already registered' },
+      });
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const componentConfirmService =
+        fixture.debugElement.injector.get(ConfirmationService);
+      const confirmSpy = vi.spyOn(componentConfirmService, 'confirm');
+      const addSpy = vi.spyOn(messageService, 'add');
+
+      fixture.componentInstance.newEmailModel.set({
+        newEmail: 'new@example.com',
+      });
+      fixture.componentInstance.onChangeEmail();
+      const { accept } = confirmSpy.mock.calls[0][0];
+      await accept?.();
+
+      expect(addSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Email already registered',
+        }),
+      );
+      expect(fixture.componentInstance.isChangingEmail()).toBe(false);
+      expect(fixture.componentInstance.newEmailModel().newEmail).toBe(
+        'new@example.com',
+      );
+      expect(supabaseMock.setPendingEmailChange).not.toHaveBeenCalled();
+    });
+
+    it('does not call updateEmail when the confirm dialog is rejected', async () => {
+      await setup({ value: mockProfile, hasValue: true });
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const componentConfirmService =
+        fixture.debugElement.injector.get(ConfirmationService);
+      const confirmSpy = vi.spyOn(componentConfirmService, 'confirm');
+
+      fixture.componentInstance.newEmailModel.set({
+        newEmail: 'new@example.com',
+      });
+      fixture.componentInstance.onChangeEmail();
+      const { reject } = confirmSpy.mock.calls[0][0];
+      reject?.();
+
+      expect(supabaseMock.updateEmail).not.toHaveBeenCalled();
+      expect(fixture.componentInstance.newEmailModel().newEmail).toBe(
+        'new@example.com',
+      );
     });
   });
 

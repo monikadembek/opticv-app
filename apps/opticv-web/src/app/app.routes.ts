@@ -54,6 +54,14 @@ export const appRoutes: Route[] = [
     canActivate: [authGuard],
   },
   {
+    path: 'settings/verify-email',
+    loadComponent: () =>
+      import('./core/auth/pages/verify-email-change/verify-email-change').then(
+        (c) => c.VerifyEmailChange,
+      ),
+    canActivate: [authGuard],
+  },
+  {
     path: '',
     pathMatch: 'full',
     redirectTo: 'home',

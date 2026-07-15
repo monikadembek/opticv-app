@@ -1,0 +1,112 @@
+.auth-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 145px);
+  padding: 2rem 1rem;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f8fffd 100%);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 8px 32px rgba(5, 150, 105, 0.08);
+  overflow: hidden;
+}
+
+.auth-brand {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  padding: 1.75rem 2rem;
+  text-align: center;
+}
+
+.brand-logo {
+  font-family: Montserrat, sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+}
+
+.brand-accent {
+  color: #d7e506;
+}
+
+.auth-content {
+  padding: 2rem 2rem 2.25rem;
+}
+
+.auth-header {
+  margin-bottom: 1.75rem;
+  text-align: center;
+}
+
+.verify-icon {
+  width: 3rem;
+  height: 3rem;
+  background: #ecfdf5;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  color: #059669;
+  font-size: 1.25rem;
+}
+
+.auth-title {
+  font-family: Montserrat, sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1a2e22;
+  margin: 0 0 0.5rem;
+}
+
+.auth-subtitle {
+  font-size: 0.9rem;
+  color: #71717b;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.otp-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.auth-submit-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.auth-error {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.auth-note {
+  margin-top: 1.5rem;
+  font-size: 0.78rem;
+  color: #a1a1aa;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.auth-note-icon {
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}

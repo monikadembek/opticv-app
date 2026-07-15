@@ -9,11 +9,13 @@ import {
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
+  email,
   form,
   FormField,
   maxLength,
   minLength,
   required,
+  validate,
 } from '@angular/forms/signals';
 import { Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -29,6 +31,7 @@ import { Supabase } from '../../core/auth/services/supabase';
 import { UserSettingsApiService } from '../../core/services/user-settings-api.service';
 import { catchError, EMPTY, tap } from 'rxjs';
 import posthog from 'posthog-js';
+import { CvStore } from '../../core/stores/cv.store';
 
 @Component({
   selector: 'app-settings',
@@ -45,6 +48,11 @@ import posthog from 'posthog-js';
     DatePipe,
   ],
   templateUrl: './settings.html',
+  styles: `
+    .hide-invalid-style.p-invalid {
+      border-color: var(--p-inputtext-border-color) !important;
+    }
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [ConfirmationService],
 })
@@ -54,12 +62,15 @@ export class Settings implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly supabase = inject(Supabase);
   private readonly router = inject(Router);
+  private readonly cvStore = inject(CvStore);
 
   readonly userProfile = this.userSettingsApiService.userProfile;
   readonly usageStatus = this.userSettingsApiService.usageStatus;
   readonly isDeleting = signal(false);
   readonly isSavingName = signal(false);
   readonly nameSubmitted = signal(false);
+  readonly isChangingEmail = signal(false);
+  readonly newEmailSubmitted = signal(false);
   readonly productUpdatesEnabled = signal(true);
   readonly weeklyTipsEnabled = signal(false);
 
@@ -71,6 +82,22 @@ export class Settings implements OnInit {
     });
     minLength(path.displayName, 2, {
       message: 'Name must be at least 2 characters long',
+    });
+  });
+
+  readonly newEmailModel = signal({ newEmail: '' });
+  readonly newEmailForm = form(this.newEmailModel, (path) => {
+    required(path.newEmail, { message: 'New email is required.' });
+    email(path.newEmail, { message: 'Enter a valid email address.' });
+    validate(path.newEmail, (ctx) => {
+      const currentEmail = this.userProfile.value()?.email;
+      if (currentEmail && ctx.value() === currentEmail) {
+        return {
+          kind: 'sameEmail',
+          message: 'New email must be different from your current email.',
+        };
+      }
+      return undefined;
     });
   });
 
@@ -86,6 +113,7 @@ export class Settings implements OnInit {
       const profile = this.userProfile.value();
       if (profile) {
         this.fullNameModel.set({ displayName: profile.displayName ?? '' });
+        this.newEmailModel.set({ newEmail: profile.email ?? '' });
       }
     });
   }
@@ -135,6 +163,7 @@ export class Settings implements OnInit {
             }),
             tap(async () => {
               await this.supabase.signOut();
+              this.cvStore.resetStore();
               this.router.navigate(['/login']);
             }),
           )
@@ -181,6 +210,46 @@ export class Settings implements OnInit {
         });
         this.userSettingsApiService.reloadUserProfile();
       });
+  }
+
+  onChangeEmailSubmit(event: Event): void {
+    event.preventDefault();
+    this.newEmailSubmitted.set(true);
+
+    const newEmail = this.newEmailForm.newEmail().value().trim();
+
+    if (this.newEmailForm().invalid()) {
+      return;
+    }
+
+    this.confirmationService.confirm({
+      header: 'Change email',
+      message: `We'll send a confirmation code to ${newEmail}. You'll need to sign in again with your new email after confirming.`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Send code',
+      rejectLabel: 'Cancel',
+      accept: async () => {
+        posthog.capture('email_change_requested', { page: 'settings' });
+        this.isChangingEmail.set(true);
+
+        const { error } = await this.supabase.updateEmail(newEmail);
+
+        if (error) {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail:
+              error.message ??
+              'Failed to start email change process. Please try again.',
+          });
+          this.isChangingEmail.set(false);
+          return;
+        }
+
+        this.supabase.setPendingEmailChange(newEmail);
+        this.router.navigate(['/settings/verify-email']);
+      },
+    });
   }
 
   getAvatarLabel(profile: UserProfile | null): string {

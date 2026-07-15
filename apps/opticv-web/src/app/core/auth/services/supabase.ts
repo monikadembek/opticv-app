@@ -18,6 +18,7 @@ export class Supabase {
   #currentUser = signal<User | null>(null);
   #currentSession = signal<Session | null>(null);
   #pendingEmail = signal<string | null>(null);
+  #pendingEmailChange = signal<string | null>(null);
 
   get currentUser() {
     return this.#currentUser.asReadonly();
@@ -29,6 +30,10 @@ export class Supabase {
 
   get pendingEmail() {
     return this.#pendingEmail.asReadonly();
+  }
+
+  get pendingEmailChange() {
+    return this.#pendingEmailChange.asReadonly();
   }
 
   constructor() {
@@ -46,6 +51,10 @@ export class Supabase {
     this.#pendingEmail.set(email);
   }
 
+  setPendingEmailChange(email: string | null) {
+    this.#pendingEmailChange.set(email);
+  }
+
   signInWithOtp(userEmail: string) {
     return this.supabase.auth.signInWithOtp({
       email: userEmail,
@@ -61,6 +70,18 @@ export class Supabase {
       email: email,
       token: code,
       type: 'email',
+    });
+  }
+
+  updateEmail(newEmail: string) {
+    return this.supabase.auth.updateUser({ email: newEmail });
+  }
+
+  verifyEmailChange(code: string, newEmail: string) {
+    return this.supabase.auth.verifyOtp({
+      email: newEmail,
+      token: code,
+      type: 'email_change',
     });
   }
 
