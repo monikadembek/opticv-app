@@ -73,6 +73,7 @@ model User {
   updatedAt   DateTime @updatedAt
 
   subscription        Subscription?
+  notification        Notification?
   cvDocuments         CvDocument[]
   applications        JobApplication[]
   usageLogs           UsageLog[]
@@ -103,6 +104,22 @@ model Subscription {
   updatedAt            DateTime           @updatedAt
 
   @@map("subscriptions")
+}
+
+// ─── Notification ─────────────────────────────────────────────────────────────
+
+model Notification {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  productUpdatesEnabled Boolean @default(true)
+  weeklyTipsEnabled     Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("notifications")
 }
 
 // ─── CV Document ──────────────────────────────────────────────────────────────

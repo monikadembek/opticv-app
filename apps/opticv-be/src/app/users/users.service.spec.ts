@@ -28,6 +28,9 @@ const mockPrisma = {
   cvDocument: {
     count: jest.fn().mockResolvedValue(0),
   },
+  notification: {
+    upsert: jest.fn(),
+  },
 };
 
 const mockR2 = {
@@ -49,6 +52,10 @@ describe('UsersService', () => {
     jest.clearAllMocks();
     mockPrisma.cvDocument.count.mockResolvedValue(0);
     mockQuotaService.getQuotaStatus.mockResolvedValue([]);
+    mockPrisma.notification.upsert.mockResolvedValue({
+      productUpdatesEnabled: true,
+      weeklyTipsEnabled: false,
+    });
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UsersService,
@@ -154,6 +161,7 @@ describe('UsersService', () => {
         displayName: 'Jane Doe',
         avatarUrl: null,
         subscription: { tier: 'FREE', status: 'ACTIVE' },
+        notifications: { productUpdatesEnabled: true, weeklyTipsEnabled: false },
       });
     });
 
@@ -175,6 +183,132 @@ describe('UsersService', () => {
       });
 
       expect(result.subscription).toBeNull();
+    });
+  });
+
+  describe('getProfile', () => {
+    it('throws NotFoundException when user does not exist', async () => {
+      mockPrisma.user.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.getProfile('sb-id')).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(mockPrisma.notification.upsert).not.toHaveBeenCalled();
+    });
+
+    it('upserts a default notification row and includes it in the profile', async () => {
+      mockPrisma.user.findUnique.mockResolvedValueOnce({
+        id: 'user-id',
+        email: 'test@example.com',
+        displayName: null,
+        avatarUrl: null,
+        subscription: { tier: 'FREE', status: 'ACTIVE' },
+      });
+
+      const result = await service.getProfile('sb-id');
+
+      expect(mockPrisma.notification.upsert).toHaveBeenCalledWith({
+        where: { userId: 'user-id' },
+        create: { userId: 'user-id' },
+        update: {},
+      });
+      expect(result.notifications).toEqual({
+        productUpdatesEnabled: true,
+        weeklyTipsEnabled: false,
+      });
+    });
+
+    it('reflects an existing notification row', async () => {
+      mockPrisma.user.findUnique.mockResolvedValueOnce({
+        id: 'user-id',
+        email: 'test@example.com',
+        displayName: null,
+        avatarUrl: null,
+        subscription: null,
+      });
+      mockPrisma.notification.upsert.mockResolvedValueOnce({
+        productUpdatesEnabled: false,
+        weeklyTipsEnabled: true,
+      });
+
+      const result = await service.getProfile('sb-id');
+
+      expect(result.notifications).toEqual({
+        productUpdatesEnabled: false,
+        weeklyTipsEnabled: true,
+      });
+    });
+  });
+
+  describe('updateNotificationPreference', () => {
+    it('throws NotFoundException when user does not exist', async () => {
+      mockPrisma.user.findUnique.mockResolvedValueOnce(null);
+
+      await expect(
+        service.updateNotificationPreference('sb-id', {
+          type: 'PRODUCT_UPDATES',
+          enabled: false,
+        }),
+      ).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.notification.upsert).not.toHaveBeenCalled();
+    });
+
+    it('upserts productUpdatesEnabled and returns the updated profile', async () => {
+      mockPrisma.user.findUnique.mockResolvedValueOnce({
+        id: 'user-id',
+        email: 'test@example.com',
+        displayName: null,
+        avatarUrl: null,
+        subscription: { tier: 'FREE', status: 'ACTIVE' },
+      });
+      mockPrisma.notification.upsert.mockResolvedValueOnce({
+        productUpdatesEnabled: false,
+        weeklyTipsEnabled: false,
+      });
+
+      const result = await service.updateNotificationPreference('sb-id', {
+        type: 'PRODUCT_UPDATES',
+        enabled: false,
+      });
+
+      expect(mockPrisma.notification.upsert).toHaveBeenCalledWith({
+        where: { userId: 'user-id' },
+        create: { userId: 'user-id', productUpdatesEnabled: false },
+        update: { productUpdatesEnabled: false },
+      });
+      expect(result.notifications).toEqual({
+        productUpdatesEnabled: false,
+        weeklyTipsEnabled: false,
+      });
+    });
+
+    it('upserts weeklyTipsEnabled and returns the updated profile', async () => {
+      mockPrisma.user.findUnique.mockResolvedValueOnce({
+        id: 'user-id',
+        email: 'test@example.com',
+        displayName: null,
+        avatarUrl: null,
+        subscription: null,
+      });
+      mockPrisma.notification.upsert.mockResolvedValueOnce({
+        productUpdatesEnabled: true,
+        weeklyTipsEnabled: true,
+      });
+
+      const result = await service.updateNotificationPreference('sb-id', {
+        type: 'WEEKLY_TIPS',
+        enabled: true,
+      });
+
+      expect(mockPrisma.notification.upsert).toHaveBeenCalledWith({
+        where: { userId: 'user-id' },
+        create: { userId: 'user-id', weeklyTipsEnabled: true },
+        update: { weeklyTipsEnabled: true },
+      });
+      expect(result.notifications).toEqual({
+        productUpdatesEnabled: true,
+        weeklyTipsEnabled: true,
+      });
     });
   });
 

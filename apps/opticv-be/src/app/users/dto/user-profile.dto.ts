@@ -9,6 +9,14 @@ class SubscriptionDto {
   status!: SubscriptionStatus;
 }
 
+class NotificationPreferencesDto {
+  @ApiProperty()
+  productUpdatesEnabled!: boolean;
+
+  @ApiProperty()
+  weeklyTipsEnabled!: boolean;
+}
+
 export class UserProfileDto {
   @ApiProperty()
   id!: string;
@@ -24,4 +32,7 @@ export class UserProfileDto {
 
   @ApiPropertyOptional({ type: SubscriptionDto, nullable: true })
   subscription!: SubscriptionDto | null;
+
+  @ApiProperty({ type: NotificationPreferencesDto })
+  notifications!: NotificationPreferencesDto;
 }

@@ -19,6 +19,7 @@ import { UsersService } from './users.service';
 import { WebhookPayloadDto } from './dto/webhook-payload.dto';
 import { UserProfileDto } from './dto/user-profile.dto';
 import { UpdateDisplayNameDto } from './dto/update-display-name.dto';
+import { UpdateNotificationPreferenceDto } from './dto/update-notification-preference.dto';
 import { SupabaseGuard } from '../auth/supabase.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { UserModel } from '../../generated/prisma/models.js';
@@ -110,6 +111,28 @@ export class UsersController {
     @Body() dto: UpdateDisplayNameDto,
   ): Promise<UserProfileDto> {
     return this.usersService.updateDisplayName(user.supabaseId, dto);
+  }
+
+  @Patch('me/notifications')
+  @UseGuards(SupabaseGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update a notification preference' })
+  @ApiResponse({
+    status: 200,
+    type: UserProfileDto,
+    description: 'Updated user profile',
+  })
+  @ApiResponse({ status: 400, description: 'Validation failed' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async updateNotificationPreference(
+    @CurrentUser() user: UserModel,
+    @Body() dto: UpdateNotificationPreferenceDto,
+  ): Promise<UserProfileDto> {
+    return this.usersService.updateNotificationPreference(
+      user.supabaseId,
+      dto,
+    );
   }
 
   @Get('me/usage')

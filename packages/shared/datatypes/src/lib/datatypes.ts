@@ -145,6 +145,13 @@ export type SubscriptionStatus =
   | 'PAST_DUE'
   | 'TRIALING';
 
+export type NotificationType = 'PRODUCT_UPDATES' | 'WEEKLY_TIPS';
+
+export type NotificationPreferences = {
+  productUpdatesEnabled: boolean;
+  weeklyTipsEnabled: boolean;
+};
+
 export type UserProfile = {
   id: string;
   email: string;
@@ -154,6 +161,7 @@ export type UserProfile = {
     tier: SubscriptionTier;
     status: SubscriptionStatus;
   } | null;
+  notifications: NotificationPreferences;
 };
 
 export type CvDocument = {

@@ -49,6 +49,55 @@ describe('UserSettingsApiService', () => {
     });
   });
 
+  // ─── updateNotificationPreference ───────────────────────────────────────
+
+  describe('updateNotificationPreference', () => {
+    it('PATCHes /api/users/me/notifications with type and enabled', () => {
+      let completed = false;
+
+      service
+        .updateNotificationPreference('PRODUCT_UPDATES', true)
+        .subscribe({ complete: () => (completed = true) });
+
+      const req = httpMock.expectOne(
+        'http://localhost:3000/api/users/me/notifications',
+      );
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual({
+        type: 'PRODUCT_UPDATES',
+        enabled: true,
+      });
+      req.flush({
+        id: 'user-1',
+        email: 'test@example.com',
+        displayName: null,
+        avatarUrl: null,
+        subscription: null,
+        notifications: { productUpdatesEnabled: true, weeklyTipsEnabled: false },
+      });
+
+      expect(completed).toBe(true);
+    });
+
+    it('propagates HTTP errors', () => {
+      let errorReceived = false;
+
+      service
+        .updateNotificationPreference('WEEKLY_TIPS', false)
+        .subscribe({ error: () => (errorReceived = true) });
+
+      const req = httpMock.expectOne(
+        'http://localhost:3000/api/users/me/notifications',
+      );
+      req.flush('Internal Server Error', {
+        status: 500,
+        statusText: 'Internal Server Error',
+      });
+
+      expect(errorReceived).toBe(true);
+    });
+  });
+
   // ─── deleteAccount ───────────────────────────────────────────────────────
 
   describe('deleteAccount', () => {
