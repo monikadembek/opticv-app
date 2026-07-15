@@ -1092,15 +1092,16 @@ FREE: 2, BASIC: 10, PRO: 20
 
 ---
 
-### Add notifications (BE & FE)
+### 87. Save user notifications preferences (BE & FE)
 
-**status: todo**
-**time:**
+**status: in progress**
+
+**time: 15.07.2026**
 
 - in account setting page user can turn on notification for product updates and job tips
 - add new table Notifications with those options and add relation to user table
 - prepare endpoint where user can send notification type with value true/ false and it would update that data in database
-- on frontend in Account Settings page implement passing notifications values to backend via prepared endpoint, which should be executed when user clicks the switch button
+- on frontend in Account Settings page implement passing notifications values to backend via prepared endpoint, which should be executed when user clicks the switch toggle button
 
 ---
 
