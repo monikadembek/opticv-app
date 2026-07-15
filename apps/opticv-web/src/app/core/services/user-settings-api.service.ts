@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import type { UsageStatus, UserProfile } from '@opticv/datatypes';
+import type { NotificationType, UsageStatus, UserProfile } from '@opticv/datatypes';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -38,6 +38,16 @@ export class UserSettingsApiService {
     return this.http.patch<UserProfile>(
       `${environment.apiUrl}/users/me/display-name`,
       { displayName },
+    );
+  }
+
+  updateNotificationPreference(
+    type: NotificationType,
+    enabled: boolean,
+  ): Observable<UserProfile> {
+    return this.http.patch<UserProfile>(
+      `${environment.apiUrl}/users/me/notifications`,
+      { type, enabled },
     );
   }
 

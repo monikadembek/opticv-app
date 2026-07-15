@@ -26,7 +26,11 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import type { LimitedFeature, UserProfile } from '@opticv/datatypes';
+import type {
+  LimitedFeature,
+  NotificationType,
+  UserProfile,
+} from '@opticv/datatypes';
 import { Supabase } from '../../core/auth/services/supabase';
 import { UserSettingsApiService } from '../../core/services/user-settings-api.service';
 import { catchError, EMPTY, tap } from 'rxjs';
@@ -111,10 +115,15 @@ export class Settings implements OnInit {
 
   constructor() {
     effect(() => {
+      console.log('effect run');
       const profile = this.userProfile.value();
       if (profile) {
         this.fullNameModel.set({ displayName: profile.displayName ?? '' });
         this.newEmailModel.set({ newEmail: profile.email ?? '' });
+        this.productUpdatesEnabled.set(
+          profile.notifications.productUpdatesEnabled,
+        );
+        this.weeklyTipsEnabled.set(profile.notifications.weeklyTipsEnabled);
       }
     });
   }
@@ -211,6 +220,34 @@ export class Settings implements OnInit {
         });
         this.userSettingsApiService.reloadUserProfile();
       });
+  }
+
+  onNotificationToggle(type: NotificationType, enabled: boolean): void {
+    const preference =
+      type === 'PRODUCT_UPDATES'
+        ? this.productUpdatesEnabled
+        : this.weeklyTipsEnabled;
+    const previousValue = !enabled;
+
+    preference.set(enabled);
+
+    this.userSettingsApiService
+      .updateNotificationPreference(type, enabled)
+      .pipe(
+        catchError((err) => {
+          const message =
+            (err as { error?: { message?: string } })?.error?.message ??
+            'Failed to update notification preference. Please try again.';
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Preference Update Error',
+            detail: message,
+          });
+          preference.set(previousValue);
+          return EMPTY;
+        }),
+      )
+      .subscribe();
   }
 
   onChangeEmailSubmit(event: Event): void {

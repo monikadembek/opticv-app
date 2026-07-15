@@ -14,6 +14,7 @@ const mockProfile: UserProfile = {
   displayName: 'Test User',
   avatarUrl: null,
   subscription: { tier: 'FREE', status: 'ACTIVE' },
+  notifications: { productUpdatesEnabled: true, weeklyTipsEnabled: false },
 };
 
 function createResource<T>(
@@ -41,6 +42,7 @@ function createUserSettingsMock(
     usageStatus: createResource<UsageStatus>(usageOverrides),
     deleteAccount: vi.fn().mockReturnValue(of(undefined)),
     updateDisplayName: vi.fn().mockReturnValue(of(mockProfile)),
+    updateNotificationPreference: vi.fn().mockReturnValue(of(mockProfile)),
     reloadUserProfile: vi.fn(),
     reloadUsageStatus: vi.fn(),
   };
@@ -788,6 +790,101 @@ describe('Settings', () => {
       const text = fixture.nativeElement.textContent as string;
       expect(text).toContain('Product updates');
       expect(text).toContain('Job-search tips');
+    });
+
+    it('syncs productUpdatesEnabled and weeklyTipsEnabled from the loaded profile', async () => {
+      await setup({
+        value: {
+          ...mockProfile,
+          notifications: {
+            productUpdatesEnabled: false,
+            weeklyTipsEnabled: true,
+          },
+        },
+        hasValue: true,
+      });
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(fixture.componentInstance.productUpdatesEnabled()).toBe(false);
+      expect(fixture.componentInstance.weeklyTipsEnabled()).toBe(true);
+    });
+  });
+
+  // ─── onNotificationToggle ────────────────────────────────────────────────
+
+  describe('onNotificationToggle', () => {
+    it('sets productUpdatesEnabled and calls updateNotificationPreference', async () => {
+      await setup({ value: mockProfile, hasValue: true });
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      fixture.componentInstance.onNotificationToggle('PRODUCT_UPDATES', false);
+
+      expect(fixture.componentInstance.productUpdatesEnabled()).toBe(false);
+      expect(
+        userSettingsMock.updateNotificationPreference,
+      ).toHaveBeenCalledWith('PRODUCT_UPDATES', false);
+    });
+
+    it('sets weeklyTipsEnabled and calls updateNotificationPreference', async () => {
+      await setup({ value: mockProfile, hasValue: true });
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      fixture.componentInstance.onNotificationToggle('WEEKLY_TIPS', true);
+
+      expect(fixture.componentInstance.weeklyTipsEnabled()).toBe(true);
+      expect(
+        userSettingsMock.updateNotificationPreference,
+      ).toHaveBeenCalledWith('WEEKLY_TIPS', true);
+    });
+
+    it('reverts productUpdatesEnabled and shows an error toast on failure', async () => {
+      await setup({ value: mockProfile, hasValue: true });
+      userSettingsMock.updateNotificationPreference.mockReturnValue(
+        throwError(() => ({ error: { message: 'Something went wrong' } })),
+      );
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const addSpy = vi.spyOn(messageService, 'add');
+
+      fixture.componentInstance.onNotificationToggle('PRODUCT_UPDATES', false);
+
+      expect(fixture.componentInstance.productUpdatesEnabled()).toBe(true);
+      expect(addSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          severity: 'error',
+          summary: 'Update Error',
+          detail: 'Something went wrong',
+        }),
+      );
+    });
+
+    it('reverts weeklyTipsEnabled and shows an error toast on failure', async () => {
+      await setup({ value: mockProfile, hasValue: true });
+      userSettingsMock.updateNotificationPreference.mockReturnValue(
+        throwError(() => ({ error: { message: 'Something went wrong' } })),
+      );
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const addSpy = vi.spyOn(messageService, 'add');
+
+      fixture.componentInstance.onNotificationToggle('WEEKLY_TIPS', true);
+
+      expect(fixture.componentInstance.weeklyTipsEnabled()).toBe(false);
+      expect(addSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          severity: 'error',
+          summary: 'Update Error',
+          detail: 'Something went wrong',
+        }),
+      );
     });
   });
 
