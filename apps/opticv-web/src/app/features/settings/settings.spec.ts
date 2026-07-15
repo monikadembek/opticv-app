@@ -50,7 +50,6 @@ function createSupabaseMock() {
   return {
     signOut: vi.fn().mockResolvedValue(undefined),
     updateEmail: vi.fn().mockResolvedValue({ data: {}, error: null }),
-    setPendingEmailChange: vi.fn(),
   };
 }
 
@@ -479,9 +478,9 @@ describe('Settings', () => {
     });
   });
 
-  // ─── change email form (onChangeEmail) ──────────────────────────────────
+  // ─── change email form (onChangeEmailSubmit) ────────────────────────────
 
-  describe('onChangeEmail', () => {
+  describe('onChangeEmailSubmit', () => {
     it('shows a required error and does not open the confirm dialog for an empty email', async () => {
       await setup({ value: mockProfile, hasValue: true });
       const fixture = TestBed.createComponent(Settings);
@@ -492,7 +491,7 @@ describe('Settings', () => {
       const confirmSpy = vi.spyOn(componentConfirmService, 'confirm');
 
       fixture.componentInstance.newEmailModel.set({ newEmail: '' });
-      fixture.componentInstance.onChangeEmail();
+      fixture.componentInstance.onChangeEmailSubmit(createSubmitEvent());
       fixture.detectChanges();
 
       expect(confirmSpy).not.toHaveBeenCalled();
@@ -511,7 +510,7 @@ describe('Settings', () => {
       const confirmSpy = vi.spyOn(componentConfirmService, 'confirm');
 
       fixture.componentInstance.newEmailModel.set({ newEmail: 'not-an-email' });
-      fixture.componentInstance.onChangeEmail();
+      fixture.componentInstance.onChangeEmailSubmit(createSubmitEvent());
       fixture.detectChanges();
 
       expect(confirmSpy).not.toHaveBeenCalled();
@@ -532,7 +531,7 @@ describe('Settings', () => {
       fixture.componentInstance.newEmailModel.set({
         newEmail: mockProfile.email,
       });
-      fixture.componentInstance.onChangeEmail();
+      fixture.componentInstance.onChangeEmailSubmit(createSubmitEvent());
       fixture.detectChanges();
 
       expect(confirmSpy).not.toHaveBeenCalled();
@@ -555,19 +554,19 @@ describe('Settings', () => {
       fixture.componentInstance.newEmailModel.set({
         newEmail: 'new@example.com',
       });
-      fixture.componentInstance.onChangeEmail();
+      fixture.componentInstance.onChangeEmailSubmit(createSubmitEvent());
 
       expect(confirmSpy).toHaveBeenCalledOnce();
       expect(confirmSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           header: 'Change email',
-          acceptLabel: 'Send code',
+          acceptLabel: 'Send link',
           rejectLabel: 'Cancel',
         }),
       );
     });
 
-    it('calls updateEmail, setPendingEmailChange, and navigates to /settings/verify-email on confirm success', async () => {
+    it('calls updateEmail and shows the pending confirmation message on confirm success', async () => {
       await setup({ value: mockProfile, hasValue: true });
       const fixture = TestBed.createComponent(Settings);
       fixture.detectChanges();
@@ -575,21 +574,19 @@ describe('Settings', () => {
       const componentConfirmService =
         fixture.debugElement.injector.get(ConfirmationService);
       const confirmSpy = vi.spyOn(componentConfirmService, 'confirm');
-      const router = TestBed.inject(Router);
-      const navigateSpy = vi.spyOn(router, 'navigate');
 
       fixture.componentInstance.newEmailModel.set({
         newEmail: 'new@example.com',
       });
-      fixture.componentInstance.onChangeEmail();
+      fixture.componentInstance.onChangeEmailSubmit(createSubmitEvent());
       const { accept } = confirmSpy.mock.calls[0][0];
       await accept?.();
 
       expect(supabaseMock.updateEmail).toHaveBeenCalledWith('new@example.com');
-      expect(supabaseMock.setPendingEmailChange).toHaveBeenCalledWith(
+      expect(fixture.componentInstance.emailChangePendingFor()).toBe(
         'new@example.com',
       );
-      expect(navigateSpy).toHaveBeenCalledWith(['/settings/verify-email']);
+      expect(fixture.componentInstance.isChangingEmail()).toBe(false);
     });
 
     it('sets isChangingEmail while the request is in flight', async () => {
@@ -607,7 +604,7 @@ describe('Settings', () => {
       fixture.componentInstance.newEmailModel.set({
         newEmail: 'new@example.com',
       });
-      fixture.componentInstance.onChangeEmail();
+      fixture.componentInstance.onChangeEmailSubmit(createSubmitEvent());
       const { accept } = confirmSpy.mock.calls[0][0];
       accept?.();
 
@@ -631,7 +628,7 @@ describe('Settings', () => {
       fixture.componentInstance.newEmailModel.set({
         newEmail: 'new@example.com',
       });
-      fixture.componentInstance.onChangeEmail();
+      fixture.componentInstance.onChangeEmailSubmit(createSubmitEvent());
       const { accept } = confirmSpy.mock.calls[0][0];
       await accept?.();
 
@@ -646,7 +643,7 @@ describe('Settings', () => {
       expect(fixture.componentInstance.newEmailModel().newEmail).toBe(
         'new@example.com',
       );
-      expect(supabaseMock.setPendingEmailChange).not.toHaveBeenCalled();
+      expect(fixture.componentInstance.emailChangePendingFor()).toBeNull();
     });
 
     it('does not call updateEmail when the confirm dialog is rejected', async () => {
@@ -661,7 +658,7 @@ describe('Settings', () => {
       fixture.componentInstance.newEmailModel.set({
         newEmail: 'new@example.com',
       });
-      fixture.componentInstance.onChangeEmail();
+      fixture.componentInstance.onChangeEmailSubmit(createSubmitEvent());
       const { reject } = confirmSpy.mock.calls[0][0];
       reject?.();
 
