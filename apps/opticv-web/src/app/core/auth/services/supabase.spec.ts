@@ -8,6 +8,7 @@ import { Supabase } from './supabase';
 const mockAuth = {
   signInWithOtp: vi.fn(),
   verifyOtp: vi.fn(),
+  updateUser: vi.fn(),
   signOut: vi.fn(),
   getSession: vi.fn(),
   onAuthStateChange: vi.fn((cb: (event: string, session: unknown) => void) => {
@@ -75,6 +76,7 @@ describe('Supabase service', () => {
       expect(service.currentUser()).toBeNull();
       expect(service.currentSession()).toBeNull();
       expect(service.pendingEmail()).toBeNull();
+      expect(service.pendingEmailChange()).toBeNull();
     });
   });
 
@@ -98,6 +100,29 @@ describe('Supabase service', () => {
       service.setPendingEmail('user@example.com');
       service.setPendingEmail(null);
       expect(service.pendingEmail()).toBeNull();
+    });
+  });
+
+  // ── setPendingEmailChange ────────────────────────────────────────────────────
+
+  describe('setPendingEmailChange()', () => {
+    beforeEach(() =>
+      TestBed.configureTestingModule({
+        providers: [{ provide: PLATFORM_ID, useValue: 'server' }],
+      }),
+    );
+
+    it('stores a non-null email', () => {
+      const service = TestBed.inject(Supabase);
+      service.setPendingEmailChange('new@example.com');
+      expect(service.pendingEmailChange()).toBe('new@example.com');
+    });
+
+    it('clears the email when null is passed', () => {
+      const service = TestBed.inject(Supabase);
+      service.setPendingEmailChange('new@example.com');
+      service.setPendingEmailChange(null);
+      expect(service.pendingEmailChange()).toBeNull();
     });
   });
 
@@ -134,6 +159,42 @@ describe('Supabase service', () => {
         email: 'user@example.com',
         token: '123456',
         type: 'email',
+      });
+    });
+  });
+
+  // ── updateEmail ──────────────────────────────────────────────────────────────
+
+  describe('updateEmail()', () => {
+    it('delegates to supabase.auth.updateUser with correct params', () => {
+      TestBed.configureTestingModule({
+        providers: [{ provide: PLATFORM_ID, useValue: 'browser' }],
+      });
+      const service = TestBed.inject(Supabase);
+
+      service.updateEmail('new@example.com');
+
+      expect(mockAuth.updateUser).toHaveBeenCalledWith({
+        email: 'new@example.com',
+      });
+    });
+  });
+
+  // ── verifyEmailChange ────────────────────────────────────────────────────────
+
+  describe('verifyEmailChange()', () => {
+    it('delegates to supabase.auth.verifyOtp with correct params', () => {
+      TestBed.configureTestingModule({
+        providers: [{ provide: PLATFORM_ID, useValue: 'browser' }],
+      });
+      const service = TestBed.inject(Supabase);
+
+      service.verifyEmailChange('123456', 'new@example.com');
+
+      expect(mockAuth.verifyOtp).toHaveBeenCalledWith({
+        email: 'new@example.com',
+        token: '123456',
+        type: 'email_change',
       });
     });
   });
@@ -239,6 +300,18 @@ describe('Supabase service', () => {
       fireAuthStateChange('SIGNED_IN', mockSession);
 
       expect(service.pendingEmail()).toBeNull();
+    });
+
+    it('does not clear pendingEmailChange on SIGNED_IN', () => {
+      TestBed.configureTestingModule({
+        providers: [{ provide: PLATFORM_ID, useValue: 'browser' }],
+      });
+      const service = TestBed.inject(Supabase);
+      service.setPendingEmailChange('new@example.com');
+
+      fireAuthStateChange('SIGNED_IN', mockSession);
+
+      expect(service.pendingEmailChange()).toBe('new@example.com');
     });
 
     it('ignores unknown auth events without changing state', () => {

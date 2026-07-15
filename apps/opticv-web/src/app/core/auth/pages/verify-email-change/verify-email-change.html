@@ -9,10 +9,9 @@
         <div class="verify-icon">
           <span class="pi pi-envelope"></span>
         </div>
-        <h1 class="auth-title">Check your email</h1>
+        <h1 class="auth-title">Confirm your new email</h1>
         <p class="auth-subtitle">
-          We've sent a 6-digit code to your email address. Enter it below to
-          sign in.
+          Enter the code sent to {{ supabase.pendingEmailChange() }}.
         </p>
         <p class="auth-subtitle mt-2!">
           Please check SPAM folder in your mailbox if you don't receive email in
@@ -45,7 +44,7 @@
           [disabled]="otpModel.invalid || !code"
           class="auth-submit-btn"
         >
-          <span pButtonLabel>Verify and sign in</span>
+          <span pButtonLabel>Verify and update email</span>
         </button>
       </form>
 
@@ -66,8 +65,4 @@
       </p>
     </div>
   </div>
-
-  <p class="auth-footer-link">
-    Wrong email? <a routerLink="/login">Go back</a>
-  </p>
 </div>
