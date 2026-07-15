@@ -378,7 +378,7 @@ describe('Settings', () => {
     return { preventDefault: vi.fn() } as unknown as Event;
   }
 
-  describe('onSubmit', () => {
+  describe('onFullNameUpdateSubmit', () => {
     it('calls updateDisplayName with the trimmed value, reloads the profile, and shows a success toast', async () => {
       await setup({ value: mockProfile, hasValue: true });
       const fixture = TestBed.createComponent(Settings);
@@ -388,7 +388,8 @@ describe('Settings', () => {
       userSettingsMock.reloadUserProfile.mockClear();
 
       fixture.componentInstance.fullNameModel.set({ displayName: '  Alice  ' });
-      fixture.componentInstance.onSubmit(createSubmitEvent());
+      fixture.componentInstance.fullNameForm.displayName().markAsDirty();
+      fixture.componentInstance.onFullNameUpdateSubmit(createSubmitEvent());
 
       expect(userSettingsMock.updateDisplayName).toHaveBeenCalledWith('Alice');
       expect(userSettingsMock.reloadUserProfile).toHaveBeenCalledOnce();
@@ -408,7 +409,7 @@ describe('Settings', () => {
       await fixture.whenStable();
 
       fixture.componentInstance.fullNameModel.set({ displayName: '' });
-      fixture.componentInstance.onSubmit(createSubmitEvent());
+      fixture.componentInstance.onFullNameUpdateSubmit(createSubmitEvent());
       fixture.detectChanges();
 
       expect(userSettingsMock.updateDisplayName).not.toHaveBeenCalled();
@@ -425,7 +426,7 @@ describe('Settings', () => {
       fixture.componentInstance.fullNameModel.set({
         displayName: 'a'.repeat(101),
       });
-      fixture.componentInstance.onSubmit(createSubmitEvent());
+      fixture.componentInstance.onFullNameUpdateSubmit(createSubmitEvent());
       fixture.detectChanges();
 
       expect(userSettingsMock.updateDisplayName).not.toHaveBeenCalled();
@@ -445,7 +446,8 @@ describe('Settings', () => {
       userSettingsMock.reloadUserProfile.mockClear();
 
       fixture.componentInstance.fullNameModel.set({ displayName: 'Alice' });
-      fixture.componentInstance.onSubmit(createSubmitEvent());
+      fixture.componentInstance.fullNameForm.displayName().markAsDirty();
+      fixture.componentInstance.onFullNameUpdateSubmit(createSubmitEvent());
 
       expect(addSpy).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -472,7 +474,8 @@ describe('Settings', () => {
       await fixture.whenStable();
 
       fixture.componentInstance.fullNameModel.set({ displayName: 'Alice' });
-      fixture.componentInstance.onSubmit(createSubmitEvent());
+      fixture.componentInstance.fullNameForm.displayName().markAsDirty();
+      fixture.componentInstance.onFullNameUpdateSubmit(createSubmitEvent());
 
       expect(fixture.componentInstance.isSavingName()).toBe(true);
     });
@@ -591,9 +594,11 @@ describe('Settings', () => {
 
     it('sets isChangingEmail while the request is in flight', async () => {
       await setup({ value: mockProfile, hasValue: true });
-      supabaseMock.updateEmail.mockReturnValue(new Promise(() => {
-        /* never resolves */
-      }));
+      supabaseMock.updateEmail.mockReturnValue(
+        new Promise(() => {
+          /* never resolves */
+        }),
+      );
       const fixture = TestBed.createComponent(Settings);
       fixture.detectChanges();
       await fixture.whenStable();
