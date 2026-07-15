@@ -115,7 +115,6 @@ export class Settings implements OnInit {
 
   constructor() {
     effect(() => {
-      console.log('effect run');
       const profile = this.userProfile.value();
       if (profile) {
         this.fullNameModel.set({ displayName: profile.displayName ?? '' });

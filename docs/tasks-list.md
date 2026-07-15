@@ -1094,7 +1094,7 @@ FREE: 2, BASIC: 10, PRO: 20
 
 ### 87. Save user notifications preferences (BE & FE)
 
-**status: in progress**
+**status: done**
 
 **time: 15.07.2026**
 
