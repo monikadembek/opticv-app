@@ -15,6 +15,7 @@ const mockProfile: UserProfile = {
   displayName: 'Jane Doe',
   avatarUrl: null,
   subscription: { tier: 'FREE', status: 'ACTIVE' },
+  notifications: { productUpdatesEnabled: true, weeklyTipsEnabled: false },
 };
 
 const mockUser = {
@@ -26,6 +27,7 @@ const mockUser = {
 const mockUsersService = {
   getProfile: jest.fn().mockResolvedValue(mockProfile),
   updateDisplayName: jest.fn().mockResolvedValue(mockProfile),
+  updateNotificationPreference: jest.fn().mockResolvedValue(mockProfile),
 };
 
 const mockConfigService = {
@@ -71,6 +73,35 @@ describe('UsersController', () => {
 
       await expect(
         controller.updateDisplayName(mockUser, { displayName: 'Jane Doe' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('updateNotificationPreference', () => {
+    it('delegates to service.updateNotificationPreference with supabaseId and dto', async () => {
+      const dto = { type: 'PRODUCT_UPDATES' as const, enabled: false };
+
+      const result = await controller.updateNotificationPreference(
+        mockUser,
+        dto,
+      );
+
+      expect(
+        mockUsersService.updateNotificationPreference,
+      ).toHaveBeenCalledWith(mockUser.supabaseId, dto);
+      expect(result).toEqual(mockProfile);
+    });
+
+    it('propagates NotFoundException thrown by service', async () => {
+      mockUsersService.updateNotificationPreference.mockRejectedValueOnce(
+        new NotFoundException('User not found.'),
+      );
+
+      await expect(
+        controller.updateNotificationPreference(mockUser, {
+          type: 'WEEKLY_TIPS',
+          enabled: true,
+        }),
       ).rejects.toThrow(NotFoundException);
     });
   });

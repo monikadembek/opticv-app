@@ -10,9 +10,15 @@ import { PrismaService } from '../prisma/prisma.service';
 import { R2Service } from '../storage/r2.service';
 import { QuotaService } from '../quota/quota.service';
 import { UserModel } from '../../generated/prisma/models.js';
-import type { SubscriptionTier, UsageStatus, UserProfile } from '@opticv/datatypes';
+import type {
+  NotificationPreferences,
+  SubscriptionTier,
+  UsageStatus,
+  UserProfile,
+} from '@opticv/datatypes';
 import { TIER_LIMITS } from '@opticv/datatypes';
 import { UpdateDisplayNameDto } from './dto/update-display-name.dto';
+import { UpdateNotificationPreferenceDto } from './dto/update-notification-preference.dto';
 
 @Injectable()
 export class UsersService {
@@ -56,6 +62,8 @@ export class UsersService {
       throw new NotFoundException('User not found.');
     }
 
+    const notifications = await this.ensureNotificationPreferences(user.id);
+
     return {
       id: user.id,
       email: user.email,
@@ -64,6 +72,7 @@ export class UsersService {
       subscription: user.subscription
         ? { tier: user.subscription.tier, status: user.subscription.status }
         : null,
+      notifications,
     };
   }
 
@@ -86,6 +95,10 @@ export class UsersService {
       include: { subscription: true },
     });
 
+    const notifications = await this.ensureNotificationPreferences(
+      updatedUser.id,
+    );
+
     return {
       id: updatedUser.id,
       email: updatedUser.email,
@@ -97,6 +110,61 @@ export class UsersService {
             status: updatedUser.subscription.status,
           }
         : null,
+      notifications,
+    };
+  }
+
+  async updateNotificationPreference(
+    supabaseId: string,
+    dto: UpdateNotificationPreferenceDto,
+  ): Promise<UserProfile> {
+    const user = await this.prisma.user.findUnique({
+      where: { supabaseId },
+      include: { subscription: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+
+    const field =
+      dto.type === 'PRODUCT_UPDATES'
+        ? 'productUpdatesEnabled'
+        : 'weeklyTipsEnabled';
+
+    const notification = await this.prisma.notification.upsert({
+      where: { userId: user.id },
+      create: { userId: user.id, [field]: dto.enabled },
+      update: { [field]: dto.enabled },
+    });
+
+    return {
+      id: user.id,
+      email: user.email,
+      displayName: user.displayName,
+      avatarUrl: user.avatarUrl,
+      subscription: user.subscription
+        ? { tier: user.subscription.tier, status: user.subscription.status }
+        : null,
+      notifications: {
+        productUpdatesEnabled: notification.productUpdatesEnabled,
+        weeklyTipsEnabled: notification.weeklyTipsEnabled,
+      },
+    };
+  }
+
+  private async ensureNotificationPreferences(
+    userId: string,
+  ): Promise<NotificationPreferences> {
+    const notification = await this.prisma.notification.upsert({
+      where: { userId },
+      create: { userId },
+      update: {},
+    });
+
+    return {
+      productUpdatesEnabled: notification.productUpdatesEnabled,
+      weeklyTipsEnabled: notification.weeklyTipsEnabled,
     };
   }
 
