@@ -106,9 +106,10 @@
           {{ newEmailForm.newEmail().errors()[0].message }}
         </p>
         } @if (emailChangePendingFor()) {
-        <p class="mt-1 text-sm text-emerald-700" role="status">
-          Confirmation link sent to
-          <strong>{{ emailChangePendingFor() }}</strong>. Click it to complete
+        <p class="mt-4 flex items-center text-sm text-green-600">
+          <i class="pi pi-info-circle mr-2" aria-hidden="true"></i>
+          Confirmation link sent to&nbsp;
+          <strong> {{ emailChangePendingFor() }}</strong>. Click it to complete
           the change.
         </p>
         }
