@@ -69,9 +69,9 @@ describe('UsersService', () => {
     });
 
     expect(mockTx.user.upsert).toHaveBeenCalledWith({
-      where: { email: 'test@example.com' },
+      where: { supabaseId: 'sb-id' },
       create: { supabaseId: 'sb-id', email: 'test@example.com' },
-      update: { supabaseId: 'sb-id' },
+      update: { email: 'test@example.com' },
     });
     expect(mockTx.subscription.upsert).toHaveBeenCalledWith({
       where: { userId: 'user-id' },
@@ -87,6 +87,25 @@ describe('UsersService', () => {
 
     expect(mockTx.user.upsert).toHaveBeenCalledTimes(2);
     expect(mockTx.subscription.upsert).toHaveBeenCalledTimes(2);
+  });
+
+  it('updates the email of an existing user when it has changed in Supabase', async () => {
+    mockTx.user.upsert.mockResolvedValueOnce({
+      ...mockUser,
+      email: 'new@example.com',
+    });
+
+    const result = await service.upsertUser({
+      supabaseId: 'sb-id',
+      email: 'new@example.com',
+    });
+
+    expect(mockTx.user.upsert).toHaveBeenCalledWith({
+      where: { supabaseId: 'sb-id' },
+      create: { supabaseId: 'sb-id', email: 'new@example.com' },
+      update: { email: 'new@example.com' },
+    });
+    expect(result.email).toBe('new@example.com');
   });
 
   it('propagates transaction errors', async () => {
