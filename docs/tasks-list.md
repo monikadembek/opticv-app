@@ -1082,10 +1082,12 @@ FREE: 2, BASIC: 10, PRO: 20
 
 ### 86. Implement user email change
 
-**status: todo**
-**time:**
+**status: done**
 
-- implement user email change via supabase
+**time: 14.07.2026 - 15.07.2026**
+
+- implement user email change via updating the user data in supabase authentication
+- process of changing email should be executed when user provides new email addres in settings page, clicks Change email button and then confirms the message in dialog window, which sends confirmation email to new email address with link which must be clicked to confirm the change in supabase
 - use the plan from @docs/user-email-change.md
 
 ---
@@ -1097,8 +1099,15 @@ FREE: 2, BASIC: 10, PRO: 20
 
 - in account setting page user can turn on notification for product updates and job tips
 - add new table Notifications with those options and add relation to user table
-- prepare endpoint where user can send notification type and value true/ false and it would update that data in database
-- on frontend in Account Settings page implement passing notifications values to backend via prepared endpoint
+- prepare endpoint where user can send notification type with value true/ false and it would update that data in database
+- on frontend in Account Settings page implement passing notifications values to backend via prepared endpoint, which should be executed when user clicks the switch button
+
+---
+
+### Bug avatar in top nav header doesn't react to user email change
+
+**status: todo**
+**time:**
 
 ---
 

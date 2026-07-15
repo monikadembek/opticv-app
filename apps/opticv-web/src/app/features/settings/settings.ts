@@ -71,6 +71,7 @@ export class Settings implements OnInit {
   readonly nameSubmitted = signal(false);
   readonly isChangingEmail = signal(false);
   readonly newEmailSubmitted = signal(false);
+  readonly emailChangePendingFor = signal<string | null>(null);
   readonly productUpdatesEnabled = signal(true);
   readonly weeklyTipsEnabled = signal(false);
 
@@ -172,7 +173,7 @@ export class Settings implements OnInit {
     });
   }
 
-  onSubmit(event: Event): void {
+  onFullNameUpdateSubmit(event: Event): void {
     event.preventDefault();
 
     this.nameSubmitted.set(true);
@@ -201,7 +202,7 @@ export class Settings implements OnInit {
           return EMPTY;
         }),
       )
-      .subscribe((res) => {
+      .subscribe(() => {
         this.isSavingName.set(false);
         this.messageService.add({
           severity: 'success',
@@ -224,15 +225,17 @@ export class Settings implements OnInit {
 
     this.confirmationService.confirm({
       header: 'Change email',
-      message: `We'll send a confirmation code to ${newEmail}. You'll need to sign in again with your new email after confirming.`,
+      message: `We'll send a confirmation link to ${newEmail}. Click the link in that email to complete the change.`,
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Send code',
+      acceptLabel: 'Send link',
       rejectLabel: 'Cancel',
       accept: async () => {
         posthog.capture('email_change_requested', { page: 'settings' });
         this.isChangingEmail.set(true);
 
         const { error } = await this.supabase.updateEmail(newEmail);
+
+        this.isChangingEmail.set(false);
 
         if (error) {
           this.messageService.add({
@@ -242,12 +245,10 @@ export class Settings implements OnInit {
               error.message ??
               'Failed to start email change process. Please try again.',
           });
-          this.isChangingEmail.set(false);
           return;
         }
 
-        this.supabase.setPendingEmailChange(newEmail);
-        this.router.navigate(['/settings/verify-email']);
+        this.emailChangePendingFor.set(newEmail);
       },
     });
   }

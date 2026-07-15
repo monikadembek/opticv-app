@@ -44,7 +44,7 @@
     </div>
 
     <div class="flex flex-col gap-6">
-      <form (submit)="onSubmit($event)">
+      <form (submit)="onFullNameUpdateSubmit($event)">
         <label for="fullName" class="mb-1 block text-sm font-medium"
           >Full name</label
         >
@@ -94,8 +94,6 @@
             pButton
             type="submit"
             label="Change email"
-            severity="secondary"
-            [outlined]="true"
             [loading]="isChangingEmail()"
             [disabled]="isChangingEmail()"
             aria-label="Change email"
@@ -106,6 +104,13 @@
         newEmailForm.newEmail().errors().length > 0) {
         <p class="mt-1 text-sm text-red-600" role="alert">
           {{ newEmailForm.newEmail().errors()[0].message }}
+        </p>
+        } @if (emailChangePendingFor()) {
+        <p class="mt-4 flex items-center text-sm text-green-600">
+          <i class="pi pi-info-circle mr-2" aria-hidden="true"></i>
+          Confirmation link sent to&nbsp;
+          <strong> {{ emailChangePendingFor() }}</strong>. Click it to complete
+          the change.
         </p>
         }
       </form>
