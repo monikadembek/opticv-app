@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { PLATFORM_ID } from '@angular/core';
-import { CvDropzone } from './cv-dropzone';
+import { CvDropzone, UploadFileError } from './cv-dropzone';
 
 const PDF_TYPE = 'application/pdf';
 const DOCX_TYPE =
@@ -22,6 +22,7 @@ function makeDragEvent(files: File[]): DragEvent {
 describe('CvDropzone', () => {
   let fixture: ComponentFixture<CvDropzone>;
   let component: CvDropzone;
+  let validationErrors: (UploadFileError | null)[];
 
   beforeEach(async () => {
     TestBed.resetTestingModule();
@@ -32,6 +33,8 @@ describe('CvDropzone', () => {
 
     fixture = TestBed.createComponent(CvDropzone);
     component = fixture.componentInstance;
+    validationErrors = [];
+    component.validationError.subscribe((error) => validationErrors.push(error));
     fixture.detectChanges();
   });
 
@@ -47,7 +50,7 @@ describe('CvDropzone', () => {
       component.onFileInputChange(fileInputEvent);
 
       expect(component.selectedFile()).toBe(file);
-      expect(component.validationError()).toBeNull();
+      expect(validationErrors).toEqual([null]);
     });
 
     it('should accept a valid DOCX file', () => {
@@ -57,7 +60,7 @@ describe('CvDropzone', () => {
       component.onFileInputChange(fileInputEvent);
 
       expect(component.selectedFile()).toBe(file);
-      expect(component.validationError()).toBeNull();
+      expect(validationErrors).toEqual([null]);
     });
 
     it('should reject a file with unsupported mime type', () => {
@@ -67,9 +70,13 @@ describe('CvDropzone', () => {
       component.onFileInputChange(fileInputEvent);
 
       expect(component.selectedFile()).toBeNull();
-      expect(component.validationError()).toBe(
-        'Only PDF and DOCX files are accepted.',
-      );
+      expect(validationErrors).toEqual([
+        null,
+        expect.objectContaining({
+          type: 'unsupported_format',
+          message: 'Only PDF and DOCX files are accepted.',
+        }),
+      ]);
     });
 
     it('should reject a file exceeding 5 MB', () => {
@@ -79,7 +86,13 @@ describe('CvDropzone', () => {
       component.onFileInputChange(fileInputEvent);
 
       expect(component.selectedFile()).toBeNull();
-      expect(component.validationError()).toBe('File must be smaller than 5 MB.');
+      expect(validationErrors).toEqual([
+        null,
+        expect.objectContaining({
+          type: 'too_big_size',
+          message: 'File must be smaller than 5 MB.',
+        }),
+      ]);
     });
 
     it('should clear validation error when a valid file follows an invalid one', () => {
@@ -87,13 +100,13 @@ describe('CvDropzone', () => {
       component.onFileInputChange({
         target: { files: [invalid] },
       } as unknown as Event);
-      expect(component.validationError()).not.toBeNull();
+      expect(validationErrors.at(-1)).not.toBeNull();
 
       const valid = makeFile('resume.pdf', PDF_TYPE);
       component.onFileInputChange({
         target: { files: [valid] },
       } as unknown as Event);
-      expect(component.validationError()).toBeNull();
+      expect(validationErrors.at(-1)).toBeNull();
       expect(component.selectedFile()).toBe(valid);
     });
   });
@@ -115,16 +128,19 @@ describe('CvDropzone', () => {
       component.onDrop(makeDragEvent([file1, file2]));
 
       expect(component.selectedFile()).toBeNull();
-      expect(component.validationError()).toBe(
-        'Only one file can be uploaded at a time.',
-      );
+      expect(validationErrors).toEqual([
+        expect.objectContaining({
+          type: 'too_many_files',
+          message: 'Only one file can be uploaded at a time.',
+        }),
+      ]);
     });
 
     it('should do nothing when dataTransfer has no files', () => {
       component.onDrop(makeDragEvent([]));
 
       expect(component.selectedFile()).toBeNull();
-      expect(component.validationError()).toBeNull();
+      expect(validationErrors).toEqual([]);
     });
   });
 
@@ -142,7 +158,7 @@ describe('CvDropzone', () => {
   });
 
   describe('removeFile', () => {
-    it('should clear selected file and validation error', () => {
+    it('should clear selected file and emit null validation error', () => {
       const file = makeFile('resume.pdf', PDF_TYPE);
       component.onFileInputChange({
         target: { files: [file] },
@@ -151,7 +167,7 @@ describe('CvDropzone', () => {
       component.removeFile();
 
       expect(component.selectedFile()).toBeNull();
-      expect(component.validationError()).toBeNull();
+      expect(validationErrors.at(-1)).toBeNull();
     });
   });
 
@@ -212,23 +228,13 @@ describe('CvDropzone', () => {
       expect(removeBtn).toBeTruthy();
     });
 
-    it('should show validation error in the template', () => {
-      const file = makeFile('resume.txt', 'text/plain');
-      component.onFileInputChange({
-        target: { files: [file] },
-      } as unknown as Event);
+    it('should show the dropzone prompt when no file is selected', () => {
       fixture.detectChanges();
 
-      const alert = fixture.debugElement.query(By.css('[role="alert"]'));
-      expect(alert.nativeElement.textContent.trim()).toBe(
-        'Only PDF and DOCX files are accepted.',
-      );
-    });
-
-    it('should not show validation error when there is none', () => {
-      fixture.detectChanges();
-      const alert = fixture.debugElement.query(By.css('[role="alert"]'));
-      expect(alert).toBeNull();
+      const prompt = fixture.debugElement.query(By.css('input[type="file"]'));
+      expect(prompt).toBeTruthy();
+      const fileName = fixture.debugElement.query(By.css('.truncate'));
+      expect(fileName).toBeNull();
     });
   });
 });

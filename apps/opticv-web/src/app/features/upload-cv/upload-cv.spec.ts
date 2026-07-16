@@ -73,18 +73,6 @@ describe('UploadCv', () => {
       expect(component.isLoading()).toBe(false);
     });
 
-    it('should show a success toast on successful upload', () => {
-      cvUploadApiService.uploadCv.mockReturnValue(of(mockResponse));
-
-      component.onFileSelected(
-        new File([''], 'resume.pdf', { type: 'application/pdf' }),
-      );
-
-      expect(messageService.add).toHaveBeenCalledWith(
-        expect.objectContaining({ severity: 'success' }),
-      );
-    });
-
     it('should clear the dropzone selected file on success', () => {
       cvUploadApiService.uploadCv.mockReturnValue(of(mockResponse));
       const dropzone = component.dropZoneComponent();
@@ -197,10 +185,12 @@ describe('UploadCv', () => {
 
     it('should not show the uploaded file section before any upload', () => {
       fixture.detectChanges();
-      const addedLabel = fixture.debugElement.queryAll(By.css('p')).find((el) =>
-        el.nativeElement.textContent.includes('Added file'),
-      );
-      expect(addedLabel).toBeUndefined();
+      const successLabel = fixture.debugElement
+        .queryAll(By.css('p'))
+        .find((el) =>
+          el.nativeElement.textContent.includes('CV uploaded successfully'),
+        );
+      expect(successLabel).toBeUndefined();
     });
 
     it('should pass isLoading to the dropzone', () => {

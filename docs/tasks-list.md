@@ -1107,7 +1107,7 @@ FREE: 2, BASIC: 10, PRO: 20
 
 ### 88. Upload CV page - redesing (FE)
 
-**status: in progress**
+**status: done**
 
 **time: 15.07.2026 - 16.07.2026**
 
