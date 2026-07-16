@@ -1,22 +1,25 @@
 <div
   role="region"
   aria-label="CV file upload area"
-  class="flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-10 transition-colors"
-  [class]="isDragOver() ? 'border-primary bg-primary/5' : 'border-surface-300'"
+  class="flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed px-10 md:px-20 py-10 text-center transition-colors"
+  [class]="isDragOver() ? 'border-primary bg-primary/5' : 'border-(--text-subtle) bg-surface-50'"
 >
   @if (selectedFile()) {
-  <div class="flex w-full items-center gap-4 rounded-lg bg-surface-100 p-4">
-    <span class="pi pi-file text-2xl text-primary"></span>
-    <div class="flex-1 overflow-hidden">
-      <p class="truncate font-medium text-surface-900">
+  <div
+    class="flex w-full items-center rounded-md bg-surface-200 border border-green-500 px-4 py-2"
+  >
+    <i class="pi pi-file text-primary text-2xl! mr-3 inline-block"></i>
+    <div class="flex-1 overflow-hidden text-left">
+      <p class="truncate font-semibold text-surface-900 mr-3">
         {{ selectedFile()!.name }}
       </p>
-      <p class="text-sm text-surface-500">{{ filesize() }}</p>
+      <p class="text-xs text-surface-500">{{ filesize() }}</p>
     </div>
     <button
       type="button"
-      class="pi pi-times cursor-pointer rounded-full p-1 text-surface-500 hover:text-surface-900"
+      class="pi pi-times cursor-pointer rounded-full p-1 text-surface-500 hover:text-surface-900 ml-auto"
       aria-label="Remove file"
+      title="Remove"
       (click)="removeFile()"
       [disabled]="isLoading()"
     ></button>
@@ -25,19 +28,27 @@
   <p-button
     class="mt-6"
     label="Upload CV"
+    size="small"
     [loading]="isLoading()"
     [disabled]="isLoading()"
     (onClick)="submit()"
   />
   } @else {
-  <span class="pi pi-cloud-upload mb-4 text-5xl text-surface-400"></span>
-  <p class="mb-5 text-lg font-semibold text-surface-700">
+  <svg
+    data-p-icon="cloud-upload"
+    [size]="40"
+    color="var(--primary-600)"
+    style="width: 40px; height: 40px"
+  ></svg>
+  <p class="mt-4 mb-1 text-lg font-semibold text-surface-900">
     Drag & drop your CV here
   </p>
+  <p class="mb-5 text-sm text-surface-500">or choose a file from your device</p>
 
   <label
-    class="cursor-pointer rounded-md border border-primary px-4 py-2 text-sm font-medium text-primary hover:bg-primary/5"
+    class="cursor-pointer rounded-md border border-primary px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/5"
   >
+    <span class="pi pi-folder-open mr-2" aria-hidden="true"></span>
     <input
       type="file"
       class="sr-only"
@@ -47,8 +58,5 @@
     />
     Browse files
   </label>
-
-  @if (validationError()) {
-  <p role="alert" class="mt-4 text-sm text-red-600">{{ validationError() }}</p>
-  } }
+  }
 </div>
