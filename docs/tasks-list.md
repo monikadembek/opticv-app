@@ -1105,6 +1105,16 @@ FREE: 2, BASIC: 10, PRO: 20
 
 ---
 
+### 88. Upload CV page - redesing (FE)
+
+**status: in progress**
+
+**time: 15.07.2026 - 16.07.2026**
+
+- change UI in the upload CV page
+
+---
+
 ### Bug avatar in top nav header doesn't react to user email change
 
 **status: todo**

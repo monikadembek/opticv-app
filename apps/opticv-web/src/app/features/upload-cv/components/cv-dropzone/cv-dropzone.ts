@@ -11,6 +11,13 @@ import {
 import { isPlatformBrowser } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { formatFileSize } from '../../../../shared/utils';
+import { CloudUpload } from '@primeicons/angular/cloud-upload';
+
+export interface UploadFileError {
+  type: 'too_many_files' | 'unsupported_format' | 'too_big_size';
+  file: File;
+  message: string;
+}
 
 const ALLOWED_MIME_TYPES = [
   'application/pdf',
@@ -21,7 +28,7 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 @Component({
   selector: 'app-cv-dropzone',
-  imports: [ButtonModule],
+  imports: [ButtonModule, CloudUpload],
   templateUrl: './cv-dropzone.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
@@ -35,9 +42,9 @@ export class CvDropzone {
 
   readonly isLoading = input<boolean>(false);
   readonly fileSelected = output<File>();
+  readonly validationError = output<UploadFileError | null>();
 
   readonly selectedFile = signal<File | null>(null);
-  readonly validationError = signal<string | null>(null);
   readonly isDragOver = signal(false);
 
   readonly filesize = computed<string>(() => {
@@ -67,7 +74,11 @@ export class CvDropzone {
     if (!files || files.length === 0) return;
 
     if (files.length > 1) {
-      this.validationError.set('Only one file can be uploaded at a time.');
+      this.validationError.emit({
+        type: 'too_many_files',
+        file: files[0],
+        message: 'Only one file can be uploaded at a time.',
+      });
       return;
     }
 
@@ -85,7 +96,7 @@ export class CvDropzone {
 
   removeFile(): void {
     this.selectedFile.set(null);
-    this.validationError.set(null);
+    this.validationError.emit(null);
   }
 
   submit(): void {
@@ -96,15 +107,23 @@ export class CvDropzone {
   }
 
   private validateFile(file: File): void {
-    this.validationError.set(null);
+    this.validationError.emit(null);
 
     if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-      this.validationError.set('Only PDF and DOCX files are accepted.');
+      this.validationError.emit({
+        type: 'unsupported_format',
+        file: file,
+        message: 'Only PDF and DOCX files are accepted.',
+      });
       return;
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      this.validationError.set('File must be smaller than 5 MB.');
+      this.validationError.emit({
+        type: 'too_big_size',
+        file: file,
+        message: 'File must be smaller than 5 MB.',
+      });
       return;
     }
 

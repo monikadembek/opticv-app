@@ -1,54 +1,136 @@
-<div class="mx-auto max-w-2xl px-4 py-12">
-  <h1 class="mb-4 text-3xl font-bold text-surface-900">Upload your CV</h1>
-  <p class="mb-4 text-surface-500">
+<div class="mx-auto max-w-2xl px-4 py-12 w-[1000px] max-w-[100%] container">
+  <h1 class="mb-3 text-3xl font-bold text-surface-900">Upload your CV</h1>
+  <p class="mb-6 text-surface-500">
     Upload your CV to get started with AI-powered optimization.
   </p>
 
-  <div
-    class="rounded-md bg-blue-50 border border-blue-200 p-2 text-sm text-blue-700 mb-10"
-  >
-    Accepted formats:
-    <span class="font-semibold">PDF, DOCX</span> &nbsp;&nbsp;|&nbsp;&nbsp; Max
-    size: <span class="font-semibold">5 MB</span> &nbsp;&nbsp;|&nbsp;&nbsp;
-    Language:
-    <span class="font-semibold">English only</span>
-    <br />
-    <p class="mt-2 italic">
-      * OptiCV currently supports only CVs written in English.
-    </p>
-  </div>
+  <div class="flex w-full">
+    <div
+      class="w-[300px] rounded-l-md bg-green-50 border border-(--border-subtle) p-5 text-sm"
+    >
+      @if (!uploadedFile()) {
+      <h2 class="font-semibold mb-4 text-lg">What you will need</h2>
+      <ul>
+        <li class="mb-3 flex items-center">
+          <i
+            class="pi pi-check-circle mr-2 text-green-700"
+            aria-hidden="true"
+          ></i>
+          PDF or DOCX format
+        </li>
+        <li class="mb-3 flex items-center">
+          <i
+            class="pi pi-check-circle mr-2 text-green-700"
+            aria-hidden="true"
+          ></i>
+          Up to 5MB per file
+        </li>
+        <li class="mb-3 flex items-center">
+          <i
+            class="pi pi-check-circle mr-2 text-green-700"
+            aria-hidden="true"
+          ></i>
+          Written in English
+        </li>
+        <li class="mb-3 flex items-center">
+          <i class="pi pi-ban mr-2 text-(--critical)" aria-hidden="true"></i>
+          Can't be password protected file
+        </li>
+        <li class="mb-3 flex items-center">
+          <i class="pi pi-ban mr-2 text-(--critical)" aria-hidden="true"></i>
+          Can't be scanned image
+        </li>
+      </ul>
+      } @else {
+      <h2 class="font-semibold text-lg">Ready to go</h2>
+      <p>Your CV has been uploaded</p>
 
-  <app-cv-dropzone
-    [isLoading]="isLoading()"
-    (fileSelected)="onFileSelected($event)"
-  />
-
-  @if (uploadedFile()) {
-  <p class="mt-8 mb-5 font-bold">Added file:</p>
-  <div class="flex items-start gap-4">
-    <span class="pi pi-file-pdf text-3xl text-primary"></span>
-    <div class="flex-1 overflow-hidden">
-      <p class="truncate font-semibold text-surface-900">
-        {{ uploadedFile()!.fileName }}
-      </p>
-      <p class="text-sm text-surface-500">
-        {{ filesize() }} &middot; Uploaded {{ uploadedFile()!.createdAt | date:
-        'medium' }}
-      </p>
+      <p-button
+        label="Optimize your CV"
+        icon="pi pi-bolt"
+        size="small"
+        [fluid]="true"
+        class="mb-4 mt-6 block"
+        (onClick)="optimizeCv(uploadedFile()!)"
+      />
+      <p-button
+        icon="pi pi-plus"
+        label="Upload another CV"
+        size="small"
+        [outlined]="true"
+        [fluid]="true"
+        (onClick)="uploadedFile.set(null)"
+      />
+      }
     </div>
-    <span class="pi pi-check-circle text-xl text-green-500"></span>
+
+    <div
+      class="flex-1 border border-(--border-subtle) rounded-r-md p-8 flex flex-col items-center justify-center"
+    >
+      @if (error()) {
+      <div
+        class="w-full flex items-center gap-3 mb-5 p-4 text-sm text-(--critical) border border-(--critical) rounded-md bg-red-100"
+      >
+        <i class="pi pi-exclamation-circle"></i>
+        <p>
+          <span class="font-semibold">{{ error()?.file?.name}}</span><br />
+          <span class="text-sm"
+            >{{ formatFileSize(error()?.file!.size) }}
+          </span>
+        </p>
+        <i class="pi pi-ban"></i>
+      </div>
+      <div
+        class="w-full flex items-center gap-3 mb-5 p-4 text-sm text-(--critical) border border-(--critical) rounded-md bg-red-100"
+      >
+        <i class="pi pi-exclamation-triangle"></i>
+        <p>
+          <span class="font-semibold">Couldn't add file</span>.
+          {{error()?.message }}
+        </p>
+      </div>
+      <p-button
+        icon="pi pi-replay"
+        label="Select another file"
+        [outlined]="true"
+        (onClick)="error.set(null)"
+      ></p-button>
+      } @else if (uploadedFile()) {
+      <div
+        class="w-full flex items-center gap-3 mb-3 p-4 text-sm border border-(--primary-600) rounded-md bg-(--primary-50)"
+      >
+        @if (getMimeLabel(uploadedFile()!.mimeType) === 'PDF') {
+        <span class="pi pi-file-pdf text-3xl! text-primary"></span>
+        } @else {
+        <span class="pi pi-file-word text-3xl! text-primary"></span>
+        }
+        <div class="flex-1 overflow-hidden">
+          <p class="truncate font-semibold text-surface-900">
+            {{ uploadedFile()!.fileName }}
+          </p>
+          <p class="text-xs text-surface-500">
+            {{ filesize() }} &middot; Uploaded {{ uploadedFile()!.createdAt |
+            date: 'medium' }}
+          </p>
+        </div>
+        <span class="pi pi-check-circle text-xl text-green-500"></span>
+      </div>
+      <div
+        class="mt-4 w-full flex items-start gap-3 p-4 text-sm border border-(--primary-600) rounded-md bg-(--primary-50)"
+      >
+        <i class="pi pi-check-circle text-primary" aria-hidden="true"></i>
+        <p class="font-semibold text-primary">CV uploaded successfully.</p>
+      </div>
+
+      } @else {
+      <div class="w-full">
+        <app-cv-dropzone
+          [isLoading]="isLoading()"
+          (fileSelected)="onFileSelected($event)"
+          (validationError)="error.set($event)"
+        />
+      </div>
+      }
+    </div>
   </div>
-  <p class="mt-4 flex items-center gap-2 text-sm text-green-600">
-    <i class="pi pi-check-circle" aria-hidden="true"></i>
-    CV uploaded and parsed successfully.
-  </p>
-  <div class="mt-6">
-    <p-button
-      label="Optimize your CV"
-      icon="pi pi-bolt"
-      size="small"
-      routerLink="/cv-optimization"
-    />
-  </div>
-  }
 </div>
