@@ -136,7 +136,7 @@ describe('SectionCard', () => {
   it('does not render a help button when helpTitle is not set', () => {
     fixture.detectChanges();
     const helpButton = fixture.debugElement.query(
-      By.css('p-button[icon="pi pi-info"]'),
+      By.css('.section-card__help-button'),
     );
     expect(helpButton).toBeNull();
   });
@@ -151,7 +151,7 @@ describe('SectionCard', () => {
     fixture.componentRef.setInput('helpTitle', 'About Test Section');
     fixture.detectChanges();
     const helpButton = fixture.debugElement.query(
-      By.css('p-button[icon="pi pi-info"]'),
+      By.css('.section-card__help-button'),
     );
     expect(helpButton).toBeTruthy();
   });
@@ -160,13 +160,13 @@ describe('SectionCard', () => {
     fixture.componentRef.setInput('helpTitle', 'About Test Section');
     fixture.detectChanges();
     const helpButton = fixture.debugElement.query(
-      By.css('p-button[icon="pi pi-info"]'),
+      By.css('.section-card__help-button'),
     );
     const toggle = fixture.nativeElement.querySelector('.section-card__toggle');
-    expect(helpButton.componentInstance.ariaLabel).toBe(
+    expect(helpButton.nativeElement.getAttribute('aria-label')).toBe(
       'About Test Section section',
     );
-    expect(helpButton.componentInstance.ariaLabel).not.toBe(
+    expect(helpButton.nativeElement.getAttribute('aria-label')).not.toBe(
       toggle.getAttribute('aria-label'),
     );
   });
@@ -176,9 +176,9 @@ describe('SectionCard', () => {
     fixture.detectChanges();
     expect(fixture.componentInstance.helpDialogVisible()).toBe(false);
     const helpButton = fixture.debugElement.query(
-      By.css('p-button[icon="pi pi-info"]'),
+      By.css('.section-card__help-button'),
     );
-    helpButton.triggerEventHandler('onClick');
+    helpButton.triggerEventHandler('click');
     fixture.detectChanges();
     expect(fixture.componentInstance.helpDialogVisible()).toBe(true);
   });
@@ -188,7 +188,7 @@ describe('SectionCard', () => {
     fixture.componentRef.setInput('collapsed', true);
     fixture.detectChanges();
     const helpButton = fixture.debugElement.query(
-      By.css('p-button[icon="pi pi-info"]'),
+      By.css('.section-card__help-button'),
     );
     expect(helpButton).toBeTruthy();
   });

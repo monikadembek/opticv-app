@@ -47,7 +47,7 @@ describe('TopHeader', () => {
       fixture.detectChanges();
       expect(component.items).toHaveLength(1);
       expect(component.items![0].label).toBe('Home');
-      expect(component.items![0]['route']).toBe('/');
+      expect(component.items![0]['route']).toBe('/home');
     });
 
     it('should add Dashboard and Upload CV items when logged in', () => {
