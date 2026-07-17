@@ -6,7 +6,46 @@
   <div class="section-card__header">
     <div class="section-card__icon"><i [class]="'pi ' + icon()"></i></div>
     <h2 class="section-card__title">{{ title() }}</h2>
-    @if (status() === 'completed') {
+    @if (helpTitle()) {
+    <button
+      [title]="'About ' + title() + ' section'"
+      [ariaLabel]="'About ' + title() + ' section'"
+      (click)="helpDialogVisible.set(true)"
+      class="section-card__help-button"
+    >
+      <svg
+        width="36"
+        height="36"
+        viewBox="0 0 1200.24 1200.24"
+        version="1.1"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        xml:space="preserve"
+        xmlns:serif="http://www.serif.com/"
+        style="
+          fill-rule: evenodd;
+          clip-rule: evenodd;
+          stroke-linejoin: round;
+          stroke-miterlimit: 2;
+        "
+      >
+        <g>
+          <path
+            d="M1177.41 600.002c0 318.896 -258.51 577.403 -577.41 577.403 -119.01 0 -229.59 -35.989 -321.48 -97.704l-221.775 63.564 63.555 -221.784C58.59 829.594 22.59 719.005 22.59 600.003c0 -318.894 258.51 -577.407 577.41 -577.407s577.41 258.513 577.41 577.407Zm-138.735 0c0 -242.271 -196.41 -438.672 -438.675 -438.672 -242.28 0 -438.675 196.401 -438.675 438.672 0 242.272 196.395 438.673 438.675 438.673 242.265 0 438.675 -196.401 438.675 -438.673"
+            style="fill: #047857"
+          />
+          <path
+            d="M683.73 403.717c0 46.241 -37.485 83.726 -83.73 83.726 -46.245 0 -83.73 -37.485 -83.73 -83.726s37.485 -83.726 83.73 -83.726c46.245 0 83.73 37.485 83.73 83.726"
+            style="fill: #047857; fill-rule: nonzero"
+          />
+          <path
+            d="M641.895 796.216v-220.802c0 -11.662 -9.45 -21.118 -21.12 -21.118h-116.58c-11.655 0 -21.12 9.456 -21.12 21.118v41.562c0 11.664 9.465 21.118 21.12 21.118h53.91v158.121h-53.91c-11.655 0 -21.12 9.456 -21.12 21.118v41.562c0 11.664 9.465 21.118 21.12 21.118h191.61c11.655 0 21.12 -9.454 21.12 -21.118v-41.562c0 -11.663 -9.465 -21.118 -21.12 -21.118z"
+            style="fill: #047857; fill-rule: nonzero"
+          />
+        </g>
+      </svg>
+    </button>
+    } @if (status() === 'completed') {
     <span class="status-completed">
       <i class="pi pi-check-circle"></i>Completed
     </span>
@@ -44,3 +83,15 @@
     }
   </div>
 </div>
+@if (helpTitle()) {
+<p-dialog
+  [header]="helpTitle()"
+  [visible]="helpDialogVisible()"
+  (visibleChange)="$event ? null : helpDialogVisible.set(false)"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: '600px', maxWidth: '95vw' }"
+>
+  <ng-content select="[sectionHelp]" />
+</p-dialog>
+}

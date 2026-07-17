@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { SectionCard } from './section-card';
 
 describe('SectionCard', () => {
@@ -130,5 +131,65 @@ describe('SectionCard', () => {
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
     const body = fixture.nativeElement.querySelector('.section-card__body');
     expect(body.hasAttribute('hidden')).toBe(true);
+  });
+
+  it('does not render a help button when helpTitle is not set', () => {
+    fixture.detectChanges();
+    const helpButton = fixture.debugElement.query(
+      By.css('.section-card__help-button'),
+    );
+    expect(helpButton).toBeNull();
+  });
+
+  it('does not render a help dialog when helpTitle is not set', () => {
+    fixture.detectChanges();
+    const dialog = fixture.debugElement.query(By.css('p-dialog'));
+    expect(dialog).toBeNull();
+  });
+
+  it('renders a help button when helpTitle is set', () => {
+    fixture.componentRef.setInput('helpTitle', 'About Test Section');
+    fixture.detectChanges();
+    const helpButton = fixture.debugElement.query(
+      By.css('.section-card__help-button'),
+    );
+    expect(helpButton).toBeTruthy();
+  });
+
+  it('has a help button accessible name distinct from the collapse toggle', () => {
+    fixture.componentRef.setInput('helpTitle', 'About Test Section');
+    fixture.detectChanges();
+    const helpButton = fixture.debugElement.query(
+      By.css('.section-card__help-button'),
+    );
+    const toggle = fixture.nativeElement.querySelector('.section-card__toggle');
+    expect(helpButton.nativeElement.getAttribute('aria-label')).toBe(
+      'About Test Section section',
+    );
+    expect(helpButton.nativeElement.getAttribute('aria-label')).not.toBe(
+      toggle.getAttribute('aria-label'),
+    );
+  });
+
+  it('opens the help dialog when the help button is clicked', () => {
+    fixture.componentRef.setInput('helpTitle', 'About Test Section');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.helpDialogVisible()).toBe(false);
+    const helpButton = fixture.debugElement.query(
+      By.css('.section-card__help-button'),
+    );
+    helpButton.triggerEventHandler('click');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.helpDialogVisible()).toBe(true);
+  });
+
+  it('keeps the help button visible when the section is collapsed', () => {
+    fixture.componentRef.setInput('helpTitle', 'About Test Section');
+    fixture.componentRef.setInput('collapsed', true);
+    fixture.detectChanges();
+    const helpButton = fixture.debugElement.query(
+      By.css('.section-card__help-button'),
+    );
+    expect(helpButton).toBeTruthy();
   });
 });

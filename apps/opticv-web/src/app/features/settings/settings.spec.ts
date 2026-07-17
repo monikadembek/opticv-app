@@ -859,7 +859,7 @@ describe('Settings', () => {
       expect(addSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           severity: 'error',
-          summary: 'Update Error',
+          summary: 'Preference Update Error',
           detail: 'Something went wrong',
         }),
       );
@@ -881,7 +881,7 @@ describe('Settings', () => {
       expect(addSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           severity: 'error',
-          summary: 'Update Error',
+          summary: 'Preference Update Error',
           detail: 'Something went wrong',
         }),
       );

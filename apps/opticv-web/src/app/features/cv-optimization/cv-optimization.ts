@@ -403,7 +403,10 @@ export class CvOptimization implements OnInit {
 
   readonly allSectionIds = computed<string[]>(() => {
     const ids: string[] = [...ActivePrompts];
-    if (!this.isStoredMode() && this.submittedJobApplication()) {
+    if (
+      (!this.isStoredMode() && this.submittedJobApplication()) ||
+      (this.isStoredMode() && this.jobApplication())
+    ) {
       ids.push('JOB_POSTING');
     }
     return ids;
