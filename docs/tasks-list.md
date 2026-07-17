@@ -1138,15 +1138,29 @@ FREE: 2, BASIC: 10, PRO: 20
 
 ---
 
-### 91. UX - Add help informations
+### 91. UX - Adding Help information to section in CV Optimization page
 
-**status: todo**
+**status: in progress**
 
 **time: 17.07.2026**
 
-- add help informations which will explain what are keywords and why are they important,
-- what is summary, ats, etc.
-- why we should rewrite bullet points in a certain way
+- add short, per-section explanations to the cv-optimization page, so users understand what each section is, why it matters, and how ATS uses it
+- job-info-banner component should look like the rest of sections, now it is missing the header part
+
+---
+
+### 92. Bug - Keywords gap section - position for added experience bullet type items is not preserved
+
+**status: todo**
+
+**time: 18.07.2026**
+
+---
+
+### Add Rodo / GDPR section to CV
+
+**status: todo**
+**time:**
 
 ---
 
