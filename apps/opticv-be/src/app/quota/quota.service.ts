@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import type { LimitedFeature, QuotaStatus, SubscriptionTier } from '@opticv/datatypes';
 import { TIER_LIMITS } from '@opticv/datatypes';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 
 @Injectable()
@@ -36,20 +37,7 @@ export class QuotaService {
       });
     }
 
-    const consumed = await this.prisma.$transaction(async (tx) => {
-      const row = await tx.usageQuota.upsert({
-        where: { userId_feature_periodStart: { userId, feature, periodStart } },
-        create: { userId, feature, periodStart, count: 0 },
-        update: {},
-      });
-
-      const result = await tx.usageQuota.updateMany({
-        where: { id: row.id, count: { lt: limit } },
-        data: { count: { increment: 1 } },
-      });
-
-      return result.count > 0;
-    });
+    const consumed = await this.consumeQuota(userId, feature, periodStart, limit);
 
     if (!consumed) {
       throw new ForbiddenException({
@@ -58,6 +46,38 @@ export class QuotaService {
         limit,
         resetsAt,
       });
+    }
+  }
+
+  private async consumeQuota(
+    userId: string,
+    feature: LimitedFeature,
+    periodStart: Date,
+    limit: number,
+  ): Promise<boolean> {
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const row = await tx.usageQuota.upsert({
+          where: { userId_feature_periodStart: { userId, feature, periodStart } },
+          create: { userId, feature, periodStart, count: 0 },
+          update: {},
+        });
+
+        const result = await tx.usageQuota.updateMany({
+          where: { id: row.id, count: { lt: limit } },
+          data: { count: { increment: 1 } },
+        });
+
+        return result.count > 0;
+      });
+    } catch (error) {
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        return this.consumeQuota(userId, feature, periodStart, limit);
+      }
+      throw error;
     }
   }
 
