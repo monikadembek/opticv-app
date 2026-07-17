@@ -1115,10 +1115,40 @@ FREE: 2, BASIC: 10, PRO: 20
 
 ---
 
+### 89. Top menu should show which page is opened
+
+**status: done**
+
+**time: 17.07.2026**
+
+- the item in the top menu should indicate currently opened page
+- display it bolded and green
+
+---
+
+### 90. UX - Add help informations
+
+**status: todo**
+**time:**
+
+- add help informations which will explain what are keywords and why are they important,
+- what is summary, ats, etc.
+- why we should rewrite bullet points in a certain way
+
+---
+
 ### Bug avatar in top nav header doesn't react to user email change
 
 **status: todo**
 **time:**
+
+---
+
+### Bug - after account is deleted all items in menu stay visible, the same when user logs out
+
+**status: todo**
+
+When user deletes its account, gets logged out, but account is already deleted so supabase logout returns error, we are redirected to login page but all item in top menu are visible, even the ones which should be visible only to logged in users.
 
 ---
 
@@ -1128,17 +1158,6 @@ FREE: 2, BASIC: 10, PRO: 20
 **time:**
 
 - some selected bullet rewrites are not applied to A4 cv template preview and not applied to exported CV, investigate the issue, it happens when missing bullets target position which is not listed on the cv, it may be included in results in 'other' property
-
----
-
-### UX - Add help informations
-
-**status: todo**
-**time:**
-
-- add help informations which will explain what are keywords and why are they important,
-- what is summary, ats, etc.
-- why we should rewrite bullet points in a certain way
 
 ---
 
@@ -1190,20 +1209,6 @@ FREE: 2, BASIC: 10, PRO: 20
 
 ---
 
-### Bug - after account is deleted all items in menu stay visible
-
-**status: todo**
-
-When user deletes its account, gets logged out, but account is already deleted so supabase logout returns error, we are redirected to login page but all item in top menu are visible, even the ones which should be visible only to logged in users.
-
----
-
-### Bug - Fix issue with selecting template card with keyboard
-
-**status: cancelled - no longer relevant, this is no longer used**
-
----
-
 ### Implement logging to db/file
 
 **status: todo**
@@ -1218,30 +1223,4 @@ https://ngx-simple-text-editor.netlify.app/usage.html
 
 ---
 
-### Run full optimization process instead of running promptTypes one by one
-
-**status: todo**
-
-- use method runFullOptimizationProcess(jobApplicationId: string) from cv-optimization-api.service.ts
-
----
-
 ### Privacy: Resumes contain PII. Encrypt at rest, allow users to delete data, and be explicit in your privacy policy that resumes aren't used to train models. This is a real concern for your users.
-
----
-
-### Refactor fetching list of cvs in dashboard (FE)
-
-**status - todo**
-
-- implement httpResource to get list of user cvs in dashboard
-
----
-
-### Handle CV files with images (photo)
-
-**status - todo**
-
-- rethink the parsing strategy to handle cv files which may contain user photo
-
----

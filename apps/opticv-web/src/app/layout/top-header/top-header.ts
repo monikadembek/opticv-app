@@ -6,7 +6,7 @@ import {
   input,
   output,
 } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { MenubarModule } from 'primeng/menubar';
@@ -15,7 +15,13 @@ import posthog from 'posthog-js';
 
 @Component({
   selector: 'app-top-header',
-  imports: [AvatarModule, MenubarModule, ButtonModule, RouterLink],
+  imports: [
+    AvatarModule,
+    MenubarModule,
+    ButtonModule,
+    RouterLink,
+    RouterLinkActive,
+  ],
   templateUrl: './top-header.html',
   styleUrl: './top-header.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,7 +36,7 @@ export class TopHeader {
   items: MenuItem[] = [
     {
       label: 'Home',
-      route: '/',
+      route: '/home',
     },
   ];
 
@@ -54,7 +60,7 @@ export class TopHeader {
         this.items = [
           {
             label: 'Home',
-            route: '/',
+            route: '/home',
           },
           ...loggedInMenuItems,
         ];
