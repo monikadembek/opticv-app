@@ -1126,10 +1126,22 @@ FREE: 2, BASIC: 10, PRO: 20
 
 ---
 
-### 90. UX - Add help informations
+### 90. Bug - the NaN in ATS score ring
+
+**status: in progress**
+
+**time: 17.07.2026**
+
+- Fix the NaN ATS score bug - missing/non-finite issue.estimatedImpact treat as 0 instead of letting undefined \* n propagate as NaN
+- investigate - the stored RESUME_AUTOPSY record you pasted has no estimatedImpact on any issue even though the type requires it — that's likely from before the field existed, or the AI prompt/schema isn't enforcing it.
+
+---
+
+### 91. UX - Add help informations
 
 **status: todo**
-**time:**
+
+**time: 17.07.2026**
 
 - add help informations which will explain what are keywords and why are they important,
 - what is summary, ats, etc.
