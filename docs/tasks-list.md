@@ -1140,7 +1140,7 @@ FREE: 2, BASIC: 10, PRO: 20
 
 ### 91. UX - Adding Help information to section in CV Optimization page
 
-**status: in progress**
+**status: done**
 
 **time: 17.07.2026**
 
