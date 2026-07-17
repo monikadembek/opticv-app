@@ -106,13 +106,15 @@ export function recomputeAtsProjection(
   const summaryFraction = selections.selectedSummaryAngle !== null ? 1 : 0;
 
   for (const issue of original.issues) {
+    const estimatedImpact = Number.isFinite(issue.estimatedImpact)
+      ? issue.estimatedImpact
+      : 0;
     let credit = 0;
     if (issue.category === 'keywords') {
       credit =
-        issue.estimatedImpact * (selections.selectedKeywords.length > 0 ? 1 : 0);
+        estimatedImpact * (selections.selectedKeywords.length > 0 ? 1 : 0);
     } else if (issue.category === 'content') {
-      credit =
-        issue.estimatedImpact * Math.max(bulletFraction, summaryFraction);
+      credit = estimatedImpact * Math.max(bulletFraction, summaryFraction);
     }
     projected += credit;
   }

@@ -86,6 +86,7 @@ Also provide an overall ATS pass-likelihood score (0-100) and a predicted score 
                 'quotedText',
                 'whyItMatters',
                 'fix',
+                'estimatedImpact',
               ],
               properties: {
                 id: {
