@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ForbiddenException } from '@nestjs/common';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { QuotaService } from './quota.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 
@@ -82,6 +83,36 @@ describe('QuotaService', () => {
 
       const updateManyArg = mockPrisma.usageQuota.updateMany.mock.calls[0][0];
       expect(updateManyArg.where.id).toBe('row-current');
+    });
+
+    it('retries the transaction when a concurrent request wins the upsert race (P2002)', async () => {
+      const p2002 = new PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: '7.8.0',
+      });
+
+      mockPrisma.$transaction
+        .mockImplementationOnce(() => Promise.reject(p2002))
+        .mockImplementationOnce((fn) => fn(mockPrisma));
+      mockPrisma.usageQuota.upsert.mockResolvedValue({ id: 'row-1' });
+      mockPrisma.usageQuota.updateMany.mockResolvedValue({ count: 1 });
+
+      await expect(
+        service.checkAndConsume('user-1', 'CV_OPTIMIZATION', 'FREE'),
+      ).resolves.toBeUndefined();
+
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(2);
+    });
+
+    it('rethrows non-P2002 errors without retrying', async () => {
+      const otherError = new Error('connection lost');
+      mockPrisma.$transaction.mockImplementationOnce(() => Promise.reject(otherError));
+
+      await expect(
+        service.checkAndConsume('user-1', 'CV_OPTIMIZATION', 'FREE'),
+      ).rejects.toThrow('connection lost');
+
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
     });
   });
 
