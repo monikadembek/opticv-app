@@ -111,6 +111,8 @@
       @if (isStoredMode() && jobApplication()) {
       <app-job-info-banner
         [jobApplication]="jobApplication()!"
+        [collapsed]="isSectionCollapsed('JOB_POSTING')"
+        (collapsedChange)="onSectionCollapsedChange('JOB_POSTING', $event)"
         (openCv)="openOriginalCv()"
       />
       }
