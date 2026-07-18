@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient } from '@supabase/supabase-js';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { R2Service } from '../storage/r2.service';
 import { QuotaService } from '../quota/quota.service';
@@ -36,36 +35,21 @@ export class UsersService {
     supabaseId: string;
     email: string;
   }): Promise<UserModel> {
-    try {
-      return await this.prisma.$transaction(async (tx) => {
-        const user = await tx.user.upsert({
-          where: { supabaseId: data.supabaseId },
-          create: { supabaseId: data.supabaseId, email: data.email },
-          update: { email: data.email },
-        });
-
-        await tx.subscription.upsert({
-          where: { userId: user.id },
-          create: { userId: user.id, tier: 'FREE', status: 'ACTIVE' },
-          update: {},
-        });
-
-        return user;
+    return this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.upsert({
+        where: { supabaseId: data.supabaseId },
+        create: { supabaseId: data.supabaseId, email: data.email },
+        update: { email: data.email },
       });
-    } catch (error) {
-      if (
-        error instanceof PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        const user = await this.prisma.user.findUnique({
-          where: { supabaseId: data.supabaseId },
-        });
-        if (user) {
-          return user;
-        }
-      }
-      throw error;
-    }
+
+      await tx.subscription.upsert({
+        where: { userId: user.id },
+        create: { userId: user.id, tier: 'FREE', status: 'ACTIVE' },
+        update: {},
+      });
+
+      return user;
+    });
   }
 
   async getProfile(supabaseId: string): Promise<UserProfile> {
