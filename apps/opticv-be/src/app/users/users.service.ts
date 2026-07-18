@@ -57,21 +57,11 @@ export class UsersService {
         error instanceof PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        const bySupabaseId = await this.prisma.user.findUnique({
+        const user = await this.prisma.user.findUnique({
           where: { supabaseId: data.supabaseId },
         });
-        if (bySupabaseId) {
-          return bySupabaseId;
-        }
-
-        const byEmail = await this.prisma.user.findUnique({
-          where: { email: data.email },
-        });
-        if (byEmail) {
-          return this.prisma.user.update({
-            where: { id: byEmail.id },
-            data: { supabaseId: data.supabaseId },
-          });
+        if (user) {
+          return user;
         }
       }
       throw error;

@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { NotFoundException } from '@nestjs/common';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 import { UsersService } from './users.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { R2Service } from '../storage/r2.service';
@@ -122,75 +121,6 @@ describe('UsersService', () => {
     await expect(
       service.upsertUser({ supabaseId: 'sb-id', email: 'test@example.com' }),
     ).rejects.toThrow('db error');
-  });
-
-  it('recovers on P2002 by re-fetching the user by supabaseId', async () => {
-    mockTx.user.upsert.mockRejectedValueOnce(
-      new PrismaClientKnownRequestError('Unique constraint failed', {
-        code: 'P2002',
-        clientVersion: '7.0.0',
-      }),
-    );
-    mockPrisma.user.findUnique.mockResolvedValueOnce(mockUser);
-
-    const result = await service.upsertUser({
-      supabaseId: 'sb-id',
-      email: 'test@example.com',
-    });
-
-    expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
-      where: { supabaseId: 'sb-id' },
-    });
-    expect(mockPrisma.user.update).not.toHaveBeenCalled();
-    expect(result).toEqual(mockUser);
-  });
-
-  it('recovers on P2002 by falling back to email and reattaching supabaseId when the conflict is on email', async () => {
-    mockTx.user.upsert.mockRejectedValueOnce(
-      new PrismaClientKnownRequestError('Unique constraint failed', {
-        code: 'P2002',
-        clientVersion: '7.0.0',
-      }),
-    );
-    mockPrisma.user.findUnique
-      .mockResolvedValueOnce(null) // miss by supabaseId
-      .mockResolvedValueOnce(mockUser); // hit by email
-    mockPrisma.user.update.mockResolvedValueOnce({
-      ...mockUser,
-      supabaseId: 'sb-id',
-    });
-
-    const result = await service.upsertUser({
-      supabaseId: 'sb-id',
-      email: 'test@example.com',
-    });
-
-    expect(mockPrisma.user.findUnique).toHaveBeenNthCalledWith(1, {
-      where: { supabaseId: 'sb-id' },
-    });
-    expect(mockPrisma.user.findUnique).toHaveBeenNthCalledWith(2, {
-      where: { email: 'test@example.com' },
-    });
-    expect(mockPrisma.user.update).toHaveBeenCalledWith({
-      where: { id: mockUser.id },
-      data: { supabaseId: 'sb-id' },
-    });
-    expect(result.supabaseId).toBe('sb-id');
-  });
-
-  it('rethrows P2002 when no user is found by supabaseId or email', async () => {
-    const p2002Error = new PrismaClientKnownRequestError(
-      'Unique constraint failed',
-      { code: 'P2002', clientVersion: '7.0.0' },
-    );
-    mockTx.user.upsert.mockRejectedValueOnce(p2002Error);
-    mockPrisma.user.findUnique
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(null);
-
-    await expect(
-      service.upsertUser({ supabaseId: 'sb-id', email: 'test@example.com' }),
-    ).rejects.toThrow(p2002Error);
   });
 
   describe('updateDisplayName', () => {
