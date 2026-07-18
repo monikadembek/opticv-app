@@ -64,6 +64,13 @@ export class TopHeader {
           },
           ...loggedInMenuItems,
         ];
+      } else {
+        this.items = [
+          {
+            label: 'Home',
+            route: '/home',
+          },
+        ];
       }
     });
   }
