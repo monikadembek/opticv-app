@@ -1149,7 +1149,18 @@ FREE: 2, BASIC: 10, PRO: 20
 
 ---
 
-### 92. Bug - Keywords gap section - position for added experience bullet type items is not preserved
+### Bug 92 - after user logs out or deletes account all items in menu stay visible
+
+**status: done**
+
+**time: 18.07.2026**
+
+- when user logs out all items in the menu that are meant for the logged in users should be hidden,
+- When user deletes its account, gets logged out, but account is already deleted so supabase logout returns error, we are redirected to login page but all item in top menu are visible, even the ones which should be visible only to logged in users.
+
+---
+
+### 93. Bug - Keywords gap section - position for added experience bullet type items is not preserved
 
 **status: todo**
 
@@ -1168,14 +1179,6 @@ FREE: 2, BASIC: 10, PRO: 20
 
 **status: todo**
 **time:**
-
----
-
-### Bug - after account is deleted all items in menu stay visible, the same when user logs out
-
-**status: todo**
-
-When user deletes its account, gets logged out, but account is already deleted so supabase logout returns error, we are redirected to login page but all item in top menu are visible, even the ones which should be visible only to logged in users.
 
 ---
 
