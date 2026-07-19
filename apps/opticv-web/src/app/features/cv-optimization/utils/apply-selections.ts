@@ -21,7 +21,7 @@ export function applySelectionsToCV(
   }> = [],
   missingBulletEdits: Map<string, string> = new Map(),
   keywordEdits: Map<string, string> = new Map(),
-  keywordBulletPositions: Map<string, string> = new Map(),
+  keywordBulletPositions: Map<string, number> = new Map(),
 ): CvStructuredData {
   const clone: CvStructuredData = structuredClone(cv);
 
@@ -99,19 +99,14 @@ export function applySelectionsToCV(
           existing.add(displayText.toLowerCase());
         }
       } else if (placement === 'experience_bullet') {
-        const forPosition = keywordBulletPositions.get(kw);
-        if (!forPosition) continue;
+        const experienceIndex = keywordBulletPositions.get(kw);
+        if (experienceIndex === undefined) continue;
+        if (experienceIndex < 0 || experienceIndex >= clone.experience.length)
+          continue;
         const quotedMatch = entry?.recommendation?.match(/'([^']+)'/);
         const baseText = quotedMatch ? quotedMatch[1] : kw;
         const displayText = keywordEdits.get(kw) ?? baseText;
-        const expIndex = clone.experience.findIndex((e) => {
-          const dashFormat = `${e.company ?? ''} - ${e.title ?? ''}`;
-          const atFormat = `${e.title ?? ''} at ${e.company ?? ''}`;
-          return dashFormat === forPosition || atFormat === forPosition;
-        });
-        if (expIndex !== -1) {
-          clone.experience[expIndex].bullets.push(displayText);
-        }
+        clone.experience[experienceIndex].bullets.push(displayText);
       }
     }
   }

@@ -177,16 +177,26 @@
               <select
                 [id]="'kw-pos-' + item.keyword"
                 class="text-sm border border-(--border-subtle) rounded px-2 py-1 flex-1 bg-white"
-                [value]="getKeywordPosition(item.keyword)"
                 (change)="onPositionChange(item.keyword, $any($event.target).value)"
               >
-                <option value="">— pick a position —</option>
-                @for (pos of experiencePositions(); track pos) {
-                <option [value]="pos">{{ pos }}</option>
+                <option
+                  value=""
+                  [selected]="getKeywordPosition(item.keyword) === null"
+                >
+                  — pick a position —
+                </option>
+                @for (pos of experiencePositions(); track $index; let i =
+                $index) {
+                <option
+                  [value]="i"
+                  [selected]="getKeywordPosition(item.keyword) === i"
+                >
+                  {{ pos }}
+                </option>
                 }
               </select>
             </div>
-            @if (!getKeywordPosition(item.keyword)) {
+            @if (getKeywordPosition(item.keyword) === null) {
             <p class="text-xs text-amber-600 mt-1">
               Pick a position to include this in your CV.
             </p>
@@ -305,16 +315,26 @@
               <select
                 [id]="'kw-lacks-pos-' + item.keyword"
                 class="text-sm border border-(--border-subtle) rounded px-2 py-1 flex-1 bg-white"
-                [value]="getKeywordPosition(item.keyword)"
                 (change)="onPositionChange(item.keyword, $any($event.target).value)"
               >
-                <option value="">— pick a position —</option>
-                @for (pos of experiencePositions(); track pos) {
-                <option [value]="pos">{{ pos }}</option>
+                <option
+                  value=""
+                  [selected]="getKeywordPosition(item.keyword) === null"
+                >
+                  — pick a position —
+                </option>
+                @for (pos of experiencePositions(); track $index; let i =
+                $index) {
+                <option
+                  [value]="i"
+                  [selected]="getKeywordPosition(item.keyword) === i"
+                >
+                  {{ pos }}
+                </option>
                 }
               </select>
             </div>
-            @if (!getKeywordPosition(item.keyword)) {
+            @if (getKeywordPosition(item.keyword) === null) {
             <p class="text-xs text-amber-600 mt-1">
               Pick a position to include this in your CV.
             </p>

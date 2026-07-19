@@ -306,7 +306,7 @@ describe('applySelectionsToCV', () => {
 
     describe('experience_bullet placement', () => {
       const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedKeywords: ['React'] };
-      const position = 'Acme Corp - Frontend Developer';
+      const position = 0;
 
       const kwResultWithQuotedRecommendation: KeywordGapResult = {
         ...KEYWORD_RESULT,
@@ -375,7 +375,7 @@ describe('applySelectionsToCV', () => {
         );
       });
 
-      it('does not modify any experience entry when no position is assigned', () => {
+      it('does not modify any experience entry when the position index is missing from the map', () => {
         const result = applySelectionsToCV(
           BASE_CV, selections, null, null, kwResultWithQuotedRecommendation,
           new Map(), [], [], new Map(), new Map(), new Map(),
@@ -384,8 +384,18 @@ describe('applySelectionsToCV', () => {
         expect(result.experience[1].bullets).toHaveLength(1);
       });
 
-      it('does not modify any experience entry when the position label does not match', () => {
-        const kwBulletPositions = new Map([['React', 'Nonexistent Corp - CTO']]);
+      it('does not modify any experience entry when the position index is out of bounds', () => {
+        const kwBulletPositions = new Map([['React', 99]]);
+        const result = applySelectionsToCV(
+          BASE_CV, selections, null, null, kwResultWithQuotedRecommendation,
+          new Map(), [], [], new Map(), new Map(), kwBulletPositions,
+        );
+        expect(result.experience[0].bullets).toHaveLength(3);
+        expect(result.experience[1].bullets).toHaveLength(1);
+      });
+
+      it('does not modify any experience entry when the position index is negative', () => {
+        const kwBulletPositions = new Map([['React', -1]]);
         const result = applySelectionsToCV(
           BASE_CV, selections, null, null, kwResultWithQuotedRecommendation,
           new Map(), [], [], new Map(), new Map(), kwBulletPositions,

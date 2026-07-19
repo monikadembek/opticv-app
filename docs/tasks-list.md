@@ -1162,9 +1162,11 @@ FREE: 2, BASIC: 10, PRO: 20
 
 ### 93. Bug - Keywords gap section - position for added experience bullet type items is not preserved
 
-**status: todo**
+**status: done**
 
-**time: 18.07.2026**
+**time: 18.07.2026 - 19.07.2026**
+
+If we open cv-optimization page in stored mode, in the Keywords gap section if we selected previously keyword with suggested placement experience bullet the the selected position is not preserved and it should be. This must be fixed.
 
 ---
 

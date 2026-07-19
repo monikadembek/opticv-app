@@ -60,7 +60,11 @@ import { BulletRewriter } from './components/bullet-rewriter/bullet-rewriter';
 import { CoverLetterEditor } from './components/cover-letter-editor/cover-letter-editor';
 import { InterviewPrep } from './components/interview-prep/interview-prep';
 import { LinkedInUpdates } from './components/linkedin-updates/linkedin-updates';
-import { CV_TEMPLATES, CvTemplateId, DEFAULT_ACCENT_COLOR } from './cv-templates';
+import {
+  CV_TEMPLATES,
+  CvTemplateId,
+  DEFAULT_ACCENT_COLOR,
+} from './cv-templates';
 import { SubscriptionTier, TIER_LIMITS } from '@opticv/datatypes';
 import { UserSettingsApiService } from '../../core/services/user-settings-api.service';
 import { applySelectionsToCV } from './utils/apply-selections';
@@ -243,7 +247,7 @@ export class CvOptimization implements OnInit {
   readonly keywordEdits = signal<Map<string, string>>(new Map());
   readonly activeKeywordEditKey = signal<string | null>(null);
   readonly editedKeywordText = signal<string>('');
-  readonly keywordBulletPositions = signal<Map<string, string>>(new Map());
+  readonly keywordBulletPositions = signal<Map<string, number>>(new Map());
 
   readonly sidebarExpanded = signal(true);
   private readonly breakpointObserver = inject(BreakpointObserver);
@@ -636,9 +640,9 @@ export class CvOptimization implements OnInit {
                     keywordEditsMap.set(e.originalKeyword, e.editedText);
                   }
                   this.keywordEdits.set(keywordEditsMap);
-                  const kwBulletPosMap = new Map<string, string>();
+                  const kwBulletPosMap = new Map<string, number>();
                   for (const p of state.keywordBulletPositions ?? []) {
-                    kwBulletPosMap.set(p.keyword, p.forPosition);
+                    kwBulletPosMap.set(p.keyword, p.experienceIndex);
                   }
                   this.keywordBulletPositions.set(kwBulletPosMap);
                 } catch {
@@ -904,14 +908,14 @@ export class CvOptimization implements OnInit {
 
   onKeywordBulletPositionSelected(event: {
     keyword: string;
-    forPosition: string;
+    experienceIndex: number | null;
   }): void {
     this.keywordBulletPositions.update((map) => {
       const next = new Map(map);
-      if (event.forPosition === '') {
+      if (event.experienceIndex === null) {
         next.delete(event.keyword);
       } else {
-        next.set(event.keyword, event.forPosition);
+        next.set(event.keyword, event.experienceIndex);
       }
       return next;
     });
@@ -1069,10 +1073,10 @@ export class CvOptimization implements OnInit {
       }
       const keywordBulletPositionsArr: Array<{
         keyword: string;
-        forPosition: string;
+        experienceIndex: number;
       }> = [];
-      for (const [keyword, forPosition] of this.keywordBulletPositions()) {
-        keywordBulletPositionsArr.push({ keyword, forPosition });
+      for (const [keyword, experienceIndex] of this.keywordBulletPositions()) {
+        keywordBulletPositionsArr.push({ keyword, experienceIndex });
       }
       const state: BulletUserState = {
         edits,

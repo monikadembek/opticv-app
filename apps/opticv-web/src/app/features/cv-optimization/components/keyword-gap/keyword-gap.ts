@@ -25,14 +25,17 @@ export class KeywordGap {
   readonly activeKeywordEditKey = input<string | null>(null);
   readonly editedKeywordText = input<string>('');
   readonly experiencePositions = input<string[]>([]);
-  readonly keywordBulletPositions = input<Map<string, string>>(new Map());
+  readonly keywordBulletPositions = input<Map<string, number>>(new Map());
 
   readonly keywordToggled = output<string>();
   readonly keywordEditStarted = output<string>();
   readonly keywordEditSaved = output<{ key: string; text: string }>();
   readonly keywordEditCancelled = output<void>();
   readonly keywordEditTextChanged = output<string>();
-  readonly keywordBulletPositionSelected = output<{ keyword: string; forPosition: string }>();
+  readonly keywordBulletPositionSelected = output<{
+    keyword: string;
+    experienceIndex: number | null;
+  }>();
 
   readonly ringCircumference = RING_CIRCUMFERENCE;
 
@@ -82,11 +85,12 @@ export class KeywordGap {
     return this.keywordEdits().get(keyword) ?? keyword;
   }
 
-  getKeywordPosition(keyword: string): string {
-    return this.keywordBulletPositions().get(keyword) ?? '';
+  getKeywordPosition(keyword: string): number | null {
+    return this.keywordBulletPositions().get(keyword) ?? null;
   }
 
-  onPositionChange(keyword: string, forPosition: string): void {
-    this.keywordBulletPositionSelected.emit({ keyword, forPosition });
+  onPositionChange(keyword: string, value: string): void {
+    const experienceIndex = value === '' ? null : Number(value);
+    this.keywordBulletPositionSelected.emit({ keyword, experienceIndex });
   }
 }
