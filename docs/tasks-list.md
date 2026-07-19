@@ -1170,6 +1170,28 @@ If we open cv-optimization page in stored mode, in the Keywords gap section if w
 
 ---
 
+### 94. UX - In-app user guide - welcome guide + help icon
+
+**status: todo**
+**time: 19.07.2026**
+
+Help user understand and use the app by implementing in-app user guide.
+Implement:
+
+- A welcome modal shown once on first login, explaining the 3-step process.
+- A persistent help icon in the header that reopens the welcome modal / guide on demand.
+
+---
+
+### 95. UX - In-app user guide - cv-optimization page guided tour
+
+**status: todo**
+**time: 19.07.2026**
+
+Implement a guided tour specific to the cv-optimization page, highlighting its key areas step by step.
+
+---
+
 ### Add Rodo / GDPR section to CV
 
 **status: todo**
@@ -1200,16 +1222,6 @@ If we open cv-optimization page in stored mode, in the Keywords gap section if w
 
 - there is a lot of informations on cv-optimization page, it might be overwhelmig for the user,
 - maybe the additional materials should be moved to new page?
-
----
-
-### UX - explain user how to use app
-
-**status: todo**
-**time:**
-
-- in the beginning it would be good to have some welcome screen or user guide
-  so we can guide user with how to use the app, how the entire process works
 
 ---
 
