@@ -1172,7 +1172,7 @@ If we open cv-optimization page in stored mode, in the Keywords gap section if w
 
 ### 94. UX - In-app user guide - welcome guide + help icon
 
-**status: in progress**
+**status: done**
 **time: 19.07.2026**
 
 Help user understand and use the app by implementing in-app user guide.

@@ -101,7 +101,7 @@ describe('TopHeader', () => {
 
     it('should not show Sign Out button', () => {
       const signOutButton = fixture.debugElement.query(
-        By.css('p-button[label="Sign Out"]'),
+        By.css('p-button[title="Sign Out"]'),
       );
       expect(signOutButton).toBeNull();
     });
@@ -128,7 +128,7 @@ describe('TopHeader', () => {
 
     it('should show Sign Out button', () => {
       const signOutButton = fixture.debugElement.query(
-        By.css('p-button[label="Sign Out"]'),
+        By.css('p-button[title="Sign Out"]'),
       );
       expect(signOutButton).toBeTruthy();
     });
