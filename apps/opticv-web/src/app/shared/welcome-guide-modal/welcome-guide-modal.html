@@ -1,0 +1,71 @@
+<p-dialog
+  header="Welcome to OptiCV"
+  [visible]="userGuideStore.isWelcomeModalOpen()"
+  [modal]="true"
+  [draggable]="false"
+  [style]="{ width: '700px', maxWidth: '95vw' }"
+  (onHide)="onHide()"
+>
+  <p class="mb-6 text-center">
+    Here's how to go from CV to optimized CV in 3 simple steps.
+  </p>
+  <div class="welcome-guide-modal__steps">
+    <div class="welcome-guide-modal__step">
+      <img
+        ngSrc="/images/step-1-upload.png"
+        alt="screenshot of cv upload page"
+        width="320"
+        height="200"
+        class="mb-4"
+      />
+      <h3 class="welcome-guide-modal__step-title">
+        <span class="step-number">1.</span>
+        Upload your CV
+      </h3>
+      <p class="welcome-guide-modal__step-text">
+        Import your existing CV once (PDF or DOCX). We parse it and reuse it
+        across the app.
+      </p>
+    </div>
+    <div class="welcome-guide-modal__step">
+      <img
+        ngSrc="/images/step-2-job-description.png"
+        alt="screenshot of job application form"
+        width="320"
+        height="200"
+        class="mb-4"
+      />
+      <h3 class="welcome-guide-modal__step-title">
+        <span class="step-number">2.</span>
+        Paste job description
+      </h3>
+      <p class="welcome-guide-modal__step-text">
+        Paste a job posting and run the optimization — scoring, rewriting, and
+        flagging gaps against that specific role.
+      </p>
+    </div>
+    <div class="welcome-guide-modal__step">
+      <img
+        ngSrc="/images/step-3-optimization.png"
+        alt="screenshot of optimize-cv page"
+        width="320"
+        height="200"
+        class="mb-4"
+      />
+      <h3 class="welcome-guide-modal__step-title">
+        <span class="step-number">3.</span>
+        Get your optimized CV
+      </h3>
+      <p class="welcome-guide-modal__step-text">
+        Review AI suggestions, apply changes, then export your tailored,
+        ATS-friendly CV.
+      </p>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Got it"
+      (onClick)="userGuideStore.closeWelcomeModal()"
+    ></p-button>
+  </ng-template>
+</p-dialog>

@@ -1,0 +1,48 @@
+.welcome-guide-modal__steps {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media screen and (min-width: 768px) {
+  .welcome-guide-modal__steps {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.welcome-guide-modal__step {
+  padding: 1.25rem;
+  border-radius: 12px;
+  border-left: 4px solid var(--primary-color);
+  background: var(--white);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.welcome-guide-modal__step img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.step-number {
+  font-family: Montserrat, Verdana, Geneva, Tahoma, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  line-height: 1;
+  margin-right: 0.5rem;
+}
+
+.welcome-guide-modal__step-title {
+  font-family: Montserrat, Verdana, Geneva, Tahoma, sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+
+.welcome-guide-modal__step-text {
+  font-size: 0.875rem;
+  color: var(--text-grey-color);
+  line-height: 1.6;
+}

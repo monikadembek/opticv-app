@@ -1180,15 +1180,16 @@ Implement:
 
 - A welcome modal shown once on first login, explaining the 3-step process.
 - A persistent help icon in the header that reopens the welcome modal / guide on demand.
+- after adding help icon to top menu, change Sign out button to icon button on mobile view so that everything fits on the screen
 
 ---
 
-### 95. RWD issue - top menu change Sign out button ti icon button on mobile view
+### 95. UX/UI - Redesign welcome modal
 
-**status: todo**
-**time:**
+**status: in progress**
+**time: 20.07.2026**
 
-- top menu Sign out button change to icon button on mobile view so that everything fits on the screen
+- implement new designs for the welcome modal
 
 ---
 

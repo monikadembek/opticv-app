@@ -1,12 +1,15 @@
 import { Component, input, output, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import posthog from 'posthog-js';
 import { App } from './app';
 import { TopHeader } from './layout/top-header/top-header';
 import { Footer } from './layout/footer/footer';
 import { Supabase } from './core/auth/services/supabase';
 import { ToastModule } from 'primeng/toast';
 import { CvStore } from './core/stores/cv.store';
+import { UserGuideStore } from './core/stores/user-guide.store';
+import { WelcomeGuideModal } from './shared/welcome-guide-modal/welcome-guide-modal';
 
 @Component({ selector: 'app-top-header', template: '', standalone: true })
 class TopHeaderStub {
@@ -20,6 +23,13 @@ class FooterStub {}
 
 @Component({ selector: 'p-toast', template: '', standalone: true })
 class ToastStub {}
+
+@Component({
+  selector: 'app-welcome-guide-modal',
+  template: '',
+  standalone: true,
+})
+class WelcomeGuideModalStub {}
 
 const mockSession = { user: { email: 'test@example.com' } } as any;
 
@@ -41,14 +51,23 @@ function createCvStoreMock() {
   return { loadUserCVs: vi.fn(), resetStore: vi.fn() };
 }
 
+function createUserGuideStoreMock() {
+  return {
+    hasSeenWelcome: vi.fn().mockReturnValue(false),
+    openWelcomeModal: vi.fn(),
+  };
+}
+
 describe('App', () => {
   let supabaseMock: ReturnType<typeof createSupabaseMock>;
   let cvStoreMock: ReturnType<typeof createCvStoreMock>;
+  let userGuideStoreMock: ReturnType<typeof createUserGuideStoreMock>;
 
   beforeEach(async () => {
     TestBed.resetTestingModule();
     supabaseMock = createSupabaseMock();
     cvStoreMock = createCvStoreMock();
+    userGuideStoreMock = createUserGuideStoreMock();
 
     await TestBed.configureTestingModule({
       imports: [App],
@@ -56,11 +75,21 @@ describe('App', () => {
         provideRouter([]),
         { provide: Supabase, useValue: supabaseMock },
         { provide: CvStore, useValue: cvStoreMock },
+        { provide: UserGuideStore, useValue: userGuideStoreMock },
       ],
     })
       .overrideComponent(App, {
-        remove: { imports: [TopHeader, Footer, ToastModule] },
-        add: { imports: [TopHeaderStub, FooterStub, ToastStub] },
+        remove: {
+          imports: [TopHeader, Footer, ToastModule, WelcomeGuideModal],
+        },
+        add: {
+          imports: [
+            TopHeaderStub,
+            FooterStub,
+            ToastStub,
+            WelcomeGuideModalStub,
+          ],
+        },
       })
       .compileComponents();
   });
@@ -166,6 +195,46 @@ describe('App', () => {
       fixture.detectChanges();
 
       expect(cvStoreMock.loadUserCVs).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('welcome modal trigger', () => {
+    it('opens the welcome modal and captures the event when the email has not been seen', () => {
+      userGuideStoreMock.hasSeenWelcome.mockReturnValue(false);
+      const captureSpy = vi.spyOn(posthog, 'capture');
+      const fixture = TestBed.createComponent(App);
+      fixture.detectChanges();
+
+      supabaseMock.setSession(mockSession, mockSession.user);
+      fixture.detectChanges();
+
+      expect(userGuideStoreMock.hasSeenWelcome).toHaveBeenCalledWith(
+        'test@example.com',
+      );
+      expect(userGuideStoreMock.openWelcomeModal).toHaveBeenCalledOnce();
+      expect(captureSpy).toHaveBeenCalledWith('welcome_modal_shown');
+    });
+
+    it('does not open the welcome modal when the email has already been seen', () => {
+      userGuideStoreMock.hasSeenWelcome.mockReturnValue(true);
+      const fixture = TestBed.createComponent(App);
+      fixture.detectChanges();
+
+      supabaseMock.setSession(mockSession, mockSession.user);
+      fixture.detectChanges();
+
+      expect(userGuideStoreMock.openWelcomeModal).not.toHaveBeenCalled();
+    });
+
+    it('does not open the welcome modal when no email is available', () => {
+      const sessionWithoutEmail = { user: {} } as any;
+      const fixture = TestBed.createComponent(App);
+      fixture.detectChanges();
+
+      supabaseMock.setSession(sessionWithoutEmail, {} as any);
+      fixture.detectChanges();
+
+      expect(userGuideStoreMock.openWelcomeModal).not.toHaveBeenCalled();
     });
   });
 });

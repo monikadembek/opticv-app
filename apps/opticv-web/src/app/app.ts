@@ -12,9 +12,12 @@ import { Supabase } from './core/auth/services/supabase';
 import { ToastModule } from 'primeng/toast';
 import { PosthogService } from './core/services/posthog.service';
 import { CvStore } from './core/stores/cv.store';
+import { UserGuideStore } from './core/stores/user-guide.store';
+import { WelcomeGuideModal } from './shared/welcome-guide-modal/welcome-guide-modal';
+import posthog from 'posthog-js';
 
 @Component({
-  imports: [RouterModule, TopHeader, Footer, ToastModule],
+  imports: [RouterModule, TopHeader, Footer, ToastModule, WelcomeGuideModal],
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -25,6 +28,7 @@ export class App {
   private readonly router = inject(Router);
   readonly _posthog = inject(PosthogService);
   readonly cvStore = inject(CvStore);
+  readonly userGuideStore = inject(UserGuideStore);
 
   isUserLoggedIn = computed(() =>
     this.supabaseService.currentSession() ? true : false,
@@ -40,6 +44,12 @@ export class App {
       const isLoggedIn = this.isUserLoggedIn();
       if (isLoggedIn && !wasLoggedIn) {
         this.cvStore.loadUserCVs();
+
+        const email = this.supabaseService.currentUser()?.email;
+        if (email && !this.userGuideStore.hasSeenWelcome(email)) {
+          this.userGuideStore.openWelcomeModal();
+          posthog.capture('welcome_modal_shown');
+        }
       }
       wasLoggedIn = isLoggedIn;
     });
