@@ -12,6 +12,7 @@ import { AvatarModule } from 'primeng/avatar';
 import { MenubarModule } from 'primeng/menubar';
 import { ButtonModule } from 'primeng/button';
 import posthog from 'posthog-js';
+import { UserGuideStore } from '../../core/stores/user-guide.store';
 
 @Component({
   selector: 'app-top-header',
@@ -28,6 +29,7 @@ import posthog from 'posthog-js';
 })
 export class TopHeader {
   private readonly router = inject(Router);
+  private readonly userGuideStore = inject(UserGuideStore);
 
   isLoggedIn = input<boolean>(false);
   userLabel = input('U');
@@ -88,6 +90,14 @@ export class TopHeader {
     posthog.capture('signout_button_clicked', {
       place: 'top header',
       button_title: 'Sign Out',
+    });
+  }
+
+  openHelp(): void {
+    this.userGuideStore.openWelcomeModal();
+    posthog.capture('help_icon_clicked', {
+      place: 'top header',
+      button_title: 'Help',
     });
   }
 }
