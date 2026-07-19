@@ -36,6 +36,16 @@ const MOCK_RESULT: KeywordGapResult = {
       recommendation: 'Acquire Kubernetes knowledge or omit from application.',
       suggestedPlacement: 'skills',
     },
+    {
+      keyword: 'GraphQL',
+      category: 'tools',
+      importance: 'high',
+      isRequired: true,
+      candidateLikelyHas: true,
+      evidenceFromResume: 'Worked with REST APIs, similar concepts apply.',
+      recommendation: "Add 'Built GraphQL API layer.' to your experience.",
+      suggestedPlacement: 'experience_bullet',
+    },
   ],
   underweightedKeywords: [
     {
@@ -185,5 +195,78 @@ describe('KeywordGap', () => {
     fixture.detectChanges();
     const evidenceBlocks = fixture.nativeElement.querySelectorAll('.border-l.border-surface-200');
     expect(evidenceBlocks.length).toBe(1);
+  });
+
+  describe('experience bullet position picker', () => {
+    const graphqlOnly: KeywordGapResult = {
+      ...MOCK_RESULT,
+      missingKeywords: [MOCK_RESULT.missingKeywords[2]],
+    };
+
+    beforeEach(() => {
+      fixture.componentRef.setInput('result', graphqlOnly);
+      fixture.componentRef.setInput('selectedKeywords', ['GraphQL']);
+      fixture.componentRef.setInput('experiencePositions', [
+        'Acme Corp - Frontend Developer',
+        'Beta Inc - Engineer',
+      ]);
+      fixture.detectChanges();
+    });
+
+    it('does not render the position select when the keyword is not selected', () => {
+      fixture.componentRef.setInput('selectedKeywords', []);
+      fixture.detectChanges();
+      const select = fixture.nativeElement.querySelector('#kw-pos-GraphQL');
+      expect(select).toBeNull();
+    });
+
+    it('renders one option per experience position plus the placeholder', () => {
+      const select: HTMLSelectElement = fixture.nativeElement.querySelector('#kw-pos-GraphQL');
+      expect(select).not.toBeNull();
+      expect(select.options.length).toBe(3);
+      expect(select.options[1].textContent).toContain('Acme Corp - Frontend Developer');
+      expect(select.options[2].textContent).toContain('Beta Inc - Engineer');
+    });
+
+    it('getKeywordPosition returns null when no entry exists for the keyword', () => {
+      expect(component.getKeywordPosition('GraphQL')).toBeNull();
+    });
+
+    it('getKeywordPosition returns the stored experienceIndex when one exists', () => {
+      fixture.componentRef.setInput('keywordBulletPositions', new Map([['GraphQL', 1]]));
+      fixture.detectChanges();
+      expect(component.getKeywordPosition('GraphQL')).toBe(1);
+    });
+
+    it('select.value reflects the stored experienceIndex in the DOM', () => {
+      fixture.componentRef.setInput('keywordBulletPositions', new Map([['GraphQL', 1]]));
+      fixture.detectChanges();
+      const select: HTMLSelectElement = fixture.nativeElement.querySelector('#kw-pos-GraphQL');
+      expect(select.value).toBe('1');
+    });
+
+    it('onPositionChange emits experienceIndex: null when the placeholder is chosen', () => {
+      const emitted: Array<{ keyword: string; experienceIndex: number | null }> = [];
+      component.keywordBulletPositionSelected.subscribe((e) => emitted.push(e));
+      component.onPositionChange('GraphQL', '');
+      expect(emitted).toEqual([{ keyword: 'GraphQL', experienceIndex: null }]);
+    });
+
+    it('onPositionChange emits the numeric experienceIndex when an option is chosen', () => {
+      const emitted: Array<{ keyword: string; experienceIndex: number | null }> = [];
+      component.keywordBulletPositionSelected.subscribe((e) => emitted.push(e));
+      component.onPositionChange('GraphQL', '1');
+      expect(emitted).toEqual([{ keyword: 'GraphQL', experienceIndex: 1 }]);
+    });
+
+    it('does not show the "pick a position" warning when index 0 is selected', () => {
+      fixture.componentRef.setInput('keywordBulletPositions', new Map([['GraphQL', 0]]));
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).not.toContain('Pick a position to include this in your CV.');
+    });
+
+    it('shows the "pick a position" warning when no index is selected', () => {
+      expect(fixture.nativeElement.textContent).toContain('Pick a position to include this in your CV.');
+    });
   });
 });

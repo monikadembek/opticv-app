@@ -2453,4 +2453,189 @@ describe('CvOptimization', () => {
       expect(component.selections().selectedKeywords).toEqual([]);
     });
   });
+
+  describe('onKeywordBulletPositionSelected — persistence', () => {
+    it('persists keywordBulletPositions to the known BULLET_UPGRADE result id', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      component.bulletUpgradeResultId.set('bullet-result-1');
+
+      component.onKeywordBulletPositionSelected({
+        keyword: 'React',
+        experienceIndex: 0,
+      });
+
+      expect(apiService.saveUserOutput).toHaveBeenCalledWith(
+        'bullet-result-1',
+        JSON.stringify({
+          edits: [],
+          selectedBullets: [],
+          selectedMissingBullets: [],
+          removedBullets: [],
+          keywordEdits: [],
+          keywordBulletPositions: [{ keyword: 'React', experienceIndex: 0 }],
+          selectedKeywords: [],
+        }),
+      );
+    });
+
+    it('removes a keyword position when experienceIndex is null, and persists', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      component.bulletUpgradeResultId.set('bullet-result-1');
+
+      component.onKeywordBulletPositionSelected({
+        keyword: 'React',
+        experienceIndex: 0,
+      });
+      component.onKeywordBulletPositionSelected({
+        keyword: 'React',
+        experienceIndex: null,
+      });
+
+      expect(component.keywordBulletPositions().has('React')).toBe(false);
+      expect(apiService.saveUserOutput).toHaveBeenLastCalledWith(
+        'bullet-result-1',
+        expect.stringContaining('"keywordBulletPositions":[]'),
+      );
+    });
+  });
+
+  describe('loadStoredOptimization — restores keyword bullet positions', () => {
+    it('restores keywordBulletPositions from BULLET_UPGRADE userEditedOutput', async () => {
+      const bulletResult: OptimizationResultSummary = {
+        id: 'bullet-result-1',
+        promptType: PromptType.BULLET_UPGRADE,
+        status: 'COMPLETED',
+        userEditedOutput: JSON.stringify({
+          edits: [],
+          selectedBullets: [],
+          selectedMissingBullets: [],
+          removedBullets: [],
+          selectedKeywords: ['React'],
+          keywordBulletPositions: [{ keyword: 'React', experienceIndex: 0 }],
+        }),
+        structuredOutput: null,
+      };
+
+      await createComponent({
+        jobApplicationId: 'job-app-id-1',
+        getOptimizationResults: vi.fn().mockReturnValue(of([bulletResult])),
+      });
+
+      expect(component.keywordBulletPositions()).toEqual(
+        new Map([['React', 0]]),
+      );
+    });
+
+    it('defaults keywordBulletPositions to an empty map when absent from stored state', async () => {
+      const bulletResult: OptimizationResultSummary = {
+        id: 'bullet-result-1',
+        promptType: PromptType.BULLET_UPGRADE,
+        status: 'COMPLETED',
+        userEditedOutput: JSON.stringify({
+          edits: [],
+          selectedBullets: [],
+          selectedMissingBullets: [],
+          removedBullets: [],
+        }),
+        structuredOutput: null,
+      };
+
+      await createComponent({
+        jobApplicationId: 'job-app-id-1',
+        getOptimizationResults: vi.fn().mockReturnValue(of([bulletResult])),
+      });
+
+      expect(component.keywordBulletPositions()).toEqual(new Map());
+    });
+
+    it('renders the correct pre-selected option in the position <select> after a full reload', async () => {
+      const structuredData: CvStructuredData = {
+        ...mockCvStructuredData,
+        experience: [
+          {
+            company: 'Acme Corp',
+            title: 'Frontend Developer',
+            location: null,
+            startDate: '2021-01',
+            endDate: '2024-01',
+            current: false,
+            bullets: [],
+          },
+          {
+            company: 'Beta Inc',
+            title: 'Engineer',
+            location: null,
+            startDate: '2019-01',
+            endDate: '2021-01',
+            current: false,
+            bullets: [],
+          },
+        ],
+      };
+
+      const keywordGapResult = {
+        matchScore: 80,
+        matchScoreBreakdown: {
+          requiredMatched: 3,
+          requiredTotal: 5,
+          preferredMatched: 2,
+          preferredTotal: 4,
+        },
+        matchedKeywords: [],
+        missingKeywords: [
+          {
+            keyword: 'React',
+            category: 'tools',
+            importance: 'high',
+            isRequired: true,
+            candidateLikelyHas: true,
+            evidenceFromResume: '',
+            recommendation: "Add 'Built React apps.' to your experience.",
+            suggestedPlacement: 'experience_bullet',
+          },
+        ],
+        underweightedKeywords: [],
+        fabricationWarnings: [],
+        acronymIssues: [],
+      };
+
+      const keywordGapResultRow: OptimizationResultSummary = {
+        id: 'keyword-gap-result-1',
+        promptType: PromptType.KEYWORD_GAP,
+        status: 'COMPLETED',
+        userEditedOutput: null,
+        structuredOutput: keywordGapResult,
+      };
+
+      const bulletResult: OptimizationResultSummary = {
+        id: 'bullet-result-1',
+        promptType: PromptType.BULLET_UPGRADE,
+        status: 'COMPLETED',
+        userEditedOutput: JSON.stringify({
+          edits: [],
+          selectedBullets: [],
+          selectedMissingBullets: [],
+          removedBullets: [],
+          selectedKeywords: ['React'],
+          keywordBulletPositions: [{ keyword: 'React', experienceIndex: 1 }],
+        }),
+        structuredOutput: null,
+      };
+
+      await createComponent({
+        jobApplicationId: 'job-app-id-1',
+        getOptimizationResults: vi
+          .fn()
+          .mockReturnValue(of([keywordGapResultRow, bulletResult])),
+        getStructuredData: vi.fn().mockReturnValue(of({ data: structuredData })),
+      });
+      fixture.detectChanges();
+
+      const select: HTMLSelectElement | null =
+        fixture.nativeElement.querySelector('#kw-pos-React');
+      if (select === null) throw new Error('Position select not found');
+      expect(select.value).toBe('1');
+      expect(select.selectedOptions[0].textContent).toContain('Beta Inc - Engineer');
+    });
+  });
 });
