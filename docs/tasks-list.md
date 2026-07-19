@@ -1172,7 +1172,7 @@ If we open cv-optimization page in stored mode, in the Keywords gap section if w
 
 ### 94. UX - In-app user guide - welcome guide + help icon
 
-**status: todo**
+**status: in progress**
 **time: 19.07.2026**
 
 Help user understand and use the app by implementing in-app user guide.
@@ -1183,10 +1183,19 @@ Implement:
 
 ---
 
-### 95. UX - In-app user guide - cv-optimization page guided tour
+### 95. RWD issue - top menu change Sign out button ti icon button on mobile view
 
 **status: todo**
-**time: 19.07.2026**
+**time:**
+
+- top menu Sign out button change to icon button on mobile view so that everything fits on the screen
+
+---
+
+### UX - In-app user guide - cv-optimization page guided tour
+
+**status: todo**
+**time:**
 
 Implement a guided tour specific to the cv-optimization page, highlighting its key areas step by step.
 
