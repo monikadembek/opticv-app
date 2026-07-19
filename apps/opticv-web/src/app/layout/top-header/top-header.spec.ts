@@ -2,7 +2,15 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
 import { vi } from 'vitest';
+import posthog from 'posthog-js';
 import { TopHeader } from './top-header';
+import { UserGuideStore } from '../../core/stores/user-guide.store';
+
+function createUserGuideStoreMock() {
+  return {
+    openWelcomeModal: vi.fn(),
+  };
+}
 
 // PrimeNG Menubar calls window.matchMedia during init, which doesn't exist in jsdom
 Object.defineProperty(globalThis, 'matchMedia', {
@@ -23,12 +31,17 @@ describe('TopHeader', () => {
   let component: TopHeader;
   let fixture: ComponentFixture<TopHeader>;
   let router: Router;
+  let userGuideStoreMock: ReturnType<typeof createUserGuideStoreMock>;
 
   beforeEach(async () => {
     TestBed.resetTestingModule();
+    userGuideStoreMock = createUserGuideStoreMock();
     await TestBed.configureTestingModule({
       imports: [TopHeader],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        { provide: UserGuideStore, useValue: userGuideStoreMock },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TopHeader);
@@ -88,7 +101,7 @@ describe('TopHeader', () => {
 
     it('should not show Sign Out button', () => {
       const signOutButton = fixture.debugElement.query(
-        By.css('p-button[label="Sign Out"]'),
+        By.css('p-button[title="Sign Out"]'),
       );
       expect(signOutButton).toBeNull();
     });
@@ -96,6 +109,13 @@ describe('TopHeader', () => {
     it('should not show avatar', () => {
       const avatar = fixture.debugElement.query(By.css('p-avatar'));
       expect(avatar).toBeNull();
+    });
+
+    it('should not show the help icon button', () => {
+      const helpButton = fixture.debugElement.query(
+        By.css('p-button[ariaLabel="Open help guide"]'),
+      );
+      expect(helpButton).toBeNull();
     });
   });
 
@@ -108,7 +128,7 @@ describe('TopHeader', () => {
 
     it('should show Sign Out button', () => {
       const signOutButton = fixture.debugElement.query(
-        By.css('p-button[label="Sign Out"]'),
+        By.css('p-button[title="Sign Out"]'),
       );
       expect(signOutButton).toBeTruthy();
     });
@@ -124,6 +144,13 @@ describe('TopHeader', () => {
       const avatar = fixture.debugElement.query(By.css('p-avatar'));
       expect(avatar).toBeTruthy();
       expect(component.userLabel()).toBe('M');
+    });
+
+    it('should show the help icon button', () => {
+      const helpButton = fixture.debugElement.query(
+        By.css('p-button[ariaLabel="Open help guide"]'),
+      );
+      expect(helpButton).toBeTruthy();
     });
   });
 
@@ -141,6 +168,32 @@ describe('TopHeader', () => {
       component.signOut.subscribe(signOutSpy);
       component.emitSignOut();
       expect(signOutSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('openHelp', () => {
+    it('opens the welcome modal via UserGuideStore', () => {
+      component.openHelp();
+      expect(userGuideStoreMock.openWelcomeModal).toHaveBeenCalledOnce();
+    });
+
+    it('captures help_icon_clicked', () => {
+      const captureSpy = vi.spyOn(posthog, 'capture');
+      component.openHelp();
+      expect(captureSpy).toHaveBeenCalledWith('help_icon_clicked', {
+        place: 'top header',
+        button_title: 'Help',
+      });
+    });
+
+    it('calls openWelcomeModal when the help icon is clicked', () => {
+      fixture.componentRef.setInput('isLoggedIn', true);
+      fixture.detectChanges();
+      const helpButton = fixture.debugElement.query(
+        By.css('p-button[ariaLabel="Open help guide"]'),
+      );
+      helpButton.triggerEventHandler('onClick');
+      expect(userGuideStoreMock.openWelcomeModal).toHaveBeenCalledOnce();
     });
   });
 });

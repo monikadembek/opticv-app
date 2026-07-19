@@ -30,16 +30,27 @@
             (onClick)="navigateToLoginPage()"
           ></p-button>
           } @else {
+          <p-button
+            icon="pi pi-question-circle"
+            [text]="true"
+            [rounded]="true"
+            severity="secondary"
+            ariaLabel="Open help guide"
+            title="Help guide"
+            (onClick)="openHelp()"
+          ></p-button>
           <p-avatar
             [label]="userLabel()"
             class="mr-2 cursor-pointer"
             [style]="{ 'background-color': '#10b981', color: '#ffffff' }"
             shape="circle"
+            title="Account settings"
             routerLink="/settings"
           />
           <p-button
-            label="Sign Out"
+            title="Sign Out"
             size="small"
+            icon="pi pi-power-off"
             (onClick)="emitSignOut()"
           ></p-button>
           }
