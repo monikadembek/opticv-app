@@ -1,48 +1,282 @@
-.welcome-guide-modal__steps {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
+:host ::ng-deep .p-dialog,
+:host ::ng-deep .p-dialog .p-dialog-content {
+  border-radius: 16px;
+  overflow: hidden;
 }
 
-@media screen and (min-width: 768px) {
-  .welcome-guide-modal__steps {
-    grid-template-columns: repeat(3, 1fr);
-  }
+:host ::ng-deep .p-dialog .p-dialog-content {
+  padding: 0;
 }
 
-.welcome-guide-modal__step {
-  padding: 1.25rem;
-  border-radius: 12px;
-  border-left: 4px solid var(--primary-color);
-  background: var(--white);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.welcome-guide-modal__step img {
-  width: 100%;
-  height: auto;
-  border-radius: 8px;
-}
-
-.step-number {
+.welcome-guide-modal__intro-title,
+.welcome-guide-modal__tour-title,
+.welcome-guide-modal__finish-title {
   font-family: Montserrat, Verdana, Geneva, Tahoma, sans-serif;
-  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--text-color);
+}
+
+.welcome-guide-modal__intro-title,
+.welcome-guide-modal__finish-title {
+  margin: 0 0 8px;
+}
+
+.welcome-guide-modal__intro-subtext,
+.welcome-guide-modal__tour-caption,
+.welcome-guide-modal__finish-subtext {
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-grey-color);
+}
+
+.welcome-guide-modal__intro-title,
+.welcome-guide-modal__intro-subtext {
+  color: var(--white);
+}
+
+/* Intro screen */
+
+.welcome-guide-modal__intro-header {
+  background: linear-gradient(160deg, var(--primary-color), var(--black));
+  padding: 34px 32px 30px;
+  text-align: center;
+}
+
+.welcome-guide-modal__intro-logo {
+  width: 58px;
+  height: 58px;
+  border-radius: 999px;
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
+.welcome-guide-modal__intro-title {
+  font-size: 26px;
+}
+
+.welcome-guide-modal__intro-subtext {
+  margin: 0 auto;
+  max-width: 430px;
+  opacity: 0.92;
+}
+
+.welcome-guide-modal__intro-body {
+  padding: 22px 30px 26px;
+}
+
+.welcome-guide-modal__bullet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.welcome-guide-modal__bullet-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.welcome-guide-modal__bullet-icon {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary-color) 12%, var(--white));
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+}
+
+.welcome-guide-modal__bullet-title {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-color);
+}
+
+.welcome-guide-modal__bullet-text {
+  font-size: 13px;
+  color: var(--text-grey-color);
+}
+
+.welcome-guide-modal__intro-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+/* Tour screen */
+
+.welcome-guide-modal__tour-header,
+.welcome-guide-modal__tour-header-actions,
+.welcome-guide-modal__tour-header-brand,
+.welcome-guide-modal__tour-footer,
+.welcome-guide-modal__dots,
+.welcome-guide-modal__tour-nav {
+  display: flex;
+  align-items: center;
+}
+
+.welcome-guide-modal__tour-header,
+.welcome-guide-modal__tour-footer {
+  justify-content: space-between;
+}
+
+.welcome-guide-modal__tour-header {
+  padding: 16px 16px 0 20px;
+}
+
+.welcome-guide-modal__tour-header-brand {
+  gap: 9px;
+}
+
+.welcome-guide-modal__tour-header-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-grey-color);
+}
+
+.welcome-guide-modal__tour-header-actions {
+  gap: 14px;
+}
+
+.welcome-guide-modal__step-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-grey-color);
+  font-variant-numeric: tabular-nums;
+}
+
+.welcome-guide-modal__close-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-grey-color);
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+}
+
+.welcome-guide-modal__close-btn:hover {
+  background: color-mix(in srgb, var(--text-grey-color) 12%, transparent);
+}
+
+.welcome-guide-modal__image-area {
+  position: relative;
+  height: 240px;
+  margin: 14px 20px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--text-grey-color) 25%, transparent);
+  background: color-mix(in srgb, var(--text-grey-color) 6%, var(--white));
+}
+
+.welcome-guide-modal__image-area img {
+  object-fit: cover;
+  object-position: top center;
+}
+
+.welcome-guide-modal__tour-content {
+  padding: 18px 24px 2px;
+}
+
+.welcome-guide-modal__tag {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 12px;
   font-weight: 700;
   color: var(--primary-color);
-  line-height: 1;
-  margin-right: 0.5rem;
 }
 
-.welcome-guide-modal__step-title {
-  font-family: Montserrat, Verdana, Geneva, Tahoma, sans-serif;
-  font-size: 1.1rem;
+.welcome-guide-modal__tour-title {
+  margin: 10px 0 6px;
+  font-size: 21px;
+}
+
+.welcome-guide-modal__tour-footer {
+  padding: 18px 24px 22px;
+}
+
+.welcome-guide-modal__dots {
+  gap: 7px;
+}
+
+.welcome-guide-modal__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: color-mix(in srgb, var(--text-grey-color) 35%, var(--white));
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.welcome-guide-modal__dot--active {
+  width: 26px;
+  background: var(--primary-color);
+}
+
+.welcome-guide-modal__tour-nav {
+  gap: 10px;
+}
+
+/* Finish screen */
+
+.welcome-guide-modal__finish {
+  padding: 40px 34px 34px;
+  text-align: center;
+}
+
+.welcome-guide-modal__finish-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary-color) 12%, var(--white));
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 18px;
+  font-size: 28px;
+}
+
+.welcome-guide-modal__finish-title {
+  font-size: 24px;
+}
+
+.welcome-guide-modal__finish-subtext {
+  margin: 0 auto 24px;
+  max-width: 360px;
+}
+
+/* Shared */
+
+.welcome-guide-modal__link-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--primary-color);
+  font-size: 14px;
   font-weight: 600;
-  color: var(--text-color);
-  margin-bottom: 0.5rem;
+  margin-top: 2px;
+  padding: 6px;
 }
 
-.welcome-guide-modal__step-text {
-  font-size: 0.875rem;
-  color: var(--text-grey-color);
-  line-height: 1.6;
+.welcome-guide-modal__link-btn:hover {
+  text-decoration: underline;
 }

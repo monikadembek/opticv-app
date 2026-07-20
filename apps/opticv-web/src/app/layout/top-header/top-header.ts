@@ -94,7 +94,7 @@ export class TopHeader {
   }
 
   openHelp(): void {
-    this.userGuideStore.openWelcomeModal();
+    this.userGuideStore.openWelcomeModal('tour');
     posthog.capture('help_icon_clicked', {
       place: 'top header',
       button_title: 'Help',

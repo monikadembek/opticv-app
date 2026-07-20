@@ -72,18 +72,34 @@ describe('UserGuideStore', () => {
     });
   });
 
-  describe('openWelcomeModal / closeWelcomeModal', () => {
-    it('opens the modal', () => {
+  describe('openWelcomeModal', () => {
+    it('opens in full mode, resetting to the intro screen', () => {
       const store = setup();
 
-      store.openWelcomeModal();
+      store.openWelcomeModal('full');
 
       expect(store.isWelcomeModalOpen()).toBe(true);
+      expect(store.mode()).toBe('full');
+      expect(store.screen()).toBe('intro');
+      expect(store.stepIndex()).toBe(0);
     });
 
+    it('opens in tour mode, resetting to the tour screen at step 1', () => {
+      const store = setup();
+
+      store.openWelcomeModal('tour');
+
+      expect(store.isWelcomeModalOpen()).toBe(true);
+      expect(store.mode()).toBe('tour');
+      expect(store.screen()).toBe('tour');
+      expect(store.stepIndex()).toBe(0);
+    });
+  });
+
+  describe('closeWelcomeModal', () => {
     it('closes the modal', () => {
       const store = setup();
-      store.openWelcomeModal();
+      store.openWelcomeModal('full');
 
       store.closeWelcomeModal();
 
@@ -91,10 +107,116 @@ describe('UserGuideStore', () => {
     });
   });
 
+  describe('startTour', () => {
+    it('transitions from intro to tour and resets stepIndex', () => {
+      const store = setup();
+      store.openWelcomeModal('full');
+      store.goToStep(3);
+
+      store.startTour();
+
+      expect(store.screen()).toBe('tour');
+      expect(store.stepIndex()).toBe(0);
+    });
+  });
+
+  describe('nextStep', () => {
+    it('increments stepIndex while below the last step', () => {
+      const store = setup();
+      store.openWelcomeModal('full');
+      store.startTour();
+
+      store.nextStep();
+
+      expect(store.stepIndex()).toBe(1);
+      expect(store.screen()).toBe('tour');
+    });
+
+    it('transitions to the finish screen at the last step in full mode', () => {
+      const store = setup();
+      store.openWelcomeModal('full');
+      store.startTour();
+      store.goToStep(6);
+
+      store.nextStep();
+
+      expect(store.screen()).toBe('finish');
+      expect(store.stepIndex()).toBe(6);
+    });
+
+    it('is a no-op on step/screen at the last step in tour mode', () => {
+      const store = setup();
+      store.openWelcomeModal('tour');
+      store.goToStep(6);
+
+      store.nextStep();
+
+      expect(store.screen()).toBe('tour');
+      expect(store.stepIndex()).toBe(6);
+    });
+  });
+
+  describe('prevStep', () => {
+    it('decrements stepIndex while above zero', () => {
+      const store = setup();
+      store.openWelcomeModal('full');
+      store.goToStep(2);
+
+      store.prevStep();
+
+      expect(store.stepIndex()).toBe(1);
+    });
+
+    it('returns to the intro screen at step 0 in full mode', () => {
+      const store = setup();
+      store.openWelcomeModal('full');
+      store.startTour();
+
+      store.prevStep();
+
+      expect(store.screen()).toBe('intro');
+    });
+
+    it('is a no-op at step 0 in tour mode', () => {
+      const store = setup();
+      store.openWelcomeModal('tour');
+
+      store.prevStep();
+
+      expect(store.screen()).toBe('tour');
+      expect(store.stepIndex()).toBe(0);
+    });
+  });
+
+  describe('goToStep', () => {
+    it('jumps to the given step and sets the tour screen', () => {
+      const store = setup();
+      store.openWelcomeModal('full');
+
+      store.goToStep(4);
+
+      expect(store.stepIndex()).toBe(4);
+      expect(store.screen()).toBe('tour');
+    });
+  });
+
+  describe('replayTour', () => {
+    it('resets to the intro screen at step 0', () => {
+      const store = setup();
+      store.openWelcomeModal('full');
+      store.goToStep(6);
+
+      store.replayTour();
+
+      expect(store.screen()).toBe('intro');
+      expect(store.stepIndex()).toBe(0);
+    });
+  });
+
   describe('markWelcomeSeen', () => {
     it('adds the email to seenByEmail and closes the modal', () => {
       const store = setup();
-      store.openWelcomeModal();
+      store.openWelcomeModal('full');
 
       store.markWelcomeSeen('new@example.com');
 

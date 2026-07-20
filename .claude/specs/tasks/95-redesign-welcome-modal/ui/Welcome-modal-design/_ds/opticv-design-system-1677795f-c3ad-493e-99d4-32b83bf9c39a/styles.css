@@ -1,0 +1,15 @@
+/* OptiCV Design System — global stylesheet entry point.
+   Consumers link THIS one file. Keep it as @import lines only. */
+
+/* Webfonts (declares @font-face for Montserrat + Lato) */
+@import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap");
+@import "./tokens/fonts.css";
+
+/* Design tokens */
+@import "./tokens/colors.css";
+@import "./tokens/typography.css";
+@import "./tokens/spacing.css";
+@import "./tokens/elevation.css";
+
+/* Component classes (token-based; ship to consumers) */
+@import "./components/components.css";
