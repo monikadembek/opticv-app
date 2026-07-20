@@ -136,23 +136,23 @@ describe('UserGuideStore', () => {
       const store = setup();
       store.openWelcomeModal('full');
       store.startTour();
-      store.goToStep(5);
+      store.goToStep(6);
 
       store.nextStep();
 
       expect(store.screen()).toBe('finish');
-      expect(store.stepIndex()).toBe(5);
+      expect(store.stepIndex()).toBe(6);
     });
 
     it('is a no-op on step/screen at the last step in tour mode', () => {
       const store = setup();
       store.openWelcomeModal('tour');
-      store.goToStep(5);
+      store.goToStep(6);
 
       store.nextStep();
 
       expect(store.screen()).toBe('tour');
-      expect(store.stepIndex()).toBe(5);
+      expect(store.stepIndex()).toBe(6);
     });
   });
 
@@ -204,7 +204,7 @@ describe('UserGuideStore', () => {
     it('resets to the intro screen at step 0', () => {
       const store = setup();
       store.openWelcomeModal('full');
-      store.goToStep(5);
+      store.goToStep(6);
 
       store.replayTour();
 

@@ -84,7 +84,7 @@ describe('WelcomeGuideModal', () => {
 
       expect(text).toContain('Welcome to OptiCV');
       expect(text).toContain('Take the 2-minute tour');
-      expect(text).toContain("Skip — I'll explore on my own");
+      expect(text).toContain("Skip - I'll explore on my own");
       expect(text).not.toContain('Quick tour');
       expect(text).not.toContain("You're ready to go");
     });
@@ -124,7 +124,7 @@ describe('WelcomeGuideModal', () => {
       const text = fixture.nativeElement.textContent;
 
       expect(text).toContain('Upload your CV once');
-      expect(text).toContain('1 / 6');
+      expect(text).toContain('1 / 7');
     });
 
     it('shows Back button on step 1 in full mode', async () => {
@@ -188,7 +188,7 @@ describe('WelcomeGuideModal', () => {
       await setup('user@example.com', {
         mode: 'full',
         screen: 'tour',
-        stepIndex: 5,
+        stepIndex: 6,
       });
       userGuideStoreMock.isWelcomeModalOpen.set(true);
       fixture.detectChanges();
@@ -197,11 +197,11 @@ describe('WelcomeGuideModal', () => {
       expect(text).toContain('Finish');
     });
 
-    it('clicking Finish on step 6 in full mode marks welcome as seen', async () => {
+    it('clicking Finish on step 7 in full mode marks welcome as seen', async () => {
       await setup('user@example.com', {
         mode: 'full',
         screen: 'tour',
-        stepIndex: 5,
+        stepIndex: 6,
       });
       userGuideStoreMock.isWelcomeModalOpen.set(true);
       fixture.detectChanges();
@@ -312,11 +312,11 @@ describe('WelcomeGuideModal', () => {
       expect(userGuideStoreMock.prevStep).toHaveBeenCalledOnce();
     });
 
-    it('clicking Finish on step 6 closes the modal without marking seen', async () => {
+    it('clicking Finish on step 7 closes the modal without marking seen', async () => {
       await setup('user@example.com', {
         mode: 'tour',
         screen: 'tour',
-        stepIndex: 5,
+        stepIndex: 6,
       });
       userGuideStoreMock.isWelcomeModalOpen.set(true);
       fixture.detectChanges();
