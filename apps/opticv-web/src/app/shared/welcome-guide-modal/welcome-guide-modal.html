@@ -4,7 +4,7 @@
   [draggable]="false"
   [closable]="false"
   [showHeader]="false"
-  [style]="{ width: '800px', maxWidth: '95vw' }"
+  [style]="{ width: '700px', maxWidth: '95vw' }"
   [attr.aria-label]="'Welcome to OptiCV'"
   (onHide)="onHide()"
 >
@@ -21,8 +21,8 @@
       </div>
       <h2 class="welcome-guide-modal__intro-title">Welcome to OptiCV</h2>
       <p class="welcome-guide-modal__intro-subtext">
-        AI rewrites your CV for the exact job you're chasing — so it passes ATS
-        filters and lands on a real recruiter's desk.
+        AI helps you optimize your CV for the exact job you're chasing, so it
+        passes ATS filters and lands on a real recruiter's desk.
       </p>
     </div>
     <div class="welcome-guide-modal__intro-body">
@@ -36,7 +36,8 @@
               Upload your CV once
             </div>
             <div class="welcome-guide-modal__bullet-text">
-              Reuse it for every application.
+              You can reuse it for every application. You can also upload more
+              CVs if needed.
             </div>
           </div>
         </div>
@@ -46,10 +47,11 @@
           </div>
           <div>
             <div class="welcome-guide-modal__bullet-title">
-              Tailored to any job
+              Run optimization process and get resume tailored to any job
             </div>
             <div class="welcome-guide-modal__bullet-text">
-              ATS score, keyword gaps and rewrites.
+              ATS score, keyword gaps, summary and bullet pointes rewrites -
+              ready to apply to your CV.
             </div>
           </div>
         </div>
@@ -62,7 +64,8 @@
               Land more interviews
             </div>
             <div class="welcome-guide-modal__bullet-text">
-              Cover letter and interview prep, ready to send.
+              Get cover letter, interview prep package and content for your
+              LinkedIn.
             </div>
           </div>
         </div>
@@ -78,7 +81,7 @@
           class="welcome-guide-modal__link-btn"
           (click)="onSkip()"
         >
-          Skip — I'll explore on my own
+          Skip - I'll explore on my own
         </button>
       </div>
     </div>
@@ -97,7 +100,7 @@
       </div>
       <div class="welcome-guide-modal__tour-header-actions">
         <span class="welcome-guide-modal__step-count">
-          {{ userGuideStore.stepIndex() + 1 }} / 6
+          {{ userGuideStore.stepIndex() + 1 }} / {{ lastStepIndex + 1 }}
         </span>
         <button
           type="button"

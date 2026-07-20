@@ -15,7 +15,7 @@ export interface UserGuideState {
   seenByEmail: Record<string, boolean>;
 }
 
-const LAST_STEP_INDEX = 5;
+export const LAST_STEP_INDEX = 6;
 
 const initialState: UserGuideState = {
   isWelcomeModalOpen: false,
