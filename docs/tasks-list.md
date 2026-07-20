@@ -1186,11 +1186,11 @@ Implement:
 
 ### 95. UX/UI - Redesign welcome modal
 
-**status: in progress**
+**status: done**
 **time: 20.07.2026**
 
 - implement new designs for the welcome modal, version 1c Intro -> tour -> finish Full first login journey, the html code is stored in the ui folder of that task together with the necessary images in uploads folder,
-- when user clicks the help icon button in top menu show only the carousell steps 1-6, don't show the welcome screen and the finish screen, they should only be displayed for the first time login
+- when user clicks the help icon button in top menu show only the carousell steps 1-7, don't show the welcome screen and the finish screen, they should only be displayed for the first time login
 
 ---
 
