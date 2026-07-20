@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/opticv-design-system-1677795f-c3ad-493e-99d4-32b83bf9c39a/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/opticv-design-system-1677795f-c3ad-493e-99d4-32b83bf9c39a/tokens/colors.css">
+<link rel="stylesheet" href="_ds/opticv-design-system-1677795f-c3ad-493e-99d4-32b83bf9c39a/tokens/typography.css">
+<link rel="stylesheet" href="_ds/opticv-design-system-1677795f-c3ad-493e-99d4-32b83bf9c39a/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/opticv-design-system-1677795f-c3ad-493e-99d4-32b83bf9c39a/tokens/elevation.css">
+<link rel="stylesheet" href="_ds/opticv-design-system-1677795f-c3ad-493e-99d4-32b83bf9c39a/components/components.css">
+<link rel="stylesheet" href="_ds/opticv-design-system-1677795f-c3ad-493e-99d4-32b83bf9c39a/styles.css">
+<link rel="stylesheet" href="https://unpkg.com/primeicons@7.0.0/primeicons.css">
+<script src="_ds/opticv-design-system-1677795f-c3ad-493e-99d4-32b83bf9c39a/_ds_bundle.js"></script>
+<style>
+  body { margin:0; background:#eef2f6; font-family:var(--font-body); color:var(--neutral-700); }
+  a { color: var(--primary-600); text-decoration:none; }
+  a:hover { color: var(--primary-700); }
+  @keyframes ocvModalIn { from { opacity:0; transform: translateY(14px) scale(.985);} to {opacity:1; transform:none;} }
+  .ocv-wm-btn { transition: background .25s cubic-bezier(.4,0,.2,1), color .25s, border-color .25s; }
+</style>
+</helmet>
+
+<section style="padding:56px 64px 72px; display:flex; flex-direction:column; gap:38px;">
+  <div style="display:flex;flex-direction:column;gap:10px;max-width:900px;">
+    <img src="assets/opticv-logo.svg" style="height:30px;align-self:flex-start;" alt="OptiCV">
+    <h1 style="margin:6px 0 0;font-family:var(--font-heading);font-weight:700;font-size:30px;line-height:1.1;color:var(--neutral-900);letter-spacing:-.01em;">First-login welcome modal — three directions</h1>
+    <p style="margin:0;font-size:16px;line-height:1.6;color:var(--neutral-600);max-width:700px;text-wrap:pretty;">Each shows a new user the whole OptiCV flow using your six screenshots. They're live — click the dots, steps and buttons. Reference them in chat as <a href="#1a">1a</a>, <a href="#1b">1b</a>, <a href="#1c">1c</a>.</p>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:44px;align-items:flex-start;">
+
+    <!-- ============ 1a ============ -->
+    <div id="1a" style="display:flex;flex-direction:column;gap:14px;">
+      <div style="display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;">
+        <span style="background:var(--primary-600);color:#fff;font-family:var(--font-heading);font-weight:700;font-size:13px;border-radius:6px;padding:3px 9px;letter-spacing:.02em;">1a</span>
+        <span style="font-family:var(--font-heading);font-weight:700;font-size:16px;color:var(--neutral-900);">Guided carousel</span>
+        <span style="font-size:13px;color:var(--neutral-500);">One step at a time · Next / Back</span>
+      </div>
+      <div style="position:relative;width:780px;height:560px;border-radius:20px;overflow:hidden;box-shadow:0 18px 50px rgba(15,23,42,.18);">
+        <img src="uploads/step-3-loaded-cv-optimization-results.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;filter:blur(8px) brightness(.55);transform:scale(1.1);">
+        <div style="position:absolute;inset:0;background:rgba(2,44,34,.6);"></div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:28px;">
+          <sc-if value="{{ aOpen }}" hint-placeholder-val="{{ true }}">
+            <div style="width:600px;max-width:100%;background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(2,44,34,.4);overflow:hidden;display:flex;flex-direction:column;animation:ocvModalIn .35s cubic-bezier(.4,0,.2,1);">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 16px 0 20px;">
+                <div style="display:flex;align-items:center;gap:9px;">
+                  <img src="assets/opticv-logo-icon.svg" style="height:22px;">
+                  <span style="font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--neutral-400);">Getting started</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:14px;">
+                  <span style="font-size:13px;font-weight:600;color:var(--neutral-500);font-variant-numeric:tabular-nums;">{{ aStepNum }} / 6</span>
+                  <button onClick="{{ aSkip }}" title="Skip" style="border:none;background:transparent;color:var(--neutral-400);cursor:pointer;width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px;"><i class="pi pi-times"></i></button>
+                </div>
+              </div>
+              <div style="padding:14px 20px 0;">
+                <div style="border-radius:12px;overflow:hidden;border:1px solid var(--neutral-200);background:var(--neutral-50);height:264px;">
+                  <div style="{{ aStep.bgStyle }}"></div>
+                </div>
+              </div>
+              <div style="padding:18px 24px 2px;">
+                <span class="ocv-badge ocv-badge--soft" style="text-transform:uppercase;letter-spacing:.05em;">{{ aStep.tag }}</span>
+                <h3 style="margin:10px 0 6px;font-family:var(--font-heading);font-weight:700;font-size:22px;line-height:1.15;color:var(--neutral-900);">{{ aStep.title }}</h3>
+                <p style="margin:0;font-size:15px;line-height:1.55;color:var(--neutral-600);text-wrap:pretty;">{{ aStep.caption }}</p>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 24px 22px;">
+                <div style="display:flex;align-items:center;gap:7px;">
+                  <sc-for list="{{ aDots }}" as="dot" hint-placeholder-count="6"><button onClick="{{ dot.onClick }}" style="{{ dot.style }}"></button></sc-for>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <button class="ocv-btn ocv-btn--base ocv-btn--outline ocv-wm-btn" disabled="{{ aBackDisabled }}" onClick="{{ aPrev }}" style="{{ aBackStyle }}">Back</button>
+                  <button class="ocv-btn ocv-btn--base ocv-btn--primary ocv-wm-btn" onClick="{{ aNext }}">{{ aNextLabel }}</button>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ aClosed }}">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;animation:ocvModalIn .35s ease;">
+              <div style="width:60px;height:60px;border-radius:99px;background:var(--primary-500);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 28px rgba(16,185,129,.55);"><i class="pi pi-check" style="color:#fff;font-size:24px;"></i></div>
+              <div style="font-family:var(--font-heading);font-weight:700;font-size:22px;color:#fff;">You're all set</div>
+              <button class="ocv-btn ocv-btn--base ocv-btn--white ocv-wm-btn" onClick="{{ aReplay }}"><i class="pi pi-refresh" style="margin-right:7px;"></i>Replay tour</button>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 1b ============ -->
+    <div id="1b" style="display:flex;flex-direction:column;gap:14px;">
+      <div style="display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;">
+        <span style="background:var(--primary-600);color:#fff;font-family:var(--font-heading);font-weight:700;font-size:13px;border-radius:6px;padding:3px 9px;letter-spacing:.02em;">1b</span>
+        <span style="font-family:var(--font-heading);font-weight:700;font-size:16px;color:var(--neutral-900);">Sidebar stepper</span>
+        <span style="font-size:13px;color:var(--neutral-500);">See the whole map · jump to any step</span>
+      </div>
+      <div style="position:relative;width:780px;height:560px;border-radius:20px;overflow:hidden;box-shadow:0 18px 50px rgba(15,23,42,.18);">
+        <img src="uploads/step-3-loaded-cv-optimization-results.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;filter:blur(8px) brightness(.55);transform:scale(1.1);">
+        <div style="position:absolute;inset:0;background:rgba(2,44,34,.6);"></div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:28px;">
+          <sc-if value="{{ bOpen }}" hint-placeholder-val="{{ true }}">
+            <div style="width:720px;max-width:100%;background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(2,44,34,.4);overflow:hidden;display:flex;animation:ocvModalIn .35s cubic-bezier(.4,0,.2,1);">
+              <div style="width:264px;flex:0 0 264px;background:var(--neutral-50);border-right:1px solid var(--neutral-200);padding:22px 14px;display:flex;flex-direction:column;gap:3px;">
+                <div style="display:flex;align-items:center;gap:9px;padding:2px 8px 4px;">
+                  <img src="assets/opticv-logo-icon.svg" style="height:24px;">
+                  <span style="font-family:var(--font-heading);font-weight:700;font-size:17px;color:var(--neutral-900);">Welcome</span>
+                </div>
+                <p style="margin:0 8px 12px;font-size:12.5px;line-height:1.5;color:var(--neutral-500);">From CV to interview in six quick steps.</p>
+                <sc-for list="{{ bList }}" as="item" hint-placeholder-count="6">
+                  <div onClick="{{ item.onClick }}" style="{{ item.rowStyle }}">
+                    <span style="{{ item.numStyle }}">{{ item.n }}</span>
+                    <span style="{{ item.titleStyle }}">{{ item.title }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;padding:22px 24px;min-width:0;">
+                <div style="border-radius:12px;overflow:hidden;border:1px solid var(--neutral-200);background:var(--neutral-50);height:206px;">
+                  <div style="{{ bStep.bgStyle }}"></div>
+                </div>
+                <span class="ocv-badge ocv-badge--soft" style="margin-top:16px;align-self:flex-start;text-transform:uppercase;letter-spacing:.05em;">{{ bStep.tag }}</span>
+                <h3 style="margin:10px 0 6px;font-family:var(--font-heading);font-weight:700;font-size:21px;line-height:1.15;color:var(--neutral-900);">{{ bStep.title }}</h3>
+                <p style="margin:0;font-size:14.5px;line-height:1.55;color:var(--neutral-600);text-wrap:pretty;">{{ bStep.caption }}</p>
+                <div style="flex:1;min-height:14px;"></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                  <button onClick="{{ bStart }}" class="ocv-btn ocv-btn--base ocv-btn--link">Skip tour</button>
+                  <button onClick="{{ bStart }}" class="ocv-btn ocv-btn--base ocv-btn--primary ocv-wm-btn">Get started</button>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ bClosed }}">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;animation:ocvModalIn .35s ease;">
+              <div style="width:60px;height:60px;border-radius:99px;background:var(--primary-500);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 28px rgba(16,185,129,.55);"><i class="pi pi-check" style="color:#fff;font-size:24px;"></i></div>
+              <div style="font-family:var(--font-heading);font-weight:700;font-size:22px;color:#fff;">You're all set</div>
+              <button class="ocv-btn ocv-btn--base ocv-btn--white ocv-wm-btn" onClick="{{ bReplay }}"><i class="pi pi-refresh" style="margin-right:7px;"></i>Replay tour</button>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 1c ============ -->
+    <div id="1c" style="display:flex;flex-direction:column;gap:14px;">
+      <div style="display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;">
+        <span style="background:var(--primary-600);color:#fff;font-family:var(--font-heading);font-weight:700;font-size:13px;border-radius:6px;padding:3px 9px;letter-spacing:.02em;">1c</span>
+        <span style="font-family:var(--font-heading);font-weight:700;font-size:16px;color:var(--neutral-900);">Intro → tour → finish</span>
+        <span style="font-size:13px;color:var(--neutral-500);">Full first-login journey</span>
+      </div>
+      <div style="position:relative;width:780px;height:560px;border-radius:20px;overflow:hidden;box-shadow:0 18px 50px rgba(15,23,42,.18);">
+        <img src="uploads/step-1-upload-cv-page.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;filter:blur(8px) brightness(.55);transform:scale(1.1);">
+        <div style="position:absolute;inset:0;background:rgba(2,44,34,.6);"></div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:28px;">
+          <sc-if value="{{ cOpen }}" hint-placeholder-val="{{ true }}">
+            <div style="width:540px;max-width:100%;background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(2,44,34,.4);overflow:hidden;animation:ocvModalIn .35s cubic-bezier(.4,0,.2,1);">
+
+              <sc-if value="{{ cIsIntro }}" hint-placeholder-val="{{ true }}">
+                <div style="background:linear-gradient(160deg,var(--primary-600),var(--primary-700));padding:34px 32px 30px;color:#fff;text-align:center;">
+                  <div style="width:58px;height:58px;border-radius:99px;background:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;box-shadow:0 8px 20px rgba(0,0,0,.18);"><img src="assets/opticv-logo-icon.svg" style="height:30px;"></div>
+                  <h2 style="margin:0 0 8px;font-family:var(--font-heading);font-weight:700;font-size:26px;line-height:1.15;">Welcome to OptiCV</h2>
+                  <p style="margin:0 auto;max-width:400px;font-size:15px;line-height:1.55;opacity:.92;text-wrap:pretty;">AI rewrites your CV for the exact job you're chasing — so it passes ATS filters and lands on a real recruiter's desk.</p>
+                </div>
+                <div style="padding:22px 30px 26px;">
+                  <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:22px;">
+                    <div style="display:flex;align-items:center;gap:14px;">
+                      <div style="flex:0 0 auto;width:40px;height:40px;border-radius:99px;background:var(--primary-50);display:flex;align-items:center;justify-content:center;"><i class="pi pi-upload" style="color:var(--primary-600);font-size:17px;"></i></div>
+                      <div><div style="font-weight:700;font-size:15px;color:var(--neutral-900);">Upload your CV once</div><div style="font-size:13px;color:var(--neutral-500);">Reuse it for every application.</div></div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:14px;">
+                      <div style="flex:0 0 auto;width:40px;height:40px;border-radius:99px;background:var(--primary-50);display:flex;align-items:center;justify-content:center;"><i class="pi pi-bolt" style="color:var(--primary-600);font-size:17px;"></i></div>
+                      <div><div style="font-weight:700;font-size:15px;color:var(--neutral-900);">Tailored to any job</div><div style="font-size:13px;color:var(--neutral-500);">ATS score, keyword gaps and rewrites.</div></div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:14px;">
+                      <div style="flex:0 0 auto;width:40px;height:40px;border-radius:99px;background:var(--primary-50);display:flex;align-items:center;justify-content:center;"><i class="pi pi-briefcase" style="color:var(--primary-600);font-size:17px;"></i></div>
+                      <div><div style="font-weight:700;font-size:15px;color:var(--neutral-900);">Land more interviews</div><div style="font-size:13px;color:var(--neutral-500);">Cover letter and interview prep, ready to send.</div></div>
+                    </div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:6px;align-items:center;">
+                    <button onClick="{{ cStartTour }}" class="ocv-btn ocv-btn--lg ocv-btn--primary ocv-btn--elevated ocv-wm-btn" style="width:100%;">Take the 2-minute tour</button>
+                    <button onClick="{{ cSkip }}" class="ocv-btn ocv-btn--base ocv-btn--link" style="margin-top:2px;">Skip — I'll explore on my own</button>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ cIsSteps }}">
+                <div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 16px 0 20px;">
+                    <div style="display:flex;align-items:center;gap:9px;">
+                      <img src="assets/opticv-logo-icon.svg" style="height:22px;">
+                      <span style="font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--neutral-400);">Quick tour</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:14px;">
+                      <span style="font-size:13px;font-weight:600;color:var(--neutral-500);font-variant-numeric:tabular-nums;">{{ cStepNum }} / 6</span>
+                      <button onClick="{{ cSkip }}" title="Skip" style="border:none;background:transparent;color:var(--neutral-400);cursor:pointer;width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px;"><i class="pi pi-times"></i></button>
+                    </div>
+                  </div>
+                  <div style="padding:14px 20px 0;">
+                    <div style="border-radius:12px;overflow:hidden;border:1px solid var(--neutral-200);background:var(--neutral-50);height:240px;">
+                      <div style="{{ cStep.bgStyle }}"></div>
+                    </div>
+                  </div>
+                  <div style="padding:18px 24px 2px;">
+                    <span class="ocv-badge ocv-badge--soft" style="text-transform:uppercase;letter-spacing:.05em;">{{ cStep.tag }}</span>
+                    <h3 style="margin:10px 0 6px;font-family:var(--font-heading);font-weight:700;font-size:21px;line-height:1.15;color:var(--neutral-900);">{{ cStep.title }}</h3>
+                    <p style="margin:0;font-size:15px;line-height:1.55;color:var(--neutral-600);text-wrap:pretty;">{{ cStep.caption }}</p>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 24px 22px;">
+                    <div style="display:flex;align-items:center;gap:7px;">
+                      <sc-for list="{{ cDots }}" as="dot" hint-placeholder-count="6"><button onClick="{{ dot.onClick }}" style="{{ dot.style }}"></button></sc-for>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                      <button class="ocv-btn ocv-btn--base ocv-btn--outline ocv-wm-btn" onClick="{{ cPrev }}">Back</button>
+                      <button class="ocv-btn ocv-btn--base ocv-btn--primary ocv-wm-btn" onClick="{{ cNext }}">{{ cNextLabel }}</button>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ cIsDone }}">
+                <div style="padding:40px 34px 34px;text-align:center;">
+                  <div style="width:64px;height:64px;border-radius:99px;background:var(--primary-50);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;"><i class="pi pi-check" style="color:var(--primary-600);font-size:28px;"></i></div>
+                  <h2 style="margin:0 0 8px;font-family:var(--font-heading);font-weight:700;font-size:24px;line-height:1.15;color:var(--neutral-900);">You're ready to go</h2>
+                  <p style="margin:0 auto 24px;max-width:360px;font-size:15px;line-height:1.55;color:var(--neutral-600);text-wrap:pretty;">Upload your CV to run your first optimization — you'll have an ATS-ready version in under two minutes.</p>
+                  <button onClick="{{ cFinish }}" class="ocv-btn ocv-btn--lg ocv-btn--primary ocv-btn--elevated ocv-wm-btn" style="width:100%;">Get started</button>
+                  <button onClick="{{ cStartTour }}" class="ocv-btn ocv-btn--base ocv-btn--link" style="margin-top:10px;">Replay the tour</button>
+                </div>
+              </sc-if>
+
+            </div>
+          </sc-if>
+          <sc-if value="{{ cClosed }}">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;animation:ocvModalIn .35s ease;">
+              <div style="width:60px;height:60px;border-radius:99px;background:var(--primary-500);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 28px rgba(16,185,129,.55);"><i class="pi pi-check" style="color:#fff;font-size:24px;"></i></div>
+              <div style="font-family:var(--font-heading);font-weight:700;font-size:22px;color:#fff;">Welcome dismissed</div>
+              <button class="ocv-btn ocv-btn--base ocv-btn--white ocv-wm-btn" onClick="{{ cReplay }}"><i class="pi pi-refresh" style="margin-right:7px;"></i>Replay</button>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { a: 0, aClosed: false, b: 0, bClosed: false, c: 'intro', cClosed: false };
+
+  steps() {
+    const list = [
+      { n:1, tag:'Step 1 · Upload',   img:'uploads/step-1-upload-cv-page.png',                 title:'Upload your CV once',        caption:'Drop in a PDF or DOCX. We keep it on hand to tailor for every job you chase.' },
+      { n:2, tag:'Step 2 · Optimize', img:'uploads/step-2-cv-optimization-page.png',           title:'Point it at a job',          caption:'Paste the job description and company details — OptiCV tailors everything to that exact posting.' },
+      { n:3, tag:'Step 3 · Analyze',  img:'uploads/step-3-loaded-cv-optimization-results.png', title:'See your ATS score',         caption:'An instant ATS score, keyword gaps and a rewrite that lifts a 70 to a 90.' },
+      { n:4, tag:'Step 4 · Apply',    img:'uploads/step-4-cover-letter.png',                   title:'Get a matching cover letter', caption:'A tailored cover letter in your voice — edit it inline, then export to PDF or DOCX.' },
+      { n:5, tag:'Step 5 · Apply',    img:'uploads/step-5-interview-prep.png',                 title:'Walk in interview-ready',     caption:'Likely questions, model answers and traps to avoid — matched to the role.' },
+      { n:6, tag:'Step 6 · Apply',    img:'uploads/step-6-linked-in-profile.png',              title:'Polish your LinkedIn',        caption:'Headline variants and profile rewrites so recruiters find you too.' },
+    ];
+    return list.map(s => ({ ...s, bgStyle: { width:'100%', height:'100%', backgroundImage:`url(${s.img})`, backgroundSize:'cover', backgroundPosition:'top center', backgroundRepeat:'no-repeat' } }));
+  }
+
+  dot(active, onClick) {
+    return { onClick, style: { width: active?'26px':'8px', height:'8px', borderRadius:'99px', border:'none', padding:0, cursor:'pointer', background: active?'var(--primary-600)':'var(--neutral-300)', transition:'all .3s cubic-bezier(.4,0,.2,1)' } };
+  }
+
+  renderVals() {
+    const steps = this.steps();
+    const last = steps.length - 1;
+    const a = this.state.a, b = this.state.b, c = this.state.c;
+
+    // Option A — carousel
+    const aIsLast = a === last;
+
+    // Option B — sidebar stepper
+    const bList = steps.map((s, i) => {
+      const active = i === b;
+      return {
+        n: s.n, title: s.title,
+        onClick: () => this.setState({ b: i }),
+        rowStyle: { display:'flex', alignItems:'center', gap:'12px', padding:'10px 12px', borderRadius:'10px', cursor:'pointer', background: active?'var(--primary-50)':'transparent', boxShadow: active?'inset 3px 0 0 var(--primary-600)':'none', transition:'background .2s ease' },
+        numStyle: { flex:'0 0 auto', width:'26px', height:'26px', borderRadius:'99px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'13px', fontWeight:700, fontFamily:'var(--font-heading)', background: active?'var(--primary-600)':'var(--neutral-100)', color: active?'#fff':'var(--neutral-500)', transition:'all .2s ease' },
+        titleStyle: { fontSize:'14px', fontWeight: active?700:600, color: active?'var(--neutral-900)':'var(--neutral-600)', fontFamily:'var(--font-body)' }
+      };
+    });
+
+    // Option C — intro / tour / done
+    const cIsIntro = c === 'intro';
+    const cIsDone = c === 'done';
+    const cIsSteps = !cIsIntro && !cIsDone;
+    const cIdx = cIsSteps ? c : 0;
+    const cIsLast = cIdx === last;
+
+    return {
+      // A
+      aOpen: !this.state.aClosed, aClosed: this.state.aClosed,
+      aStep: steps[a], aStepNum: a + 1,
+      aBackDisabled: a === 0,
+      aBackStyle: { opacity: a === 0 ? 0.4 : 1, pointerEvents: a === 0 ? 'none' : 'auto' },
+      aNextLabel: aIsLast ? 'Get started' : 'Next',
+      aDots: steps.map((s, i) => this.dot(i === a, () => this.setState({ a: i }))),
+      aPrev: () => this.setState(st => ({ a: Math.max(0, st.a - 1) })),
+      aNext: () => aIsLast ? this.setState({ aClosed: true }) : this.setState(st => ({ a: Math.min(last, st.a + 1) })),
+      aSkip: () => this.setState({ aClosed: true }),
+      aReplay: () => this.setState({ aClosed: false, a: 0 }),
+
+      // B
+      bOpen: !this.state.bClosed, bClosed: this.state.bClosed,
+      bStep: steps[b], bList,
+      bStart: () => this.setState({ bClosed: true }),
+      bReplay: () => this.setState({ bClosed: false, b: 0 }),
+
+      // C
+      cOpen: !this.state.cClosed, cClosed: this.state.cClosed,
+      cIsIntro, cIsSteps, cIsDone,
+      cStep: steps[cIdx], cStepNum: cIdx + 1,
+      cNextLabel: cIsLast ? 'Finish' : 'Next',
+      cDots: steps.map((s, i) => this.dot(i === cIdx, () => this.setState({ c: i }))),
+      cStartTour: () => this.setState({ cClosed: false, c: 0 }),
+      cSkip: () => this.setState({ cClosed: true }),
+      cPrev: () => this.setState(st => ({ c: st.c === 0 ? 'intro' : st.c - 1 })),
+      cNext: () => cIsLast ? this.setState({ c: 'done' }) : this.setState(st => ({ c: st.c + 1 })),
+      cFinish: () => this.setState({ cClosed: true }),
+      cReplay: () => this.setState({ cClosed: false, c: 'intro' }),
+    };
+  }
+}
+</script>
+</body>
+</html>

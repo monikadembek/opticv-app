@@ -1189,7 +1189,17 @@ Implement:
 **status: in progress**
 **time: 20.07.2026**
 
-- implement new designs for the welcome modal
+- implement new designs for the welcome modal, version 1c Intro -> tour -> finish Full first login journey, the html code is stored in the ui folder of that task together with the necessary images in uploads folder,
+- when user clicks the help icon button in top menu show only the carousell steps 1-6, don't show the welcome screen and the finish screen, they should only be displayed for the first time login
+
+---
+
+### 96. UX/UI - Update section with 3-step process on homepage
+
+**status: todo**
+**time:**
+
+- udate section with 3-step process on homepage, update images, maybe change it to align more with help modal
 
 ---
 
