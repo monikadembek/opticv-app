@@ -1,71 +1,183 @@
 <p-dialog
-  header="Welcome to OptiCV"
   [visible]="userGuideStore.isWelcomeModalOpen()"
   [modal]="true"
   [draggable]="false"
-  [style]="{ width: '700px', maxWidth: '95vw' }"
+  [closable]="false"
+  [showHeader]="false"
+  [style]="{ width: '800px', maxWidth: '95vw' }"
+  [attr.aria-label]="'Welcome to OptiCV'"
   (onHide)="onHide()"
 >
-  <p class="mb-6 text-center">
-    Here's how to go from CV to optimized CV in 3 simple steps.
-  </p>
-  <div class="welcome-guide-modal__steps">
-    <div class="welcome-guide-modal__step">
-      <img
-        ngSrc="/images/step-1-upload.png"
-        alt="screenshot of cv upload page"
-        width="320"
-        height="200"
-        class="mb-4"
-      />
-      <h3 class="welcome-guide-modal__step-title">
-        <span class="step-number">1.</span>
-        Upload your CV
-      </h3>
-      <p class="welcome-guide-modal__step-text">
-        Import your existing CV once (PDF or DOCX). We parse it and reuse it
-        across the app.
+  @if (userGuideStore.screen() === 'intro') {
+  <div class="welcome-guide-modal__intro">
+    <div class="welcome-guide-modal__intro-header">
+      <div class="welcome-guide-modal__intro-logo">
+        <img
+          ngSrc="/images/opticv-logo-icon.svg"
+          alt=""
+          width="30"
+          height="30"
+        />
+      </div>
+      <h2 class="welcome-guide-modal__intro-title">Welcome to OptiCV</h2>
+      <p class="welcome-guide-modal__intro-subtext">
+        AI rewrites your CV for the exact job you're chasing — so it passes ATS
+        filters and lands on a real recruiter's desk.
       </p>
     </div>
-    <div class="welcome-guide-modal__step">
-      <img
-        ngSrc="/images/step-2-job-description.png"
-        alt="screenshot of job application form"
-        width="320"
-        height="200"
-        class="mb-4"
-      />
-      <h3 class="welcome-guide-modal__step-title">
-        <span class="step-number">2.</span>
-        Paste job description
-      </h3>
-      <p class="welcome-guide-modal__step-text">
-        Paste a job posting and run the optimization — scoring, rewriting, and
-        flagging gaps against that specific role.
-      </p>
-    </div>
-    <div class="welcome-guide-modal__step">
-      <img
-        ngSrc="/images/step-3-optimization.png"
-        alt="screenshot of optimize-cv page"
-        width="320"
-        height="200"
-        class="mb-4"
-      />
-      <h3 class="welcome-guide-modal__step-title">
-        <span class="step-number">3.</span>
-        Get your optimized CV
-      </h3>
-      <p class="welcome-guide-modal__step-text">
-        Review AI suggestions, apply changes, then export your tailored,
-        ATS-friendly CV.
-      </p>
+    <div class="welcome-guide-modal__intro-body">
+      <div class="welcome-guide-modal__bullet-list">
+        <div class="welcome-guide-modal__bullet-row">
+          <div class="welcome-guide-modal__bullet-icon">
+            <i class="pi pi-upload" aria-hidden="true"></i>
+          </div>
+          <div>
+            <div class="welcome-guide-modal__bullet-title">
+              Upload your CV once
+            </div>
+            <div class="welcome-guide-modal__bullet-text">
+              Reuse it for every application.
+            </div>
+          </div>
+        </div>
+        <div class="welcome-guide-modal__bullet-row">
+          <div class="welcome-guide-modal__bullet-icon">
+            <i class="pi pi-bolt" aria-hidden="true"></i>
+          </div>
+          <div>
+            <div class="welcome-guide-modal__bullet-title">
+              Tailored to any job
+            </div>
+            <div class="welcome-guide-modal__bullet-text">
+              ATS score, keyword gaps and rewrites.
+            </div>
+          </div>
+        </div>
+        <div class="welcome-guide-modal__bullet-row">
+          <div class="welcome-guide-modal__bullet-icon">
+            <i class="pi pi-briefcase" aria-hidden="true"></i>
+          </div>
+          <div>
+            <div class="welcome-guide-modal__bullet-title">
+              Land more interviews
+            </div>
+            <div class="welcome-guide-modal__bullet-text">
+              Cover letter and interview prep, ready to send.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="welcome-guide-modal__intro-actions">
+        <p-button
+          label="Take the 2-minute tour"
+          styleClass="w-full"
+          (onClick)="onStartTour()"
+        ></p-button>
+        <button
+          type="button"
+          class="welcome-guide-modal__link-btn"
+          (click)="onSkip()"
+        >
+          Skip — I'll explore on my own
+        </button>
+      </div>
     </div>
   </div>
-  <ng-template pTemplate="footer">
+  } @if (userGuideStore.screen() === 'tour') {
+  <div class="welcome-guide-modal__tour">
+    <div class="welcome-guide-modal__tour-header">
+      <div class="welcome-guide-modal__tour-header-brand">
+        <img
+          ngSrc="/images/opticv-logo-icon.svg"
+          alt=""
+          width="22"
+          height="22"
+        />
+        <span class="welcome-guide-modal__tour-header-label">Quick tour</span>
+      </div>
+      <div class="welcome-guide-modal__tour-header-actions">
+        <span class="welcome-guide-modal__step-count">
+          {{ userGuideStore.stepIndex() + 1 }} / 6
+        </span>
+        <button
+          type="button"
+          class="welcome-guide-modal__close-btn"
+          aria-label="Close"
+          title="Close"
+          (click)="onCloseIcon()"
+        >
+          <i class="pi pi-times" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+    <div class="welcome-guide-modal__image-area">
+      <img
+        [ngSrc]="currentStep().image"
+        [alt]="currentStep().alt"
+        fill
+        priority
+      />
+    </div>
+    <div class="welcome-guide-modal__tour-content">
+      <span class="welcome-guide-modal__tag">{{ currentStep().tag }}</span>
+      <h3 class="welcome-guide-modal__tour-title">{{ currentStep().title }}</h3>
+      <p class="welcome-guide-modal__tour-caption">
+        {{ currentStep().caption }}
+      </p>
+    </div>
+    <div class="welcome-guide-modal__tour-footer">
+      <div class="welcome-guide-modal__dots">
+        @for (step of tourSteps; track step.tag; let i = $index) {
+        <button
+          type="button"
+          class="welcome-guide-modal__dot"
+          [class.welcome-guide-modal__dot--active]="
+                i === userGuideStore.stepIndex()
+              "
+          [attr.aria-label]="'Go to step ' + (i + 1)"
+          [attr.aria-current]="
+                i === userGuideStore.stepIndex() ? 'step' : null
+              "
+          (click)="onDotClick(i)"
+        ></button>
+        }
+      </div>
+      <div class="welcome-guide-modal__tour-nav">
+        @if (userGuideStore.mode() === 'full' || userGuideStore.stepIndex() > 0)
+        {
+        <p-button
+          label="Back"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="onPrev()"
+        ></p-button>
+        }
+        <p-button [label]="nextLabel()" (onClick)="onNext()"></p-button>
+      </div>
+    </div>
+  </div>
+  } @if (userGuideStore.screen() === 'finish') {
+  <div class="welcome-guide-modal__finish">
+    <div class="welcome-guide-modal__finish-icon">
+      <i class="pi pi-check" aria-hidden="true"></i>
+    </div>
+    <h2 class="welcome-guide-modal__finish-title">You're ready to go</h2>
+    <p class="welcome-guide-modal__finish-subtext">
+      Upload your CV to run your first optimization — you'll have an ATS-ready
+      version in under two minutes.
+    </p>
     <p-button
-      label="Got it"
-      (onClick)="userGuideStore.closeWelcomeModal()"
+      label="Get started"
+      styleClass="w-full"
+      (onClick)="onGetStarted()"
     ></p-button>
-  </ng-template>
+    <button
+      type="button"
+      class="welcome-guide-modal__link-btn"
+      (click)="onReplay()"
+    >
+      Replay the tour
+    </button>
+  </div>
+  }
 </p-dialog>

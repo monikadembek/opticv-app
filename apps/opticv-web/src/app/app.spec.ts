@@ -211,7 +211,7 @@ describe('App', () => {
       expect(userGuideStoreMock.hasSeenWelcome).toHaveBeenCalledWith(
         'test@example.com',
       );
-      expect(userGuideStoreMock.openWelcomeModal).toHaveBeenCalledOnce();
+      expect(userGuideStoreMock.openWelcomeModal).toHaveBeenCalledWith('full');
       expect(captureSpy).toHaveBeenCalledWith('welcome_modal_shown');
     });
 

@@ -174,7 +174,7 @@ describe('TopHeader', () => {
   describe('openHelp', () => {
     it('opens the welcome modal via UserGuideStore', () => {
       component.openHelp();
-      expect(userGuideStoreMock.openWelcomeModal).toHaveBeenCalledOnce();
+      expect(userGuideStoreMock.openWelcomeModal).toHaveBeenCalledWith('tour');
     });
 
     it('captures help_icon_clicked', () => {
@@ -193,7 +193,7 @@ describe('TopHeader', () => {
         By.css('p-button[ariaLabel="Open help guide"]'),
       );
       helpButton.triggerEventHandler('onClick');
-      expect(userGuideStoreMock.openWelcomeModal).toHaveBeenCalledOnce();
+      expect(userGuideStoreMock.openWelcomeModal).toHaveBeenCalledWith('tour');
     });
   });
 });

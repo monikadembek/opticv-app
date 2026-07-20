@@ -47,7 +47,7 @@ export class App {
 
         const email = this.supabaseService.currentUser()?.email;
         if (email && !this.userGuideStore.hasSeenWelcome(email)) {
-          this.userGuideStore.openWelcomeModal();
+          this.userGuideStore.openWelcomeModal('full');
           posthog.capture('welcome_modal_shown');
         }
       }
