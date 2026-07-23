@@ -1194,7 +1194,55 @@ Implement:
 
 ---
 
-### 96. UX/UI - Update section with 3-step process on homepage
+### 96. UX/UI - CV optimization page - collapse all sections by default, expand first
+
+**status: done**
+
+**time: 22.07.2026 - 23.07.2026**
+
+There is a lot of informations displayed on cv-optimization page, it might be overwhelming for the user.
+
+The CV optimization results page (cv-optimization.html/.ts) renders 7-9 result sections (ATS Analysis, Keyword Gap, Summary Rewrite, Bullet Upgrades, Cover Letter, Interview Prep, LinkedIn Profile, plus Job Posting) stacked vertically. Once an optimization run completes, the page is reportedly 15-20 screens of scrolling, a real risk that users won't read through it or won't discover value further down (e.g. Cover Letter, Interview Prep, LinkedIn Profile near the bottom). Everything is rendered flat and expanded at once, with no hierarchy of "what matters most" vs "supporting detail."
+
+- The first fix should be to collapse all sections by default and expand only the first section with ATS analysis results
+
+---
+
+### UX/UI - CV optimization page - split results into 2 groups displayed in separate tabs
+
+**status: todo**
+**time:**
+
+Split result sections into two groups by content type, shown as separate tabs (or eventually separate routes), instead of one long page mixing both:
+
+Group A — "CV Analysis": ATS Analysis, Keyword Gap, Summary Rewrite, Bullet Upgrades. These relate directly to editing/improving the resume itself.
+Group B — "Additional Materials": Cover Letter, Interview Prep, LinkedIn Profile. Supplementary job-application materials, not resume edits.
+
+---
+
+### UX/UI - CV optimization page - add scorecard / compact summary of section's results
+
+**status: todo**
+
+**time:**
+
+- add scorecard or short summary with section's results, below the section header, when section card is in collapsed state, to instantly show user some preview of results.
+
+---
+
+### UI/UX - Keyword Gap section
+
+**status: todo**
+
+**time:**
+
+- Do we need all informations that are currently displayed,
+- missing keywords should be visible more, its the most important part of this section,
+- Acronym issues and underweighted keywords - think of what we can do with those sections, are they mportant, should we display them, how we could apply the acronym issues
+
+---
+
+### UX/UI - Update section with 3-step process on homepage
 
 **status: todo**
 **time:**
@@ -1235,16 +1283,6 @@ Implement a guided tour specific to the cv-optimization page, highlighting its k
 
 ---
 
-### UX - Too much informations on cv-optimizations page
-
-**status: todo**
-**time:**
-
-- there is a lot of informations on cv-optimization page, it might be overwhelmig for the user,
-- maybe the additional materials should be moved to new page?
-
----
-
 ### UX - create animations or video on how to use the app
 
 **status: todo**
@@ -1252,12 +1290,6 @@ Implement a guided tour specific to the cv-optimization page, highlighting its k
 
 - create animations or video with the process of using the app - from upload to pasting job offer to running optimization process and then exporting cv
 - put it on the homepage
-
----
-
-### Keyword Gap - Acronym issues and underweighted keywords
-
-- think of what we can do with those sections, are tey mportant, should we display them, how we could apply the acronym issues
 
 ---
 

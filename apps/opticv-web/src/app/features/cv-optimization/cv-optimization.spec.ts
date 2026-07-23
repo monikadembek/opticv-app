@@ -1645,6 +1645,88 @@ describe('CvOptimization', () => {
     });
   });
 
+  describe('default-collapse effect', () => {
+    it('leaves collapsedSections empty while pageState is initial', () => {
+      component.jobApplicationId.set(null);
+      fixture.detectChanges();
+
+      expect(component.collapsedSections().size).toBe(0);
+    });
+
+    it('collapses all sections except RESUME_AUTOPSY on first transition to processing', () => {
+      component.jobApplicationId.set('job-1');
+      component.isProcessing.set(new Map([[PromptType.RESUME_AUTOPSY, true]]));
+      fixture.detectChanges();
+
+      const expectedCollapsed = component
+        .allSectionIds()
+        .filter((id) => id !== PromptType.RESUME_AUTOPSY);
+
+      for (const id of expectedCollapsed) {
+        expect(component.isSectionCollapsed(id)).toBe(true);
+      }
+      expect(component.isSectionCollapsed(PromptType.RESUME_AUTOPSY)).toBe(
+        false,
+      );
+    });
+
+    it('applies the same default collapse when a stored optimization is loaded', async () => {
+      await createComponent({ jobApplicationId: 'job-app-id-1' });
+      fixture.detectChanges();
+
+      expect(component.pageState()).toBe('completed');
+      const expectedCollapsed = component
+        .allSectionIds()
+        .filter((id) => id !== PromptType.RESUME_AUTOPSY);
+
+      for (const id of expectedCollapsed) {
+        expect(component.isSectionCollapsed(id)).toBe(true);
+      }
+      expect(component.isSectionCollapsed(PromptType.RESUME_AUTOPSY)).toBe(
+        false,
+      );
+    });
+
+    it('does not re-apply defaults after the user manually changes collapsedSections', () => {
+      component.jobApplicationId.set('job-1');
+      component.isProcessing.set(new Map([[PromptType.RESUME_AUTOPSY, true]]));
+      fixture.detectChanges();
+
+      component.onSectionCollapsedChange(PromptType.KEYWORD_GAP, false);
+      fixture.detectChanges();
+
+      expect(component.isSectionCollapsed(PromptType.KEYWORD_GAP)).toBe(false);
+
+      // Trigger another pageState-affecting change; the effect must not
+      // overwrite the user's manual choice since initializedDefaults is set.
+      component.isProcessing.set(
+        new Map([[PromptType.RESUME_AUTOPSY, false]]),
+      );
+      fixture.detectChanges();
+
+      expect(component.isSectionCollapsed(PromptType.KEYWORD_GAP)).toBe(false);
+    });
+
+    it('re-applies the default collapse on a second runOptimization call', () => {
+      apiService.streamOptimizationEvents.mockReturnValue(NEVER);
+
+      component.runOptimization(mockJobSubmittedData);
+      fixture.detectChanges();
+
+      component.onSectionCollapsedChange(PromptType.KEYWORD_GAP, false);
+      fixture.detectChanges();
+      expect(component.isSectionCollapsed(PromptType.KEYWORD_GAP)).toBe(false);
+
+      component.runOptimization(mockJobSubmittedData);
+      fixture.detectChanges();
+
+      expect(component.isSectionCollapsed(PromptType.KEYWORD_GAP)).toBe(true);
+      expect(component.isSectionCollapsed(PromptType.RESUME_AUTOPSY)).toBe(
+        false,
+      );
+    });
+  });
+
   describe('allSectionsCollapsed / toggleAllSections', () => {
     it('is false by default when no sections are collapsed', () => {
       expect(component.allSectionsCollapsed()).toBe(false);
