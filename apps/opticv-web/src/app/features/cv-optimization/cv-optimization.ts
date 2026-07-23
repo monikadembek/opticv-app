@@ -253,6 +253,7 @@ export class CvOptimization implements OnInit {
   private readonly breakpointObserver = inject(BreakpointObserver);
   readonly activeSection = signal<string>(PromptType.RESUME_AUTOPSY);
   readonly collapsedSections = signal<ReadonlySet<string>>(new Set());
+  private readonly initializedDefaults = signal(false);
 
   readonly autopsyResult = computed<ResumeAutopsyResult | null>(() => {
     const r = this.results().get(PromptType.RESUME_AUTOPSY)?.result;
@@ -444,6 +445,19 @@ export class CvOptimization implements OnInit {
         scrollScheduled = true;
         setTimeout(() => window.scrollTo({ top: 0 }), 300);
       }
+    });
+
+    effect(() => {
+      const state = this.pageState();
+      if (this.initializedDefaults()) return;
+      if (state === 'initial') return;
+
+      this.collapsedSections.set(
+        new Set(
+          this.allSectionIds().filter((id) => id !== PromptType.RESUME_AUTOPSY),
+        ),
+      );
+      this.initializedDefaults.set(true);
     });
   }
 
@@ -693,6 +707,7 @@ export class CvOptimization implements OnInit {
   runOptimization({ jobApplication, extractedData }: JobSubmittedData): void {
     this.results.set(new Map());
     this.isProcessing.set(new Map());
+    this.initializedDefaults.set(false);
     this.selections.set({
       selectedSummaryAngle: null,
       customSummaryText: null,
