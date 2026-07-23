@@ -1,7 +1,10 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import type { LimitedFeature, QuotaStatus, SubscriptionTier } from '@opticv/datatypes';
 import { TIER_LIMITS } from '@opticv/datatypes';
+import { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+
+const UNIQUE_CONSTRAINT_VIOLATION = 'P2002';
 
 @Injectable()
 export class QuotaService {
@@ -37,11 +40,25 @@ export class QuotaService {
     }
 
     const consumed = await this.prisma.$transaction(async (tx) => {
-      const row = await tx.usageQuota.upsert({
-        where: { userId_feature_periodStart: { userId, feature, periodStart } },
-        create: { userId, feature, periodStart, count: 0 },
-        update: {},
-      });
+      let row;
+      try {
+        row = await tx.usageQuota.upsert({
+          where: { userId_feature_periodStart: { userId, feature, periodStart } },
+          create: { userId, feature, periodStart, count: 0 },
+          update: {},
+        });
+      } catch (error) {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === UNIQUE_CONSTRAINT_VIOLATION
+        ) {
+          row = await tx.usageQuota.findUniqueOrThrow({
+            where: { userId_feature_periodStart: { userId, feature, periodStart } },
+          });
+        } else {
+          throw error;
+        }
+      }
 
       const result = await tx.usageQuota.updateMany({
         where: { id: row.id, count: { lt: limit } },
