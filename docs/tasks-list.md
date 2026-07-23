@@ -1196,7 +1196,7 @@ Implement:
 
 ### 96. UX/UI - CV optimization page - collapse all sections by default, expand first
 
-**status: in progress**
+**status: done**
 
 **time: 22.07.2026 - 23.07.2026**
 
