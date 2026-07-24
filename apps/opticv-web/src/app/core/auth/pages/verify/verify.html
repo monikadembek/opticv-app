@@ -29,9 +29,10 @@
             name="code"
             required
             [length]="6"
+            [minlength]="6"
             [integerOnly]="true"
           />
-          @if (otpModel.invalid && otpModel.dirty) {
+          @if (otpModel.invalid && (otpModel.touched || otpForm.submitted) ) {
           <p-message severity="error" size="small" variant="simple">
             Please enter the 6-digit code.
           </p-message>
@@ -42,7 +43,7 @@
           pButton
           type="submit"
           [loading]="isSubmitting()"
-          [disabled]="otpModel.invalid || !code"
+          [disabled]="isSubmitting()"
           class="auth-submit-btn"
         >
           <span pButtonLabel>Verify and sign in</span>

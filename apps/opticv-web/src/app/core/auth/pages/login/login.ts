@@ -38,10 +38,10 @@ export class Login {
 
   async onSubmit(loginForm: NgForm) {
     this.errorMessage.set('');
-    this.isSubmitting.set(true);
     const { email } = loginForm.form.value;
 
     if (loginForm.valid && email.length > 0) {
+      this.isSubmitting.set(true);
       const { error } = await this.supabase.signInWithOtp(email);
       if (!error) {
         posthog.capture('supabase_signinwithotp_executed', {
