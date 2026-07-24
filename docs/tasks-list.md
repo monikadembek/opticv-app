@@ -1208,15 +1208,66 @@ The CV optimization results page (cv-optimization.html/.ts) renders 7-9 result s
 
 ---
 
-### UX/UI - CV optimization page - split results into 2 groups displayed in separate tabs
+### 97. UX/UI - CV optimization page - split results into 2 groups displayed in separate tabs
 
-**status: todo**
-**time:**
+**status: in progress**
+
+**time: 23.07.2026 - 24.07.2026**
 
 Split result sections into two groups by content type, shown as separate tabs (or eventually separate routes), instead of one long page mixing both:
 
 Group A — "CV Analysis": ATS Analysis, Keyword Gap, Summary Rewrite, Bullet Upgrades. These relate directly to editing/improving the resume itself.
 Group B — "Additional Materials": Cover Letter, Interview Prep, LinkedIn Profile. Supplementary job-application materials, not resume edits.
+
+---
+
+### 98. Bug - Race condition error in usageQuota
+
+**status: done**
+
+**time: 23.07.2026**
+
+**Prisma quota race condition**
+
+Here's what's happening:
+
+The bug: a classic upsert race condition.
+
+checkAndConsume does this inside a transaction:
+
+const row = await tx.usageQuota.upsert({
+where: { userId_feature_periodStart: { userId, feature, periodStart } },
+create: { userId, feature, periodStart, count: 0 },
+update: {},
+});
+
+upsert is not atomic at the database level the way you'd hope — Prisma implements it as roughly "try to find/insert, and if a unique constraint violation happens during the insert, retry as an update." When two requests for the same (userId, feature, periodStart) arrive close together (e.g. a double-click, a retry, or two tabs), both transactions can simultaneously determine "no row exists yet" and both attempt to INSERT. Postgres's unique constraint on (userId, feature, periodStart) correctly allows only one insert to succeed — the second raises exactly this error: PrismaClientKnownRequestError ... Unique constraint failed on the fields: (userId, feature, periodStart). Prisma surfaces this as an unhandled exception rather than silently retrying the upsert as an update.
+
+In this specific stack trace, it happened on the first call of the month for that user+feature (RESUME_AUTOPSY → some feature), since that's the only time the row doesn't already exist and the create branch of the upsert is exercised. Once the row exists, subsequent calls hit the update: {} branch of the upsert without issue — only concurrent first calls collide.
+
+Why it's "unhandled" (handled: no): nothing in checkAndConsume or its caller (OptimizationService.triggerSingleJob) catches PrismaClientKnownRequestError with code P2002 (unique constraint violation), so it bubbles up to the global exception filter and gets reported as a 500 to the client — the user's RESUME_AUTOPSY run failed even though quota logic itself is conceptually fine.
+
+Likely trigger: the user probably double-submitted the run (double click, or a retry from the frontend/network layer) so two run/RESUME_AUTOPSY requests landed at nearly the same time for the same job application/user.
+
+No code changes made, per your request — let me know if you'd like me to suggest/implement a fix (e.g., catching P2002 and retrying, or restructuring as createMany ... skipDuplicates followed by the updateMany).
+
+**Fix summary**
+
+apps/opticv-be/src/app/quota/quota.service.ts — checkAndConsume now catches the race where two concurrent requests both try to INSERT the first usageQuota row for a (userId, feature, periodStart) combo. On a P2002 unique-constraint violation, it re-fetches the now-existing row via findUniqueOrThrow instead of letting the error bubble up as an unhandled 500.
+
+No other behavior changed — the quota-limit check (updateMany with count: { lt: limit }) still runs the same way after the row is resolved.
+
+---
+
+### 99. UI/UX - Keyword Gap section
+
+**status: todo**
+
+**time:**
+
+- Do we need all informations that are currently displayed,
+- missing keywords should be visible more, its the most important part of this section,
+- Acronym issues and underweighted keywords - think of what we can do with those sections, are they mportant, should we display them, how we could apply the acronym issues
 
 ---
 
@@ -1230,15 +1281,21 @@ Group B — "Additional Materials": Cover Letter, Interview Prep, LinkedIn Profi
 
 ---
 
-### UI/UX - Keyword Gap section
+### Login form, Verify form - unblock submit button by default
+
+---
+
+### Security check - especially related to AI attacks
 
 **status: todo**
 
 **time:**
 
-- Do we need all informations that are currently displayed,
-- missing keywords should be visible more, its the most important part of this section,
-- Acronym issues and underweighted keywords - think of what we can do with those sections, are they mportant, should we display them, how we could apply the acronym issues
+- get to know about security in terms of AI, what kind of attacks the app should be protected from
+
+---
+
+### Remove text "2 minutes tour" from welcome guide - makes user want to close welcome guide straight away
 
 ---
 

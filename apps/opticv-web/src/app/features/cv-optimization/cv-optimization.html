@@ -14,6 +14,7 @@
 <app-mobile-tabs
   [activeSection]="activeSection()"
   [statuses]="sectionStatuses()"
+  [activeTab]="activeResultsTab()"
   (sectionClicked)="handleSectionClick($event)"
 />
 }
@@ -28,6 +29,7 @@
     [atsScore]="projectedAtsScore() ?? atsScore()"
     [keywordScore]="liveKeywordScore()"
     [pageState]="pageState()"
+    [activeTab]="activeResultsTab()"
     (sectionClicked)="handleSectionClick($event)"
     (toggleClicked)="sidebarExpanded.set(!sidebarExpanded())"
   />
@@ -127,325 +129,355 @@
       </div>
       }
 
-      <!-- ATS Analysis -->
-      <app-section-card
-        [sectionId]="PromptType.RESUME_AUTOPSY"
-        icon="pi-chart-bar"
-        title="ATS Analysis"
-        [status]="sectionStatus(PromptType.RESUME_AUTOPSY)"
-        [collapsed]="isSectionCollapsed(PromptType.RESUME_AUTOPSY)"
-        (collapsedChange)="onSectionCollapsedChange(PromptType.RESUME_AUTOPSY, $event)"
-        helpTitle="ATS Analysis Section"
+      <p-tabs
+        [value]="activeResultsTab()"
+        (valueChange)="onResultsTabChanged($event)"
       >
-        @if (autopsyResult()) {
-        <app-ats-score
-          [data]="autopsyResult()!"
-          [projectedScore]="projectedAtsScore()"
-        />
-        } @if (retryablePromptTypes().has(PromptType.RESUME_AUTOPSY)) {
-        <div class="retry-action">
-          <p-button
-            label="Retry"
-            ariaLabel="Retry ATS Analysis"
-            icon="pi pi-refresh"
-            severity="warn"
-            size="small"
-            [disabled]="isProcessing().get(PromptType.RESUME_AUTOPSY) ?? false"
-            (onClick)="retryOptimization(PromptType.RESUME_AUTOPSY)"
-          />
-        </div>
-        }
-        <div sectionHelp>
-          <h2 class="font-semibold mb-4">What it is and why it matters</h2>
-          <p class="mb-2">
-            <strong>Applicant Tracking Systems (ATS)</strong> are software that
-            many companies use to automatically scan and filter resumes before a
-            human ever sees them.
-          </p>
-          <p>
-            Displayed in this section ATS score estimates how well your CV would
-            perform in that scan, based on formatting, structure, and content
-            match to the job posting. A higher score means your CV is less
-            likely to get filtered out automatically.
-          </p>
-        </div>
-      </app-section-card>
+        <p-tablist>
+          <p-tab value="cv-analysis">Resume Analysis</p-tab>
+          <p-tab value="additional-materials">Additional Materials</p-tab>
+        </p-tablist>
+        <p-tabpanels>
+          <p-tabpanel value="cv-analysis">
+            <!-- ATS Analysis -->
+            <app-section-card
+              [sectionId]="PromptType.RESUME_AUTOPSY"
+              icon="pi-chart-bar"
+              title="ATS Analysis"
+              [status]="sectionStatus(PromptType.RESUME_AUTOPSY)"
+              [collapsed]="isSectionCollapsed(PromptType.RESUME_AUTOPSY)"
+              (collapsedChange)="onSectionCollapsedChange(PromptType.RESUME_AUTOPSY, $event)"
+              helpTitle="ATS Analysis Section"
+            >
+              @if (autopsyResult()) {
+              <app-ats-score
+                [data]="autopsyResult()!"
+                [projectedScore]="projectedAtsScore()"
+              />
+              } @if (retryablePromptTypes().has(PromptType.RESUME_AUTOPSY)) {
+              <div class="retry-action">
+                <p-button
+                  label="Retry"
+                  ariaLabel="Retry ATS Analysis"
+                  icon="pi pi-refresh"
+                  severity="warn"
+                  size="small"
+                  [disabled]="isProcessing().get(PromptType.RESUME_AUTOPSY) ?? false"
+                  (onClick)="retryOptimization(PromptType.RESUME_AUTOPSY)"
+                />
+              </div>
+              }
+              <div sectionHelp>
+                <h2 class="font-semibold mb-4">
+                  What it is and why it matters
+                </h2>
+                <p class="mb-2">
+                  <strong>Applicant Tracking Systems (ATS)</strong> are software
+                  that many companies use to automatically scan and filter
+                  resumes before a human ever sees them.
+                </p>
+                <p>
+                  Displayed in this section ATS score estimates how well your CV
+                  would perform in that scan, based on formatting, structure,
+                  and content match to the job posting. A higher score means
+                  your CV is less likely to get filtered out automatically.
+                </p>
+              </div>
+            </app-section-card>
 
-      <!-- Keyword Gap -->
-      <app-section-card
-        [sectionId]="PromptType.KEYWORD_GAP"
-        icon="pi-key"
-        title="Keyword Gap"
-        [status]="sectionStatus(PromptType.KEYWORD_GAP)"
-        [collapsed]="isSectionCollapsed(PromptType.KEYWORD_GAP)"
-        (collapsedChange)="onSectionCollapsedChange(PromptType.KEYWORD_GAP, $event)"
-        helpTitle="Keyword Gap Section"
-      >
-        @if (keywordGapResult()) {
-        <app-keyword-gap
-          [result]="recomputedKeywordGapResult()!"
-          [selectedKeywords]="selections().selectedKeywords"
-          [keywordEdits]="keywordEdits()"
-          [activeKeywordEditKey]="activeKeywordEditKey()"
-          [editedKeywordText]="editedKeywordText()"
-          [experiencePositions]="experiencePositionLabels()"
-          [keywordBulletPositions]="keywordBulletPositions()"
-          (keywordToggled)="onKeywordToggled($event)"
-          (keywordEditStarted)="onKeywordEditStarted($event)"
-          (keywordEditSaved)="onKeywordEditSaved($event)"
-          (keywordEditCancelled)="onKeywordEditCancelled()"
-          (keywordEditTextChanged)="onKeywordEditTextChanged($event)"
-          (keywordBulletPositionSelected)="onKeywordBulletPositionSelected($event)"
-        />
-        } @if (retryablePromptTypes().has(PromptType.KEYWORD_GAP)) {
-        <div class="retry-action">
-          <p-button
-            label="Retry"
-            ariaLabel="Retry Keyword Gap Analysis"
-            icon="pi pi-refresh"
-            severity="warn"
-            size="small"
-            [disabled]="isProcessing().get(PromptType.KEYWORD_GAP) ?? false"
-            (onClick)="retryOptimization(PromptType.KEYWORD_GAP)"
-          />
-        </div>
-        }
-        <div sectionHelp>
-          <h2 class="font-semibold mb-4">What it is and why it matters</h2>
-          <p class="mb-2">
-            ATS software and recruiters scan content of your resume for specific
-            keywords (skills, tools, job titles) mentioned in the job posting.
-            If your CV is missing terms the employer explicitly asked for, it
-            can be scored lower or skipped entirely, even if you have the
-            underlying experience.
-          </p>
-          <p>
-            This section shows which important keywords from the job description
-            are missing from your CV, so you can add the ones that genuinely
-            apply to you.
-          </p>
-        </div>
-      </app-section-card>
+            <!-- Keyword Gap -->
+            <app-section-card
+              [sectionId]="PromptType.KEYWORD_GAP"
+              icon="pi-key"
+              title="Keyword Gap"
+              [status]="sectionStatus(PromptType.KEYWORD_GAP)"
+              [collapsed]="isSectionCollapsed(PromptType.KEYWORD_GAP)"
+              (collapsedChange)="onSectionCollapsedChange(PromptType.KEYWORD_GAP, $event)"
+              helpTitle="Keyword Gap Section"
+            >
+              @if (keywordGapResult()) {
+              <app-keyword-gap
+                [result]="recomputedKeywordGapResult()!"
+                [selectedKeywords]="selections().selectedKeywords"
+                [keywordEdits]="keywordEdits()"
+                [activeKeywordEditKey]="activeKeywordEditKey()"
+                [editedKeywordText]="editedKeywordText()"
+                [experiencePositions]="experiencePositionLabels()"
+                [keywordBulletPositions]="keywordBulletPositions()"
+                (keywordToggled)="onKeywordToggled($event)"
+                (keywordEditStarted)="onKeywordEditStarted($event)"
+                (keywordEditSaved)="onKeywordEditSaved($event)"
+                (keywordEditCancelled)="onKeywordEditCancelled()"
+                (keywordEditTextChanged)="onKeywordEditTextChanged($event)"
+                (keywordBulletPositionSelected)="onKeywordBulletPositionSelected($event)"
+              />
+              } @if (retryablePromptTypes().has(PromptType.KEYWORD_GAP)) {
+              <div class="retry-action">
+                <p-button
+                  label="Retry"
+                  ariaLabel="Retry Keyword Gap Analysis"
+                  icon="pi pi-refresh"
+                  severity="warn"
+                  size="small"
+                  [disabled]="isProcessing().get(PromptType.KEYWORD_GAP) ?? false"
+                  (onClick)="retryOptimization(PromptType.KEYWORD_GAP)"
+                />
+              </div>
+              }
+              <div sectionHelp>
+                <h2 class="font-semibold mb-4">
+                  What it is and why it matters
+                </h2>
+                <p class="mb-2">
+                  ATS software and recruiters scan content of your resume for
+                  specific keywords (skills, tools, job titles) mentioned in the
+                  job posting. If your CV is missing terms the employer
+                  explicitly asked for, it can be scored lower or skipped
+                  entirely, even if you have the underlying experience.
+                </p>
+                <p>
+                  This section shows which important keywords from the job
+                  description are missing from your CV, so you can add the ones
+                  that genuinely apply to you.
+                </p>
+              </div>
+            </app-section-card>
 
-      <!-- Summary Rewrite -->
-      <app-section-card
-        [sectionId]="PromptType.SUMMARY_REWRITE"
-        icon="pi-pen-to-square"
-        title="Summary Rewrite"
-        [status]="sectionStatus(PromptType.SUMMARY_REWRITE)"
-        [collapsed]="isSectionCollapsed(PromptType.SUMMARY_REWRITE)"
-        (collapsedChange)="onSectionCollapsedChange(PromptType.SUMMARY_REWRITE, $event)"
-        helpTitle="Summary Rewrite Section"
-      >
-        @if (summaryRewriteResult()) {
-        <app-summary-rewrite
-          [result]="summaryRewriteResult()!"
-          [selectedAngle]="selections().selectedSummaryAngle"
-          (angleSelected)="onAngleSelected($event)"
-          (angleReset)="onAngleReset()"
-          (summaryTextEdited)="onSummaryTextEdited($event)"
-        />
-        } @if (retryablePromptTypes().has(PromptType.SUMMARY_REWRITE)) {
-        <div class="retry-action">
-          <p-button
-            label="Retry"
-            ariaLabel="Retry Summary Rewrite"
-            icon="pi pi-refresh"
-            severity="warn"
-            size="small"
-            [disabled]="isProcessing().get(PromptType.SUMMARY_REWRITE) ?? false"
-            (onClick)="retryOptimization(PromptType.SUMMARY_REWRITE)"
-          />
-        </div>
-        }
-        <div sectionHelp>
-          <h2 class="font-semibold mb-4">What it is and why it matters</h2>
-          <p>
-            Your professional summary is often the first thing an ATS parses and
-            the first thing a recruiter reads. These rewritten versions are
-            tailored to echo the language and priorities of the job posting,
-            helping both the algorithm and the human reviewer quickly see you're
-            a match.
-          </p>
-        </div>
-      </app-section-card>
+            <!-- Summary Rewrite -->
+            <app-section-card
+              [sectionId]="PromptType.SUMMARY_REWRITE"
+              icon="pi-pen-to-square"
+              title="Summary Rewrite"
+              [status]="sectionStatus(PromptType.SUMMARY_REWRITE)"
+              [collapsed]="isSectionCollapsed(PromptType.SUMMARY_REWRITE)"
+              (collapsedChange)="onSectionCollapsedChange(PromptType.SUMMARY_REWRITE, $event)"
+              helpTitle="Summary Rewrite Section"
+            >
+              @if (summaryRewriteResult()) {
+              <app-summary-rewrite
+                [result]="summaryRewriteResult()!"
+                [selectedAngle]="selections().selectedSummaryAngle"
+                (angleSelected)="onAngleSelected($event)"
+                (angleReset)="onAngleReset()"
+                (summaryTextEdited)="onSummaryTextEdited($event)"
+              />
+              } @if (retryablePromptTypes().has(PromptType.SUMMARY_REWRITE)) {
+              <div class="retry-action">
+                <p-button
+                  label="Retry"
+                  ariaLabel="Retry Summary Rewrite"
+                  icon="pi pi-refresh"
+                  severity="warn"
+                  size="small"
+                  [disabled]="isProcessing().get(PromptType.SUMMARY_REWRITE) ?? false"
+                  (onClick)="retryOptimization(PromptType.SUMMARY_REWRITE)"
+                />
+              </div>
+              }
+              <div sectionHelp>
+                <h2 class="font-semibold mb-4">
+                  What it is and why it matters
+                </h2>
+                <p>
+                  Your professional summary is often the first thing an ATS
+                  parses and the first thing a recruiter reads. These rewritten
+                  versions are tailored to echo the language and priorities of
+                  the job posting, helping both the algorithm and the human
+                  reviewer quickly see you're a match.
+                </p>
+              </div>
+            </app-section-card>
 
-      <!-- Bullet Upgrades -->
-      <app-section-card
-        [sectionId]="PromptType.BULLET_UPGRADE"
-        icon="pi-list-check"
-        title="Bullet Upgrades"
-        [status]="sectionStatus(PromptType.BULLET_UPGRADE)"
-        [collapsed]="isSectionCollapsed(PromptType.BULLET_UPGRADE)"
-        (collapsedChange)="onSectionCollapsedChange(PromptType.BULLET_UPGRADE, $event)"
-        helpTitle="Bullet Upgrades Section"
-      >
-        @if (bulletUpgradeResult()) {
-        <app-bullet-rewriter
-          [result]="bulletUpgradeResult()!"
-          [selectedBullets]="selections().selectedBullets"
-          [bulletEdits]="bulletEdits()"
-          [activeBulletEditKey]="activeBulletEditKey()"
-          [editedBulletText]="editedBulletText()"
-          [selectedMissingBullets]="selectedMissingBullets()"
-          [missingBulletEdits]="missingBulletEdits()"
-          [removedBullets]="removedBullets()"
-          (bulletToggled)="onBulletToggled($event)"
-          (editStarted)="onBulletEditStarted($event)"
-          (editSaved)="onBulletEditSaved($event)"
-          (editCancelled)="onBulletEditCancelled()"
-          (editTextChanged)="onBulletEditTextChanged($event)"
-          (missingBulletToggled)="onMissingBulletToggled($event)"
-          (missingBulletEditStarted)="onMissingBulletEditStarted($event)"
-          (missingBulletEditSaved)="onMissingBulletEditSaved($event)"
-          (removedBulletToggled)="onRemovedBulletToggled($event)"
-        />
-        } @if (retryablePromptTypes().has(PromptType.BULLET_UPGRADE)) {
-        <div class="retry-action">
-          <p-button
-            label="Retry"
-            ariaLabel="Retry Bullet Upgrades"
-            icon="pi pi-refresh"
-            severity="warn"
-            size="small"
-            [disabled]="isProcessing().get(PromptType.BULLET_UPGRADE) ?? false"
-            (onClick)="retryOptimization(PromptType.BULLET_UPGRADE)"
-          />
-        </div>
-        }
-        <div sectionHelp>
-          <h2 class="font-semibold mb-4">What it is and why it matters</h2>
-          <p>
-            Strong, quantified bullet points (using action verbs and metrics)
-            score better with ATS parsing and are easier for recruiters to skim.
-            These suggestions rewrite your existing bullets and propose new ones
-            to better reflect the responsibilities and keywords the job posting
-            emphasizes.
-          </p>
-        </div>
-      </app-section-card>
+            <!-- Bullet Upgrades -->
+            <app-section-card
+              [sectionId]="PromptType.BULLET_UPGRADE"
+              icon="pi-list-check"
+              title="Bullet Upgrades"
+              [status]="sectionStatus(PromptType.BULLET_UPGRADE)"
+              [collapsed]="isSectionCollapsed(PromptType.BULLET_UPGRADE)"
+              (collapsedChange)="onSectionCollapsedChange(PromptType.BULLET_UPGRADE, $event)"
+              helpTitle="Bullet Upgrades Section"
+            >
+              @if (bulletUpgradeResult()) {
+              <app-bullet-rewriter
+                [result]="bulletUpgradeResult()!"
+                [selectedBullets]="selections().selectedBullets"
+                [bulletEdits]="bulletEdits()"
+                [activeBulletEditKey]="activeBulletEditKey()"
+                [editedBulletText]="editedBulletText()"
+                [selectedMissingBullets]="selectedMissingBullets()"
+                [missingBulletEdits]="missingBulletEdits()"
+                [removedBullets]="removedBullets()"
+                (bulletToggled)="onBulletToggled($event)"
+                (editStarted)="onBulletEditStarted($event)"
+                (editSaved)="onBulletEditSaved($event)"
+                (editCancelled)="onBulletEditCancelled()"
+                (editTextChanged)="onBulletEditTextChanged($event)"
+                (missingBulletToggled)="onMissingBulletToggled($event)"
+                (missingBulletEditStarted)="onMissingBulletEditStarted($event)"
+                (missingBulletEditSaved)="onMissingBulletEditSaved($event)"
+                (removedBulletToggled)="onRemovedBulletToggled($event)"
+              />
+              } @if (retryablePromptTypes().has(PromptType.BULLET_UPGRADE)) {
+              <div class="retry-action">
+                <p-button
+                  label="Retry"
+                  ariaLabel="Retry Bullet Upgrades"
+                  icon="pi pi-refresh"
+                  severity="warn"
+                  size="small"
+                  [disabled]="isProcessing().get(PromptType.BULLET_UPGRADE) ?? false"
+                  (onClick)="retryOptimization(PromptType.BULLET_UPGRADE)"
+                />
+              </div>
+              }
+              <div sectionHelp>
+                <h2 class="font-semibold mb-4">
+                  What it is and why it matters
+                </h2>
+                <p>
+                  Strong, quantified bullet points (using action verbs and
+                  metrics) score better with ATS parsing and are easier for
+                  recruiters to skim. These suggestions rewrite your existing
+                  bullets and propose new ones to better reflect the
+                  responsibilities and keywords the job posting emphasizes.
+                </p>
+              </div>
+            </app-section-card>
+          </p-tabpanel>
+          <p-tabpanel value="additional-materials">
+            <!-- Cover Letter -->
+            <app-section-card
+              [sectionId]="PromptType.COVER_LETTER"
+              icon="pi-file-edit"
+              title="Cover Letter"
+              [status]="sectionStatus(PromptType.COVER_LETTER)"
+              [collapsed]="isSectionCollapsed(PromptType.COVER_LETTER)"
+              (collapsedChange)="onSectionCollapsedChange(PromptType.COVER_LETTER, $event)"
+              helpTitle="Cover Letter Section"
+            >
+              @if (coverLetterResult()) {
+              <app-cover-letter-editor
+                [result]="coverLetterResult()!"
+                [initialSelectedVariant]="selectedCoverLetterVariant()"
+                [initialEditedContent]="editedCoverLetterContent()"
+                (variantSelected)="onCoverLetterVariantSelected($event)"
+                (contentEdited)="onCoverLetterTextEdited($event)"
+              />
+              } @if (retryablePromptTypes().has(PromptType.COVER_LETTER)) {
+              <div class="retry-action">
+                <p-button
+                  label="Retry"
+                  ariaLabel="Retry Cover Letter"
+                  icon="pi pi-refresh"
+                  severity="warn"
+                  size="small"
+                  [disabled]="isProcessing().get(PromptType.COVER_LETTER) ?? false"
+                  (onClick)="retryOptimization(PromptType.COVER_LETTER)"
+                />
+              </div>
+              }
+              <div sectionHelp>
+                <h2 class="font-semibold mb-4">
+                  What it is and why it matters
+                </h2>
+                <p>
+                  A tailored cover letter reinforces the keywords and
+                  qualifications from your CV and directly addresses the job
+                  posting, which can help both ATS matching (some systems scan
+                  cover letters too) and human reviewers. Pick the variant that
+                  best fits your voice, then edit freely.
+                </p>
+              </div>
+            </app-section-card>
 
-      <!-- Cover Letter -->
-      <app-section-card
-        [sectionId]="PromptType.COVER_LETTER"
-        icon="pi-file-edit"
-        title="Cover Letter"
-        [status]="sectionStatus(PromptType.COVER_LETTER)"
-        [collapsed]="isSectionCollapsed(PromptType.COVER_LETTER)"
-        (collapsedChange)="onSectionCollapsedChange(PromptType.COVER_LETTER, $event)"
-        helpTitle="Cover Letter Section"
-      >
-        @if (coverLetterResult()) {
-        <app-cover-letter-editor
-          [result]="coverLetterResult()!"
-          [initialSelectedVariant]="selectedCoverLetterVariant()"
-          [initialEditedContent]="editedCoverLetterContent()"
-          (variantSelected)="onCoverLetterVariantSelected($event)"
-          (contentEdited)="onCoverLetterTextEdited($event)"
-        />
-        } @if (retryablePromptTypes().has(PromptType.COVER_LETTER)) {
-        <div class="retry-action">
-          <p-button
-            label="Retry"
-            ariaLabel="Retry Cover Letter"
-            icon="pi pi-refresh"
-            severity="warn"
-            size="small"
-            [disabled]="isProcessing().get(PromptType.COVER_LETTER) ?? false"
-            (onClick)="retryOptimization(PromptType.COVER_LETTER)"
-          />
-        </div>
-        }
-        <div sectionHelp>
-          <h2 class="font-semibold mb-4">What it is and why it matters</h2>
-          <p>
-            A tailored cover letter reinforces the keywords and qualifications
-            from your CV and directly addresses the job posting, which can help
-            both ATS matching (some systems scan cover letters too) and human
-            reviewers. Pick the variant that best fits your voice, then edit
-            freely.
-          </p>
-        </div>
-      </app-section-card>
+            <!-- Interview Prep -->
+            <app-section-card
+              [sectionId]="PromptType.INTERVIEW_PREP"
+              icon="pi-comments"
+              title="Interview Prep"
+              [status]="sectionStatus(PromptType.INTERVIEW_PREP)"
+              [collapsed]="isSectionCollapsed(PromptType.INTERVIEW_PREP)"
+              (collapsedChange)="onSectionCollapsedChange(PromptType.INTERVIEW_PREP, $event)"
+              helpTitle="Interview Prep Section"
+            >
+              @if (interviewPrepResult()) {
+              <app-interview-prep [result]="interviewPrepResult()!" />
+              } @if (retryablePromptTypes().has(PromptType.INTERVIEW_PREP)) {
+              <div class="retry-action">
+                <p-button
+                  label="Retry"
+                  ariaLabel="Retry Interview Prep"
+                  icon="pi pi-refresh"
+                  severity="warn"
+                  size="small"
+                  [disabled]="isProcessing().get(PromptType.INTERVIEW_PREP) ?? false"
+                  (onClick)="retryOptimization(PromptType.INTERVIEW_PREP)"
+                />
+              </div>
+              }
+              <div sectionHelp>
+                <h2 class="font-semibold mb-4">
+                  What it is and why it matters
+                </h2>
+                <p>
+                  Based on the gap between your CV and this job posting, these
+                  are likely interview questions and talking points which can
+                  help you prepare answers that address exactly what this
+                  employer is looking for.
+                </p>
+              </div>
+            </app-section-card>
 
-      <!-- Interview Prep -->
-      <app-section-card
-        [sectionId]="PromptType.INTERVIEW_PREP"
-        icon="pi-comments"
-        title="Interview Prep"
-        [status]="sectionStatus(PromptType.INTERVIEW_PREP)"
-        [collapsed]="isSectionCollapsed(PromptType.INTERVIEW_PREP)"
-        (collapsedChange)="onSectionCollapsedChange(PromptType.INTERVIEW_PREP, $event)"
-        helpTitle="Interview Prep Section"
-      >
-        @if (interviewPrepResult()) {
-        <app-interview-prep [result]="interviewPrepResult()!" />
-        } @if (retryablePromptTypes().has(PromptType.INTERVIEW_PREP)) {
-        <div class="retry-action">
-          <p-button
-            label="Retry"
-            ariaLabel="Retry Interview Prep"
-            icon="pi pi-refresh"
-            severity="warn"
-            size="small"
-            [disabled]="isProcessing().get(PromptType.INTERVIEW_PREP) ?? false"
-            (onClick)="retryOptimization(PromptType.INTERVIEW_PREP)"
-          />
-        </div>
-        }
-        <div sectionHelp>
-          <h2 class="font-semibold mb-4">What it is and why it matters</h2>
-          <p>
-            Based on the gap between your CV and this job posting, these are
-            likely interview questions and talking points which can help you
-            prepare answers that address exactly what this employer is looking
-            for.
-          </p>
-        </div>
-      </app-section-card>
-
-      <!-- LinkedIn Updates -->
-      <app-section-card
-        [sectionId]="PromptType.LINKEDIN_REWRITE"
-        icon="pi-linkedin"
-        title="LinkedIn Profile"
-        [status]="sectionStatus(PromptType.LINKEDIN_REWRITE)"
-        [collapsed]="isSectionCollapsed(PromptType.LINKEDIN_REWRITE)"
-        (collapsedChange)="onSectionCollapsedChange(PromptType.LINKEDIN_REWRITE, $event)"
-        helpTitle="LinkedIn Profile Section"
-      >
-        @if (linkedInResult()) {
-        <app-linkedin-updates [result]="linkedInResult()!" />
-        } @if (retryablePromptTypes().has(PromptType.LINKEDIN_REWRITE)) {
-        <div class="retry-action">
-          <p-button
-            label="Retry"
-            ariaLabel="Retry LinkedIn Updates"
-            icon="pi pi-refresh"
-            severity="warn"
-            size="small"
-            [disabled]="isProcessing().get(PromptType.LINKEDIN_REWRITE) ?? false"
-            (onClick)="retryOptimization(PromptType.LINKEDIN_REWRITE)"
-          />
-        </div>
-        }
-        <div sectionHelp>
-          <h2 class="font-semibold mb-4">What it is and why it matters</h2>
-          <p>
-            Recruiters frequently cross-check LinkedIn profiles against CVs, and
-            LinkedIn's own search also relies on keyword matching. These
-            suggestions help align your LinkedIn profile with the same keywords
-            and positioning used in your optimized CV.
-          </p>
-        </div>
-      </app-section-card>
+            <!-- LinkedIn Updates -->
+            <app-section-card
+              [sectionId]="PromptType.LINKEDIN_REWRITE"
+              icon="pi-linkedin"
+              title="LinkedIn Profile"
+              [status]="sectionStatus(PromptType.LINKEDIN_REWRITE)"
+              [collapsed]="isSectionCollapsed(PromptType.LINKEDIN_REWRITE)"
+              (collapsedChange)="onSectionCollapsedChange(PromptType.LINKEDIN_REWRITE, $event)"
+              helpTitle="LinkedIn Profile Section"
+            >
+              @if (linkedInResult()) {
+              <app-linkedin-updates [result]="linkedInResult()!" />
+              } @if (retryablePromptTypes().has(PromptType.LINKEDIN_REWRITE)) {
+              <div class="retry-action">
+                <p-button
+                  label="Retry"
+                  ariaLabel="Retry LinkedIn Updates"
+                  icon="pi pi-refresh"
+                  severity="warn"
+                  size="small"
+                  [disabled]="isProcessing().get(PromptType.LINKEDIN_REWRITE) ?? false"
+                  (onClick)="retryOptimization(PromptType.LINKEDIN_REWRITE)"
+                />
+              </div>
+              }
+              <div sectionHelp>
+                <h2 class="font-semibold mb-4">
+                  What it is and why it matters
+                </h2>
+                <p>
+                  Recruiters frequently cross-check LinkedIn profiles against
+                  CVs, and LinkedIn's own search also relies on keyword
+                  matching. These suggestions help align your LinkedIn profile
+                  with the same keywords and positioning used in your optimized
+                  CV.
+                </p>
+              </div>
+            </app-section-card>
+          </p-tabpanel>
+        </p-tabpanels>
+      </p-tabs>
       }
     </div>
   </main>
 </div>
 
 <!-- Export footer -->
-@if (canExportCv() && jobApplicationId()) {
+@if (canExportCv() && jobApplicationId() && activeResultsTab() ===
+'cv-analysis') {
 <app-export-footer
   [sidebarExpanded]="sidebarExpanded()"
   [selectedTemplate]="selectedTemplate()"

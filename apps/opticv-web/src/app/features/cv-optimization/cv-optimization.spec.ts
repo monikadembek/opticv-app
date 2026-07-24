@@ -96,14 +96,16 @@ function makeCvListResource() {
 }
 
 describe('CvOptimization', () => {
-  // CvA4Preview (rendered inside the page's preview dialog) uses ResizeObserver
-  // which is not available in JSDOM — assign directly to avoid vi.stubGlobal
+  // CvA4Preview (rendered inside the page's preview dialog) and PrimeNG's
+  // TabList (rendered once results exist) both use ResizeObserver, which is
+  // not available in JSDOM — assign directly to avoid vi.stubGlobal
   // side-effects on other test files sharing the same worker.
   const g = globalThis as Record<string, unknown>;
   const originalResizeObserver = g['ResizeObserver'];
   beforeEach(() => {
     g['ResizeObserver'] = class {
       observe = vi.fn();
+      unobserve = vi.fn();
       disconnect = vi.fn();
     };
   });
@@ -1653,13 +1655,13 @@ describe('CvOptimization', () => {
       expect(component.collapsedSections().size).toBe(0);
     });
 
-    it('collapses all sections except RESUME_AUTOPSY on first transition to processing', () => {
+    it('collapses all cv-analysis-tab sections except RESUME_AUTOPSY on first transition to processing', () => {
       component.jobApplicationId.set('job-1');
       component.isProcessing.set(new Map([[PromptType.RESUME_AUTOPSY, true]]));
       fixture.detectChanges();
 
       const expectedCollapsed = component
-        .allSectionIds()
+        .cvAnalysisSectionIds()
         .filter((id) => id !== PromptType.RESUME_AUTOPSY);
 
       for (const id of expectedCollapsed) {
@@ -1676,7 +1678,7 @@ describe('CvOptimization', () => {
 
       expect(component.pageState()).toBe('completed');
       const expectedCollapsed = component
-        .allSectionIds()
+        .cvAnalysisSectionIds()
         .filter((id) => id !== PromptType.RESUME_AUTOPSY);
 
       for (const id of expectedCollapsed) {
@@ -1684,6 +1686,41 @@ describe('CvOptimization', () => {
       }
       expect(component.isSectionCollapsed(PromptType.RESUME_AUTOPSY)).toBe(
         false,
+      );
+    });
+
+    it('applies the Additional Materials default (Cover Letter expanded) the first time that tab is viewed', () => {
+      component.jobApplicationId.set('job-1');
+      component.isProcessing.set(new Map([[PromptType.RESUME_AUTOPSY, true]]));
+      fixture.detectChanges();
+
+      component.onResultsTabChanged('additional-materials');
+      fixture.detectChanges();
+
+      expect(component.isSectionCollapsed(PromptType.COVER_LETTER)).toBe(
+        false,
+      );
+      expect(component.isSectionCollapsed(PromptType.INTERVIEW_PREP)).toBe(
+        true,
+      );
+      expect(component.isSectionCollapsed(PromptType.LINKEDIN_REWRITE)).toBe(
+        true,
+      );
+    });
+
+    it('preserves cv-analysis collapse state when switching back from additional-materials', () => {
+      component.jobApplicationId.set('job-1');
+      component.isProcessing.set(new Map([[PromptType.RESUME_AUTOPSY, true]]));
+      fixture.detectChanges();
+
+      component.onSectionCollapsedChange(PromptType.RESUME_AUTOPSY, true);
+      component.onResultsTabChanged('additional-materials');
+      fixture.detectChanges();
+      component.onResultsTabChanged('cv-analysis');
+      fixture.detectChanges();
+
+      expect(component.isSectionCollapsed(PromptType.RESUME_AUTOPSY)).toBe(
+        true,
       );
     });
 
@@ -1737,39 +1774,66 @@ describe('CvOptimization', () => {
       expect(component.allSectionsCollapsed()).toBe(false);
     });
 
-    it('is true once every active section is collapsed', () => {
-      for (const id of component.allSectionIds()) {
+    it('is true once every active-tab section is collapsed', () => {
+      for (const id of component.activeTabSectionIds()) {
         component.onSectionCollapsedChange(id, true);
       }
       expect(component.allSectionsCollapsed()).toBe(true);
     });
 
-    it('collapses every active section when none are collapsed', () => {
+    it('collapses every active-tab section when none are collapsed', () => {
       component.toggleAllSections();
 
-      for (const id of component.allSectionIds()) {
+      for (const id of component.activeTabSectionIds()) {
         expect(component.isSectionCollapsed(id)).toBe(true);
       }
       expect(component.allSectionsCollapsed()).toBe(true);
     });
 
-    it('expands every section when all are collapsed', () => {
+    it('expands every active-tab section when all are collapsed', () => {
       component.toggleAllSections();
       component.toggleAllSections();
 
-      for (const id of component.allSectionIds()) {
+      for (const id of component.activeTabSectionIds()) {
         expect(component.isSectionCollapsed(id)).toBe(false);
       }
       expect(component.allSectionsCollapsed()).toBe(false);
     });
 
-    it('collapses all sections when toggled from a partially collapsed state', () => {
+    it('collapses all active-tab sections when toggled from a partially collapsed state', () => {
       component.onSectionCollapsedChange(PromptType.RESUME_AUTOPSY, true);
       component.toggleAllSections();
 
-      for (const id of component.allSectionIds()) {
+      for (const id of component.activeTabSectionIds()) {
         expect(component.isSectionCollapsed(id)).toBe(true);
       }
+    });
+
+    it('does not affect the inactive tab (Additional Materials) sections', () => {
+      component.toggleAllSections();
+
+      expect(component.isSectionCollapsed(PromptType.COVER_LETTER)).toBe(
+        false,
+      );
+      expect(component.isSectionCollapsed(PromptType.INTERVIEW_PREP)).toBe(
+        false,
+      );
+      expect(component.isSectionCollapsed(PromptType.LINKEDIN_REWRITE)).toBe(
+        false,
+      );
+    });
+
+    it('scopes to Additional Materials sections when that tab is active', () => {
+      component.onResultsTabChanged('additional-materials');
+
+      component.toggleAllSections();
+
+      for (const id of component.additionalMaterialsSectionIds()) {
+        expect(component.isSectionCollapsed(id)).toBe(true);
+      }
+      expect(component.isSectionCollapsed(PromptType.RESUME_AUTOPSY)).toBe(
+        false,
+      );
     });
 
     it('includes JOB_POSTING in live mode once a job application is submitted', () => {
@@ -1779,6 +1843,69 @@ describe('CvOptimization', () => {
 
     it('does not include JOB_POSTING before a job application is submitted', () => {
       expect(component.allSectionIds()).not.toContain('JOB_POSTING');
+    });
+  });
+
+  describe('activeResultsTab / onResultsTabChanged', () => {
+    it('defaults to cv-analysis', () => {
+      expect(component.activeResultsTab()).toBe('cv-analysis');
+    });
+
+    it('switches to additional-materials', () => {
+      component.onResultsTabChanged('additional-materials');
+      expect(component.activeResultsTab()).toBe('additional-materials');
+    });
+
+    it('switches back to cv-analysis', () => {
+      component.onResultsTabChanged('additional-materials');
+      component.onResultsTabChanged('cv-analysis');
+      expect(component.activeResultsTab()).toBe('cv-analysis');
+    });
+
+    it('cancels an open bullet edit when switching tabs', () => {
+      component.activeBulletEditKey.set('Acme|Dev|Old bullet');
+      component.editedBulletText.set('In progress edit');
+
+      component.onResultsTabChanged('additional-materials');
+
+      expect(component.activeBulletEditKey()).toBeNull();
+      expect(component.editedBulletText()).toBe('');
+    });
+
+    it('cancels an open keyword edit when switching tabs', () => {
+      component.activeKeywordEditKey.set('TypeScript');
+      component.editedKeywordText.set('In progress edit');
+
+      component.onResultsTabChanged('additional-materials');
+
+      expect(component.activeKeywordEditKey()).toBeNull();
+      expect(component.editedKeywordText()).toBe('');
+    });
+
+    it('runOptimization resets activeResultsTab back to cv-analysis', () => {
+      component.onResultsTabChanged('additional-materials');
+
+      component.runOptimization(mockJobSubmittedData);
+
+      expect(component.activeResultsTab()).toBe('cv-analysis');
+    });
+  });
+
+  describe('export footer visibility', () => {
+    beforeEach(() => {
+      component.cvStructuredData.set(mockCvStructuredData);
+      component.jobApplicationId.set(mockJobApplication.id);
+    });
+
+    it('canExportCv is true and activeResultsTab is cv-analysis by default', () => {
+      expect(component.canExportCv()).toBe(true);
+      expect(component.activeResultsTab()).toBe('cv-analysis');
+    });
+
+    it('activeResultsTab switches away from cv-analysis when Additional Materials is active', () => {
+      component.onResultsTabChanged('additional-materials');
+      expect(component.activeResultsTab()).not.toBe('cv-analysis');
+      expect(component.canExportCv()).toBe(true);
     });
   });
 

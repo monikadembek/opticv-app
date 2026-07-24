@@ -22,6 +22,7 @@ import {
 } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { Tabs, TabList, Tab, TabPanels, TabPanel } from 'primeng/tabs';
 import {
   BulletEditKey,
   BulletSelectionKey,
@@ -78,7 +79,7 @@ import { SectionCard } from './components/section-card/section-card';
 import { JobInfoBanner } from './components/job-info-banner/job-info-banner';
 import { ExportFooter } from './components/export-footer/export-footer';
 import { MobileTabs } from './components/mobile-tabs/mobile-tabs';
-import { SectionStatus } from './models';
+import { ActiveResultsTab, SectionStatus } from './models';
 import posthog from 'posthog-js';
 
 function isResumeAutopsyResult(value: unknown): value is ResumeAutopsyResult {
@@ -181,6 +182,11 @@ const ActivePrompts = [
     JobInfoBanner,
     ExportFooter,
     MobileTabs,
+    Tabs,
+    TabList,
+    Tab,
+    TabPanels,
+    TabPanel,
   ],
   templateUrl: './cv-optimization.html',
   styleUrl: './cv-optimization.css',
@@ -253,7 +259,10 @@ export class CvOptimization implements OnInit {
   private readonly breakpointObserver = inject(BreakpointObserver);
   readonly activeSection = signal<string>(PromptType.RESUME_AUTOPSY);
   readonly collapsedSections = signal<ReadonlySet<string>>(new Set());
-  private readonly initializedDefaults = signal(false);
+  readonly activeResultsTab = signal<ActiveResultsTab>('cv-analysis');
+  private readonly initializedTabDefaults = signal<
+    ReadonlySet<ActiveResultsTab>
+  >(new Set());
 
   readonly autopsyResult = computed<ResumeAutopsyResult | null>(() => {
     const r = this.results().get(PromptType.RESUME_AUTOPSY)?.result;
@@ -417,13 +426,42 @@ export class CvOptimization implements OnInit {
     return ids;
   });
 
+  readonly cvAnalysisSectionIds = computed<string[]>(() => {
+    const ids = [
+      'JOB_POSTING',
+      PromptType.RESUME_AUTOPSY,
+      PromptType.KEYWORD_GAP,
+      PromptType.SUMMARY_REWRITE,
+      PromptType.BULLET_UPGRADE,
+    ];
+    const all = new Set(this.allSectionIds());
+    return ids.filter((id) => all.has(id));
+  });
+
+  readonly additionalMaterialsSectionIds = computed<string[]>(() => {
+    const ids = [
+      PromptType.COVER_LETTER,
+      PromptType.INTERVIEW_PREP,
+      PromptType.LINKEDIN_REWRITE,
+    ];
+    const all = new Set(this.allSectionIds());
+    return ids.filter((id) => all.has(id));
+  });
+
+  readonly activeTabSectionIds = computed<string[]>(() =>
+    this.activeResultsTab() === 'cv-analysis'
+      ? this.cvAnalysisSectionIds()
+      : this.additionalMaterialsSectionIds(),
+  );
+
   readonly allSectionsCollapsed = computed(() =>
-    this.allSectionIds().every((id) => this.collapsedSections().has(id)),
+    this.activeTabSectionIds().every((id) => this.collapsedSections().has(id)),
   );
 
   constructor() {
     effect(() => {
       const state = this.pageState();
+      this.activeResultsTab();
       if (state !== 'initial') {
         // Defer to after render so section elements exist in DOM
         setTimeout(() => this.setupScrollspy(), 0);
@@ -447,17 +485,29 @@ export class CvOptimization implements OnInit {
       }
     });
 
+    // expand first section of active tab, collapse rest;
+    // runs the first time the given tab is viewed
     effect(() => {
       const state = this.pageState();
-      if (this.initializedDefaults()) return;
+      const tab = this.activeResultsTab();
       if (state === 'initial') return;
+      if (this.initializedTabDefaults().has(tab)) return;
 
-      this.collapsedSections.set(
-        new Set(
-          this.allSectionIds().filter((id) => id !== PromptType.RESUME_AUTOPSY),
-        ),
+      const defaultExpandedId =
+        tab === 'cv-analysis'
+          ? PromptType.RESUME_AUTOPSY
+          : PromptType.COVER_LETTER;
+
+      this.collapsedSections.update((current) => {
+        const next = new Set(current);
+        for (const id of this.activeTabSectionIds()) {
+          if (id !== defaultExpandedId) next.add(id);
+        }
+        return next;
+      });
+      this.initializedTabDefaults.update(
+        (current) => new Set([...current, tab]),
       );
-      this.initializedDefaults.set(true);
     });
   }
 
@@ -542,11 +592,21 @@ export class CvOptimization implements OnInit {
   }
 
   toggleAllSections(): void {
+    const activeIds = this.activeTabSectionIds();
+    const next = new Set(this.collapsedSections());
     if (this.allSectionsCollapsed()) {
-      this.collapsedSections.set(new Set());
+      for (const id of activeIds) next.delete(id);
     } else {
-      this.collapsedSections.set(new Set(this.allSectionIds()));
+      for (const id of activeIds) next.add(id);
     }
+    this.collapsedSections.set(next);
+  }
+
+  onResultsTabChanged(tab: string | number | undefined): void {
+    if (tab !== 'cv-analysis' && tab !== 'additional-materials') return;
+    this.onBulletEditCancelled();
+    this.onKeywordEditCancelled();
+    this.activeResultsTab.set(tab);
   }
 
   handleSectionClick(id: string): void {
@@ -707,7 +767,9 @@ export class CvOptimization implements OnInit {
   runOptimization({ jobApplication, extractedData }: JobSubmittedData): void {
     this.results.set(new Map());
     this.isProcessing.set(new Map());
-    this.initializedDefaults.set(false);
+    this.collapsedSections.set(new Set());
+    this.initializedTabDefaults.set(new Set());
+    this.activeResultsTab.set('cv-analysis');
     this.selections.set({
       selectedSummaryAngle: null,
       customSummaryText: null,

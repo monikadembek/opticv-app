@@ -6,6 +6,7 @@ import {
   output,
 } from '@angular/core';
 import { PromptType } from '@opticv/datatypes';
+import { ActiveResultsTab } from '../../models';
 
 export const NAV_GROUPS: {
   group: string;
@@ -81,11 +82,22 @@ export class OptimSidebar {
   readonly atsScore = input<number | null>(null);
   readonly keywordScore = input<number | null>(null);
   readonly pageState = input<'initial' | 'processing' | 'completed'>('initial');
+  readonly activeTab = input<ActiveResultsTab>('cv-analysis');
 
   readonly sectionClicked = output<string>();
   readonly toggleClicked = output<void>();
 
   readonly navGroups = NAV_GROUPS;
+
+  readonly visibleNavGroups = computed(() =>
+    this.navGroups.filter(
+      (g) =>
+        g.group === 'Job Posting' ||
+        (this.activeTab() === 'cv-analysis'
+          ? g.group === 'Resume Analysis'
+          : g.group === 'Additional Materials'),
+    ),
+  );
 
   readonly showScores = computed(
     () =>

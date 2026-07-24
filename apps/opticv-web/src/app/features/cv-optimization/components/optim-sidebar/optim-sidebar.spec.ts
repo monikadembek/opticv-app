@@ -22,12 +22,30 @@ describe('OptimSidebar', () => {
   });
 
   describe('nav items', () => {
-    it('renders a nav button for every item across all groups', () => {
+    it('renders a nav button for every item in Job Posting + active tab group (default cv-analysis)', () => {
       fixture.componentRef.setInput('pageState', 'completed');
       fixture.detectChanges();
-      const allItems = NAV_GROUPS.flatMap((g) => g.items);
+      const expectedItems = NAV_GROUPS.filter(
+        (g) => g.group === 'Job Posting' || g.group === 'Resume Analysis',
+      ).flatMap((g) => g.items);
       const buttons = fixture.nativeElement.querySelectorAll('button.nav-item');
-      expect(buttons.length).toBe(allItems.length);
+      expect(buttons.length).toBe(expectedItems.length);
+    });
+
+    it('renders only Job Posting + Additional Materials items when activeTab is additional-materials', () => {
+      fixture.componentRef.setInput('pageState', 'completed');
+      fixture.componentRef.setInput('activeTab', 'additional-materials');
+      fixture.detectChanges();
+      const expectedItems = NAV_GROUPS.filter(
+        (g) => g.group === 'Job Posting' || g.group === 'Additional Materials',
+      ).flatMap((g) => g.items);
+      const buttons = fixture.nativeElement.querySelectorAll('button.nav-item');
+      expect(buttons.length).toBe(expectedItems.length);
+      expect(
+        Array.from(buttons as NodeListOf<HTMLButtonElement>).some((b) =>
+          b.textContent?.includes('Keyword Gap'),
+        ),
+      ).toBe(false);
     });
 
     it('marks the active section button with active class', () => {
@@ -72,7 +90,7 @@ describe('OptimSidebar', () => {
       const labels = fixture.nativeElement.querySelectorAll(
         '.sidebar-group-label',
       );
-      expect(labels.length).toBe(NAV_GROUPS.length);
+      expect(labels.length).toBe(component.visibleNavGroups().length);
     });
 
     it('hides group labels and shows dividers when collapsed', () => {
@@ -84,7 +102,7 @@ describe('OptimSidebar', () => {
       const dividers =
         fixture.nativeElement.querySelectorAll('.sidebar-divider');
       expect(labels.length).toBe(0);
-      expect(dividers.length).toBe(NAV_GROUPS.length);
+      expect(dividers.length).toBe(component.visibleNavGroups().length);
     });
 
     it('shows spinner icon for items in processingSet', () => {
