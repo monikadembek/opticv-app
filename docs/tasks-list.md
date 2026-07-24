@@ -1210,7 +1210,7 @@ The CV optimization results page (cv-optimization.html/.ts) renders 7-9 result s
 
 ### 97. UX/UI - CV optimization page - split results into 2 groups displayed in separate tabs
 
-**status: in progress**
+**status: done**
 
 **time: 23.07.2026 - 24.07.2026**
 
