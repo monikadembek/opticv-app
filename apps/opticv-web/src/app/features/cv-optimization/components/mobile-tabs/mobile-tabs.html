@@ -1,5 +1,5 @@
 <div class="mobile-tabs">
-  @for (item of navItems; track item.id) {
+  @for (item of navItems(); track item.id) {
     <button
       #tabBtn
       class="mobile-tab"

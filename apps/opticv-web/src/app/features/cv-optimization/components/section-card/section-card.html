@@ -3,7 +3,9 @@
   [attr.data-section]="sectionId()"
   class="section-card"
 >
-  <div class="section-card__header">
+  <div
+    class="section-card__header gap-2 sm:gap-3 pl-3 pr-2 py-5 sm:pl-5 sm:pr-5 sm:py-6"
+  >
     <div class="section-card__icon"><i [class]="'pi ' + icon()"></i></div>
     <h2 class="section-card__title">{{ title() }}</h2>
     @if (helpTitle()) {
@@ -14,8 +16,8 @@
       class="section-card__help-button"
     >
       <svg
-        width="36"
-        height="36"
+        width="32"
+        height="32"
         viewBox="0 0 1200.24 1200.24"
         version="1.1"
         xmlns="http://www.w3.org/2000/svg"

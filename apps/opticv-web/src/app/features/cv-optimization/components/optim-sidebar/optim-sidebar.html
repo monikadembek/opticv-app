@@ -96,7 +96,7 @@
   }
 
   <nav class="sidebar-nav">
-    @for (group of navGroups; track group.group) { @if (expanded()) {
+    @for (group of visibleNavGroups(); track group.group) { @if (expanded()) {
     <div class="sidebar-group-label">{{ group.group }}</div>
     } @else {
     <div class="sidebar-divider"></div>

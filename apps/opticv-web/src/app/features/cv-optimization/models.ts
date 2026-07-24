@@ -4,3 +4,5 @@ export type SectionStatus =
   | 'error'
   | 'pending'
   | undefined;
+
+export type ActiveResultsTab = 'cv-analysis' | 'additional-materials';
