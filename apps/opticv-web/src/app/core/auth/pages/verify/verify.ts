@@ -44,10 +44,11 @@ export class Verify implements OnInit {
 
   async onSubmit(form: NgForm) {
     this.errorMessage.set('');
-    this.isSubmitting.set(true);
+
     const { code } = form.form.value;
 
     if (form.valid) {
+      this.isSubmitting.set(true);
       posthog.capture('supabase_verifyotp_executed', { page: 'verify' });
       const {
         data: { session },

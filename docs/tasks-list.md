@@ -1259,7 +1259,28 @@ No other behavior changed — the quota-limit check (updateMany with count: { lt
 
 ---
 
-### 99. UI/UX - Keyword Gap section
+### 99. Login form, Verify form - submit button enabled when form is not submitting
+
+**status: done**
+
+**time: 24.07.2026**
+
+- remove disabled state when form is not submitting for Submit buttons in Login and Verify components
+
+---
+
+### 100. UI/UX - Changes in Welcome Guide component
+
+**status: todo**
+
+**time: 24.07.2026**
+
+- Remove text "2 minutes tour" from welcome guide - makes user want to close welcome guide straight away
+- update images, now the cv optimization page has tabs and sidebar displays only items included in active tab
+
+---
+
+### UI/UX - Keyword Gap section
 
 **status: todo**
 
@@ -1281,10 +1302,6 @@ No other behavior changed — the quota-limit check (updateMany with count: { lt
 
 ---
 
-### Login form, Verify form - unblock submit button by default
-
----
-
 ### Security check - especially related to AI attacks
 
 **status: todo**
@@ -1292,10 +1309,6 @@ No other behavior changed — the quota-limit check (updateMany with count: { lt
 **time:**
 
 - get to know about security in terms of AI, what kind of attacks the app should be protected from
-
----
-
-### Remove text "2 minutes tour" from welcome guide - makes user want to close welcome guide straight away
 
 ---
 

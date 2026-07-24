@@ -53,7 +53,7 @@ describe('Login', () => {
   it('should render the sign in heading', () => {
     fixture.detectChanges();
     const h1 = fixture.nativeElement.querySelector('h1');
-    expect(h1.textContent.trim()).toBe('Welcome back');
+    expect(h1.textContent.trim()).toBe('Welcome');
   });
 
   it('should render the email input', () => {
