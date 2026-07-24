@@ -83,13 +83,13 @@ describe('WelcomeGuideModal', () => {
       const text = fixture.nativeElement.textContent;
 
       expect(text).toContain('Welcome to OptiCV');
-      expect(text).toContain('Take the 2-minute tour');
+      expect(text).toContain('Take the tour');
       expect(text).toContain("Skip - I'll explore on my own");
       expect(text).not.toContain('Quick tour');
       expect(text).not.toContain("You're ready to go");
     });
 
-    it('clicking "Take the 2-minute tour" calls startTour', async () => {
+    it('clicking "Take the tour" calls startTour', async () => {
       await setup('user@example.com', { mode: 'full', screen: 'intro' });
       userGuideStoreMock.isWelcomeModalOpen.set(true);
       fixture.detectChanges();
