@@ -2,15 +2,23 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ForbiddenException } from '@nestjs/common';
 import { QuotaService } from './quota.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { Prisma } from '../../generated/prisma/client.js';
 
 const mockPrisma = {
   usageQuota: {
     upsert: jest.fn(),
     updateMany: jest.fn(),
+    findUniqueOrThrow: jest.fn(),
     findMany: jest.fn(),
   },
   $transaction: jest.fn(),
 };
+
+const uniqueConstraintError = () =>
+  new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+    code: 'P2002',
+    clientVersion: 'test',
+  });
 
 describe('QuotaService', () => {
   let service: QuotaService;
@@ -49,6 +57,38 @@ describe('QuotaService', () => {
           data: { count: { increment: 1 } },
         }),
       );
+    });
+
+    it('falls back to the existing row when a concurrent insert wins the unique constraint race', async () => {
+      mockPrisma.usageQuota.upsert.mockRejectedValue(uniqueConstraintError());
+      mockPrisma.usageQuota.findUniqueOrThrow.mockResolvedValue({ id: 'row-1' });
+      mockPrisma.usageQuota.updateMany.mockResolvedValue({ count: 1 });
+
+      await expect(
+        service.checkAndConsume('user-1', 'CV_OPTIMIZATION', 'FREE'),
+      ).resolves.toBeUndefined();
+
+      expect(mockPrisma.usageQuota.findUniqueOrThrow).toHaveBeenCalled();
+      expect(mockPrisma.usageQuota.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ id: 'row-1', count: { lt: 1 } }),
+          data: { count: { increment: 1 } },
+        }),
+      );
+    });
+
+    it('rethrows other prisma errors instead of treating them as the unique constraint race', async () => {
+      const otherError = new Prisma.PrismaClientKnownRequestError('Some other error', {
+        code: 'P2025',
+        clientVersion: 'test',
+      });
+      mockPrisma.usageQuota.upsert.mockRejectedValue(otherError);
+
+      await expect(
+        service.checkAndConsume('user-1', 'CV_OPTIMIZATION', 'FREE'),
+      ).rejects.toThrow(otherError);
+
+      expect(mockPrisma.usageQuota.findUniqueOrThrow).not.toHaveBeenCalled();
     });
 
     it('throws QUOTA_EXCEEDED when the conditional update affects no rows', async () => {
