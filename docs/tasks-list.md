@@ -1271,12 +1271,12 @@ No other behavior changed — the quota-limit check (updateMany with count: { lt
 
 ### 100. UI/UX - Changes in Welcome Guide component
 
-**status: todo**
+**status: done**
 
 **time: 24.07.2026**
 
-- Remove text "2 minutes tour" from welcome guide - makes user want to close welcome guide straight away
-- update images, now the cv optimization page has tabs and sidebar displays only items included in active tab
+- Remove text "2-minutes" text from intro screen of welcome guide - can makes user want to close welcome guide straight away
+- update images because now the cv optimization page has tabs and sidebar displays only items included in active tab
 
 ---
 
