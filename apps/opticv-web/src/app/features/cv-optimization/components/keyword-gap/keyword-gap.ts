@@ -4,6 +4,7 @@ import {
   computed,
   input,
   output,
+  signal,
 } from '@angular/core';
 import type { KeywordGapResult } from '@opticv/datatypes';
 import { ButtonModule } from 'primeng/button';
@@ -46,6 +47,30 @@ export class KeywordGap {
   readonly missingGenuinelyLacks = computed(() =>
     this.result().missingKeywords.filter((k) => !k.candidateLikelyHas),
   );
+
+  readonly exactMatchedKeywords = computed(() =>
+    this.result().matchedKeywords.filter((k) => k.matchType === 'exact'),
+  );
+
+  readonly semanticMatchedKeywords = computed(() =>
+    this.result().matchedKeywords.filter((k) => k.matchType !== 'exact'),
+  );
+
+  readonly isUnderweightedExpanded = signal(false);
+  readonly isAcronymIssuesExpanded = signal(false);
+  readonly isFabricationWarningsExpanded = signal(false);
+
+  toggleUnderweighted(): void {
+    this.isUnderweightedExpanded.update((expanded) => !expanded);
+  }
+
+  toggleAcronymIssues(): void {
+    this.isAcronymIssuesExpanded.update((expanded) => !expanded);
+  }
+
+  toggleFabricationWarnings(): void {
+    this.isFabricationWarningsExpanded.update((expanded) => !expanded);
+  }
 
   readonly scoreColor = computed(() => {
     const score = this.result().matchScore;
