@@ -1,86 +1,89 @@
 <div class="space-y-8 py-2">
   <!-- Match Score -->
-  <div class="flex flex-col items-center gap-4">
-    <div class="flex flex-col items-center gap-2">
-      <svg
-        viewBox="0 0 100 100"
-        class="w-32 h-32"
-        role="img"
-        [attr.aria-label]="'Keyword match score: ' + result().matchScore + '%'"
+  <div class="flex items-center gap-4">
+    <svg
+      viewBox="0 0 100 100"
+      class="w-32 h-32"
+      role="img"
+      [attr.aria-label]="'Keyword match score: ' + result().matchScore + '%'"
+    >
+      <circle
+        cx="50"
+        cy="50"
+        r="40"
+        fill="none"
+        stroke="#e5e7eb"
+        stroke-width="10"
+      />
+      <circle
+        cx="50"
+        cy="50"
+        r="40"
+        fill="none"
+        [attr.stroke]="strokeColor()"
+        stroke-width="10"
+        stroke-linecap="round"
+        [attr.stroke-dasharray]="ringCircumference"
+        [attr.stroke-dashoffset]="strokeDashoffset()"
+        transform="rotate(-90 50 50)"
+      />
+      <text
+        x="50"
+        y="50"
+        text-anchor="middle"
+        dominant-baseline="central"
+        font-size="20"
+        font-weight="700"
+        [attr.fill]="strokeColor()"
       >
-        <circle
-          cx="50"
-          cy="50"
-          r="40"
-          fill="none"
-          stroke="#e5e7eb"
-          stroke-width="10"
-        />
-        <circle
-          cx="50"
-          cy="50"
-          r="40"
-          fill="none"
-          [attr.stroke]="strokeColor()"
-          stroke-width="10"
-          stroke-linecap="round"
-          [attr.stroke-dasharray]="ringCircumference"
-          [attr.stroke-dashoffset]="strokeDashoffset()"
-          transform="rotate(-90 50 50)"
-        />
-        <text
-          x="50"
-          y="50"
-          text-anchor="middle"
-          dominant-baseline="central"
-          font-size="20"
-          font-weight="700"
-          [attr.fill]="strokeColor()"
-        >
-          {{ result().matchScore }}%
-        </text>
-      </svg>
-      <span class="text-sm font-medium">Keyword Match Score</span>
-    </div>
-    <div class="flex items-center gap-5 text-sm text-surface-600">
-      <span>
-        Required:
-        <span class="font-semibold font-(family-name:--font-heading)"
-          >{{ result().matchScoreBreakdown.requiredMatched }} / {{
-          result().matchScoreBreakdown.requiredTotal }}</span
-        >
-      </span>
-      <span>
-        Preferred:
-        <span class="font-semibold font-(family-name:--font-heading)"
-          >{{ result().matchScoreBreakdown.preferredMatched }} / {{
-          result().matchScoreBreakdown.preferredTotal }}</span
-        >
-      </span>
+        {{ result().matchScore }}%
+      </text>
+    </svg>
+
+    <div class="flex flex-col items-start gap-2">
+      <span
+        class="text-sm font-semibold uppercase text-(--text-muted) font-(family-name:--font-heading)"
+        >Keyword Match Score</span
+      >
+      <div class="flex items-center gap-6 text-sm text-surface-600">
+        <span>
+          Required:
+          <span class="font-semibold font-(family-name:--font-heading)"
+            >{{ result().matchScoreBreakdown.requiredMatched }} / {{
+            result().matchScoreBreakdown.requiredTotal }}</span
+          >
+        </span>
+        <span>
+          Preferred:
+          <span class="font-semibold font-(family-name:--font-heading)"
+            >{{ result().matchScoreBreakdown.preferredMatched }} / {{
+            result().matchScoreBreakdown.preferredTotal }}</span
+          >
+        </span>
+      </div>
     </div>
   </div>
 
   <!-- Missing Keywords -->
   @if (result().missingKeywords.length > 0) {
   <div>
-    <h3 class="text-base font-semibold text-surface-800 mb-3">
+    <h3 class="text-base font-semibold text-surface-800 mb-2">
       Missing Keywords
       <span
         class="ml-2 text-xs font-semibold bg-(--neutral-100) text-surface-600 rounded-sm px-2 py-1"
         >{{ result().missingKeywords.length }}</span
       >
     </h3>
-    <p class="text-sm text-(--text-muted) mb-3">
-      Select keywords to incorporate into your CV.
+    <p class="text-sm text-(--text-muted) mb-5">
+      Select keywords to incorporate into your CV - these move your score the
+      most.
     </p>
     <div class="space-y-4">
       @if (missingLikelyHas().length > 0) {
-      <div>
-        <p
-          class="text-xs font-semibold uppercase tracking-wide text-surface-400 mb-2"
-        >
-          Likely have — add to your CV
-        </p>
+      <div class="mb-6">
+        <h4 class="font-semibold uppercase tracking-wide text-surface-400 mb-4">
+          Likely have - add to your CV
+        </h4>
         <ul class="space-y-2 list-none p-0 m-0">
           @for (item of missingLikelyHas(); track item.keyword) {
           <li
@@ -96,6 +99,12 @@
                 class="accent-primary-500"
                 [attr.aria-label]="'Select keyword ' + item.keyword"
               />
+              <label
+                [for]="'kw-' + item.keyword"
+                class="font-semibold text-md text-surface-800 cursor-pointer"
+                >{{ getKeywordDisplayText(item.keyword) }}</label
+              >
+
               <span
                 class="text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full"
                 [class]="item.importance === 'critical' ? 'bg-red-100 text-red-700' :
@@ -111,18 +120,18 @@
                 class="text-xs bg-blue-100 text-blue-700 rounded px-1.5 py-0.5"
                 >Required</span
               >
-              }
-              <label
-                [for]="'kw-' + item.keyword"
-                class="font-semibold text-sm text-surface-800 cursor-pointer"
-                >{{ getKeywordDisplayText(item.keyword) }}</label
-              >
-              @if (isEditedKeyword(item.keyword)) {
+              } @if (isEditedKeyword(item.keyword)) {
               <span
                 class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 font-medium"
                 >Edited</span
               >
-              } @if (!isEditingKeyword(item.keyword)) {
+              }
+              <span
+                class="text-xs bg-(--neutral-100) text-surface-600 rounded px-1.5 ml-auto py-0.5 capitalize"
+                title="Suggested placement"
+                >{{ item.suggestedPlacement.replace('_', ' ') }}</span
+              >
+              @if (!isEditingKeyword(item.keyword)) {
               <p-button
                 type="button"
                 variant="outlined"
@@ -135,14 +144,9 @@
                 <i class="pi pi-pencil text-xs!"></i> Edit
               </p-button>
               }
-              <span
-                class="text-xs bg-(--neutral-100) text-surface-600 rounded px-1.5 py-0.5 ml-auto capitalize"
-                title="Suggested placement"
-                >{{ item.suggestedPlacement.replace('_', ' ') }}</span
-              >
             </div>
             @if (isEditingKeyword(item.keyword)) {
-            <div class="space-y-2 mt-2">
+            <div class="space-y-2 mt-2 ml-5">
               <input
                 pInputText
                 type="text"
@@ -168,7 +172,7 @@
             </div>
             } @if (isSelected(item.keyword) && item.suggestedPlacement ===
             'experience_bullet') {
-            <div class="mt-2 flex items-center gap-2">
+            <div class="mt-2 ml-5 flex items-center gap-2">
               <label
                 [for]="'kw-pos-' + item.keyword"
                 class="text-xs text-surface-600 shrink-0"
@@ -197,16 +201,16 @@
               </select>
             </div>
             @if (getKeywordPosition(item.keyword) === null) {
-            <p class="text-xs text-amber-600 mt-1">
+            <p class="text-xs text-amber-600 mt-1 ml-5">
               Pick a position to include this in your CV.
             </p>
             } }
-            <p class="mt-1 text-sm text-surface-500">
+            <p class="mt-1 ml-5 text-sm text-surface-500">
               {{ item.recommendation }}
             </p>
             @if (item.evidenceFromResume) {
             <p
-              class="mt-2 text-xs italic text-surface-400 pl-2 border-l border-surface-200"
+              class="mt-2 ml-5 text-xs italic text-surface-400 pl-2 border-l border-surface-200"
             >
               {{ item.evidenceFromResume }}
             </p>
@@ -217,11 +221,9 @@
       </div>
       } @if (missingGenuinelyLacks().length > 0) {
       <div>
-        <p
-          class="text-xs font-semibold uppercase tracking-wide text-surface-400 mb-2"
-        >
+        <h4 class="font-semibold uppercase tracking-wide text-surface-400 mb-2">
           Skills to acquire or omit
-        </p>
+        </h4>
         <ul class="space-y-2 list-none p-0 m-0">
           @for (item of missingGenuinelyLacks(); track item.keyword) {
           <li
@@ -237,6 +239,11 @@
                 class="accent-primary-500"
                 [attr.aria-label]="'Select keyword ' + item.keyword"
               />
+              <label
+                [for]="'kw-lacks-' + item.keyword"
+                class="font-semibold text-sm text-surface-800 cursor-pointer"
+                >{{ getKeywordDisplayText(item.keyword) }}</label
+              >
               <span
                 class="text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full"
                 [class]="item.importance === 'critical' ? 'bg-red-100 text-red-700' :
@@ -250,18 +257,17 @@
                 class="text-xs bg-blue-100 text-blue-700 rounded px-1.5 py-0.5"
                 >Required</span
               >
-              }
-              <label
-                [for]="'kw-lacks-' + item.keyword"
-                class="font-semibold text-sm text-surface-800 cursor-pointer"
-                >{{ getKeywordDisplayText(item.keyword) }}</label
-              >
-              @if (isEditedKeyword(item.keyword)) {
+              } @if (isEditedKeyword(item.keyword)) {
               <span
                 class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 font-medium"
                 >Edited</span
               >
-              } @if (!isEditingKeyword(item.keyword)) {
+              }
+              <span
+                class="text-xs bg-(--neutral-100) text-surface-600 capitalize rounded px-1.5 py-0.5 ml-auto"
+                >{{ item.suggestedPlacement.replace('_', ' ') }}</span
+              >
+              @if (!isEditingKeyword(item.keyword)) {
               <p-button
                 type="button"
                 variant="outlined"
@@ -274,13 +280,9 @@
                 <i class="pi pi-pencil text-xs!"></i> Edit
               </p-button>
               }
-              <span
-                class="text-xs bg-(--neutral-100) text-surface-600 capitalize rounded px-1.5 py-0.5 ml-auto"
-                >{{ item.suggestedPlacement.replace('_', ' ') }}</span
-              >
             </div>
             @if (isEditingKeyword(item.keyword)) {
-            <div class="space-y-2 mt-2">
+            <div class="space-y-2 mt-2 ml-5">
               <input
                 pInputText
                 type="text"
@@ -306,7 +308,7 @@
             </div>
             } @if (isSelected(item.keyword) && item.suggestedPlacement ===
             'experience_bullet') {
-            <div class="mt-2 flex items-center gap-2">
+            <div class="mt-2 ml-5 flex items-center gap-2">
               <label
                 [for]="'kw-lacks-pos-' + item.keyword"
                 class="text-xs text-surface-600 shrink-0"
@@ -335,16 +337,16 @@
               </select>
             </div>
             @if (getKeywordPosition(item.keyword) === null) {
-            <p class="text-xs text-amber-600 mt-1">
+            <p class="text-xs text-amber-600 mt-1 ml-5">
               Pick a position to include this in your CV.
             </p>
             } }
-            <p class="mt-1 text-sm text-surface-500">
+            <p class="mt-1 text-sm text-surface-500 ml-5">
               {{ item.recommendation }}
             </p>
             @if (item.evidenceFromResume) {
             <p
-              class="mt-2 text-xs italic text-surface-400 pl-2 border-l border-surface-200"
+              class="mt-2 ml-5 text-xs italic text-surface-400 pl-2 border-l border-surface-200"
             >
               {{ item.evidenceFromResume }}
             </p>
@@ -372,60 +374,106 @@
   <!-- Matched Keywords -->
   @if (result().matchedKeywords.length > 0) {
   <div>
-    <h3 class="text-base font-semibold text-surface-800 mb-3">
-      Matched Keywords
+    <h3 class="text-base font-semibold text-surface-800 mb-1">
+      Matched keywords
       <span
-        class="ml-2 text-xs font-semibold bg-(--neutral-100) text-surface-600 rounded-sm px-2 py-1"
+        class="ml-2 text-xs font-semibold bg-(--neutral-100) text-surface-600 rounded-full px-2 py-1"
         >{{ result().matchedKeywords.length }}</span
       >
-    </h3>
-    <ul class="space-y-2 list-none p-0 m-0">
-      @for (item of result().matchedKeywords; track item.keyword) {
-      <li
-        class="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-(--border-subtle)"
+      <span class="ml-2 text-sm font-normal text-(--text-muted)"
+        >already in your CV - nothing to do here</span
       >
-        @switch (item.matchType) { @case ('exact') {
-        <i
-          class="pi pi-check-circle text-green-500 shrink-0"
-          title="Exact match type"
-        ></i>
-        } @case ('partial') {
-        <i
-          class="pi pi-circle text-yellow-500 shrink-0"
-          title="Partial match type"
-        ></i>
-        } @default {
-        <i
-          class="pi pi-minus-circle text-teal-500 shrink-0"
-          title="Different semantic from matched keyword"
-        ></i>
-        } } @if (item.isRequired) {
+    </h3>
+
+    @if (exactMatchedKeywords().length > 0) {
+    <div class="mt-4">
+      <h4
+        class="text-xs font-semibold uppercase tracking-wide text-surface-400"
+      >
+        Exact match
+        <span class="normal-case font-normal text-surface-400"
+          >· {{ exactMatchedKeywords().length }} · verbatim in your resume</span
+        >
+      </h4>
+      <div class="mt-3 flex flex-wrap gap-2">
+        @for (item of exactMatchedKeywords(); track item.keyword) {
         <span
-          class="text-xs bg-blue-100 text-blue-700 rounded px-1.5 py-0.5 shrink-0"
-          >Required</span
+          class="inline-flex items-center gap-1 text-sm text-emerald-700 bg-emerald-100 rounded-full px-3 py-1"
         >
+          <i class="pi pi-check text-xs!"></i>
+          {{ item.keyword }}
+          <span class="text-emerald-600">x{{ item.occurrencesInResume }}</span>
+          @if (item.isRequired) {
+          <span
+            class="text-xs bg-blue-100 text-blue-700 rounded px-1.5 py-0.5 ml-1"
+            >Required</span
+          >
+          }
+        </span>
         }
-        <span class="text-sm text-surface-800">{{ item.keyword }}</span>
-        <span class="text-xs text-(--text-muted) ml-auto shrink-0"
-          >x{{ item.occurrencesInResume }}</span
+      </div>
+    </div>
+    } @if (semanticMatchedKeywords().length > 0) {
+    <div class="mt-5">
+      <h4
+        class="text-xs font-semibold uppercase tracking-wide text-surface-400"
+      >
+        Semantic match
+        <span class="normal-case font-normal text-surface-400"
+          >· {{ semanticMatchedKeywords().length }} · matched by meaning,
+          different wording</span
         >
-      </li>
-      }
-    </ul>
+      </h4>
+      <div class="mt-3 flex flex-wrap gap-2">
+        @for (item of semanticMatchedKeywords(); track item.keyword) {
+        <span
+          class="inline-flex items-center gap-1 text-sm text-surface-600 bg-(--neutral-100) rounded-full px-3 py-1"
+        >
+          <i class="pi pi-sync text-xs!"></i>
+          {{ item.keyword }}
+          <span class="text-surface-500">x{{ item.occurrencesInResume }}</span>
+          @if (item.isRequired) {
+          <span
+            class="text-xs bg-blue-100 text-blue-700 rounded px-1.5 py-0.5 ml-1"
+            >Required</span
+          >
+          }
+        </span>
+        }
+      </div>
+    </div>
+    }
   </div>
   }
 
   <!-- Underweighted Keywords -->
   @if (result().underweightedKeywords.length > 0) {
-  <div>
-    <h3 class="text-base font-semibold text-surface-800 mb-3">
-      Underweighted Keywords
+  <div class="rounded-lg border border-(--border-subtle)">
+    <button
+      type="button"
+      class="w-full flex items-center gap-2 px-4 py-3 text-left"
+      (click)="toggleUnderweighted()"
+      [attr.aria-expanded]="isUnderweightedExpanded()"
+      aria-controls="underweighted-keywords-panel"
+    >
+      <i class="pi pi-chart-line text-surface-500"></i>
+      <span class="font-semibold text-sm text-surface-800"
+        >Underweighted keywords</span
+      >
       <span
-        class="ml-2 text-xs font-semibold bg-(--neutral-100) text-surface-600 rounded-sm px-2 py-0.5"
+        class="text-xs font-semibold bg-(--neutral-100) text-surface-600 rounded-full px-2 py-0.5"
         >{{ result().underweightedKeywords.length }}</span
       >
-    </h3>
-    <ul class="space-y-2 list-none p-0 m-0">
+      <i
+        class="pi pi-chevron-down ml-auto text-surface-400 transition-transform"
+        [class.rotate-180]="isUnderweightedExpanded()"
+      ></i>
+    </button>
+    @if (isUnderweightedExpanded()) {
+    <ul
+      id="underweighted-keywords-panel"
+      class="space-y-2 list-none p-0 m-0 px-4 pb-4"
+    >
       @for (item of result().underweightedKeywords; track item.keyword) {
       <li class="rounded-lg border border-(--border-subtle) px-4 py-3">
         <div class="flex items-center gap-3">
@@ -451,20 +499,33 @@
       </li>
       }
     </ul>
+    }
   </div>
   }
 
   <!-- Acronym Issues -->
   @if (result().acronymIssues.length > 0) {
-  <div>
-    <h3 class="text-base font-semibold text-surface-800 mb-3">
-      Acronym Issues
+  <div class="rounded-lg border border-(--border-subtle)">
+    <button
+      type="button"
+      class="w-full flex items-center gap-2 px-4 py-3 text-left"
+      (click)="toggleAcronymIssues()"
+      [attr.aria-expanded]="isAcronymIssuesExpanded()"
+      aria-controls="acronym-issues-panel"
+    >
+      <i class="pi pi-hashtag text-surface-500"></i>
+      <span class="font-semibold text-sm text-surface-800">Acronym issues</span>
       <span
-        class="ml-2 text-xs font-semibold bg-(--neutral-100) text-surface-600 rounded-sm px-2 py-0.5"
+        class="text-xs font-semibold bg-(--neutral-100) text-surface-600 rounded-full px-2 py-0.5"
         >{{ result().acronymIssues.length }}</span
       >
-    </h3>
-    <ul class="space-y-2 list-none p-0 m-0">
+      <i
+        class="pi pi-chevron-down ml-auto text-surface-400 transition-transform"
+        [class.rotate-180]="isAcronymIssuesExpanded()"
+      ></i>
+    </button>
+    @if (isAcronymIssuesExpanded()) {
+    <ul id="acronym-issues-panel" class="space-y-2 list-none p-0 m-0 px-4 pb-4">
       @for (item of result().acronymIssues; track item.term) {
       <li
         class="rounded-lg border border-(--border-subtle) px-4 py-3 space-y-1"
@@ -473,27 +534,43 @@
           >{{ item.term }}</span
         >
         <p class="mb-1 text-sm text-surface-500">{{ item.issue }}</p>
+        @if (item.fix) {
         <p class="m-0 text-sm text-green-600">
           <span class="font-semibold mr-1 uppercase">Fix:</span> {{ item.fix }}
         </p>
+        }
       </li>
       }
     </ul>
+    }
   </div>
   }
 
   <!-- Fabrication Warnings -->
   @if (result().fabricationWarnings.length > 0) {
-  <div>
-    <h3 class="text-base font-semibold text-surface-800 mb-3">
-      <i class="pi pi-exclamation-triangle text-amber-500 mr-1.5"></i>
-      Fabrication Warnings
+  <div class="rounded-lg border border-amber-200 bg-amber-50">
+    <button
+      type="button"
+      class="w-full flex items-center gap-2 px-4 py-3 text-left"
+      (click)="toggleFabricationWarnings()"
+      [attr.aria-expanded]="isFabricationWarningsExpanded()"
+      aria-controls="fabrication-warnings-panel"
+    >
+      <i class="pi pi-exclamation-triangle text-amber-500"></i>
+      <span class="font-semibold text-sm text-surface-800"
+        >Fabrication warnings</span
+      >
       <span
-        class="ml-2 text-xs font-semibold bg-(--neutral-100) text-surface-600 rounded-sm px-2 py-0.5"
+        class="text-xs font-semibold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5"
         >{{ result().fabricationWarnings.length }}</span
       >
-    </h3>
-    <div class="rounded-lg bg-amber-50 border border-amber-200 p-4">
+      <i
+        class="pi pi-chevron-down ml-auto text-amber-500 transition-transform"
+        [class.rotate-180]="isFabricationWarningsExpanded()"
+      ></i>
+    </button>
+    @if (isFabricationWarningsExpanded()) {
+    <div id="fabrication-warnings-panel" class="px-4 pb-4">
       <ul class="space-y-3 list-none p-0 m-0">
         @for (item of result().fabricationWarnings; track item.keyword) {
         <li class="space-y-0.5">
@@ -505,6 +582,7 @@
         }
       </ul>
     </div>
+    }
   </div>
   }
 </div>
