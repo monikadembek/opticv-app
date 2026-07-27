@@ -487,9 +487,10 @@
       aria-controls="underweighted-keywords-panel"
     >
       <i class="pi pi-chart-line text-surface-500"></i>
-      <span class="font-semibold text-sm text-surface-800"
-        >Underweighted keywords</span
-      >
+      <p class="text-sm text-surface-800">
+        <span class="font-semibold">Underweighted keywords</span>
+        - present in resume but mentioned too few times for strong ATS ranking
+      </p>
       <span
         class="text-xs font-semibold bg-(--neutral-100) text-surface-600 rounded-full px-2 py-0.5"
         >{{ result().underweightedKeywords.length }}</span
@@ -544,7 +545,11 @@
       aria-controls="acronym-issues-panel"
     >
       <i class="pi pi-hashtag text-surface-500"></i>
-      <span class="font-semibold text-sm text-surface-800">Acronym issues</span>
+      <p class="text-sm text-surface-800">
+        <span class="font-semibold">Acronym issues</span> - terms written
+        differently than in the job description that may not be picked up by ATS
+        keyword matching
+      </p>
       <span
         class="text-xs font-semibold bg-(--neutral-100) text-surface-600 rounded-full px-2 py-0.5"
         >{{ result().acronymIssues.length }}</span
@@ -587,9 +592,10 @@
       aria-controls="fabrication-warnings-panel"
     >
       <i class="pi pi-exclamation-triangle text-amber-500"></i>
-      <span class="font-semibold text-sm text-surface-800"
-        >Fabrication warnings</span
-      >
+      <p class="text-sm text-surface-800">
+        <span class="font-semibold">Fabrication warnings</span> - keywords from
+        job description that the candidate clearly does not have
+      </p>
       <span
         class="text-xs font-semibold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5"
         >{{ result().fabricationWarnings.length }}</span

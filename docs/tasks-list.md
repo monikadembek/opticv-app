@@ -1282,13 +1282,17 @@ No other behavior changed — the quota-limit check (updateMany with count: { lt
 
 ### UI/UX - Keyword Gap section
 
-**status: todo**
+**status: in progress**
 
-**time:**
+**time: 25.07.2026 - 27.07.2026**
 
-- Do we need all informations that are currently displayed,
-- missing keywords should be visible more, its the most important part of this section,
-- Acronym issues and underweighted keywords - think of what we can do with those sections, are they mportant, should we display them, how we could apply the acronym issues
+- Do we need all informations that are currently displayed?
+- UI/UX improvements:
+  - missing keywords should be visible more, its the most important part of this section,
+  - matched keywords are taking too much space, display in pills,
+  - make some sections collapsible to not display so much information at once,
+  - add explanations to what acronym issues, underweighted keywords and fabrication warnings are,
+- Acronym issues - implement adding/replacing keywords in optimized CV.
 
 ---
 
