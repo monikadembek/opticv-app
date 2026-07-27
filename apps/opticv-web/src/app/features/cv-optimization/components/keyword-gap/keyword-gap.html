@@ -1,6 +1,6 @@
-<div class="space-y-8 py-2">
+<div class="py-2">
   <!-- Match Score -->
-  <div class="flex items-center gap-4">
+  <div class="mb-6 flex items-center gap-4">
     <svg
       viewBox="0 0 100 100"
       class="w-32 h-32"
@@ -66,8 +66,8 @@
 
   <!-- Missing Keywords -->
   @if (result().missingKeywords.length > 0) {
-  <div>
-    <h3 class="text-base font-semibold text-surface-800 mb-2">
+  <div class="mb-8">
+    <h3 class="text-xl font-semibold text-surface-800 mb-2">
       Missing Keywords
       <span
         class="ml-2 text-xs font-semibold bg-(--neutral-100) text-surface-600 rounded-sm px-2 py-1"
@@ -81,13 +81,15 @@
     <div class="space-y-4">
       @if (missingLikelyHas().length > 0) {
       <div class="mb-6">
-        <h4 class="font-semibold uppercase tracking-wide text-surface-400 mb-4">
+        <h4
+          class="font-semibold uppercase tracking-wide text-(--text-muted) mb-2"
+        >
           Likely have - add to your CV
         </h4>
-        <ul class="space-y-2 list-none p-0 m-0">
+        <ul class="space-y-3 list-none p-0 m-0">
           @for (item of missingLikelyHas(); track item.keyword) {
           <li
-            class="flex flex-col gap-1 rounded-lg border px-4 py-3 transition-colors"
+            class="flex flex-col gap-1 rounded-lg border px-4 pt-4 pb-5 transition-colors"
             [class]="isSelected(item.keyword) ? 'border-emerald-600 bg-emerald-100/40' : 'border-(--border-subtle)'"
           >
             <div class="flex items-center gap-2 flex-wrap">
@@ -96,7 +98,7 @@
                 [id]="'kw-' + item.keyword"
                 [checked]="isSelected(item.keyword)"
                 (change)="toggleKeyword(item.keyword)"
-                class="accent-primary-500"
+                class="accent-primary"
                 [attr.aria-label]="'Select keyword ' + item.keyword"
               />
               <label
@@ -111,7 +113,7 @@
                                 item.importance === 'high'     ? 'bg-orange-100 text-orange-700' :
                                 item.importance === 'medium'   ? 'bg-amber-100 text-amber-700' :
                                                                   'bg-slate-100 text-slate-600'"
-                pTooltip="Importance"
+                title="Importance"
                 tooltipPosition="top"
                 >{{ item.importance }}</span
               >
@@ -147,6 +149,11 @@
             </div>
             @if (isEditingKeyword(item.keyword)) {
             <div class="space-y-2 mt-2 ml-5">
+              <p
+                class="uppercase mb-1 text-sm font-semibold font-(family-name:--font-heading) text-(--text-muted)"
+              >
+                Edit the text that will be added
+              </p>
               <input
                 pInputText
                 type="text"
@@ -170,17 +177,30 @@
                 />
               </div>
             </div>
+            } @if (!isEditingKeyword(item.keyword)) {
+            <p class="mt-1 ml-5 text-sm text-surface-500">
+              {{ item.recommendation }}
+            </p>
+            @if (item.evidenceFromResume) {
+            <p
+              class="mt-2 ml-5 text-xs italic text-surface-400 border-l border-surface-200 bg-(--neutral-100) p-2 rounded-sm"
+            >
+              {{ item.evidenceFromResume }}
+            </p>
             } @if (isSelected(item.keyword) && item.suggestedPlacement ===
             'experience_bullet') {
-            <div class="mt-2 ml-5 flex items-center gap-2">
+            <div
+              class="mt-4 ml-5 p-4 flex flex-col items-start gap-2 bg-white rounded-md border border-(--color-green-light)"
+            >
               <label
                 [for]="'kw-pos-' + item.keyword"
-                class="text-xs text-surface-600 shrink-0"
-                >Add to position:</label
-              >
+                class="text-sm text-(--primary-700) uppercase shrink-0 font-semibold flex items-center gap-2"
+                ><i class="pi pi-list"></i>
+                Add as a bullet - choose where:
+              </label>
               <select
                 [id]="'kw-pos-' + item.keyword"
-                class="text-sm border border-(--border-subtle) rounded px-2 py-1 flex-1 bg-white"
+                class="text-sm border border-(--border-subtle) rounded px-2 py-1 flex-1 bg-white w-full"
                 (change)="onPositionChange(item.keyword, $any($event.target).value)"
               >
                 <option
@@ -200,34 +220,27 @@
                 }
               </select>
             </div>
-            @if (getKeywordPosition(item.keyword) === null) {
+            @if (isSelected(item.keyword) && getKeywordPosition(item.keyword)
+            === null) {
             <p class="text-xs text-amber-600 mt-1 ml-5">
               Pick a position to include this in your CV.
             </p>
-            } }
-            <p class="mt-1 ml-5 text-sm text-surface-500">
-              {{ item.recommendation }}
-            </p>
-            @if (item.evidenceFromResume) {
-            <p
-              class="mt-2 ml-5 text-xs italic text-surface-400 pl-2 border-l border-surface-200"
-            >
-              {{ item.evidenceFromResume }}
-            </p>
-            }
+            } } }
           </li>
           }
         </ul>
       </div>
       } @if (missingGenuinelyLacks().length > 0) {
       <div>
-        <h4 class="font-semibold uppercase tracking-wide text-surface-400 mb-2">
+        <h4
+          class="font-semibold uppercase tracking-wide text-(--text-muted) mb-2"
+        >
           Skills to acquire or omit
         </h4>
-        <ul class="space-y-2 list-none p-0 m-0">
+        <ul class="space-y-3 list-none p-0 m-0">
           @for (item of missingGenuinelyLacks(); track item.keyword) {
           <li
-            class="flex flex-col gap-1 rounded-lg border px-4 py-3 transition-colors"
+            class="flex flex-col gap-1 rounded-lg border px-4 pt-4 pb-5 transition-colors"
             [class]="isSelected(item.keyword) ? 'border-emerald-600 bg-emerald-100/40' : 'border-(--border-subtle)'"
           >
             <div class="flex items-center gap-2 flex-wrap">
@@ -236,7 +249,7 @@
                 [id]="'kw-lacks-' + item.keyword"
                 [checked]="isSelected(item.keyword)"
                 (change)="toggleKeyword(item.keyword)"
-                class="accent-primary-500"
+                class="accent-primary"
                 [attr.aria-label]="'Select keyword ' + item.keyword"
               />
               <label
@@ -283,6 +296,11 @@
             </div>
             @if (isEditingKeyword(item.keyword)) {
             <div class="space-y-2 mt-2 ml-5">
+              <p
+                class="uppercase mb-1 text-sm font-semibold font-(family-name:--font-heading) text-(--text-muted)"
+              >
+                Edit the text that will be added
+              </p>
               <input
                 pInputText
                 type="text"
@@ -306,17 +324,30 @@
                 />
               </div>
             </div>
+            } @if (!isEditingKeyword(item.keyword)) {
+            <p class="mt-1 text-sm text-surface-500 ml-5">
+              {{ item.recommendation }}
+            </p>
+            @if (item.evidenceFromResume) {
+            <p
+              class="mt-2 ml-5 text-xs italic text-surface-400 border-l border-surface-200 bg-(--neutral-100) p-2 rounded-sm"
+            >
+              {{ item.evidenceFromResume }}
+            </p>
             } @if (isSelected(item.keyword) && item.suggestedPlacement ===
             'experience_bullet') {
-            <div class="mt-2 ml-5 flex items-center gap-2">
+            <div
+              class="mt-4 ml-5 p-4 flex flex-col items-start gap-2 bg-white rounded-md border border-(--color-green-light)"
+            >
               <label
                 [for]="'kw-lacks-pos-' + item.keyword"
-                class="text-xs text-surface-600 shrink-0"
-                >Add to position:</label
+                class="text-sm text-(--primary-700) uppercase shrink-0 font-semibold flex items-center gap-2"
+                ><i class="pi pi-list"></i> Add as a bullet - choose
+                where:</label
               >
               <select
                 [id]="'kw-lacks-pos-' + item.keyword"
-                class="text-sm border border-(--border-subtle) rounded px-2 py-1 flex-1 bg-white"
+                class="text-sm border border-(--border-subtle) rounded px-2 py-1 flex-1 bg-white w-full"
                 (change)="onPositionChange(item.keyword, $any($event.target).value)"
               >
                 <option
@@ -336,21 +367,12 @@
                 }
               </select>
             </div>
-            @if (getKeywordPosition(item.keyword) === null) {
+            @if (isSelected(item.keyword) && getKeywordPosition(item.keyword)
+            === null) {
             <p class="text-xs text-amber-600 mt-1 ml-5">
               Pick a position to include this in your CV.
             </p>
-            } }
-            <p class="mt-1 text-sm text-surface-500 ml-5">
-              {{ item.recommendation }}
-            </p>
-            @if (item.evidenceFromResume) {
-            <p
-              class="mt-2 ml-5 text-xs italic text-surface-400 pl-2 border-l border-surface-200"
-            >
-              {{ item.evidenceFromResume }}
-            </p>
-            }
+            } } }
           </li>
           }
         </ul>
@@ -359,7 +381,9 @@
     </div>
 
     @if (selectedKeywords().length > 0) {
-    <p class="mt-4 text-sm text-(--primary-600) flex items-center gap-1.5">
+    <p
+      class="mt-4 px-4 py-3 text-sm text-(--primary-600) flex items-center gap-1.5 bg-green-100 rounded-xl"
+    >
       <i class="pi pi-check-circle"></i>
       <span class="font-semibold"
         >{{ selectedKeywords().length }} {{ selectedKeywords().length > 1 ?
@@ -373,15 +397,17 @@
 
   <!-- Matched Keywords -->
   @if (result().matchedKeywords.length > 0) {
-  <div>
-    <h3 class="text-base font-semibold text-surface-800 mb-1">
+  <hr class="pb-6 text-(--border-subtle)" />
+
+  <div class="mb-8">
+    <h3 class="text-xl font-semibold text-surface-800 mb-1">
       Matched keywords
       <span
         class="ml-2 text-xs font-semibold bg-(--neutral-100) text-surface-600 rounded-full px-2 py-1"
         >{{ result().matchedKeywords.length }}</span
       >
       <span class="ml-2 text-sm font-normal text-(--text-muted)"
-        >already in your CV - nothing to do here</span
+        >already in your CV</span
       >
     </h3>
 
@@ -398,10 +424,10 @@
       <div class="mt-3 flex flex-wrap gap-2">
         @for (item of exactMatchedKeywords(); track item.keyword) {
         <span
-          class="inline-flex items-center gap-1 text-sm text-emerald-700 bg-emerald-100 rounded-full px-3 py-1"
+          class="inline-flex items-center gap-1.5 text-sm text-emerald-700 bg-emerald-100 rounded-full px-3 py-1 border border-(--color-green-light)/30"
         >
           <i class="pi pi-check text-xs!"></i>
-          {{ item.keyword }}
+          <span class="font-semibold">{{ item.keyword }}</span>
           <span class="text-emerald-600">x{{ item.occurrencesInResume }}</span>
           @if (item.isRequired) {
           <span
@@ -427,10 +453,10 @@
       <div class="mt-3 flex flex-wrap gap-2">
         @for (item of semanticMatchedKeywords(); track item.keyword) {
         <span
-          class="inline-flex items-center gap-1 text-sm text-surface-600 bg-(--neutral-100) rounded-full px-3 py-1"
+          class="inline-flex items-center gap-1.5 text-sm text-surface-600 bg-(--neutral-100) rounded-full px-3 py-1 border border-(--border-subtle)"
         >
           <i class="pi pi-sync text-xs!"></i>
-          {{ item.keyword }}
+          <span class="font-semibold">{{ item.keyword }}</span>
           <span class="text-surface-500">x{{ item.occurrencesInResume }}</span>
           @if (item.isRequired) {
           <span
@@ -444,11 +470,15 @@
     </div>
     }
   </div>
+  } @if (result().underweightedKeywords.length > 0 ||
+  result().acronymIssues.length > 0 || result().fabricationWarnings.length > 0)
+  {
+  <hr class="pb-8 text-(--border-subtle)" />
   }
 
   <!-- Underweighted Keywords -->
   @if (result().underweightedKeywords.length > 0) {
-  <div class="rounded-lg border border-(--border-subtle)">
+  <div class="mb-4 rounded-lg border border-(--border-subtle)">
     <button
       type="button"
       class="w-full flex items-center gap-2 px-4 py-3 text-left"
@@ -505,7 +535,7 @@
 
   <!-- Acronym Issues -->
   @if (result().acronymIssues.length > 0) {
-  <div class="rounded-lg border border-(--border-subtle)">
+  <div class="mb-4 rounded-lg border border-(--border-subtle)">
     <button
       type="button"
       class="w-full flex items-center gap-2 px-4 py-3 text-left"
@@ -548,7 +578,7 @@
 
   <!-- Fabrication Warnings -->
   @if (result().fabricationWarnings.length > 0) {
-  <div class="rounded-lg border border-amber-200 bg-amber-50">
+  <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50">
     <button
       type="button"
       class="w-full flex items-center gap-2 px-4 py-3 text-left"

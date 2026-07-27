@@ -46,7 +46,7 @@
               type="checkbox"
               [checked]="isSelected(position.company, position.title, bullet.originalText)"
               (change)="toggleBullet(position.company, position.title, bullet.originalText)"
-              class="accent-primary-500 shrink-0"
+              class="accent-primary shrink-0"
               [attr.aria-label]="'Select AI rewrite for bullet at ' + position.title + ' - ' + position.company"
             />
             <span class="font-semibold text-sm"
@@ -235,7 +235,7 @@
               type="checkbox"
               [checked]="isRemovedBullet(position.company, position.title, bullet.originalText)"
               (change)="removedBulletToggled.emit({ company: position.company, title: position.title, originalText: bullet.originalText })"
-              class="accent-primary-500 mt-0.5 shrink-0"
+              class="accent-primary mt-0.5 shrink-0"
               [attr.aria-label]="'Remove bullet at ' + position.title + ' — ' + position.company + ': ' + bullet.originalText"
             />
             <div class="space-y-1 flex-1">
@@ -297,7 +297,7 @@
             type="checkbox"
             [checked]="isMissingSelected(suggestion.forPosition, suggestion.suggestedBullet)"
             (change)="missingBulletToggled.emit({ forPosition: suggestion.forPosition, suggestedBullet: suggestion.suggestedBullet })"
-            class="accent-primary-500 mt-1 shrink-0"
+            class="accent-primary mt-1 shrink-0"
             [attr.aria-label]="'Add suggested bullet for ' + suggestion.forPosition"
           />
           <div class="space-y-2 flex-1">

@@ -56,7 +56,7 @@
           [value]="variant.angle"
           [checked]="selectedAngle() === variant.angle"
           [attr.aria-label]="'Select ' + angleLabels[variant.angle]"
-          class="accent-primary-500"
+          class="accent-primary"
           (click)="$event.stopPropagation()"
           (change)="selectVariant(variant.angle)"
         />
