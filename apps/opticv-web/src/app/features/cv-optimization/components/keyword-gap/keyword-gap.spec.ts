@@ -11,9 +11,24 @@ const MOCK_RESULT: KeywordGapResult = {
     preferredTotal: 7,
   },
   matchedKeywords: [
-    { keyword: 'TypeScript', matchType: 'exact', occurrencesInResume: 3, isRequired: true },
-    { keyword: 'React', matchType: 'semantic', occurrencesInResume: 2, isRequired: false },
-    { keyword: 'Node', matchType: 'partial', occurrencesInResume: 1, isRequired: false },
+    {
+      keyword: 'TypeScript',
+      matchType: 'exact',
+      occurrencesInResume: 3,
+      isRequired: true,
+    },
+    {
+      keyword: 'React',
+      matchType: 'semantic',
+      occurrencesInResume: 2,
+      isRequired: false,
+    },
+    {
+      keyword: 'Node',
+      matchType: 'partial',
+      occurrencesInResume: 1,
+      isRequired: false,
+    },
   ],
   missingKeywords: [
     {
@@ -52,18 +67,24 @@ const MOCK_RESULT: KeywordGapResult = {
       keyword: 'CI/CD',
       currentOccurrences: 1,
       recommendedOccurrences: 3,
-      suggestedAdditions: ['Add CI/CD to summary', 'Mention in experience bullets'],
+      suggestedAdditions: [
+        'Add CI/CD to summary',
+        'Mention in experience bullets',
+      ],
     },
   ],
   fabricationWarnings: [
-    { keyword: 'Hadoop', reason: 'No evidence of Hadoop experience found in resume.' },
+    {
+      keyword: 'Hadoop',
+      reason: 'No evidence of Hadoop experience found in resume.',
+    },
   ],
   acronymIssues: [
     {
       term: 'CI/CD',
       issue: 'Only abbreviation used',
-      fix: 'Add full form: Continuous Integration/Continuous Deployment',
-      actionType: 'add',
+      fix: 'CI/CD (Continuous Integration/Continuous Deployment)',
+      actionType: 'replace',
       suggestedPlacement: 'skills',
     },
   ],
@@ -110,13 +131,19 @@ describe('KeywordGap', () => {
     fixture.detectChanges();
     expect(component.scoreColor()).toBe('green');
 
-    fixture.componentRef.setInput('result', { ...MOCK_RESULT, matchScore: 100 });
+    fixture.componentRef.setInput('result', {
+      ...MOCK_RESULT,
+      matchScore: 100,
+    });
     fixture.detectChanges();
     expect(component.scoreColor()).toBe('green');
   });
 
   it('hides matched keywords section when matchedKeywords is empty', () => {
-    fixture.componentRef.setInput('result', { ...MOCK_RESULT, matchedKeywords: [] });
+    fixture.componentRef.setInput('result', {
+      ...MOCK_RESULT,
+      matchedKeywords: [],
+    });
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).not.toContain('Matched keywords');
   });
@@ -126,14 +153,21 @@ describe('KeywordGap', () => {
   });
 
   it('hides missing keywords section when missingKeywords is empty', () => {
-    fixture.componentRef.setInput('result', { ...MOCK_RESULT, missingKeywords: [] });
+    fixture.componentRef.setInput('result', {
+      ...MOCK_RESULT,
+      missingKeywords: [],
+    });
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).not.toContain('Missing Keywords');
   });
 
   it('shows both sub-groups when both likely-has and genuinely-lacks are populated', () => {
-    expect(fixture.nativeElement.textContent).toContain('Likely have - add to your CV');
-    expect(fixture.nativeElement.textContent).toContain('Skills to acquire or omit');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Likely have - add to your CV',
+    );
+    expect(fixture.nativeElement.textContent).toContain(
+      'Skills to acquire or omit',
+    );
   });
 
   it('shows only likely-has sub-group when missingGenuinelyLacks is empty', () => {
@@ -143,8 +177,12 @@ describe('KeywordGap', () => {
     };
     fixture.componentRef.setInput('result', onlyLikelyHas);
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Likely have - add to your CV');
-    expect(fixture.nativeElement.textContent).not.toContain('Skills to acquire or omit');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Likely have - add to your CV',
+    );
+    expect(fixture.nativeElement.textContent).not.toContain(
+      'Skills to acquire or omit',
+    );
   });
 
   it('shows only genuinely-lacks sub-group when missingLikelyHas is empty', () => {
@@ -154,30 +192,48 @@ describe('KeywordGap', () => {
     };
     fixture.componentRef.setInput('result', onlyGenuinelyLacks);
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).not.toContain('Likely have - add to your CV');
-    expect(fixture.nativeElement.textContent).toContain('Skills to acquire or omit');
+    expect(fixture.nativeElement.textContent).not.toContain(
+      'Likely have - add to your CV',
+    );
+    expect(fixture.nativeElement.textContent).toContain(
+      'Skills to acquire or omit',
+    );
   });
 
   it('hides underweighted keywords section when underweightedKeywords is empty', () => {
-    fixture.componentRef.setInput('result', { ...MOCK_RESULT, underweightedKeywords: [] });
+    fixture.componentRef.setInput('result', {
+      ...MOCK_RESULT,
+      underweightedKeywords: [],
+    });
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).not.toContain('Underweighted keywords');
+    expect(fixture.nativeElement.textContent).not.toContain(
+      'Underweighted keywords',
+    );
   });
 
   it('hides acronym issues section when acronymIssues is empty', () => {
-    fixture.componentRef.setInput('result', { ...MOCK_RESULT, acronymIssues: [] });
+    fixture.componentRef.setInput('result', {
+      ...MOCK_RESULT,
+      acronymIssues: [],
+    });
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).not.toContain('Acronym issues');
   });
 
   it('hides fabrication warnings section when fabricationWarnings is empty', () => {
-    fixture.componentRef.setInput('result', { ...MOCK_RESULT, fabricationWarnings: [] });
+    fixture.componentRef.setInput('result', {
+      ...MOCK_RESULT,
+      fabricationWarnings: [],
+    });
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).not.toContain('Fabrication warnings');
+    expect(fixture.nativeElement.textContent).not.toContain(
+      'Fabrication warnings',
+    );
   });
 
   it('renders fabrication warnings with amber background when non-empty', () => {
-    const warningContainer = fixture.nativeElement.querySelector('.bg-amber-50');
+    const warningContainer =
+      fixture.nativeElement.querySelector('.bg-amber-50');
     expect(warningContainer).not.toBeNull();
   });
 
@@ -188,7 +244,9 @@ describe('KeywordGap', () => {
     };
     fixture.componentRef.setInput('result', itemWithEmptyEvidence);
     fixture.detectChanges();
-    const evidenceBlocks = fixture.nativeElement.querySelectorAll('.border-l.border-surface-200');
+    const evidenceBlocks = fixture.nativeElement.querySelectorAll(
+      '.border-l.border-surface-200',
+    );
     expect(evidenceBlocks.length).toBe(0);
   });
 
@@ -199,7 +257,9 @@ describe('KeywordGap', () => {
     };
     fixture.componentRef.setInput('result', itemWithEvidence);
     fixture.detectChanges();
-    const evidenceBlocks = fixture.nativeElement.querySelectorAll('.border-l.border-surface-200');
+    const evidenceBlocks = fixture.nativeElement.querySelectorAll(
+      '.border-l.border-surface-200',
+    );
     expect(evidenceBlocks.length).toBe(1);
   });
 
@@ -207,15 +267,22 @@ describe('KeywordGap', () => {
     const text = fixture.nativeElement.textContent;
     expect(text).toContain('Exact match');
     expect(text).toContain('Semantic match');
-    expect(component.exactMatchedKeywords().map((k) => k.keyword)).toEqual(['TypeScript']);
-    expect(component.semanticMatchedKeywords().map((k) => k.keyword)).toEqual(['React', 'Node']);
+    expect(component.exactMatchedKeywords().map((k) => k.keyword)).toEqual([
+      'TypeScript',
+    ]);
+    expect(component.semanticMatchedKeywords().map((k) => k.keyword)).toEqual([
+      'React',
+      'Node',
+    ]);
   });
 
   it('collapses underweighted keywords and fabrication warnings by default, but always shows acronym issues', () => {
     const text = fixture.nativeElement.textContent;
     expect(text).not.toContain('CI/CD to summary');
     expect(text).toContain('Only abbreviation used');
-    expect(text).not.toContain('No evidence of Hadoop experience found in resume.');
+    expect(text).not.toContain(
+      'No evidence of Hadoop experience found in resume.',
+    );
   });
 
   it('expands underweighted keywords panel on toggle', () => {
@@ -227,7 +294,9 @@ describe('KeywordGap', () => {
   it('expands fabrication warnings panel on toggle', () => {
     component.toggleFabricationWarnings();
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('No evidence of Hadoop experience found in resume.');
+    expect(fixture.nativeElement.textContent).toContain(
+      'No evidence of Hadoop experience found in resume.',
+    );
   });
 
   describe('experience bullet position picker', () => {
@@ -254,10 +323,13 @@ describe('KeywordGap', () => {
     });
 
     it('renders one option per experience position plus the placeholder', () => {
-      const select: HTMLSelectElement = fixture.nativeElement.querySelector('#kw-pos-GraphQL');
+      const select: HTMLSelectElement =
+        fixture.nativeElement.querySelector('#kw-pos-GraphQL');
       expect(select).not.toBeNull();
       expect(select.options.length).toBe(3);
-      expect(select.options[1].textContent).toContain('Acme Corp - Frontend Developer');
+      expect(select.options[1].textContent).toContain(
+        'Acme Corp - Frontend Developer',
+      );
       expect(select.options[2].textContent).toContain('Beta Inc - Engineer');
     });
 
@@ -266,40 +338,60 @@ describe('KeywordGap', () => {
     });
 
     it('getKeywordPosition returns the stored experienceIndex when one exists', () => {
-      fixture.componentRef.setInput('keywordBulletPositions', new Map([['GraphQL', 1]]));
+      fixture.componentRef.setInput(
+        'keywordBulletPositions',
+        new Map([['GraphQL', 1]]),
+      );
       fixture.detectChanges();
       expect(component.getKeywordPosition('GraphQL')).toBe(1);
     });
 
     it('select.value reflects the stored experienceIndex in the DOM', () => {
-      fixture.componentRef.setInput('keywordBulletPositions', new Map([['GraphQL', 1]]));
+      fixture.componentRef.setInput(
+        'keywordBulletPositions',
+        new Map([['GraphQL', 1]]),
+      );
       fixture.detectChanges();
-      const select: HTMLSelectElement = fixture.nativeElement.querySelector('#kw-pos-GraphQL');
+      const select: HTMLSelectElement =
+        fixture.nativeElement.querySelector('#kw-pos-GraphQL');
       expect(select.value).toBe('1');
     });
 
     it('onPositionChange emits experienceIndex: null when the placeholder is chosen', () => {
-      const emitted: Array<{ keyword: string; experienceIndex: number | null }> = [];
+      const emitted: Array<{
+        keyword: string;
+        experienceIndex: number | null;
+      }> = [];
       component.keywordBulletPositionSelected.subscribe((e) => emitted.push(e));
       component.onPositionChange('GraphQL', '');
       expect(emitted).toEqual([{ keyword: 'GraphQL', experienceIndex: null }]);
     });
 
     it('onPositionChange emits the numeric experienceIndex when an option is chosen', () => {
-      const emitted: Array<{ keyword: string; experienceIndex: number | null }> = [];
+      const emitted: Array<{
+        keyword: string;
+        experienceIndex: number | null;
+      }> = [];
       component.keywordBulletPositionSelected.subscribe((e) => emitted.push(e));
       component.onPositionChange('GraphQL', '1');
       expect(emitted).toEqual([{ keyword: 'GraphQL', experienceIndex: 1 }]);
     });
 
     it('does not show the "pick a position" warning when index 0 is selected', () => {
-      fixture.componentRef.setInput('keywordBulletPositions', new Map([['GraphQL', 0]]));
+      fixture.componentRef.setInput(
+        'keywordBulletPositions',
+        new Map([['GraphQL', 0]]),
+      );
       fixture.detectChanges();
-      expect(fixture.nativeElement.textContent).not.toContain('Pick a position to include this in your CV.');
+      expect(fixture.nativeElement.textContent).not.toContain(
+        'Pick a position to include this in your CV.',
+      );
     });
 
     it('shows the "pick a position" warning when no index is selected', () => {
-      expect(fixture.nativeElement.textContent).toContain('Pick a position to include this in your CV.');
+      expect(fixture.nativeElement.textContent).toContain(
+        'Pick a position to include this in your CV.',
+      );
     });
   });
 
@@ -335,7 +427,10 @@ describe('KeywordGap', () => {
     it('acronymEditSaved emits key and text on save', () => {
       const emitted: Array<{ key: string; text: string }> = [];
       component.acronymEditSaved.subscribe((e) => emitted.push(e));
-      component.acronymEditSaved.emit({ key: 'CI/CD', text: 'Custom fix text' });
+      component.acronymEditSaved.emit({
+        key: 'CI/CD',
+        text: 'Custom fix text',
+      });
       expect(emitted).toEqual([{ key: 'CI/CD', text: 'Custom fix text' }]);
     });
 
@@ -346,31 +441,36 @@ describe('KeywordGap', () => {
       expect(called).toBe(true);
     });
 
-    it('getAcronymDisplayText falls back to item.fix when no edit exists', () => {
-      expect(component.getAcronymDisplayText('CI/CD')).toBe(
-        'Add full form: Continuous Integration/Continuous Deployment',
+    it('getAcronymDisplayFixedText falls back to item.fix when no edit exists', () => {
+      expect(component.getAcronymDisplayFixedText('CI/CD')).toBe(
+        'CI/CD (Continuous Integration/Continuous Deployment)',
       );
     });
 
-    it('getAcronymDisplayText returns the edited text when one exists', () => {
-      fixture.componentRef.setInput('acronymEdits', new Map([['CI/CD', 'Edited fix']]));
+    it('getAcronymDisplayFixedText returns the edited text when one exists', () => {
+      fixture.componentRef.setInput(
+        'acronymEdits',
+        new Map([['CI/CD', 'Edited fix']]),
+      );
       fixture.detectChanges();
-      expect(component.getAcronymDisplayText('CI/CD')).toBe('Edited fix');
+      expect(component.getAcronymDisplayFixedText('CI/CD')).toBe('Edited fix');
     });
 
-    it('getAcronymDisplayText falls back to the term itself when no item and no edit exist', () => {
-      expect(component.getAcronymDisplayText('Unknown')).toBe('Unknown');
+    it('getAcronymDisplayFixedText falls back to the term itself when no item and no edit exist', () => {
+      expect(component.getAcronymDisplayFixedText('Unknown')).toBe('Unknown');
     });
 
     it('onAcronymPositionChange emits experienceIndex: null when the placeholder is chosen', () => {
-      const emitted: Array<{ term: string; experienceIndex: number | null }> = [];
+      const emitted: Array<{ term: string; experienceIndex: number | null }> =
+        [];
       component.acronymBulletPositionSelected.subscribe((e) => emitted.push(e));
       component.onAcronymPositionChange('CI/CD', '');
       expect(emitted).toEqual([{ term: 'CI/CD', experienceIndex: null }]);
     });
 
     it('onAcronymPositionChange emits the numeric experienceIndex when an option is chosen', () => {
-      const emitted: Array<{ term: string; experienceIndex: number | null }> = [];
+      const emitted: Array<{ term: string; experienceIndex: number | null }> =
+        [];
       component.acronymBulletPositionSelected.subscribe((e) => emitted.push(e));
       component.onAcronymPositionChange('CI/CD', '1');
       expect(emitted).toEqual([{ term: 'CI/CD', experienceIndex: 1 }]);
@@ -379,9 +479,7 @@ describe('KeywordGap', () => {
     it('does not render checkbox for historical acronym issues without actionType', () => {
       const historical: KeywordGapResult = {
         ...MOCK_RESULT,
-        acronymIssues: [
-          { term: 'Legacy', issue: 'Old issue', fix: 'Old fix' },
-        ],
+        acronymIssues: [{ term: 'Legacy', issue: 'Old issue', fix: 'Old fix' }],
       };
       fixture.componentRef.setInput('result', historical);
       fixture.detectChanges();

@@ -144,7 +144,7 @@ export class KeywordGap {
     return this.acronymEdits().has(term);
   }
 
-  getAcronymDisplayText(term: string): string {
+  getAcronymDisplayFixedText(term: string): string {
     return (
       this.acronymEdits().get(term) ??
       this.result().acronymIssues.find((a) => a.term === term)?.fix ??

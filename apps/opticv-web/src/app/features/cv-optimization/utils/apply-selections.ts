@@ -124,7 +124,6 @@ export function applySelectionsToCV(
   }
 
   if (selections.selectedAcronymIssues.length > 0 && keywordResult) {
-    const existingSkills = new Set(clone.skills.map((s) => s.toLowerCase()));
     for (const term of selections.selectedAcronymIssues) {
       const entry = keywordResult.acronymIssues.find((a) => a.term === term);
       if (!entry?.actionType) continue;
@@ -132,80 +131,72 @@ export function applySelectionsToCV(
       const displayText = acronymEdits.get(term) ?? entry.fix;
       const placement = entry.suggestedPlacement;
 
-      if (entry.actionType === 'add') {
-        if (placement === 'skills' || placement === 'multiple' || !placement) {
-          if (!existingSkills.has(displayText.toLowerCase())) {
-            clone.skills.push(displayText);
-            existingSkills.add(displayText.toLowerCase());
-          }
-        } else if (placement === 'experience_bullet') {
-          const experienceIndex = acronymBulletPositions.get(term);
-          if (experienceIndex === undefined) continue;
-          if (experienceIndex < 0 || experienceIndex >= clone.experience.length)
-            continue;
-          clone.experience[experienceIndex].bullets.push(displayText);
+      if (placement === 'skills') {
+        const skillIndex = clone.skills.findIndex((s) =>
+          s.toLowerCase().includes(entry.term.toLowerCase()),
+        );
+        if (skillIndex !== -1) {
+          const replaced = replaceFirstCaseInsensitive(
+            clone.skills[skillIndex],
+            entry.term,
+            displayText,
+          );
+          clone.skills[skillIndex] = replaced ?? displayText;
+        }
+      } else if (placement === 'experience_bullet') {
+        const experienceIndex = acronymBulletPositions.get(term);
+        if (experienceIndex === undefined) continue;
+        if (experienceIndex < 0 || experienceIndex >= clone.experience.length)
+          continue;
+        const bullets = clone.experience[experienceIndex].bullets;
+        const bulletIndex = bullets.findIndex((b) =>
+          b.toLowerCase().includes(entry.term.toLowerCase()),
+        );
+        if (bulletIndex !== -1) {
+          const replaced = replaceFirstCaseInsensitive(
+            bullets[bulletIndex],
+            entry.term,
+            displayText,
+          );
+          if (replaced !== null) bullets[bulletIndex] = replaced;
+        } else {
+          bullets.push(displayText);
+        }
+      } else if (placement === 'summary') {
+        if (clone.summary) {
+          const replaced = replaceFirstCaseInsensitive(
+            clone.summary,
+            entry.term,
+            displayText,
+          );
+          if (replaced !== null) clone.summary = replaced;
         }
       } else {
-        if (placement === 'skills') {
-          const skillIndex = clone.skills.findIndex(
-            (s) => s.toLowerCase() === entry.term.toLowerCase(),
+        // 'multiple' and 'title' (no dedicated CV-level title field) — broad replace
+        if (clone.summary) {
+          const replacedSummary = replaceFirstCaseInsensitive(
+            clone.summary,
+            entry.term,
+            displayText,
           );
-          if (skillIndex !== -1) {
-            clone.skills[skillIndex] = displayText;
-          }
-        } else if (placement === 'experience_bullet') {
-          const experienceIndex = acronymBulletPositions.get(term);
-          if (experienceIndex === undefined) continue;
-          if (experienceIndex < 0 || experienceIndex >= clone.experience.length)
-            continue;
-          const bullets = clone.experience[experienceIndex].bullets;
-          const bulletIndex = bullets.findIndex(
-            (b) => b.toLowerCase().includes(entry.term.toLowerCase()),
+          if (replacedSummary !== null) clone.summary = replacedSummary;
+        }
+        for (let i = 0; i < clone.skills.length; i++) {
+          const replacedSkill = replaceFirstCaseInsensitive(
+            clone.skills[i],
+            entry.term,
+            displayText,
           );
-          if (bulletIndex !== -1) {
-            const replaced = replaceFirstCaseInsensitive(
-              bullets[bulletIndex],
+          if (replacedSkill !== null) clone.skills[i] = replacedSkill;
+        }
+        for (const exp of clone.experience) {
+          for (let i = 0; i < exp.bullets.length; i++) {
+            const replacedBullet = replaceFirstCaseInsensitive(
+              exp.bullets[i],
               entry.term,
               displayText,
             );
-            if (replaced !== null) bullets[bulletIndex] = replaced;
-          }
-        } else if (placement === 'summary') {
-          if (clone.summary) {
-            const replaced = replaceFirstCaseInsensitive(
-              clone.summary,
-              entry.term,
-              displayText,
-            );
-            if (replaced !== null) clone.summary = replaced;
-          }
-        } else {
-          // 'multiple' and 'title' (no dedicated CV-level title field) — broad replace
-          if (clone.summary) {
-            const replacedSummary = replaceFirstCaseInsensitive(
-              clone.summary,
-              entry.term,
-              displayText,
-            );
-            if (replacedSummary !== null) clone.summary = replacedSummary;
-          }
-          for (let i = 0; i < clone.skills.length; i++) {
-            const replacedSkill = replaceFirstCaseInsensitive(
-              clone.skills[i],
-              entry.term,
-              displayText,
-            );
-            if (replacedSkill !== null) clone.skills[i] = replacedSkill;
-          }
-          for (const exp of clone.experience) {
-            for (let i = 0; i < exp.bullets.length; i++) {
-              const replacedBullet = replaceFirstCaseInsensitive(
-                exp.bullets[i],
-                entry.term,
-                displayText,
-              );
-              if (replacedBullet !== null) exp.bullets[i] = replacedBullet;
-            }
+            if (replacedBullet !== null) exp.bullets[i] = replacedBullet;
           }
         }
       }

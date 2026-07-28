@@ -329,7 +329,7 @@ export type KeywordGapAcronymIssue = {
   term: string;
   issue: string;
   fix: string;
-  actionType?: 'add' | 'replace';
+  actionType?: 'replace';
   suggestedPlacement?:
     | 'summary'
     | 'skills'

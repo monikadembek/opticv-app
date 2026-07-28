@@ -177,7 +177,7 @@ Analysis principles:
 - Distinguish between exact matches, semantic matches (e.g., "JS" vs "JavaScript"), and missing keywords.
 - Identify required vs preferred qualifications from the job description — don't treat them equally.
 - Don't suggest adding keywords the candidate doesn't have actual experience with. Suggest reframing existing experience to surface relevant skills.
-- Account for ATS quirks: acronyms typically need to appear in both expanded and abbreviated form.
+- Account for ATS quirks: acronyms typically need to appear in both expanded and abbreviated form. When you flag an acronym issue, set "term" to the exact substring as it literally appears in the resume text (matching case and punctuation) so it can be found and replaced programmatically, and set "fix" to the exact replacement text that should replace the "term", for example text that could include both the abbreviated and expanded form together (e.g., "CI/CD (Continuous Integration/Continuous Deployment)"), so a single in-place replacement leaves both forms present.
 - Consider keyword frequency — appearing once vs three times in a resume affects ATS ranking.
 - Include soft skills and methodologies (e.g., "Agile", "stakeholder management") not just hard skills.
 
@@ -364,14 +364,22 @@ Also calculate an overall keyword match score (percentage of important job descr
                 'suggestedPlacement',
               ],
               properties: {
-                term: { type: 'string' },
+                term: {
+                  type: 'string',
+                  description:
+                    'The exact substring as it literally appears in the resume text (matching case and punctuation), so it can be found and replaced programmatically',
+                },
                 issue: { type: 'string' },
-                fix: { type: 'string' },
+                fix: {
+                  type: 'string',
+                  description:
+                    'The exact replacement text for "term", including both the abbreviated and expanded form together (e.g., "CI/CD (Continuous Integration/Continuous Deployment)"), don\'t add here any explanatation or description text, only the exact replacement text for the "term"',
+                },
                 actionType: {
                   type: 'string',
-                  enum: ['add', 'replace'],
+                  enum: ['replace'],
                   description:
-                    "'add' if the fix should be inserted as a new term, 'replace' if it should replace the existing term wherever it appears",
+                    'Always "replace" — the fix text replaces the existing term in place',
                 },
                 suggestedPlacement: {
                   type: 'string',

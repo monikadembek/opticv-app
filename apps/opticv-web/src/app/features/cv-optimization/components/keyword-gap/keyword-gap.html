@@ -508,11 +508,7 @@
           <label
             [for]="'acr-' + item.term"
             class="font-semibold text-sm text-surface-800 cursor-pointer"
-            >{{ getAcronymDisplayText(item.term) }}</label
-          >
-          <span
-            class="text-xs bg-blue-100 text-blue-700 rounded px-1.5 py-0.5 uppercase"
-            >{{ item.actionType }}</span
+            >{{ item.term }}</label
           >
           @if (isEditedAcronym(item.term)) {
           <span
@@ -570,12 +566,15 @@
           </div>
         </div>
         } @if (!isEditingAcronym(item.term)) {
-        <p class="mt-1 ml-5 text-sm text-surface-500">{{ item.issue }}</p>
-        @if (item.fix) {
         <p class="m-0 ml-5 text-sm text-green-600">
-          <span class="font-semibold mr-1 uppercase">Fix:</span> {{ item.fix }}
+          <span class="font-semibold mr-1 uppercase">Replace with:</span> {{
+          getAcronymDisplayFixedText(item.term) }}
         </p>
-        } @if (isAcronymSelected(item.term) && item.suggestedPlacement ===
+        <p class="mt-1 ml-5 text-sm text-surface-500">
+          <span class="font-semibold mr-1 uppercase">Issue: </span>{{ item.issue
+          }}
+        </p>
+        @if (isAcronymSelected(item.term) && item.suggestedPlacement ===
         'experience_bullet') {
         <div
           class="mt-4 ml-5 p-4 flex flex-col items-start gap-2 bg-white rounded-md border border-(--color-green-light)"
@@ -584,7 +583,7 @@
             [for]="'acr-pos-' + item.term"
             class="text-sm text-(--primary-700) uppercase shrink-0 font-semibold flex items-center gap-2"
             ><i class="pi pi-list"></i>
-            Add as a bullet - choose where:
+            Replace within a bullet - choose where:
           </label>
           <select
             [id]="'acr-pos-' + item.term"

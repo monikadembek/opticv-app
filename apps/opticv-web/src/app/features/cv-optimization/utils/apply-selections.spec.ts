@@ -114,7 +114,7 @@ const ACRONYM_RESULT: KeywordGapResult = {
   ...KEYWORD_RESULT,
   missingKeywords: [],
   acronymIssues: [
-    { term: 'JS', issue: 'Should be spelled out.', fix: 'JavaScript', actionType: 'add', suggestedPlacement: 'skills' },
+    { term: 'JS', issue: 'Only abbreviation used.', fix: 'JS (JavaScript)', actionType: 'replace', suggestedPlacement: 'skills' },
     { term: 'ML', issue: 'Inconsistent with JD.', fix: 'Machine Learning', actionType: 'replace', suggestedPlacement: 'skills' },
   ],
 };
@@ -484,41 +484,7 @@ describe('applySelectionsToCV', () => {
   });
 
   describe('acronym issues', () => {
-    it('adds an "add" acronym fix with placement "skills" to skills', () => {
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['JS'] };
-      const result = applySelectionsToCV(BASE_CV, selections, null, null, ACRONYM_RESULT);
-      expect(result.skills).toContain('JavaScript');
-    });
-
-    it('adds an "add" acronym fix with placement "experience_bullet" at the chosen position', () => {
-      const kwResult: KeywordGapResult = {
-        ...ACRONYM_RESULT,
-        acronymIssues: [
-          { term: 'CI', issue: 'Spell out.', fix: 'Continuous Integration', actionType: 'add', suggestedPlacement: 'experience_bullet' },
-        ],
-      };
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['CI'] };
-      const acronymBulletPositions = new Map([['CI', 0]]);
-      const result = applySelectionsToCV(
-        BASE_CV, selections, null, null, kwResult,
-        new Map(), [], [], new Map(), new Map(), new Map(), new Map(), acronymBulletPositions,
-      );
-      expect(result.experience[0].bullets).toContain('Continuous Integration');
-    });
-
-    it('adds an "add" acronym fix with placement "multiple" to skills (fallback)', () => {
-      const kwResult: KeywordGapResult = {
-        ...ACRONYM_RESULT,
-        acronymIssues: [
-          { term: 'QA', issue: 'Spell out.', fix: 'Quality Assurance', actionType: 'add', suggestedPlacement: 'multiple' },
-        ],
-      };
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['QA'] };
-      const result = applySelectionsToCV(BASE_CV, selections, null, null, kwResult);
-      expect(result.skills).toContain('Quality Assurance');
-    });
-
-    it('replaces a matching skill entry for "replace" with placement "skills"', () => {
+    it('replaces a matching skill entry with placement "skills"', () => {
       const cv: CvStructuredData = { ...BASE_CV, skills: ['ML', 'HTML'] };
       const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['ML'] };
       const result = applySelectionsToCV(cv, selections, null, null, ACRONYM_RESULT);
@@ -526,7 +492,15 @@ describe('applySelectionsToCV', () => {
       expect(result.skills).not.toContain('ML');
     });
 
-    it('replaces the substring in the chosen bullet for "replace" with placement "experience_bullet"', () => {
+    it('replaces a skill entry containing the term as a substring with placement "skills"', () => {
+      const cv: CvStructuredData = { ...BASE_CV, skills: ['ML (basic)', 'HTML'] };
+      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['ML'] };
+      const result = applySelectionsToCV(cv, selections, null, null, ACRONYM_RESULT);
+      expect(result.skills).toContain('Machine Learning (basic)');
+      expect(result.skills).not.toContain('ML (basic)');
+    });
+
+    it('replaces the substring in the chosen bullet for placement "experience_bullet"', () => {
       const kwResult: KeywordGapResult = {
         ...ACRONYM_RESULT,
         acronymIssues: [
@@ -540,6 +514,22 @@ describe('applySelectionsToCV', () => {
         new Map(), [], [], new Map(), new Map(), new Map(), new Map(), acronymBulletPositions,
       );
       expect(result.experience[0].bullets).toContain('Did things with React.js.');
+    });
+
+    it('inserts the fix as a new bullet when the term is not found in any bullet at the chosen position', () => {
+      const kwResult: KeywordGapResult = {
+        ...ACRONYM_RESULT,
+        acronymIssues: [
+          { term: 'CI', issue: 'x', fix: 'CI (Continuous Integration)', actionType: 'replace', suggestedPlacement: 'experience_bullet' },
+        ],
+      };
+      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['CI'] };
+      const acronymBulletPositions = new Map([['CI', 0]]);
+      const result = applySelectionsToCV(
+        BASE_CV, selections, null, null, kwResult,
+        new Map(), [], [], new Map(), new Map(), new Map(), new Map(), acronymBulletPositions,
+      );
+      expect(result.experience[0].bullets).toContain('CI (Continuous Integration)');
     });
 
     it('replaces the substring in summary for "replace" with placement "summary"', () => {
@@ -603,13 +593,15 @@ describe('applySelectionsToCV', () => {
     });
 
     it('uses acronymEdits override instead of entry.fix', () => {
+      const cv: CvStructuredData = { ...BASE_CV, skills: ['JS', 'HTML'] };
       const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['JS'] };
       const acronymEdits = new Map([['JS', 'Vanilla JavaScript']]);
       const result = applySelectionsToCV(
-        BASE_CV, selections, null, null, ACRONYM_RESULT,
+        cv, selections, null, null, ACRONYM_RESULT,
         new Map(), [], [], new Map(), new Map(), new Map(), acronymEdits,
       );
       expect(result.skills).toContain('Vanilla JavaScript');
+      expect(result.skills).not.toContain('JS');
     });
 
     it('skips historical acronym issues with no actionType without throwing', () => {
