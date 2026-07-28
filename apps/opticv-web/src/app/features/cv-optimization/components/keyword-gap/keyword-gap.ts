@@ -71,15 +71,10 @@ export class KeywordGap {
   );
 
   readonly isUnderweightedExpanded = signal(false);
-  readonly isAcronymIssuesExpanded = signal(false);
   readonly isFabricationWarningsExpanded = signal(false);
 
   toggleUnderweighted(): void {
     this.isUnderweightedExpanded.update((expanded) => !expanded);
-  }
-
-  toggleAcronymIssues(): void {
-    this.isAcronymIssuesExpanded.update((expanded) => !expanded);
   }
 
   toggleFabricationWarnings(): void {

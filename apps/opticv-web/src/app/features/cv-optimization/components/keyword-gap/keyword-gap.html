@@ -470,97 +470,26 @@
     </div>
     }
   </div>
-  } @if (result().underweightedKeywords.length > 0 ||
-  result().acronymIssues.length > 0 || result().fabricationWarnings.length > 0)
-  {
-  <hr class="pb-8 text-(--border-subtle)" />
-  }
-
-  <!-- Underweighted Keywords -->
-  @if (result().underweightedKeywords.length > 0) {
-  <div class="mb-4 rounded-lg border border-(--border-subtle)">
-    <button
-      type="button"
-      class="w-full flex items-center gap-2 px-4 py-3 text-left"
-      (click)="toggleUnderweighted()"
-      [attr.aria-expanded]="isUnderweightedExpanded()"
-      aria-controls="underweighted-keywords-panel"
-    >
-      <i class="pi pi-chart-line text-surface-500"></i>
-      <p class="text-sm text-surface-800">
-        <span class="font-semibold">Underweighted keywords</span>
-        - present in resume but mentioned too few times for strong ATS ranking
-      </p>
-      <span
-        class="text-xs font-semibold bg-(--neutral-100) text-surface-600 rounded-full px-2 py-0.5"
-        >{{ result().underweightedKeywords.length }}</span
-      >
-      <i
-        class="pi pi-chevron-down ml-auto text-surface-400 transition-transform"
-        [class.rotate-180]="isUnderweightedExpanded()"
-      ></i>
-    </button>
-    @if (isUnderweightedExpanded()) {
-    <ul
-      id="underweighted-keywords-panel"
-      class="space-y-2 list-none p-0 m-0 px-4 pb-4"
-    >
-      @for (item of result().underweightedKeywords; track item.keyword) {
-      <li class="rounded-lg border border-(--border-subtle) px-4 py-3">
-        <div class="flex items-center gap-3">
-          <span class="font-semibold text-sm text-surface-800"
-            >{{ item.keyword }}</span
-          >
-          <span
-            class="text-sm text-surface-500 flex items-center gap-1"
-            title="Current occurencies vs suggested occurencies"
-          >
-            {{ item.currentOccurrences }}
-            <i class="pi pi-arrow-right text-xs! text-surface-400"></i>
-            {{ item.recommendedOccurrences }}
-          </span>
-        </div>
-        @if (item.suggestedAdditions.length > 0) {
-        <ul class="mt-2 pl-4 space-y-1 list-disc list-inside">
-          @for (suggestion of item.suggestedAdditions; track suggestion) {
-          <li class="text-xs text-surface-500">{{ suggestion }}</li>
-          }
-        </ul>
-        }
-      </li>
-      }
-    </ul>
-    }
-  </div>
   }
 
   <!-- Acronym Issues -->
   @if (result().acronymIssues.length > 0) {
-  <div class="mb-4 rounded-lg border border-(--border-subtle)">
-    <button
-      type="button"
-      class="w-full flex items-center gap-2 px-4 py-3 text-left"
-      (click)="toggleAcronymIssues()"
-      [attr.aria-expanded]="isAcronymIssuesExpanded()"
-      aria-controls="acronym-issues-panel"
-    >
-      <i class="pi pi-hashtag text-surface-500"></i>
-      <p class="text-sm text-surface-800">
-        <span class="font-semibold">Acronym issues</span> - terms written
-        differently than in the job description that may not be picked up by ATS
-        keyword matching
-      </p>
+  <hr class="pb-8 text-(--border-subtle)" />
+
+  <div class="mb-8">
+    <h3 class="text-xl font-semibold text-surface-800 mb-1">
+      Acronym issues
       <span
-        class="text-xs font-semibold bg-(--neutral-100) text-surface-600 rounded-full px-2 py-0.5"
+        class="ml-2 text-xs font-semibold bg-(--neutral-100) text-surface-600 rounded-full px-2 py-1"
         >{{ result().acronymIssues.length }}</span
       >
-      <i
-        class="pi pi-chevron-down ml-auto text-surface-400 transition-transform"
-        [class.rotate-180]="isAcronymIssuesExpanded()"
-      ></i>
-    </button>
-    @if (isAcronymIssuesExpanded()) {
-    <ul id="acronym-issues-panel" class="space-y-2 list-none p-0 m-0 px-4 pb-4">
+    </h3>
+    <p class="mb-4 text-sm font-normal text-(--text-muted)">
+      Terms written differently than in the job description that may not be
+      picked up by ATS keyword matching
+    </p>
+
+    <ul id="acronym-issues-panel" class="space-y-2 list-none p-0 m-0">
       @for (item of result().acronymIssues; track item.term) {
       <li
         class="flex flex-col gap-1 rounded-lg border px-4 pt-4 pb-5 transition-colors"
@@ -662,11 +591,17 @@
             class="text-sm border border-(--border-subtle) rounded px-2 py-1 flex-1 bg-white w-full"
             (change)="onAcronymPositionChange(item.term, $any($event.target).value)"
           >
-            <option value="" [selected]="getAcronymPosition(item.term) === null">
+            <option
+              value=""
+              [selected]="getAcronymPosition(item.term) === null"
+            >
               — pick a position —
             </option>
             @for (pos of experiencePositions(); track $index; let i = $index) {
-            <option [value]="i" [selected]="getAcronymPosition(item.term) === i">
+            <option
+              [value]="i"
+              [selected]="getAcronymPosition(item.term) === i"
+            >
               {{ pos }}
             </option>
             }
@@ -687,6 +622,66 @@
           <span class="font-semibold mr-1 uppercase">Fix:</span> {{ item.fix }}
         </p>
         } }
+      </li>
+      }
+    </ul>
+  </div>
+  } @if (result().underweightedKeywords.length > 0 ||
+  result().fabricationWarnings.length > 0) {
+  <hr class="pb-8 text-(--border-subtle)" />
+  }
+
+  <!-- Underweighted Keywords -->
+  @if (result().underweightedKeywords.length > 0) {
+  <div class="mb-4 rounded-lg border border-(--border-subtle)">
+    <button
+      type="button"
+      class="w-full flex items-center gap-2 px-4 py-3 text-left"
+      (click)="toggleUnderweighted()"
+      [attr.aria-expanded]="isUnderweightedExpanded()"
+      aria-controls="underweighted-keywords-panel"
+    >
+      <i class="pi pi-chart-line text-surface-500"></i>
+      <p class="text-sm text-surface-800">
+        <span class="font-semibold">Underweighted keywords</span>
+        - present in resume but mentioned too few times for strong ATS ranking
+      </p>
+      <span
+        class="text-xs font-semibold bg-(--neutral-100) text-surface-600 rounded-full px-2 py-0.5"
+        >{{ result().underweightedKeywords.length }}</span
+      >
+      <i
+        class="pi pi-chevron-down ml-auto text-surface-400 transition-transform"
+        [class.rotate-180]="isUnderweightedExpanded()"
+      ></i>
+    </button>
+    @if (isUnderweightedExpanded()) {
+    <ul
+      id="underweighted-keywords-panel"
+      class="space-y-2 list-none p-0 m-0 px-4 pb-4"
+    >
+      @for (item of result().underweightedKeywords; track item.keyword) {
+      <li class="rounded-lg border border-(--border-subtle) px-4 py-3">
+        <div class="flex items-center gap-3">
+          <span class="font-semibold text-sm text-surface-800"
+            >{{ item.keyword }}</span
+          >
+          <span
+            class="text-sm text-surface-500 flex items-center gap-1"
+            title="Current occurencies vs suggested occurencies"
+          >
+            {{ item.currentOccurrences }}
+            <i class="pi pi-arrow-right text-xs! text-surface-400"></i>
+            {{ item.recommendedOccurrences }}
+          </span>
+        </div>
+        @if (item.suggestedAdditions.length > 0) {
+        <ul class="mt-2 pl-4 space-y-1 list-disc list-inside">
+          @for (suggestion of item.suggestedAdditions; track suggestion) {
+          <li class="text-xs text-surface-500">{{ suggestion }}</li>
+          }
+        </ul>
+        }
       </li>
       }
     </ul>

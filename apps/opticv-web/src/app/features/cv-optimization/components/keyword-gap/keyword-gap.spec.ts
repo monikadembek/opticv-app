@@ -211,10 +211,10 @@ describe('KeywordGap', () => {
     expect(component.semanticMatchedKeywords().map((k) => k.keyword)).toEqual(['React', 'Node']);
   });
 
-  it('collapses underweighted keywords, acronym issues, and fabrication warnings by default', () => {
+  it('collapses underweighted keywords and fabrication warnings by default, but always shows acronym issues', () => {
     const text = fixture.nativeElement.textContent;
     expect(text).not.toContain('CI/CD to summary');
-    expect(text).not.toContain('Only abbreviation used');
+    expect(text).toContain('Only abbreviation used');
     expect(text).not.toContain('No evidence of Hadoop experience found in resume.');
   });
 
@@ -222,12 +222,6 @@ describe('KeywordGap', () => {
     component.toggleUnderweighted();
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Add CI/CD to summary');
-  });
-
-  it('expands acronym issues panel on toggle', () => {
-    component.toggleAcronymIssues();
-    fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Only abbreviation used');
   });
 
   it('expands fabrication warnings panel on toggle', () => {
@@ -310,11 +304,6 @@ describe('KeywordGap', () => {
   });
 
   describe('acronym issues interactions', () => {
-    beforeEach(() => {
-      component.toggleAcronymIssues();
-      fixture.detectChanges();
-    });
-
     it('toggleAcronymIssue emits acronymIssueToggled with the term', () => {
       const emitted: string[] = [];
       component.acronymIssueToggled.subscribe((t) => emitted.push(t));
