@@ -27,6 +27,11 @@ export class KeywordGap {
   readonly editedKeywordText = input<string>('');
   readonly experiencePositions = input<string[]>([]);
   readonly keywordBulletPositions = input<Map<string, number>>(new Map());
+  readonly selectedAcronymIssues = input<string[]>([]);
+  readonly acronymEdits = input<Map<string, string>>(new Map());
+  readonly activeAcronymEditKey = input<string | null>(null);
+  readonly editedAcronymText = input<string>('');
+  readonly acronymBulletPositions = input<Map<string, number>>(new Map());
 
   readonly keywordToggled = output<string>();
   readonly keywordEditStarted = output<string>();
@@ -35,6 +40,15 @@ export class KeywordGap {
   readonly keywordEditTextChanged = output<string>();
   readonly keywordBulletPositionSelected = output<{
     keyword: string;
+    experienceIndex: number | null;
+  }>();
+  readonly acronymIssueToggled = output<string>();
+  readonly acronymEditStarted = output<string>();
+  readonly acronymEditSaved = output<{ key: string; text: string }>();
+  readonly acronymEditCancelled = output<void>();
+  readonly acronymEditTextChanged = output<string>();
+  readonly acronymBulletPositionSelected = output<{
+    term: string;
     experienceIndex: number | null;
   }>();
 
@@ -117,5 +131,38 @@ export class KeywordGap {
   onPositionChange(keyword: string, value: string): void {
     const experienceIndex = value === '' ? null : Number(value);
     this.keywordBulletPositionSelected.emit({ keyword, experienceIndex });
+  }
+
+  isAcronymSelected(term: string): boolean {
+    return this.selectedAcronymIssues().includes(term);
+  }
+
+  toggleAcronymIssue(term: string): void {
+    this.acronymIssueToggled.emit(term);
+  }
+
+  isEditingAcronym(term: string): boolean {
+    return this.activeAcronymEditKey() === term;
+  }
+
+  isEditedAcronym(term: string): boolean {
+    return this.acronymEdits().has(term);
+  }
+
+  getAcronymDisplayText(term: string): string {
+    return (
+      this.acronymEdits().get(term) ??
+      this.result().acronymIssues.find((a) => a.term === term)?.fix ??
+      term
+    );
+  }
+
+  getAcronymPosition(term: string): number | null {
+    return this.acronymBulletPositions().get(term) ?? null;
+  }
+
+  onAcronymPositionChange(term: string, value: string): void {
+    const experienceIndex = value === '' ? null : Number(value);
+    this.acronymBulletPositionSelected.emit({ term, experienceIndex });
   }
 }

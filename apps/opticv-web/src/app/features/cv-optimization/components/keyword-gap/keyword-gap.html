@@ -563,8 +563,121 @@
     <ul id="acronym-issues-panel" class="space-y-2 list-none p-0 m-0 px-4 pb-4">
       @for (item of result().acronymIssues; track item.term) {
       <li
-        class="rounded-lg border border-(--border-subtle) px-4 py-3 space-y-1"
+        class="flex flex-col gap-1 rounded-lg border px-4 pt-4 pb-5 transition-colors"
+        [class]="isAcronymSelected(item.term) ? 'border-emerald-600 bg-emerald-100/40' : 'border-(--border-subtle)'"
       >
+        @if (item.actionType) {
+        <div class="flex items-center gap-2 flex-wrap">
+          <input
+            type="checkbox"
+            [id]="'acr-' + item.term"
+            [checked]="isAcronymSelected(item.term)"
+            (change)="toggleAcronymIssue(item.term)"
+            class="accent-primary"
+            [attr.aria-label]="'Select acronym issue ' + item.term"
+          />
+          <label
+            [for]="'acr-' + item.term"
+            class="font-semibold text-sm text-surface-800 cursor-pointer"
+            >{{ getAcronymDisplayText(item.term) }}</label
+          >
+          <span
+            class="text-xs bg-blue-100 text-blue-700 rounded px-1.5 py-0.5 uppercase"
+            >{{ item.actionType }}</span
+          >
+          @if (isEditedAcronym(item.term)) {
+          <span
+            class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 font-medium"
+            >Edited</span
+          >
+          }
+          <span
+            class="text-xs bg-(--neutral-100) text-surface-600 capitalize rounded px-1.5 py-0.5 ml-auto"
+            title="Suggested placement"
+            >{{ item.suggestedPlacement?.replace('_', ' ') }}</span
+          >
+          @if (!isEditingAcronym(item.term)) {
+          <p-button
+            type="button"
+            variant="outlined"
+            severity="success"
+            size="small"
+            class="py-0!"
+            (click)="acronymEditStarted.emit(item.term)"
+            aria-label="Edit acronym fix"
+          >
+            <i class="pi pi-pencil text-xs!"></i> Edit
+          </p-button>
+          }
+        </div>
+        @if (isEditingAcronym(item.term)) {
+        <div class="space-y-2 mt-2 ml-5">
+          <p
+            class="uppercase mb-1 text-sm font-semibold font-(family-name:--font-heading) text-(--text-muted)"
+          >
+            Edit the text that will be added
+          </p>
+          <input
+            pInputText
+            type="text"
+            [value]="editedAcronymText()"
+            (input)="acronymEditTextChanged.emit($any($event.target).value)"
+            class="w-full text-sm"
+            aria-label="Edit acronym fix text"
+          />
+          <div class="flex gap-2">
+            <p-button
+              label="Save"
+              size="small"
+              (onClick)="acronymEditSaved.emit({ key: item.term, text: editedAcronymText() })"
+            />
+            <p-button
+              label="Cancel"
+              size="small"
+              severity="secondary"
+              [text]="true"
+              (onClick)="acronymEditCancelled.emit()"
+            />
+          </div>
+        </div>
+        } @if (!isEditingAcronym(item.term)) {
+        <p class="mt-1 ml-5 text-sm text-surface-500">{{ item.issue }}</p>
+        @if (item.fix) {
+        <p class="m-0 ml-5 text-sm text-green-600">
+          <span class="font-semibold mr-1 uppercase">Fix:</span> {{ item.fix }}
+        </p>
+        } @if (isAcronymSelected(item.term) && item.suggestedPlacement ===
+        'experience_bullet') {
+        <div
+          class="mt-4 ml-5 p-4 flex flex-col items-start gap-2 bg-white rounded-md border border-(--color-green-light)"
+        >
+          <label
+            [for]="'acr-pos-' + item.term"
+            class="text-sm text-(--primary-700) uppercase shrink-0 font-semibold flex items-center gap-2"
+            ><i class="pi pi-list"></i>
+            Add as a bullet - choose where:
+          </label>
+          <select
+            [id]="'acr-pos-' + item.term"
+            class="text-sm border border-(--border-subtle) rounded px-2 py-1 flex-1 bg-white w-full"
+            (change)="onAcronymPositionChange(item.term, $any($event.target).value)"
+          >
+            <option value="" [selected]="getAcronymPosition(item.term) === null">
+              — pick a position —
+            </option>
+            @for (pos of experiencePositions(); track $index; let i = $index) {
+            <option [value]="i" [selected]="getAcronymPosition(item.term) === i">
+              {{ pos }}
+            </option>
+            }
+          </select>
+        </div>
+        @if (isAcronymSelected(item.term) && getAcronymPosition(item.term) ===
+        null) {
+        <p class="text-xs text-amber-600 mt-1 ml-5">
+          Pick a position to include this in your CV.
+        </p>
+        } } } } @else {
         <span class="font-semibold text-sm text-surface-800"
           >{{ item.term }}</span
         >
@@ -573,7 +686,7 @@
         <p class="m-0 text-sm text-green-600">
           <span class="font-semibold mr-1 uppercase">Fix:</span> {{ item.fix }}
         </p>
-        }
+        } }
       </li>
       }
     </ul>

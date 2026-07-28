@@ -7,6 +7,16 @@ import type {
   UserSelections,
 } from '@opticv/datatypes';
 
+function replaceFirstCaseInsensitive(
+  text: string,
+  term: string,
+  replacement: string,
+): string | null {
+  const index = text.toLowerCase().indexOf(term.toLowerCase());
+  if (index === -1) return null;
+  return text.slice(0, index) + replacement + text.slice(index + term.length);
+}
+
 export function applySelectionsToCV(
   cv: CvStructuredData,
   selections: UserSelections,
@@ -22,6 +32,8 @@ export function applySelectionsToCV(
   missingBulletEdits: Map<string, string> = new Map(),
   keywordEdits: Map<string, string> = new Map(),
   keywordBulletPositions: Map<string, number> = new Map(),
+  acronymEdits: Map<string, string> = new Map(),
+  acronymBulletPositions: Map<string, number> = new Map(),
 ): CvStructuredData {
   const clone: CvStructuredData = structuredClone(cv);
 
@@ -107,6 +119,95 @@ export function applySelectionsToCV(
         const baseText = quotedMatch ? quotedMatch[1] : kw;
         const displayText = keywordEdits.get(kw) ?? baseText;
         clone.experience[experienceIndex].bullets.push(displayText);
+      }
+    }
+  }
+
+  if (selections.selectedAcronymIssues.length > 0 && keywordResult) {
+    const existingSkills = new Set(clone.skills.map((s) => s.toLowerCase()));
+    for (const term of selections.selectedAcronymIssues) {
+      const entry = keywordResult.acronymIssues.find((a) => a.term === term);
+      if (!entry?.actionType) continue;
+
+      const displayText = acronymEdits.get(term) ?? entry.fix;
+      const placement = entry.suggestedPlacement;
+
+      if (entry.actionType === 'add') {
+        if (placement === 'skills' || placement === 'multiple' || !placement) {
+          if (!existingSkills.has(displayText.toLowerCase())) {
+            clone.skills.push(displayText);
+            existingSkills.add(displayText.toLowerCase());
+          }
+        } else if (placement === 'experience_bullet') {
+          const experienceIndex = acronymBulletPositions.get(term);
+          if (experienceIndex === undefined) continue;
+          if (experienceIndex < 0 || experienceIndex >= clone.experience.length)
+            continue;
+          clone.experience[experienceIndex].bullets.push(displayText);
+        }
+      } else {
+        if (placement === 'skills') {
+          const skillIndex = clone.skills.findIndex(
+            (s) => s.toLowerCase() === entry.term.toLowerCase(),
+          );
+          if (skillIndex !== -1) {
+            clone.skills[skillIndex] = displayText;
+          }
+        } else if (placement === 'experience_bullet') {
+          const experienceIndex = acronymBulletPositions.get(term);
+          if (experienceIndex === undefined) continue;
+          if (experienceIndex < 0 || experienceIndex >= clone.experience.length)
+            continue;
+          const bullets = clone.experience[experienceIndex].bullets;
+          const bulletIndex = bullets.findIndex(
+            (b) => b.toLowerCase().includes(entry.term.toLowerCase()),
+          );
+          if (bulletIndex !== -1) {
+            const replaced = replaceFirstCaseInsensitive(
+              bullets[bulletIndex],
+              entry.term,
+              displayText,
+            );
+            if (replaced !== null) bullets[bulletIndex] = replaced;
+          }
+        } else if (placement === 'summary') {
+          if (clone.summary) {
+            const replaced = replaceFirstCaseInsensitive(
+              clone.summary,
+              entry.term,
+              displayText,
+            );
+            if (replaced !== null) clone.summary = replaced;
+          }
+        } else {
+          // 'multiple' and 'title' (no dedicated CV-level title field) — broad replace
+          if (clone.summary) {
+            const replacedSummary = replaceFirstCaseInsensitive(
+              clone.summary,
+              entry.term,
+              displayText,
+            );
+            if (replacedSummary !== null) clone.summary = replacedSummary;
+          }
+          for (let i = 0; i < clone.skills.length; i++) {
+            const replacedSkill = replaceFirstCaseInsensitive(
+              clone.skills[i],
+              entry.term,
+              displayText,
+            );
+            if (replacedSkill !== null) clone.skills[i] = replacedSkill;
+          }
+          for (const exp of clone.experience) {
+            for (let i = 0; i < exp.bullets.length; i++) {
+              const replacedBullet = replaceFirstCaseInsensitive(
+                exp.bullets[i],
+                entry.term,
+                displayText,
+              );
+              if (replacedBullet !== null) exp.bullets[i] = replacedBullet;
+            }
+          }
+        }
       }
     }
   }

@@ -204,12 +204,23 @@
                 [editedKeywordText]="editedKeywordText()"
                 [experiencePositions]="experiencePositionLabels()"
                 [keywordBulletPositions]="keywordBulletPositions()"
+                [selectedAcronymIssues]="selections().selectedAcronymIssues"
+                [acronymEdits]="acronymEdits()"
+                [activeAcronymEditKey]="activeAcronymEditKey()"
+                [editedAcronymText]="editedAcronymText()"
+                [acronymBulletPositions]="acronymBulletPositions()"
                 (keywordToggled)="onKeywordToggled($event)"
                 (keywordEditStarted)="onKeywordEditStarted($event)"
                 (keywordEditSaved)="onKeywordEditSaved($event)"
                 (keywordEditCancelled)="onKeywordEditCancelled()"
                 (keywordEditTextChanged)="onKeywordEditTextChanged($event)"
                 (keywordBulletPositionSelected)="onKeywordBulletPositionSelected($event)"
+                (acronymIssueToggled)="onAcronymIssueToggled($event)"
+                (acronymEditStarted)="onAcronymEditStarted($event)"
+                (acronymEditSaved)="onAcronymEditSaved($event)"
+                (acronymEditCancelled)="onAcronymEditCancelled()"
+                (acronymEditTextChanged)="onAcronymEditTextChanged($event)"
+                (acronymBulletPositionSelected)="onAcronymBulletPositionSelected($event)"
               />
               } @if (retryablePromptTypes().has(PromptType.KEYWORD_GAP)) {
               <div class="retry-action">

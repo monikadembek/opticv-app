@@ -59,7 +59,13 @@ const MOCK_RESULT: KeywordGapResult = {
     { keyword: 'Hadoop', reason: 'No evidence of Hadoop experience found in resume.' },
   ],
   acronymIssues: [
-    { term: 'CI/CD', issue: 'Only abbreviation used', fix: 'Add full form: Continuous Integration/Continuous Deployment' },
+    {
+      term: 'CI/CD',
+      issue: 'Only abbreviation used',
+      fix: 'Add full form: Continuous Integration/Continuous Deployment',
+      actionType: 'add',
+      suggestedPlacement: 'skills',
+    },
   ],
 };
 
@@ -300,6 +306,99 @@ describe('KeywordGap', () => {
 
     it('shows the "pick a position" warning when no index is selected', () => {
       expect(fixture.nativeElement.textContent).toContain('Pick a position to include this in your CV.');
+    });
+  });
+
+  describe('acronym issues interactions', () => {
+    beforeEach(() => {
+      component.toggleAcronymIssues();
+      fixture.detectChanges();
+    });
+
+    it('toggleAcronymIssue emits acronymIssueToggled with the term', () => {
+      const emitted: string[] = [];
+      component.acronymIssueToggled.subscribe((t) => emitted.push(t));
+      component.toggleAcronymIssue('CI/CD');
+      expect(emitted).toEqual(['CI/CD']);
+    });
+
+    it('isAcronymSelected reflects the selectedAcronymIssues input', () => {
+      fixture.componentRef.setInput('selectedAcronymIssues', ['CI/CD']);
+      fixture.detectChanges();
+      expect(component.isAcronymSelected('CI/CD')).toBe(true);
+      expect(component.isAcronymSelected('Other')).toBe(false);
+    });
+
+    it('acronymEditStarted emits the term when Edit is clicked', () => {
+      const emitted: string[] = [];
+      component.acronymEditStarted.subscribe((t) => emitted.push(t));
+      component.acronymEditStarted.emit('CI/CD');
+      expect(emitted).toEqual(['CI/CD']);
+    });
+
+    it('isEditingAcronym reflects the activeAcronymEditKey input', () => {
+      fixture.componentRef.setInput('activeAcronymEditKey', 'CI/CD');
+      fixture.detectChanges();
+      expect(component.isEditingAcronym('CI/CD')).toBe(true);
+      expect(component.isEditingAcronym('Other')).toBe(false);
+    });
+
+    it('acronymEditSaved emits key and text on save', () => {
+      const emitted: Array<{ key: string; text: string }> = [];
+      component.acronymEditSaved.subscribe((e) => emitted.push(e));
+      component.acronymEditSaved.emit({ key: 'CI/CD', text: 'Custom fix text' });
+      expect(emitted).toEqual([{ key: 'CI/CD', text: 'Custom fix text' }]);
+    });
+
+    it('acronymEditCancelled emits on cancel', () => {
+      let called = false;
+      component.acronymEditCancelled.subscribe(() => (called = true));
+      component.acronymEditCancelled.emit();
+      expect(called).toBe(true);
+    });
+
+    it('getAcronymDisplayText falls back to item.fix when no edit exists', () => {
+      expect(component.getAcronymDisplayText('CI/CD')).toBe(
+        'Add full form: Continuous Integration/Continuous Deployment',
+      );
+    });
+
+    it('getAcronymDisplayText returns the edited text when one exists', () => {
+      fixture.componentRef.setInput('acronymEdits', new Map([['CI/CD', 'Edited fix']]));
+      fixture.detectChanges();
+      expect(component.getAcronymDisplayText('CI/CD')).toBe('Edited fix');
+    });
+
+    it('getAcronymDisplayText falls back to the term itself when no item and no edit exist', () => {
+      expect(component.getAcronymDisplayText('Unknown')).toBe('Unknown');
+    });
+
+    it('onAcronymPositionChange emits experienceIndex: null when the placeholder is chosen', () => {
+      const emitted: Array<{ term: string; experienceIndex: number | null }> = [];
+      component.acronymBulletPositionSelected.subscribe((e) => emitted.push(e));
+      component.onAcronymPositionChange('CI/CD', '');
+      expect(emitted).toEqual([{ term: 'CI/CD', experienceIndex: null }]);
+    });
+
+    it('onAcronymPositionChange emits the numeric experienceIndex when an option is chosen', () => {
+      const emitted: Array<{ term: string; experienceIndex: number | null }> = [];
+      component.acronymBulletPositionSelected.subscribe((e) => emitted.push(e));
+      component.onAcronymPositionChange('CI/CD', '1');
+      expect(emitted).toEqual([{ term: 'CI/CD', experienceIndex: 1 }]);
+    });
+
+    it('does not render checkbox for historical acronym issues without actionType', () => {
+      const historical: KeywordGapResult = {
+        ...MOCK_RESULT,
+        acronymIssues: [
+          { term: 'Legacy', issue: 'Old issue', fix: 'Old fix' },
+        ],
+      };
+      fixture.componentRef.setInput('result', historical);
+      fixture.detectChanges();
+      const checkbox = fixture.nativeElement.querySelector('#acr-Legacy');
+      expect(checkbox).toBeNull();
+      expect(fixture.nativeElement.textContent).toContain('Old issue');
     });
   });
 });

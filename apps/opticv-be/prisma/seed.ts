@@ -205,6 +205,7 @@ Also calculate an overall keyword match score (percentage of important job descr
           'missingKeywords',
           'underweightedKeywords',
           'fabricationWarnings',
+          'acronymIssues',
         ],
         properties: {
           matchScore: {
@@ -355,11 +356,34 @@ Also calculate an overall keyword match score (percentage of important job descr
               "Acronyms used inconsistently (e.g., resume has 'AWS' but job description wants 'Amazon Web Services')",
             items: {
               type: 'object',
-              required: ['term', 'issue', 'fix'],
+              required: [
+                'term',
+                'issue',
+                'fix',
+                'actionType',
+                'suggestedPlacement',
+              ],
               properties: {
                 term: { type: 'string' },
                 issue: { type: 'string' },
                 fix: { type: 'string' },
+                actionType: {
+                  type: 'string',
+                  enum: ['add', 'replace'],
+                  description:
+                    "'add' if the fix should be inserted as a new term, 'replace' if it should replace the existing term wherever it appears",
+                },
+                suggestedPlacement: {
+                  type: 'string',
+                  enum: [
+                    'summary',
+                    'skills',
+                    'experience_bullet',
+                    'title',
+                    'multiple',
+                  ],
+                  description: 'Where in the resume this acronym fix applies',
+                },
               },
             },
           },
