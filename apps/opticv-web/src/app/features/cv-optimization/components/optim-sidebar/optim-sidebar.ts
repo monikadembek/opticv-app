@@ -30,7 +30,7 @@ export const NAV_GROUPS: {
         icon: 'pi-chart-bar',
         label: 'ATS Analysis',
       },
-      { id: PromptType.KEYWORD_GAP, icon: 'pi-key', label: 'Keyword Gap' },
+      { id: PromptType.KEYWORD_GAP, icon: 'pi-key', label: 'Keywords' },
       {
         id: PromptType.SUMMARY_REWRITE,
         icon: 'pi-pen-to-square',

@@ -189,11 +189,11 @@
             <app-section-card
               [sectionId]="PromptType.KEYWORD_GAP"
               icon="pi-key"
-              title="Keyword Gap"
+              title="Keywords"
               [status]="sectionStatus(PromptType.KEYWORD_GAP)"
               [collapsed]="isSectionCollapsed(PromptType.KEYWORD_GAP)"
               (collapsedChange)="onSectionCollapsedChange(PromptType.KEYWORD_GAP, $event)"
-              helpTitle="Keyword Gap Section"
+              helpTitle="Keywords Section"
             >
               @if (keywordGapResult()) {
               <app-keyword-gap
@@ -226,7 +226,7 @@
               <div class="retry-action">
                 <p-button
                   label="Retry"
-                  ariaLabel="Retry Keyword Gap Analysis"
+                  ariaLabel="Retry Keywords Analysis"
                   icon="pi pi-refresh"
                   severity="warn"
                   size="small"
