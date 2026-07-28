@@ -217,6 +217,7 @@ export class CvOptimization implements OnInit {
     customSummaryText: null,
     selectedBullets: [],
     selectedKeywords: [],
+    selectedAcronymIssues: [],
   });
   readonly isExportingPdf = signal(false);
   readonly isExportingDocx = signal(false);
@@ -254,6 +255,10 @@ export class CvOptimization implements OnInit {
   readonly activeKeywordEditKey = signal<string | null>(null);
   readonly editedKeywordText = signal<string>('');
   readonly keywordBulletPositions = signal<Map<string, number>>(new Map());
+  readonly acronymEdits = signal<Map<string, string>>(new Map());
+  readonly activeAcronymEditKey = signal<string | null>(null);
+  readonly editedAcronymText = signal<string>('');
+  readonly acronymBulletPositions = signal<Map<string, number>>(new Map());
 
   readonly sidebarExpanded = signal(true);
   private readonly breakpointObserver = inject(BreakpointObserver);
@@ -320,6 +325,8 @@ export class CvOptimization implements OnInit {
       this.missingBulletEdits(),
       this.keywordEdits(),
       this.keywordBulletPositions(),
+      this.acronymEdits(),
+      this.acronymBulletPositions(),
     );
   });
 
@@ -691,6 +698,7 @@ export class CvOptimization implements OnInit {
                     ...s,
                     selectedBullets: state.selectedBullets,
                     selectedKeywords: state.selectedKeywords ?? [],
+                    selectedAcronymIssues: state.selectedAcronymIssues ?? [],
                   }));
                   this.selectedMissingBullets.set(
                     (state.selectedMissingBullets ?? []).map((s) => ({
@@ -719,6 +727,16 @@ export class CvOptimization implements OnInit {
                     kwBulletPosMap.set(p.keyword, p.experienceIndex);
                   }
                   this.keywordBulletPositions.set(kwBulletPosMap);
+                  const acronymEditsMap = new Map<string, string>();
+                  for (const e of state.acronymEdits ?? []) {
+                    acronymEditsMap.set(e.originalTerm, e.editedText);
+                  }
+                  this.acronymEdits.set(acronymEditsMap);
+                  const acronymBulletPosMap = new Map<string, number>();
+                  for (const p of state.acronymBulletPositions ?? []) {
+                    acronymBulletPosMap.set(p.term, p.experienceIndex);
+                  }
+                  this.acronymBulletPositions.set(acronymBulletPosMap);
                 } catch {
                   console.warn(
                     'Could not parse bullet user state from stored optimization',
@@ -775,6 +793,7 @@ export class CvOptimization implements OnInit {
       customSummaryText: null,
       selectedBullets: [],
       selectedKeywords: [],
+      selectedAcronymIssues: [],
     });
     this.bulletEdits.set(new Map());
     this.bulletUpgradeResultId.set(null);
@@ -791,6 +810,10 @@ export class CvOptimization implements OnInit {
     this.activeKeywordEditKey.set(null);
     this.editedKeywordText.set('');
     this.keywordBulletPositions.set(new Map());
+    this.acronymEdits.set(new Map());
+    this.activeAcronymEditKey.set(null);
+    this.editedAcronymText.set('');
+    this.acronymBulletPositions.set(new Map());
     this.jobApplicationId.set(jobApplication.id);
     this.submittedJobApplication.set(jobApplication);
     this.cvStructuredData.set(extractedData);
@@ -999,6 +1022,73 @@ export class CvOptimization implements OnInit {
     this.persistBulletState();
   }
 
+  onAcronymIssueToggled(term: string): void {
+    this.selections.update((s) => {
+      const selectedAcronymIssues = s.selectedAcronymIssues.includes(term)
+        ? s.selectedAcronymIssues.filter((t) => t !== term)
+        : [...s.selectedAcronymIssues, term];
+      return { ...s, selectedAcronymIssues };
+    });
+    this.persistBulletState();
+  }
+
+  onAcronymEditStarted(term: string): void {
+    this.activeAcronymEditKey.set(term);
+    if (this.acronymEdits().has(term)) {
+      this.editedAcronymText.set(this.acronymEdits().get(term)!);
+      return;
+    }
+    const entry = this.keywordGapResult()?.acronymIssues.find(
+      (a) => a.term === term,
+    );
+    this.editedAcronymText.set(entry?.fix ?? term);
+  }
+
+  onAcronymEditTextChanged(text: string): void {
+    this.editedAcronymText.set(text);
+  }
+
+  onAcronymEditCancelled(): void {
+    this.activeAcronymEditKey.set(null);
+    this.editedAcronymText.set('');
+  }
+
+  onAcronymEditSaved(event: { key: string; text: string }): void {
+    const trimmed = event.text.trim();
+    if (trimmed === '') return;
+    const entry = this.keywordGapResult()?.acronymIssues.find(
+      (a) => a.term === event.key,
+    );
+    this.acronymEdits.update((map) => {
+      const next = new Map(map);
+      if (trimmed === entry?.fix) {
+        next.delete(event.key);
+      } else {
+        next.set(event.key, trimmed);
+      }
+      return next;
+    });
+    this.activeAcronymEditKey.set(null);
+    this.editedAcronymText.set('');
+    this.persistBulletState();
+  }
+
+  onAcronymBulletPositionSelected(event: {
+    term: string;
+    experienceIndex: number | null;
+  }): void {
+    this.acronymBulletPositions.update((map) => {
+      const next = new Map(map);
+      if (event.experienceIndex === null) {
+        next.delete(event.term);
+      } else {
+        next.set(event.term, event.experienceIndex);
+      }
+      return next;
+    });
+    this.persistBulletState();
+  }
+
   onBulletEditStarted(key: string): void {
     this.activeBulletEditKey.set(key);
     const existing = this.bulletEdits().get(key);
@@ -1155,6 +1245,20 @@ export class CvOptimization implements OnInit {
       for (const [keyword, experienceIndex] of this.keywordBulletPositions()) {
         keywordBulletPositionsArr.push({ keyword, experienceIndex });
       }
+      const acronymEditsArr: Array<{
+        originalTerm: string;
+        editedText: string;
+      }> = [];
+      for (const [originalTerm, editedText] of this.acronymEdits()) {
+        acronymEditsArr.push({ originalTerm, editedText });
+      }
+      const acronymBulletPositionsArr: Array<{
+        term: string;
+        experienceIndex: number;
+      }> = [];
+      for (const [term, experienceIndex] of this.acronymBulletPositions()) {
+        acronymBulletPositionsArr.push({ term, experienceIndex });
+      }
       const state: BulletUserState = {
         edits,
         selectedBullets: this.selections().selectedBullets,
@@ -1163,6 +1267,9 @@ export class CvOptimization implements OnInit {
         keywordEdits: keywordEditsArr,
         keywordBulletPositions: keywordBulletPositionsArr,
         selectedKeywords: this.selections().selectedKeywords,
+        acronymEdits: acronymEditsArr,
+        acronymBulletPositions: acronymBulletPositionsArr,
+        selectedAcronymIssues: this.selections().selectedAcronymIssues,
       };
       this.cvOptimizationApiService
         .saveUserOutput(resultId, JSON.stringify(state))

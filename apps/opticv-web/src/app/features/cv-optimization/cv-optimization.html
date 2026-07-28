@@ -189,11 +189,11 @@
             <app-section-card
               [sectionId]="PromptType.KEYWORD_GAP"
               icon="pi-key"
-              title="Keyword Gap"
+              title="Keywords"
               [status]="sectionStatus(PromptType.KEYWORD_GAP)"
               [collapsed]="isSectionCollapsed(PromptType.KEYWORD_GAP)"
               (collapsedChange)="onSectionCollapsedChange(PromptType.KEYWORD_GAP, $event)"
-              helpTitle="Keyword Gap Section"
+              helpTitle="Keywords Section"
             >
               @if (keywordGapResult()) {
               <app-keyword-gap
@@ -204,18 +204,29 @@
                 [editedKeywordText]="editedKeywordText()"
                 [experiencePositions]="experiencePositionLabels()"
                 [keywordBulletPositions]="keywordBulletPositions()"
+                [selectedAcronymIssues]="selections().selectedAcronymIssues"
+                [acronymEdits]="acronymEdits()"
+                [activeAcronymEditKey]="activeAcronymEditKey()"
+                [editedAcronymText]="editedAcronymText()"
+                [acronymBulletPositions]="acronymBulletPositions()"
                 (keywordToggled)="onKeywordToggled($event)"
                 (keywordEditStarted)="onKeywordEditStarted($event)"
                 (keywordEditSaved)="onKeywordEditSaved($event)"
                 (keywordEditCancelled)="onKeywordEditCancelled()"
                 (keywordEditTextChanged)="onKeywordEditTextChanged($event)"
                 (keywordBulletPositionSelected)="onKeywordBulletPositionSelected($event)"
+                (acronymIssueToggled)="onAcronymIssueToggled($event)"
+                (acronymEditStarted)="onAcronymEditStarted($event)"
+                (acronymEditSaved)="onAcronymEditSaved($event)"
+                (acronymEditCancelled)="onAcronymEditCancelled()"
+                (acronymEditTextChanged)="onAcronymEditTextChanged($event)"
+                (acronymBulletPositionSelected)="onAcronymBulletPositionSelected($event)"
               />
               } @if (retryablePromptTypes().has(PromptType.KEYWORD_GAP)) {
               <div class="retry-action">
                 <p-button
                   label="Retry"
-                  ariaLabel="Retry Keyword Gap Analysis"
+                  ariaLabel="Retry Keywords Analysis"
                   icon="pi pi-refresh"
                   severity="warn"
                   size="small"

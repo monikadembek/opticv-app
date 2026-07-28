@@ -94,6 +94,7 @@ function makeSelections(overrides: Partial<UserSelections> = {}): UserSelections
     customSummaryText: null,
     selectedBullets: [],
     selectedKeywords: [],
+    selectedAcronymIssues: [],
     ...overrides,
   };
 }

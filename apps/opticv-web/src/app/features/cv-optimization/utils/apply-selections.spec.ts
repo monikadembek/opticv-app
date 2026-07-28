@@ -49,6 +49,7 @@ const EMPTY_SELECTIONS: UserSelections = {
   customSummaryText: null,
   selectedBullets: [],
   selectedKeywords: [],
+  selectedAcronymIssues: [],
 };
 
 const BULLET_RESULT: BulletUpgradeResult = {
@@ -107,6 +108,15 @@ const KEYWORD_RESULT: KeywordGapResult = {
   underweightedKeywords: [],
   fabricationWarnings: [],
   acronymIssues: [],
+};
+
+const ACRONYM_RESULT: KeywordGapResult = {
+  ...KEYWORD_RESULT,
+  missingKeywords: [],
+  acronymIssues: [
+    { term: 'JS', issue: 'Only abbreviation used.', fix: 'JS (JavaScript)', actionType: 'replace', suggestedPlacement: 'skills' },
+    { term: 'ML', issue: 'Inconsistent with JD.', fix: 'Machine Learning', actionType: 'replace', suggestedPlacement: 'skills' },
+  ],
 };
 
 describe('applySelectionsToCV', () => {
@@ -449,6 +459,7 @@ describe('applySelectionsToCV', () => {
         customSummaryText: null,
         selectedBullets: [selectedBullet],
         selectedKeywords: ['TypeScript'],
+        selectedAcronymIssues: [],
       };
 
       const result = applySelectionsToCV(
@@ -469,6 +480,145 @@ describe('applySelectionsToCV', () => {
       expect(acmeBullets).not.toContain('Worked on backend tasks occasionally.');
       expect(acmeBullets).toContain('Mentored juniors.');
       expect(result.skills).toContain('TypeScript');
+    });
+  });
+
+  describe('acronym issues', () => {
+    it('replaces a matching skill entry with placement "skills"', () => {
+      const cv: CvStructuredData = { ...BASE_CV, skills: ['ML', 'HTML'] };
+      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['ML'] };
+      const result = applySelectionsToCV(cv, selections, null, null, ACRONYM_RESULT);
+      expect(result.skills).toContain('Machine Learning');
+      expect(result.skills).not.toContain('ML');
+    });
+
+    it('replaces a skill entry containing the term as a substring with placement "skills"', () => {
+      const cv: CvStructuredData = { ...BASE_CV, skills: ['ML (basic)', 'HTML'] };
+      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['ML'] };
+      const result = applySelectionsToCV(cv, selections, null, null, ACRONYM_RESULT);
+      expect(result.skills).toContain('Machine Learning (basic)');
+      expect(result.skills).not.toContain('ML (basic)');
+    });
+
+    it('replaces the substring in the chosen bullet for placement "experience_bullet"', () => {
+      const kwResult: KeywordGapResult = {
+        ...ACRONYM_RESULT,
+        acronymIssues: [
+          { term: 'React', issue: 'x', fix: 'React.js', actionType: 'replace', suggestedPlacement: 'experience_bullet' },
+        ],
+      };
+      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['React'] };
+      const acronymBulletPositions = new Map([['React', 0]]);
+      const result = applySelectionsToCV(
+        BASE_CV, selections, null, null, kwResult,
+        new Map(), [], [], new Map(), new Map(), new Map(), new Map(), acronymBulletPositions,
+      );
+      expect(result.experience[0].bullets).toContain('Did things with React.js.');
+    });
+
+    it('leaves bullets unchanged when the term is not found in any bullet at the chosen position', () => {
+      const kwResult: KeywordGapResult = {
+        ...ACRONYM_RESULT,
+        acronymIssues: [
+          { term: 'CI', issue: 'x', fix: 'CI (Continuous Integration)', actionType: 'replace', suggestedPlacement: 'experience_bullet' },
+        ],
+      };
+      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['CI'] };
+      const acronymBulletPositions = new Map([['CI', 0]]);
+      const result = applySelectionsToCV(
+        BASE_CV, selections, null, null, kwResult,
+        new Map(), [], [], new Map(), new Map(), new Map(), new Map(), acronymBulletPositions,
+      );
+      expect(result.experience[0].bullets).toEqual(BASE_CV.experience[0].bullets);
+    });
+
+    it('replaces the substring in summary for "replace" with placement "summary"', () => {
+      const kwResult: KeywordGapResult = {
+        ...ACRONYM_RESULT,
+        acronymIssues: [
+          { term: 'Original', issue: 'x', fix: 'Updated', actionType: 'replace', suggestedPlacement: 'summary' },
+        ],
+      };
+      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['Original'] };
+      const result = applySelectionsToCV(BASE_CV, selections, null, null, kwResult);
+      expect(result.summary).toBe('Updated summary');
+    });
+
+    it('replaces across summary, skills, and bullets independently for placement "multiple"', () => {
+      const cv: CvStructuredData = {
+        ...BASE_CV,
+        summary: 'Expert in AWS.',
+        skills: ['AWS', 'HTML'],
+        experience: [
+          { ...BASE_CV.experience[0], bullets: ['Used AWS extensively.'] },
+          BASE_CV.experience[1],
+        ],
+      };
+      const kwResult: KeywordGapResult = {
+        ...ACRONYM_RESULT,
+        acronymIssues: [
+          { term: 'AWS', issue: 'x', fix: 'Amazon Web Services', actionType: 'replace', suggestedPlacement: 'multiple' },
+        ],
+      };
+      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['AWS'] };
+      const result = applySelectionsToCV(cv, selections, null, null, kwResult);
+      expect(result.summary).toBe('Expert in Amazon Web Services.');
+      expect(result.skills).toContain('Amazon Web Services');
+      expect(result.experience[0].bullets).toContain('Used Amazon Web Services extensively.');
+    });
+
+    it('treats placement "title" the same as "multiple"', () => {
+      const cv: CvStructuredData = { ...BASE_CV, summary: 'Expert in DBA.' };
+      const kwResult: KeywordGapResult = {
+        ...ACRONYM_RESULT,
+        acronymIssues: [
+          { term: 'DBA', issue: 'x', fix: 'Database Administrator', actionType: 'replace', suggestedPlacement: 'title' },
+        ],
+      };
+      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['DBA'] };
+      const result = applySelectionsToCV(cv, selections, null, null, kwResult);
+      expect(result.summary).toBe('Expert in Database Administrator.');
+    });
+
+    it('leaves the CV unchanged when "replace" term is not found', () => {
+      const kwResult: KeywordGapResult = {
+        ...ACRONYM_RESULT,
+        acronymIssues: [
+          { term: 'NOTFOUND', issue: 'x', fix: 'Something Else', actionType: 'replace', suggestedPlacement: 'summary' },
+        ],
+      };
+      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['NOTFOUND'] };
+      const result = applySelectionsToCV(BASE_CV, selections, null, null, kwResult);
+      expect(result.summary).toBe('Original summary');
+    });
+
+    it('uses acronymEdits override instead of entry.fix', () => {
+      const cv: CvStructuredData = { ...BASE_CV, skills: ['JS', 'HTML'] };
+      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['JS'] };
+      const acronymEdits = new Map([['JS', 'Vanilla JavaScript']]);
+      const result = applySelectionsToCV(
+        cv, selections, null, null, ACRONYM_RESULT,
+        new Map(), [], [], new Map(), new Map(), new Map(), acronymEdits,
+      );
+      expect(result.skills).toContain('Vanilla JavaScript');
+      expect(result.skills).not.toContain('JS');
+    });
+
+    it('skips historical acronym issues with no actionType without throwing', () => {
+      const kwResult: KeywordGapResult = {
+        ...ACRONYM_RESULT,
+        acronymIssues: [
+          { term: 'JS', issue: 'x', fix: 'JavaScript' },
+        ],
+      };
+      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['JS'] };
+      const result = applySelectionsToCV(BASE_CV, selections, null, null, kwResult);
+      expect(result.skills).toEqual(BASE_CV.skills);
+    });
+
+    it('does not add acronym fixes when selectedAcronymIssues is empty', () => {
+      const result = applySelectionsToCV(BASE_CV, EMPTY_SELECTIONS, null, null, ACRONYM_RESULT);
+      expect(result.skills).toEqual(BASE_CV.skills);
     });
   });
 });

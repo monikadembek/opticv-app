@@ -329,6 +329,13 @@ export type KeywordGapAcronymIssue = {
   term: string;
   issue: string;
   fix: string;
+  actionType?: 'replace';
+  suggestedPlacement?:
+    | 'summary'
+    | 'skills'
+    | 'experience_bullet'
+    | 'title'
+    | 'multiple';
 };
 
 export type KeywordGapResult = {
@@ -547,6 +554,7 @@ export type UserSelections = {
   customSummaryText: string | null;
   selectedBullets: BulletSelectionKey[];
   selectedKeywords: string[];
+  selectedAcronymIssues: string[];
 };
 
 export type BulletEditKey = {
@@ -567,6 +575,9 @@ export type BulletUserState = {
   keywordEdits?: Array<{ originalKeyword: string; editedText: string }>;
   keywordBulletPositions?: Array<{ keyword: string; experienceIndex: number }>;
   selectedKeywords?: string[];
+  acronymEdits?: Array<{ originalTerm: string; editedText: string }>;
+  acronymBulletPositions?: Array<{ term: string; experienceIndex: number }>;
+  selectedAcronymIssues?: string[];
 };
 
 export type SummaryUserState = {

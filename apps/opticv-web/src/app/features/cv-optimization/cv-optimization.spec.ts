@@ -2593,6 +2593,9 @@ describe('CvOptimization', () => {
           keywordEdits: [],
           keywordBulletPositions: [],
           selectedKeywords: ['TypeScript'],
+          acronymEdits: [],
+          acronymBulletPositions: [],
+          selectedAcronymIssues: [],
         }),
       );
     });
@@ -2683,6 +2686,9 @@ describe('CvOptimization', () => {
           keywordEdits: [],
           keywordBulletPositions: [{ keyword: 'React', experienceIndex: 0 }],
           selectedKeywords: [],
+          acronymEdits: [],
+          acronymBulletPositions: [],
+          selectedAcronymIssues: [],
         }),
       );
     });

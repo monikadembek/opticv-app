@@ -43,7 +43,7 @@ describe('OptimSidebar', () => {
       expect(buttons.length).toBe(expectedItems.length);
       expect(
         Array.from(buttons as NodeListOf<HTMLButtonElement>).some((b) =>
-          b.textContent?.includes('Keyword Gap'),
+          b.textContent?.includes('Keywords'),
         ),
       ).toBe(false);
     });
@@ -56,7 +56,7 @@ describe('OptimSidebar', () => {
         'button.nav-item.active',
       );
       expect(activeBtn).toBeTruthy();
-      expect(activeBtn.textContent).toContain('Keyword Gap');
+      expect(activeBtn.textContent).toContain('Keywords');
     });
 
     it('disables nav buttons when pageState is initial', () => {
