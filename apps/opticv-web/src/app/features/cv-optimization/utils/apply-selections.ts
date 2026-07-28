@@ -159,8 +159,6 @@ export function applySelectionsToCV(
             displayText,
           );
           if (replaced !== null) bullets[bulletIndex] = replaced;
-        } else {
-          bullets.push(displayText);
         }
       } else if (placement === 'summary') {
         if (clone.summary) {

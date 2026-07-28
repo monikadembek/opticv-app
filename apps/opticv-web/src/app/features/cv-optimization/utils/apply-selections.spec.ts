@@ -516,7 +516,7 @@ describe('applySelectionsToCV', () => {
       expect(result.experience[0].bullets).toContain('Did things with React.js.');
     });
 
-    it('inserts the fix as a new bullet when the term is not found in any bullet at the chosen position', () => {
+    it('leaves bullets unchanged when the term is not found in any bullet at the chosen position', () => {
       const kwResult: KeywordGapResult = {
         ...ACRONYM_RESULT,
         acronymIssues: [
@@ -529,7 +529,7 @@ describe('applySelectionsToCV', () => {
         BASE_CV, selections, null, null, kwResult,
         new Map(), [], [], new Map(), new Map(), new Map(), new Map(), acronymBulletPositions,
       );
-      expect(result.experience[0].bullets).toContain('CI (Continuous Integration)');
+      expect(result.experience[0].bullets).toEqual(BASE_CV.experience[0].bullets);
     });
 
     it('replaces the substring in summary for "replace" with placement "summary"', () => {
