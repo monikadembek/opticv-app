@@ -1280,11 +1280,11 @@ No other behavior changed — the quota-limit check (updateMany with count: { lt
 
 ---
 
-### UI/UX - Keyword Gap section
+### 101 UI/UX - Keyword Gap section
 
-**status: in progress**
+**status: done**
 
-**time: 25.07.2026 - 27.07.2026**
+**time: 25.07.2026 - 28.07.2026**
 
 - Do we need all informations that are currently displayed?
 - UI/UX improvements:
@@ -1292,7 +1292,20 @@ No other behavior changed — the quota-limit check (updateMany with count: { lt
   - matched keywords are taking too much space, display in pills,
   - make some sections collapsible to not display so much information at once,
   - add explanations to what acronym issues, underweighted keywords and fabrication warnings are,
-- Acronym issues - implement adding/replacing keywords in optimized CV.
+- Acronym issues - implement replacing acronym keywords in optimized CV,
+- Replace Keyword Gap with Keywords in the sidebar nav and Section card header.
+
+---
+
+### Test differenet jobs with different models and compare results
+
+**status: todo**
+
+**time:**
+
+Use more intelligent models for the most demanding, more important sections:
+
+- keywords gap & bullet rewrite - chatgpt-5.1
 
 ---
 
@@ -1335,6 +1348,23 @@ Implement a guided tour specific to the cv-optimization page, highlighting its k
 ---
 
 ### Add Rodo / GDPR section to CV
+
+**status: todo**
+**time:**
+
+---
+
+### Optimized CV is missing the position title
+
+**status: todo**
+**time:**
+
+- check if parsed CV contains the posistion title,
+- add position title to the optimized CV
+
+---
+
+### Connect landing page with app
 
 **status: todo**
 **time:**
