@@ -8,6 +8,7 @@ import { DEFAULT_ACCENT_COLOR } from '../../cv-templates';
 const MINIMAL_CV: CvStructuredData = {
   contact: {
     name: 'Jane Doe',
+    position: null,
     email: 'jane@example.com',
     phone: null,
     location: null,

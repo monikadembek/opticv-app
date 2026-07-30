@@ -95,6 +95,7 @@ const MONOCHROME_IDS: CvTemplateId[] = ['classic', 'minimal'];
 const makeCv = (): CvStructuredData => ({
   contact: {
     name: 'Jane Doe',
+    position: 'Senior Software Engineer',
     email: 'jane@example.com',
     phone: '555-1234',
     location: 'Remote',

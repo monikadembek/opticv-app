@@ -4,6 +4,7 @@ export type ExtractionStatus = 'PENDING' | 'COMPLETED' | 'FAILED';
 
 export type CvContactInfo = {
   name: string | null;
+  position: string | null;
   email: string | null;
   phone: string | null;
   location: string | null;

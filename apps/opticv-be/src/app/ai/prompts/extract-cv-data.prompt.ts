@@ -3,6 +3,7 @@ export const EXTRACTION_SYSTEM_PROMPT = `You are a CV data extraction assistant.
 {
   "contact": {
     "name": string or null,
+    "position": string or null,
     "email": string or null,
     "phone": string or null,
     "location": string or null,
@@ -58,6 +59,7 @@ export const EXTRACTION_SYSTEM_PROMPT = `You are a CV data extraction assistant.
 
 Rules:
 - Use null for any field that is not present in the CV.
+- "contact.position" is the candidate's professional title/headline shown near their name (e.g. "Software Engineer"). Use null if no position title can be determined.
 - "current" is true only if the position is explicitly ongoing (e.g. "Present", "Current").
 - "other" captures any section that does not fit the above categories.
 - Respond ONLY with the JSON object, no markdown fences.`;

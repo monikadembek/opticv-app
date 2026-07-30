@@ -14,7 +14,7 @@ const seeds = [
     promptType: PromptType.RESUME_AUTOPSY,
     version: '1.0.0',
     isActive: true,
-    modelPreference: 'gpt-4o',
+    modelPreference: 'gpt-5-mini',
     maxTokens: null,
     systemPrompt: `You are a Senior ATS Compliance Auditor with 15 years of experience reviewing resumes for Fortune 500 companies. You have deep knowledge of how Workday, Greenhouse, Lever, Taleo, iCIMS, and BambooHR parse and rank resumes.
 
@@ -167,7 +167,7 @@ Also provide an overall ATS pass-likelihood score (0-100) and a predicted score 
     promptType: PromptType.KEYWORD_GAP,
     version: '1.0.0',
     isActive: true,
-    modelPreference: 'gpt-5-mini',
+    modelPreference: 'gpt-5.1',
     maxTokens: null,
     systemPrompt: `You are an expert recruiter and ATS specialist who has placed candidates at top-tier companies. You understand exactly which keywords matter for ATS keyword matching and which are recruiter-attractive signals.
 
@@ -403,7 +403,7 @@ Also calculate an overall keyword match score (percentage of important job descr
     promptType: PromptType.SUMMARY_REWRITE,
     version: '1.0.0',
     isActive: true,
-    modelPreference: 'gpt-4o',
+    modelPreference: 'gpt-5-mini',
     maxTokens: null,
     systemPrompt: `You are an expert resume writer who has crafted summaries for thousands of successful candidates. Your summaries are read in 6 seconds by recruiters, so every word must earn its place.
 
@@ -513,7 +513,7 @@ For each variant, briefly explain the strategic angle.`,
     promptType: PromptType.BULLET_UPGRADE,
     version: '1.0.0',
     isActive: true,
-    modelPreference: 'gpt-5-mini',
+    modelPreference: 'gpt-5.1',
     maxTokens: null,
     systemPrompt: `You are an expert resume writer specializing in transforming weak experience bullets into high-impact achievement statements.
 
@@ -970,7 +970,7 @@ Also include:
     promptType: PromptType.LINKEDIN_REWRITE,
     version: '1.0.0',
     isActive: false,
-    modelPreference: 'gpt-4o-mini',
+    modelPreference: 'gpt-5-mini',
     maxTokens: null,
     systemPrompt: `You are an expert LinkedIn strategist who has optimized profiles that have been featured by recruiters at top companies. You understand both LinkedIn's search algorithm (which differs from ATS) and what makes recruiters click "view profile."
 
@@ -1309,7 +1309,7 @@ Provide:
     promptType: PromptType.LINKEDIN_REWRITE,
     version: '3.0.0',
     isActive: true,
-    modelPreference: 'gpt-4o-mini',
+    modelPreference: 'gpt-5-mini',
     maxTokens: null,
     notes:
       'v3.0.0: merged, ranked, deduplicated recommended skills list (CV + gap), max 50, isNew flag',

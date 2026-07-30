@@ -49,6 +49,7 @@ const mockJobApplication: JobApplication = {
 const mockCvStructuredData: CvStructuredData = {
   contact: {
     name: 'Test User',
+    position: null,
     email: 'test@example.com',
     phone: null,
     location: null,
