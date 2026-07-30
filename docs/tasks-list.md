@@ -1297,6 +1297,16 @@ No other behavior changed — the quota-limit check (updateMany with count: { lt
 
 ---
 
+### 102 Optimized CV is missing the position title (BE & FE)
+
+**status: in progress**
+**time: 29.07.2026**
+
+- in the extract-cv-data.prompt.ts we don't specify any property to hold position title that user might have in their cv, this needs to be added,
+- if user has the position title in their CV and this data is extracted we need to include it in the optimized CV, position title should be displayed below the candidate's name
+
+---
+
 ### Test differenet jobs with different models and compare results
 
 **status: todo**
@@ -1351,16 +1361,6 @@ Implement a guided tour specific to the cv-optimization page, highlighting its k
 
 **status: todo**
 **time:**
-
----
-
-### Optimized CV is missing the position title
-
-**status: todo**
-**time:**
-
-- check if parsed CV contains the posistion title,
-- add position title to the optimized CV
 
 ---
 

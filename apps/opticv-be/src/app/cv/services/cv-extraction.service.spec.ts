@@ -13,6 +13,7 @@ import type { CvStructuredData } from '@opticv/datatypes';
 const mockStructuredData: CvStructuredData = {
   contact: {
     name: 'Jane Doe',
+    position: null,
     email: 'jane@example.com',
     phone: null,
     location: null,

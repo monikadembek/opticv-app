@@ -4,6 +4,9 @@ export class CvContactInfoDto {
   @ApiProperty({ nullable: true, example: 'Jane Doe' })
   name!: string | null;
 
+  @ApiProperty({ nullable: true, example: 'Software Engineer' })
+  position!: string | null;
+
   @ApiProperty({ nullable: true, example: 'jane@example.com' })
   email!: string | null;
 

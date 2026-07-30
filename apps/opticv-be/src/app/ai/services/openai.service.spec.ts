@@ -159,6 +159,16 @@ describe('OpenAiService', () => {
       expect(result).toEqual({ contact: { name: 'Jane' } });
     });
 
+    it('returns the position field unchanged when present', async () => {
+      mockResponsesCreate.mockResolvedValue(
+        makeResponsesResult('{"contact":{"name":"Jane","position":"Software Engineer"}}'),
+      );
+
+      const result = await service.extractCvDataFromFile(Buffer.from('pdf bytes'), 'cv.pdf');
+
+      expect(result).toEqual({ contact: { name: 'Jane', position: 'Software Engineer' } });
+    });
+
     it('throws when OpenAI returns an empty output_text', async () => {
       mockResponsesCreate.mockResolvedValue(makeResponsesResult(''));
 
