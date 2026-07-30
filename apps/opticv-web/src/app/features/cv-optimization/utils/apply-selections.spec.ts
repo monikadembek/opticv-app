@@ -10,7 +10,7 @@ import type {
 } from '@opticv/datatypes';
 
 const BASE_CV: CvStructuredData = {
-  contact: { name: 'Test User', email: 'test@example.com', phone: null, location: null, linkedin: null, website: null },
+  contact: { name: 'Test User', position: null, email: 'test@example.com', phone: null, location: null, linkedin: null, website: null },
   summary: 'Original summary',
   experience: [
     {

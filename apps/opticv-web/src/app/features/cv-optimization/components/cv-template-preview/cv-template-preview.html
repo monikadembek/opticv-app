@@ -32,6 +32,10 @@
       >
         {{ cv()!.contact.name }}
       </div>
+      } @if (cv()!.contact.position) {
+      <div style="font-size: 12px; color: #444; margin-bottom: 2px">
+        {{ cv()!.contact.position }}
+      </div>
       }
     </div>
     <div
@@ -251,6 +255,10 @@
     "
   >
     {{ cv()!.contact.name }}
+  </div>
+  } @if (cv()!.contact.position) {
+  <div style="font-size: 13px; color: #475569; margin-top: 2px">
+    {{ cv()!.contact.position }}
   </div>
   } @if (cv()!.contact.email || cv()!.contact.phone || cv()!.contact.location ||
   cv()!.contact.linkedin || cv()!.contact.website) {
@@ -479,7 +487,7 @@
     max-width: 794px;
     margin: 0 auto;
     padding: 0 56px;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Roboto', sans-serif;
     font-size: 10px;
     color: #334155;
     background: #fff;
@@ -496,6 +504,17 @@
     "
   >
     {{ cv()!.contact.name }}
+  </div>
+  } @if (cv()!.contact.position) {
+  <div
+    style="
+      font-family: 'Lato', sans-serif;
+      font-size: 13px;
+      color: #475569;
+      margin-top: 2px;
+    "
+  >
+    {{ cv()!.contact.position }}
   </div>
   } @if (cv()!.contact.email || cv()!.contact.phone || cv()!.contact.location ||
   cv()!.contact.linkedin || cv()!.contact.website) {
@@ -762,7 +781,7 @@
     @if (cv()!.contact.name) {
     <div
       style="
-        font-family: 'Montserrat', sans-serif;
+        font-family: 'Roboto', sans-serif;
         font-size: 24px;
         font-weight: 700;
         color: #0f172a;
@@ -771,6 +790,17 @@
       "
     >
       {{ cv()!.contact.name }}
+    </div>
+    } @if (cv()!.contact.position) {
+    <div
+      style="
+        font-family: 'Roboto', sans-serif;
+        font-size: 12px;
+        color: #475569;
+        margin-top: 2px;
+      "
+    >
+      {{ cv()!.contact.position }}
     </div>
     } @if (cv()!.contact.email || cv()!.contact.phone || cv()!.contact.location
     || cv()!.contact.linkedin || cv()!.contact.website) {
@@ -787,7 +817,7 @@
   <div
     [style.border-left]="'3px solid ' + accentColor()"
     style="
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Roboto', sans-serif;
       font-size: 11px;
       font-weight: 700;
       color: #1e293b;
@@ -807,7 +837,7 @@
   <div
     [style.border-left]="'3px solid ' + accentColor()"
     style="
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Roboto', sans-serif;
       font-size: 11px;
       font-weight: 700;
       color: #1e293b;
@@ -877,7 +907,7 @@
   <div
     [style.border-left]="'3px solid ' + accentColor()"
     style="
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Roboto', sans-serif;
       font-size: 11px;
       font-weight: 700;
       color: #1e293b;
@@ -909,7 +939,7 @@
   <div
     [style.border-left]="'3px solid ' + accentColor()"
     style="
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Roboto', sans-serif;
       font-size: 11px;
       font-weight: 700;
       color: #1e293b;
@@ -939,7 +969,7 @@
   <div
     [style.border-left]="'3px solid ' + accentColor()"
     style="
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Roboto', sans-serif;
       font-size: 11px;
       font-weight: 700;
       color: #1e293b;
@@ -961,7 +991,7 @@
   <div
     [style.border-left]="'3px solid ' + accentColor()"
     style="
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Roboto', sans-serif;
       font-size: 11px;
       font-weight: 700;
       color: #1e293b;
@@ -989,7 +1019,7 @@
   <div
     [style.border-left]="'3px solid ' + accentColor()"
     style="
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Roboto', sans-serif;
       font-size: 11px;
       font-weight: 700;
       color: #1e293b;
@@ -1037,6 +1067,19 @@
       "
     >
       {{ cv()!.contact.name }}
+    </div>
+    } @if (cv()!.contact.position) {
+    <div
+      style="
+        font-size: 12px;
+        font-weight: 300;
+        color: #64748b;
+        margin-top: 6px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      "
+    >
+      {{ cv()!.contact.position }}
     </div>
     } @if (cv()!.contact.email || cv()!.contact.phone || cv()!.contact.location
     || cv()!.contact.linkedin || cv()!.contact.website) {
@@ -1282,7 +1325,7 @@
   @if (cv()!.contact.name) {
   <div
     style="
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Roboto', sans-serif;
       font-size: 30px;
       font-weight: 800;
       color: #0f172a;
@@ -1291,6 +1334,18 @@
     "
   >
     {{ cv()!.contact.name }}
+  </div>
+  } @if (cv()!.contact.position) {
+  <div
+    style="
+      font-family: 'Roboto', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: #475569;
+      margin-top: 2px;
+    "
+  >
+    {{ cv()!.contact.position }}
   </div>
   } @if (cv()!.contact.email || cv()!.contact.phone || cv()!.contact.location ||
   cv()!.contact.linkedin || cv()!.contact.website) {
@@ -1307,7 +1362,7 @@
   <div
     [style.background]="accentColor()"
     style="
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Roboto', sans-serif;
       font-size: 11px;
       font-weight: 700;
       color: white;
@@ -1329,7 +1384,7 @@
   <div
     [style.background]="accentColor()"
     style="
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Roboto', sans-serif;
       font-size: 11px;
       font-weight: 700;
       color: white;
@@ -1356,7 +1411,7 @@
     >
       <span
         style="
-          font-family: 'Montserrat', sans-serif;
+          font-family: 'Roboto', sans-serif;
           font-weight: 700;
           color: #0f172a;
           font-size: 10.5px;
@@ -1403,7 +1458,7 @@
   <div
     [style.background]="accentColor()"
     style="
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Roboto', sans-serif;
       font-size: 11px;
       font-weight: 700;
       color: white;
@@ -1437,7 +1492,7 @@
   <div
     [style.background]="accentColor()"
     style="
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Roboto', sans-serif;
       font-size: 11px;
       font-weight: 700;
       color: white;
@@ -1469,7 +1524,7 @@
   <div
     [style.background]="accentColor()"
     style="
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Roboto', sans-serif;
       font-size: 11px;
       font-weight: 700;
       color: white;
@@ -1493,7 +1548,7 @@
   <div
     [style.background]="accentColor()"
     style="
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Roboto', sans-serif;
       font-size: 11px;
       font-weight: 700;
       color: white;
@@ -1512,7 +1567,7 @@
   <div style="margin-bottom: 8px">
     <div
       style="
-        font-family: 'Montserrat', sans-serif;
+        font-family: 'Roboto', sans-serif;
         font-weight: 700;
         color: #0f172a;
       "
@@ -1531,7 +1586,7 @@
   <div
     [style.background]="accentColor()"
     style="
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Roboto', sans-serif;
       font-size: 11px;
       font-weight: 700;
       color: white;

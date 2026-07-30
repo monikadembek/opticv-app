@@ -616,8 +616,22 @@ export class CvExportService {
         doc.setFontSize(profile.nameSize);
         doc.setFont(profile.nameFont, profile.nameStyle);
         checkPage(28);
-        doc.text(cv.contact.name, pageWidth / 2, y, { align: 'center' });
-        y += 26;
+        doc.text(cv.contact.name.toUpperCase(), pageWidth / 2, y, {
+          align: 'center',
+        });
+        y += 22;
+      }
+
+      if (cv.contact.position) {
+        setGrey();
+        doc.setFontSize(profile.nameSize * 0.55);
+        doc.setFont(profile.bodyFont, 'normal');
+        checkPage();
+        doc.text(cv.contact.position.toUpperCase(), pageWidth / 2, y, {
+          align: 'center',
+        });
+        setBlack();
+        y += 20;
       }
 
       const contactParts = [
@@ -656,12 +670,22 @@ export class CvExportService {
       ].filter(Boolean) as string[];
 
       const nameY = y;
+      let positionY = nameY;
       if (cv.contact.name) {
         setBlack();
         doc.setFontSize(profile.nameSize);
         doc.setFont(profile.nameFont, profile.nameStyle);
         checkPage(28);
         doc.text(cv.contact.name, marginLeft, y);
+        positionY = nameY + 16;
+      }
+
+      if (cv.contact.position) {
+        setGrey();
+        doc.setFontSize(profile.nameSize * 0.55);
+        doc.setFont(profile.bodyFont, 'normal');
+        doc.text(cv.contact.position, marginLeft, positionY);
+        setBlack();
       }
 
       let rightY = nameY;
@@ -674,7 +698,8 @@ export class CvExportService {
         rightY += 13;
       }
       setBlack();
-      y = Math.max(y + 26, rightY) + 8;
+      const nameBlockBottom = cv.contact.position ? positionY + 10 : nameY + 26;
+      y = Math.max(nameBlockBottom, rightY) + 8;
     } else {
       // Classic / Corporate / Minimal-fallback: simple left-aligned, optional header band
       if (profile.headerBand) {
@@ -688,7 +713,12 @@ export class CvExportService {
         const bandPadV = 12;
         const bandTop = y - bandPadV;
         const bandHeight =
-          bandPadV + bandPadV + 18 + (contactLineCount > 0 ? 16 : 0) + bandPadV;
+          bandPadV +
+          bandPadV +
+          18 +
+          (cv.contact.position ? 20 : 0) +
+          (contactLineCount > 0 ? 16 : 0) +
+          bandPadV;
         doc.setFillColor(241, 245, 249);
         doc.rect(marginLeft - 10, bandTop, maxWidth + 20, bandHeight, 'F');
         doc.setDrawColor(profile.accentR, profile.accentG, profile.accentB);
@@ -709,6 +739,15 @@ export class CvExportService {
         doc.setFont(profile.nameFont, profile.nameStyle);
         checkPage(28);
         doc.text(cv.contact.name, marginLeft, y);
+        y += 20;
+      }
+      if (cv.contact.position) {
+        setGrey();
+        doc.setFontSize(profile.nameSize * 0.6);
+        doc.setFont(profile.bodyFont, 'normal');
+        checkPage();
+        doc.text(cv.contact.position, marginLeft, y);
+        setBlack();
         y += 20;
       }
       const contactParts = [
@@ -1097,6 +1136,9 @@ export class CvExportService {
           spacing: { after: 40 },
         }),
       );
+      if (cv.contact.position) {
+        children.push(para(cv.contact.position, false, false, 20, '444444'));
+      }
       for (const part of restContacts) {
         children.push(
           para(part, false, false, 18, '666666', AlignmentType.RIGHT),
@@ -1104,11 +1146,15 @@ export class CvExportService {
       }
     } else {
       if (cv.contact.name) {
+        const nameText =
+          templateId === 'minimal'
+            ? cv.contact.name.toUpperCase()
+            : cv.contact.name;
         children.push(
           new Paragraph({
             children: [
               new TextRun({
-                text: cv.contact.name,
+                text: nameText,
                 bold: profile.nameBold,
                 italics: profile.nameItalic,
                 font: profile.nameFont,
@@ -1119,6 +1165,15 @@ export class CvExportService {
             spacing: { after: 80 },
             alignment: contactAlign,
           }),
+        );
+      }
+      if (cv.contact.position) {
+        const positionText =
+          templateId === 'minimal'
+            ? cv.contact.position.toUpperCase()
+            : cv.contact.position;
+        children.push(
+          para(positionText, false, false, 20, '444444', contactAlign),
         );
       }
       if (contactParts.length > 0) {
