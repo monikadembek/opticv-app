@@ -1280,7 +1280,7 @@ No other behavior changed — the quota-limit check (updateMany with count: { lt
 
 ---
 
-### 101 UI/UX - Keyword Gap section
+### 101. UI/UX - Keyword Gap section
 
 **status: done**
 
@@ -1297,13 +1297,56 @@ No other behavior changed — the quota-limit check (updateMany with count: { lt
 
 ---
 
-### 102 Optimized CV is missing the position title (BE & FE)
+### 102. Optimized CV is missing the position title (BE & FE)
 
 **status: done**
 **time: 29.07.2026 - 30.07.2026**
 
 - in the extract-cv-data.prompt.ts we don't specify any property to hold position title that user might have in their cv, this needs to be added,
 - if user has the position title in their CV and this data is extracted we need to include it in the optimized CV, position title should be displayed below the candidate's name
+
+---
+
+## 103. Sort and display missing keywords by importance
+
+**status: in progress**
+**time: 31.07.2026**
+
+- display missing keywords that user likely has in the order of importance: Critical, High, Medium, Low
+
+- display missing keywords that candidate doesn't likey has also in order of importance
+
+---
+
+### 104. Add Rodo / GDPR section to CV
+
+**status: todo**
+**time:**
+
+- extract gdpr section from cv file
+- display gdpr section at the bottom of last page on cv templates
+- include gdpr section at the bottom of last page in exported pdf and docx files
+- prepare in UI section to add gdpr section to exported cv in case user cv doesn't have it and it is needed
+
+Research:
+A GDPR clause on a resume is really only relevant if you're applying to jobs in the EU/EEA (or UK, under UK GDPR). Here's the quick breakdown:
+
+Include it if:
+
+You're applying to companies based in the EU, EEA, UK, or Switzerland
+The job posting or application portal is in a European country
+You're following a CV format common in countries like Germany, Poland, France, Spain, etc., where this clause is still customary (even though strictly speaking, GDPR consent isn't legally required just to submit a CV — legitimate interest usually covers it)
+
+Skip it if:
+
+You're applying in the US, Canada, or other non-GDPR jurisdictions — it'll look out of place and signal a template that wasn't localized
+The employer already has a standard privacy notice covering applicant data (most large companies do, making the clause redundant)
+
+If you do include it, keep it short, e.g.:
+
+"I hereby give consent for my personal data included in this application to be processed for the purposes of the recruitment process, in accordance with Regulation (EU) 2016/679 (GDPR)."
+
+One nuance: many HR/legal experts now consider this clause unnecessary even in the EU, since processing a job application is generally justified under "legitimate interest" or "steps prior to entering a contract" — not consent. So some updated CV guides actually recommend dropping it. If you tell me which country/market you're applying in, I can give you a more specific answer.
 
 ---
 
@@ -1354,13 +1397,6 @@ Use more intelligent models for the most demanding, more important sections:
 **time:**
 
 Implement a guided tour specific to the cv-optimization page, highlighting its key areas step by step.
-
----
-
-### Add Rodo / GDPR section to CV
-
-**status: todo**
-**time:**
 
 ---
 
