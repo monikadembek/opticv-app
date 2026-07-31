@@ -6,12 +6,37 @@ import {
   output,
   signal,
 } from '@angular/core';
-import type { KeywordGapResult } from '@opticv/datatypes';
+import type {
+  KeywordGapMissingKeyword,
+  KeywordGapResult,
+} from '@opticv/datatypes';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
 
 const RING_CIRCUMFERENCE = 2 * Math.PI * 40;
+
+const IMPORTANCE_RANK: Readonly<
+  Record<KeywordGapMissingKeyword['importance'], number>
+> = {
+  critical: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+};
+
+function getImportanceRank(
+  importance: KeywordGapMissingKeyword['importance'],
+): number {
+  return IMPORTANCE_RANK[importance] ?? Object.keys(IMPORTANCE_RANK).length;
+}
+
+function byImportance(
+  a: KeywordGapMissingKeyword,
+  b: KeywordGapMissingKeyword,
+): number {
+  return getImportanceRank(a.importance) - getImportanceRank(b.importance);
+}
 
 @Component({
   imports: [ButtonModule, InputTextModule, TooltipModule],
@@ -55,11 +80,15 @@ export class KeywordGap {
   readonly ringCircumference = RING_CIRCUMFERENCE;
 
   readonly missingLikelyHas = computed(() =>
-    this.result().missingKeywords.filter((k) => k.candidateLikelyHas),
+    this.result()
+      .missingKeywords.filter((k) => k.candidateLikelyHas)
+      .sort(byImportance),
   );
 
   readonly missingGenuinelyLacks = computed(() =>
-    this.result().missingKeywords.filter((k) => !k.candidateLikelyHas),
+    this.result()
+      .missingKeywords.filter((k) => !k.candidateLikelyHas)
+      .sort(byImportance),
   );
 
   readonly exactMatchedKeywords = computed(() =>
