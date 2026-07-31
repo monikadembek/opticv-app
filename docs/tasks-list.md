@@ -1309,7 +1309,7 @@ No other behavior changed — the quota-limit check (updateMany with count: { lt
 
 ## 103. Sort and display missing keywords by importance
 
-**status: in progress**
+**status: done**
 **time: 31.07.2026**
 
 - display missing keywords that user likely has in the order of importance: Critical, High, Medium, Low
