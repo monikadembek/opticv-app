@@ -263,6 +263,152 @@ describe('KeywordGap', () => {
     expect(evidenceBlocks.length).toBe(1);
   });
 
+  it('missingLikelyHas orders items Critical -> High -> Medium -> Low', () => {
+    const unordered: KeywordGapResult = {
+      ...MOCK_RESULT,
+      missingKeywords: [
+        {
+          keyword: 'Low1',
+          category: 'tools',
+          importance: 'low',
+          isRequired: false,
+          candidateLikelyHas: true,
+          evidenceFromResume: '',
+          recommendation: '',
+          suggestedPlacement: 'skills',
+        },
+        {
+          keyword: 'Medium1',
+          category: 'tools',
+          importance: 'medium',
+          isRequired: false,
+          candidateLikelyHas: true,
+          evidenceFromResume: '',
+          recommendation: '',
+          suggestedPlacement: 'skills',
+        },
+        {
+          keyword: 'Critical1',
+          category: 'tools',
+          importance: 'critical',
+          isRequired: true,
+          candidateLikelyHas: true,
+          evidenceFromResume: '',
+          recommendation: '',
+          suggestedPlacement: 'skills',
+        },
+        {
+          keyword: 'High1',
+          category: 'tools',
+          importance: 'high',
+          isRequired: false,
+          candidateLikelyHas: true,
+          evidenceFromResume: '',
+          recommendation: '',
+          suggestedPlacement: 'skills',
+        },
+      ],
+    };
+    fixture.componentRef.setInput('result', unordered);
+    fixture.detectChanges();
+    expect(component.missingLikelyHas().map((k) => k.keyword)).toEqual([
+      'Critical1',
+      'High1',
+      'Medium1',
+      'Low1',
+    ]);
+  });
+
+  it('missingGenuinelyLacks orders items Critical -> High -> Medium -> Low', () => {
+    const unordered: KeywordGapResult = {
+      ...MOCK_RESULT,
+      missingKeywords: [
+        {
+          keyword: 'Low1',
+          category: 'tools',
+          importance: 'low',
+          isRequired: false,
+          candidateLikelyHas: false,
+          evidenceFromResume: '',
+          recommendation: '',
+          suggestedPlacement: 'skills',
+        },
+        {
+          keyword: 'Critical1',
+          category: 'tools',
+          importance: 'critical',
+          isRequired: true,
+          candidateLikelyHas: false,
+          evidenceFromResume: '',
+          recommendation: '',
+          suggestedPlacement: 'skills',
+        },
+        {
+          keyword: 'Medium1',
+          category: 'tools',
+          importance: 'medium',
+          isRequired: false,
+          candidateLikelyHas: false,
+          evidenceFromResume: '',
+          recommendation: '',
+          suggestedPlacement: 'skills',
+        },
+        {
+          keyword: 'High1',
+          category: 'tools',
+          importance: 'high',
+          isRequired: false,
+          candidateLikelyHas: false,
+          evidenceFromResume: '',
+          recommendation: '',
+          suggestedPlacement: 'skills',
+        },
+      ],
+    };
+    fixture.componentRef.setInput('result', unordered);
+    fixture.detectChanges();
+    expect(component.missingGenuinelyLacks().map((k) => k.keyword)).toEqual([
+      'Critical1',
+      'High1',
+      'Medium1',
+      'Low1',
+    ]);
+  });
+
+  it('preserves relative input order for items with equal importance (stable sort)', () => {
+    const sameImportance: KeywordGapResult = {
+      ...MOCK_RESULT,
+      missingKeywords: [
+        {
+          keyword: 'HighB',
+          category: 'tools',
+          importance: 'high',
+          isRequired: false,
+          candidateLikelyHas: true,
+          evidenceFromResume: '',
+          recommendation: '',
+          suggestedPlacement: 'skills',
+        },
+        {
+          keyword: 'HighA',
+          category: 'tools',
+          importance: 'high',
+          isRequired: false,
+          candidateLikelyHas: true,
+          evidenceFromResume: '',
+          recommendation: '',
+          suggestedPlacement: 'skills',
+        },
+      ],
+    };
+    fixture.componentRef.setInput('result', sameImportance);
+    fixture.detectChanges();
+    expect(component.missingLikelyHas().map((k) => k.keyword)).toEqual([
+      'HighB',
+      'HighA',
+    ]);
+  });
+
   it('splits matched keywords into exact and semantic groups', () => {
     const text = fixture.nativeElement.textContent;
     expect(text).toContain('Exact match');
