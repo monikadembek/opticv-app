@@ -230,6 +230,18 @@
     >
     }
   </div>
+  } @if (cv()!.gdprClause) {
+  <div
+    style="
+      margin-top: 12px;
+      font-size: 8px;
+      line-height: 1.5;
+      font-style: italic;
+      color: #555;
+    "
+  >
+    {{ cv()!.gdprClause }}
+  </div>
   }
 </div>
 } @case ('classic') {
@@ -478,6 +490,18 @@
       (!$last) { · }</span
     >
     }
+  </div>
+  } @if (cv()!.gdprClause) {
+  <div
+    style="
+      margin-top: 12px;
+      font-size: 8px;
+      line-height: 1.5;
+      font-style: italic;
+      color: #64748b;
+    "
+  >
+    {{ cv()!.gdprClause }}
   </div>
   }
 </div>
@@ -754,6 +778,18 @@
       (!$last) { · }</span
     >
     }
+  </div>
+  } @if (cv()!.gdprClause) {
+  <div
+    style="
+      margin-top: 12px;
+      font-size: 8px;
+      line-height: 1.5;
+      font-style: italic;
+      color: #64748b;
+    "
+  >
+    {{ cv()!.gdprClause }}
   </div>
   }
 </div>
@@ -1040,6 +1076,18 @@
     >
     }
   </div>
+  } @if (cv()!.gdprClause) {
+  <div
+    style="
+      margin-top: 12px;
+      font-size: 8px;
+      line-height: 1.5;
+      font-style: italic;
+      color: #64748b;
+    "
+  >
+    {{ cv()!.gdprClause }}
+  </div>
   }
 </div>
 } @case ('minimal') {
@@ -1307,6 +1355,19 @@
       (!$last) { · }</span
     >
     }
+  </div>
+  } @if (cv()!.gdprClause) {
+  <div
+    style="
+      margin-top: 12px;
+      font-size: 8px;
+      line-height: 1.5;
+      font-style: italic;
+      color: #94a3b8;
+      text-align: center;
+    "
+  >
+    {{ cv()!.gdprClause }}
   </div>
   }
 </div>
@@ -1608,6 +1669,18 @@
       (!$last) { · }</span
     >
     }
+  </div>
+  } @if (cv()!.gdprClause) {
+  <div
+    style="
+      margin-top: 12px;
+      font-size: 8px;
+      line-height: 1.5;
+      font-style: italic;
+      color: #64748b;
+    "
+  >
+    {{ cv()!.gdprClause }}
   </div>
   }
 </div>

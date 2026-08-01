@@ -496,6 +496,8 @@
   [allowedTemplateIds]="allowedTemplateIds()"
   [accentColor]="accentColor()"
   (accentColorChange)="accentColor.set($event)"
+  [includeGdprClause]="includeGdprClause()"
+  (includeGdprClauseChange)="onGdprClauseToggled($event)"
   [isExportingPdf]="isExportingPdf()"
   [isExportingDocx]="isExportingDocx()"
   [mergedCv]="mergedCv()"

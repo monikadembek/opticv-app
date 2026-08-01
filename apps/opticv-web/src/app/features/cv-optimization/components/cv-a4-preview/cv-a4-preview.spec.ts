@@ -23,6 +23,7 @@ const MINIMAL_CV: CvStructuredData = {
   projects: [],
   languages: [],
   other: null,
+  gdprClause: null,
 };
 
 // ResizeObserver is not available in JSDOM — stub it with a proper class so
@@ -39,7 +40,6 @@ function stubResizeObserver(): (entries: ResizeObserverEntry[]) => void {
   vi.stubGlobal('ResizeObserver', MockResizeObserver);
   return (entries) => capturedCallback(entries);
 }
-
 
 describe('CvA4Preview', () => {
   let fixture: ComponentFixture<CvA4Preview>;

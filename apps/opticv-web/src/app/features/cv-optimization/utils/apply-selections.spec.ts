@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applySelectionsToCV } from './apply-selections';
+import { DEFAULT_GDPR_CLAUSE } from '../cv-templates';
 import type {
   BulletSelectionKey,
   BulletUpgradeResult,
@@ -10,7 +11,15 @@ import type {
 } from '@opticv/datatypes';
 
 const BASE_CV: CvStructuredData = {
-  contact: { name: 'Test User', position: null, email: 'test@example.com', phone: null, location: null, linkedin: null, website: null },
+  contact: {
+    name: 'Test User',
+    position: null,
+    email: 'test@example.com',
+    phone: null,
+    location: null,
+    linkedin: null,
+    website: null,
+  },
   summary: 'Original summary',
   experience: [
     {
@@ -42,6 +51,7 @@ const BASE_CV: CvStructuredData = {
   projects: [],
   languages: [],
   other: null,
+  gdprClause: null,
 };
 
 const EMPTY_SELECTIONS: UserSelections = {
@@ -75,14 +85,30 @@ const BULLET_RESULT: BulletUpgradeResult = {
   ],
   missingBulletSuggestions: [],
   overallNotes: '',
-  verbDiversityCheck: { uniqueVerbsUsed: 3, totalBullets: 4, diverseEnough: true },
+  verbDiversityCheck: {
+    uniqueVerbsUsed: 3,
+    totalBullets: 4,
+    diverseEnough: true,
+  },
 };
 
 const SUMMARY_RESULT: SummaryRewriteResult = {
   originalSummary: 'Original summary',
   variants: [
-    { angle: 'achievement_led', text: 'Achievement-led summary.', wordCount: 3, strategicNote: '', keywordsUsed: [] },
-    { angle: 'identity_led', text: 'Identity-led summary.', wordCount: 3, strategicNote: '', keywordsUsed: [] },
+    {
+      angle: 'achievement_led',
+      text: 'Achievement-led summary.',
+      wordCount: 3,
+      strategicNote: '',
+      keywordsUsed: [],
+    },
+    {
+      angle: 'identity_led',
+      text: 'Identity-led summary.',
+      wordCount: 3,
+      strategicNote: '',
+      keywordsUsed: [],
+    },
   ],
   recommendedVariant: 'achievement_led',
   keywordsIncorporated: [],
@@ -98,12 +124,33 @@ const BASE_MISSING_KW = {
 
 const KEYWORD_RESULT: KeywordGapResult = {
   matchScore: 70,
-  matchScoreBreakdown: { requiredMatched: 2, requiredTotal: 5, preferredMatched: 1, preferredTotal: 3 },
+  matchScoreBreakdown: {
+    requiredMatched: 2,
+    requiredTotal: 5,
+    preferredMatched: 1,
+    preferredTotal: 3,
+  },
   matchedKeywords: [],
   missingKeywords: [
-    { ...BASE_MISSING_KW, keyword: 'TypeScript', suggestedPlacement: 'skills', isRequired: true },
-    { ...BASE_MISSING_KW, keyword: 'React', suggestedPlacement: 'experience_bullet', isRequired: true },
-    { ...BASE_MISSING_KW, keyword: 'CSS', suggestedPlacement: 'multiple', isRequired: false, importance: 'medium' },
+    {
+      ...BASE_MISSING_KW,
+      keyword: 'TypeScript',
+      suggestedPlacement: 'skills',
+      isRequired: true,
+    },
+    {
+      ...BASE_MISSING_KW,
+      keyword: 'React',
+      suggestedPlacement: 'experience_bullet',
+      isRequired: true,
+    },
+    {
+      ...BASE_MISSING_KW,
+      keyword: 'CSS',
+      suggestedPlacement: 'multiple',
+      isRequired: false,
+      importance: 'medium',
+    },
   ],
   underweightedKeywords: [],
   fabricationWarnings: [],
@@ -114,28 +161,64 @@ const ACRONYM_RESULT: KeywordGapResult = {
   ...KEYWORD_RESULT,
   missingKeywords: [],
   acronymIssues: [
-    { term: 'JS', issue: 'Only abbreviation used.', fix: 'JS (JavaScript)', actionType: 'replace', suggestedPlacement: 'skills' },
-    { term: 'ML', issue: 'Inconsistent with JD.', fix: 'Machine Learning', actionType: 'replace', suggestedPlacement: 'skills' },
+    {
+      term: 'JS',
+      issue: 'Only abbreviation used.',
+      fix: 'JS (JavaScript)',
+      actionType: 'replace',
+      suggestedPlacement: 'skills',
+    },
+    {
+      term: 'ML',
+      issue: 'Inconsistent with JD.',
+      fix: 'Machine Learning',
+      actionType: 'replace',
+      suggestedPlacement: 'skills',
+    },
   ],
 };
 
 describe('applySelectionsToCV', () => {
   it('returns a clone of the CV when no selections are made', () => {
-    const result = applySelectionsToCV(BASE_CV, EMPTY_SELECTIONS, null, null, null);
+    const result = applySelectionsToCV(
+      BASE_CV,
+      EMPTY_SELECTIONS,
+      null,
+      null,
+      null,
+    );
     expect(result).toEqual(BASE_CV);
     expect(result).not.toBe(BASE_CV);
   });
 
   describe('summary rewrite', () => {
     it('applies the selected angle variant summary', () => {
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedSummaryAngle: 'achievement_led' };
-      const result = applySelectionsToCV(BASE_CV, selections, SUMMARY_RESULT, null, null);
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedSummaryAngle: 'achievement_led',
+      };
+      const result = applySelectionsToCV(
+        BASE_CV,
+        selections,
+        SUMMARY_RESULT,
+        null,
+        null,
+      );
       expect(result.summary).toBe('Achievement-led summary.');
     });
 
     it('applies identity_led variant when that angle is selected', () => {
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedSummaryAngle: 'identity_led' };
-      const result = applySelectionsToCV(BASE_CV, selections, SUMMARY_RESULT, null, null);
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedSummaryAngle: 'identity_led',
+      };
+      const result = applySelectionsToCV(
+        BASE_CV,
+        selections,
+        SUMMARY_RESULT,
+        null,
+        null,
+      );
       expect(result.summary).toBe('Identity-led summary.');
     });
 
@@ -145,24 +228,48 @@ describe('applySelectionsToCV', () => {
         selectedSummaryAngle: 'achievement_led',
         customSummaryText: 'My own summary.',
       };
-      const result = applySelectionsToCV(BASE_CV, selections, SUMMARY_RESULT, null, null);
+      const result = applySelectionsToCV(
+        BASE_CV,
+        selections,
+        SUMMARY_RESULT,
+        null,
+        null,
+      );
       expect(result.summary).toBe('My own summary.');
     });
 
     it('does not change summary when selectedSummaryAngle is null', () => {
-      const result = applySelectionsToCV(BASE_CV, EMPTY_SELECTIONS, SUMMARY_RESULT, null, null);
+      const result = applySelectionsToCV(
+        BASE_CV,
+        EMPTY_SELECTIONS,
+        SUMMARY_RESULT,
+        null,
+        null,
+      );
       expect(result.summary).toBe('Original summary');
     });
 
     it('does not change summary when summaryResult is null', () => {
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedSummaryAngle: 'achievement_led' };
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedSummaryAngle: 'achievement_led',
+      };
       const result = applySelectionsToCV(BASE_CV, selections, null, null, null);
       expect(result.summary).toBe('Original summary');
     });
 
     it('does not change summary when angle does not match any variant', () => {
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedSummaryAngle: 'mission_led' };
-      const result = applySelectionsToCV(BASE_CV, selections, SUMMARY_RESULT, null, null);
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedSummaryAngle: 'mission_led',
+      };
+      const result = applySelectionsToCV(
+        BASE_CV,
+        selections,
+        SUMMARY_RESULT,
+        null,
+        null,
+      );
       expect(result.summary).toBe('Original summary');
     });
   });
@@ -175,35 +282,74 @@ describe('applySelectionsToCV', () => {
     };
 
     it('replaces the original bullet text with the AI rewrittenText', () => {
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedBullets: [selectedBullet] };
-      const result = applySelectionsToCV(BASE_CV, selections, null, BULLET_RESULT, null);
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedBullets: [selectedBullet],
+      };
+      const result = applySelectionsToCV(
+        BASE_CV,
+        selections,
+        null,
+        BULLET_RESULT,
+        null,
+      );
       const bullets = result.experience[0].bullets;
-      expect(bullets).toContain('Built React dashboards reducing load time by 40%.');
+      expect(bullets).toContain(
+        'Built React dashboards reducing load time by 40%.',
+      );
       expect(bullets).not.toContain('Did things with React.');
     });
 
     it('uses bulletEdits override when one is provided for the key', () => {
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedBullets: [selectedBullet] };
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedBullets: [selectedBullet],
+      };
       const editKey = `${selectedBullet.company}|${selectedBullet.title}|${selectedBullet.originalText}`;
       const bulletEdits = new Map([[editKey, 'Hand-edited bullet.']]);
-      const result = applySelectionsToCV(BASE_CV, selections, null, BULLET_RESULT, null, bulletEdits);
+      const result = applySelectionsToCV(
+        BASE_CV,
+        selections,
+        null,
+        BULLET_RESULT,
+        null,
+        bulletEdits,
+      );
       expect(result.experience[0].bullets).toContain('Hand-edited bullet.');
     });
 
     it('does not change bullets when selectedBullets is empty', () => {
-      const result = applySelectionsToCV(BASE_CV, EMPTY_SELECTIONS, null, BULLET_RESULT, null);
+      const result = applySelectionsToCV(
+        BASE_CV,
+        EMPTY_SELECTIONS,
+        null,
+        BULLET_RESULT,
+        null,
+      );
       expect(result.experience[0].bullets).toContain('Did things with React.');
     });
 
     it('does not change bullets when bulletResult is null', () => {
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedBullets: [selectedBullet] };
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedBullets: [selectedBullet],
+      };
       const result = applySelectionsToCV(BASE_CV, selections, null, null, null);
       expect(result.experience[0].bullets).toContain('Did things with React.');
     });
 
     it('does not affect other positions', () => {
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedBullets: [selectedBullet] };
-      const result = applySelectionsToCV(BASE_CV, selections, null, BULLET_RESULT, null);
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedBullets: [selectedBullet],
+      };
+      const result = applySelectionsToCV(
+        BASE_CV,
+        selections,
+        null,
+        BULLET_RESULT,
+        null,
+      );
       expect(result.experience[1].bullets).toEqual(['Shipped features.']);
     });
   });
@@ -216,30 +362,80 @@ describe('applySelectionsToCV', () => {
     };
 
     it('removes the specified bullet from the experience entry', () => {
-      const result = applySelectionsToCV(BASE_CV, EMPTY_SELECTIONS, null, null, null, new Map(), [removedKey]);
-      expect(result.experience[0].bullets).not.toContain('Worked on backend tasks occasionally.');
+      const result = applySelectionsToCV(
+        BASE_CV,
+        EMPTY_SELECTIONS,
+        null,
+        null,
+        null,
+        new Map(),
+        [removedKey],
+      );
+      expect(result.experience[0].bullets).not.toContain(
+        'Worked on backend tasks occasionally.',
+      );
     });
 
     it('keeps other bullets in the same position intact', () => {
-      const result = applySelectionsToCV(BASE_CV, EMPTY_SELECTIONS, null, null, null, new Map(), [removedKey]);
+      const result = applySelectionsToCV(
+        BASE_CV,
+        EMPTY_SELECTIONS,
+        null,
+        null,
+        null,
+        new Map(),
+        [removedKey],
+      );
       expect(result.experience[0].bullets).toContain('Did things with React.');
-      expect(result.experience[0].bullets).toContain('Led migration of legacy codebase to TypeScript.');
+      expect(result.experience[0].bullets).toContain(
+        'Led migration of legacy codebase to TypeScript.',
+      );
     });
 
     it('does nothing when removedBullets is empty', () => {
-      const result = applySelectionsToCV(BASE_CV, EMPTY_SELECTIONS, null, null, null, new Map(), []);
+      const result = applySelectionsToCV(
+        BASE_CV,
+        EMPTY_SELECTIONS,
+        null,
+        null,
+        null,
+        new Map(),
+        [],
+      );
       expect(result.experience[0].bullets.length).toBe(3);
     });
 
     it('ignores a removed bullet key whose company/title does not match', () => {
-      const badKey: BulletSelectionKey = { company: 'Unknown Co', title: 'Unknown Role', originalText: 'Some bullet.' };
-      const result = applySelectionsToCV(BASE_CV, EMPTY_SELECTIONS, null, null, null, new Map(), [badKey]);
+      const badKey: BulletSelectionKey = {
+        company: 'Unknown Co',
+        title: 'Unknown Role',
+        originalText: 'Some bullet.',
+      };
+      const result = applySelectionsToCV(
+        BASE_CV,
+        EMPTY_SELECTIONS,
+        null,
+        null,
+        null,
+        new Map(),
+        [badKey],
+      );
       expect(result.experience[0].bullets.length).toBe(3);
     });
 
     it('does not mutate the original CV', () => {
-      applySelectionsToCV(BASE_CV, EMPTY_SELECTIONS, null, null, null, new Map(), [removedKey]);
-      expect(BASE_CV.experience[0].bullets).toContain('Worked on backend tasks occasionally.');
+      applySelectionsToCV(
+        BASE_CV,
+        EMPTY_SELECTIONS,
+        null,
+        null,
+        null,
+        new Map(),
+        [removedKey],
+      );
+      expect(BASE_CV.experience[0].bullets).toContain(
+        'Worked on backend tasks occasionally.',
+      );
     });
   });
 
@@ -255,39 +451,90 @@ describe('applySelectionsToCV', () => {
         suggestedBullet: 'Mentored 3 junior developers.',
       };
       const result = applySelectionsToCV(
-        BASE_CV, EMPTY_SELECTIONS, null, null, null, new Map(), [], [suggestionDash],
+        BASE_CV,
+        EMPTY_SELECTIONS,
+        null,
+        null,
+        null,
+        new Map(),
+        [],
+        [suggestionDash],
       );
-      expect(result.experience[0].bullets).toContain('Mentored 3 junior developers.');
+      expect(result.experience[0].bullets).toContain(
+        'Mentored 3 junior developers.',
+      );
     });
 
     it('appends the suggested bullet using "at" format matching', () => {
       const result = applySelectionsToCV(
-        BASE_CV, EMPTY_SELECTIONS, null, null, null, new Map(), [], [suggestion],
+        BASE_CV,
+        EMPTY_SELECTIONS,
+        null,
+        null,
+        null,
+        new Map(),
+        [],
+        [suggestion],
       );
-      expect(result.experience[0].bullets).toContain('Mentored 3 junior developers.');
+      expect(result.experience[0].bullets).toContain(
+        'Mentored 3 junior developers.',
+      );
     });
 
     it('uses missingBulletEdits text when an edit is provided', () => {
       const editKey = `${suggestion.forPosition}|${suggestion.suggestedBullet}`;
-      const missingBulletEdits = new Map([[editKey, 'Custom mentoring bullet.']]);
+      const missingBulletEdits = new Map([
+        [editKey, 'Custom mentoring bullet.'],
+      ]);
       const result = applySelectionsToCV(
-        BASE_CV, EMPTY_SELECTIONS, null, null, null, new Map(), [], [suggestion], missingBulletEdits,
+        BASE_CV,
+        EMPTY_SELECTIONS,
+        null,
+        null,
+        null,
+        new Map(),
+        [],
+        [suggestion],
+        missingBulletEdits,
       );
-      expect(result.experience[0].bullets).toContain('Custom mentoring bullet.');
-      expect(result.experience[0].bullets).not.toContain('Mentored 3 junior developers.');
+      expect(result.experience[0].bullets).toContain(
+        'Custom mentoring bullet.',
+      );
+      expect(result.experience[0].bullets).not.toContain(
+        'Mentored 3 junior developers.',
+      );
     });
 
     it('does nothing when forPosition does not match any experience entry', () => {
-      const noMatch = { forPosition: 'Nonexistent Role at Unknown Co', suggestedBullet: 'Some bullet.' };
+      const noMatch = {
+        forPosition: 'Nonexistent Role at Unknown Co',
+        suggestedBullet: 'Some bullet.',
+      };
       const result = applySelectionsToCV(
-        BASE_CV, EMPTY_SELECTIONS, null, null, null, new Map(), [], [noMatch],
+        BASE_CV,
+        EMPTY_SELECTIONS,
+        null,
+        null,
+        null,
+        new Map(),
+        [],
+        [noMatch],
       );
       expect(result.experience[0].bullets.length).toBe(3);
       expect(result.experience[1].bullets.length).toBe(1);
     });
 
     it('does not mutate the original CV', () => {
-      applySelectionsToCV(BASE_CV, EMPTY_SELECTIONS, null, null, null, new Map(), [], [suggestion]);
+      applySelectionsToCV(
+        BASE_CV,
+        EMPTY_SELECTIONS,
+        null,
+        null,
+        null,
+        new Map(),
+        [],
+        [suggestion],
+      );
       expect(BASE_CV.experience[0].bullets.length).toBe(3);
     });
   });
@@ -299,23 +546,47 @@ describe('applySelectionsToCV', () => {
     };
 
     it('adds keywords with placement "skills" to the skills array', () => {
-      const result = applySelectionsToCV(BASE_CV, selectionsWithKeywords, null, null, KEYWORD_RESULT);
+      const result = applySelectionsToCV(
+        BASE_CV,
+        selectionsWithKeywords,
+        null,
+        null,
+        KEYWORD_RESULT,
+      );
       expect(result.skills).toContain('TypeScript');
     });
 
     it('adds keywords with placement "multiple" to the skills array', () => {
-      const result = applySelectionsToCV(BASE_CV, selectionsWithKeywords, null, null, KEYWORD_RESULT);
+      const result = applySelectionsToCV(
+        BASE_CV,
+        selectionsWithKeywords,
+        null,
+        null,
+        KEYWORD_RESULT,
+      );
       expect(result.skills).toContain('CSS');
     });
 
     it('does not add keywords with placement "experience_bullet" to skills', () => {
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedKeywords: ['React'] };
-      const result = applySelectionsToCV(BASE_CV, selections, null, null, KEYWORD_RESULT);
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedKeywords: ['React'],
+      };
+      const result = applySelectionsToCV(
+        BASE_CV,
+        selections,
+        null,
+        null,
+        KEYWORD_RESULT,
+      );
       expect(result.skills).not.toContain('React');
     });
 
     describe('experience_bullet placement', () => {
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedKeywords: ['React'] };
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedKeywords: ['React'],
+      };
       const position = 0;
 
       const kwResultWithQuotedRecommendation: KeywordGapResult = {
@@ -326,7 +597,8 @@ describe('applySelectionsToCV', () => {
             keyword: 'React',
             suggestedPlacement: 'experience_bullet',
             isRequired: true,
-            recommendation: "Add 'Built performant UIs with React hooks and context API' to your experience.",
+            recommendation:
+              "Add 'Built performant UIs with React hooks and context API' to your experience.",
           },
         ],
       };
@@ -339,7 +611,8 @@ describe('applySelectionsToCV', () => {
             keyword: 'React',
             suggestedPlacement: 'experience_bullet',
             isRequired: true,
-            recommendation: 'Demonstrate React expertise by adding a specific project example.',
+            recommendation:
+              'Demonstrate React expertise by adding a specific project example.',
           },
         ],
       };
@@ -347,8 +620,17 @@ describe('applySelectionsToCV', () => {
       it('extracts the quoted text from recommendation as the bullet', () => {
         const kwBulletPositions = new Map([['React', position]]);
         const result = applySelectionsToCV(
-          BASE_CV, selections, null, null, kwResultWithQuotedRecommendation,
-          new Map(), [], [], new Map(), new Map(), kwBulletPositions,
+          BASE_CV,
+          selections,
+          null,
+          null,
+          kwResultWithQuotedRecommendation,
+          new Map(),
+          [],
+          [],
+          new Map(),
+          new Map(),
+          kwBulletPositions,
         );
         expect(result.experience[0].bullets).toContain(
           'Built performant UIs with React hooks and context API',
@@ -361,8 +643,17 @@ describe('applySelectionsToCV', () => {
       it('falls back to keyword when recommendation has no quoted text', () => {
         const kwBulletPositions = new Map([['React', position]]);
         const result = applySelectionsToCV(
-          BASE_CV, selections, null, null, kwResultWithUnquotedRecommendation,
-          new Map(), [], [], new Map(), new Map(), kwBulletPositions,
+          BASE_CV,
+          selections,
+          null,
+          null,
+          kwResultWithUnquotedRecommendation,
+          new Map(),
+          [],
+          [],
+          new Map(),
+          new Map(),
+          kwBulletPositions,
         );
         expect(result.experience[0].bullets).toContain('React');
         expect(result.experience[0].bullets).not.toContain(
@@ -372,10 +663,24 @@ describe('applySelectionsToCV', () => {
 
       it('uses keywordEdits override instead of extracted recommendation text', () => {
         const kwBulletPositions = new Map([['React', position]]);
-        const kwEdits = new Map([['React', 'Built high-performance React dashboards serving 50k users.']]);
+        const kwEdits = new Map([
+          [
+            'React',
+            'Built high-performance React dashboards serving 50k users.',
+          ],
+        ]);
         const result = applySelectionsToCV(
-          BASE_CV, selections, null, null, kwResultWithQuotedRecommendation,
-          new Map(), [], [], new Map(), kwEdits, kwBulletPositions,
+          BASE_CV,
+          selections,
+          null,
+          null,
+          kwResultWithQuotedRecommendation,
+          new Map(),
+          [],
+          [],
+          new Map(),
+          kwEdits,
+          kwBulletPositions,
         );
         expect(result.experience[0].bullets).toContain(
           'Built high-performance React dashboards serving 50k users.',
@@ -387,8 +692,17 @@ describe('applySelectionsToCV', () => {
 
       it('does not modify any experience entry when the position index is missing from the map', () => {
         const result = applySelectionsToCV(
-          BASE_CV, selections, null, null, kwResultWithQuotedRecommendation,
-          new Map(), [], [], new Map(), new Map(), new Map(),
+          BASE_CV,
+          selections,
+          null,
+          null,
+          kwResultWithQuotedRecommendation,
+          new Map(),
+          [],
+          [],
+          new Map(),
+          new Map(),
+          new Map(),
         );
         expect(result.experience[0].bullets).toHaveLength(3);
         expect(result.experience[1].bullets).toHaveLength(1);
@@ -397,8 +711,17 @@ describe('applySelectionsToCV', () => {
       it('does not modify any experience entry when the position index is out of bounds', () => {
         const kwBulletPositions = new Map([['React', 99]]);
         const result = applySelectionsToCV(
-          BASE_CV, selections, null, null, kwResultWithQuotedRecommendation,
-          new Map(), [], [], new Map(), new Map(), kwBulletPositions,
+          BASE_CV,
+          selections,
+          null,
+          null,
+          kwResultWithQuotedRecommendation,
+          new Map(),
+          [],
+          [],
+          new Map(),
+          new Map(),
+          kwBulletPositions,
         );
         expect(result.experience[0].bullets).toHaveLength(3);
         expect(result.experience[1].bullets).toHaveLength(1);
@@ -407,8 +730,17 @@ describe('applySelectionsToCV', () => {
       it('does not modify any experience entry when the position index is negative', () => {
         const kwBulletPositions = new Map([['React', -1]]);
         const result = applySelectionsToCV(
-          BASE_CV, selections, null, null, kwResultWithQuotedRecommendation,
-          new Map(), [], [], new Map(), new Map(), kwBulletPositions,
+          BASE_CV,
+          selections,
+          null,
+          null,
+          kwResultWithQuotedRecommendation,
+          new Map(),
+          [],
+          [],
+          new Map(),
+          new Map(),
+          kwBulletPositions,
         );
         expect(result.experience[0].bullets).toHaveLength(3);
         expect(result.experience[1].bullets).toHaveLength(1);
@@ -416,24 +748,53 @@ describe('applySelectionsToCV', () => {
     });
 
     it('does not duplicate a keyword already present in skills', () => {
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedKeywords: ['JavaScript'] };
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedKeywords: ['JavaScript'],
+      };
       const kwResult: KeywordGapResult = {
         ...KEYWORD_RESULT,
         missingKeywords: [
-          { ...BASE_MISSING_KW, keyword: 'JavaScript', suggestedPlacement: 'skills', isRequired: false, importance: 'medium' },
+          {
+            ...BASE_MISSING_KW,
+            keyword: 'JavaScript',
+            suggestedPlacement: 'skills',
+            isRequired: false,
+            importance: 'medium',
+          },
         ],
       };
-      const result = applySelectionsToCV(BASE_CV, selections, null, null, kwResult);
-      expect(result.skills.filter((s) => s.toLowerCase() === 'javascript').length).toBe(1);
+      const result = applySelectionsToCV(
+        BASE_CV,
+        selections,
+        null,
+        null,
+        kwResult,
+      );
+      expect(
+        result.skills.filter((s) => s.toLowerCase() === 'javascript').length,
+      ).toBe(1);
     });
 
     it('does not add keywords when selectedKeywords is empty', () => {
-      const result = applySelectionsToCV(BASE_CV, EMPTY_SELECTIONS, null, null, KEYWORD_RESULT);
+      const result = applySelectionsToCV(
+        BASE_CV,
+        EMPTY_SELECTIONS,
+        null,
+        null,
+        KEYWORD_RESULT,
+      );
       expect(result.skills).toEqual(BASE_CV.skills);
     });
 
     it('does not add keywords when keywordResult is null', () => {
-      const result = applySelectionsToCV(BASE_CV, selectionsWithKeywords, null, null, null);
+      const result = applySelectionsToCV(
+        BASE_CV,
+        selectionsWithKeywords,
+        null,
+        null,
+        null,
+      );
       expect(result.skills).toEqual(BASE_CV.skills);
     });
   });
@@ -475,9 +836,13 @@ describe('applySelectionsToCV', () => {
 
       expect(result.summary).toBe('Achievement-led summary.');
       const acmeBullets = result.experience[0].bullets;
-      expect(acmeBullets).toContain('Built React dashboards reducing load time by 40%.');
+      expect(acmeBullets).toContain(
+        'Built React dashboards reducing load time by 40%.',
+      );
       expect(acmeBullets).not.toContain('Did things with React.');
-      expect(acmeBullets).not.toContain('Worked on backend tasks occasionally.');
+      expect(acmeBullets).not.toContain(
+        'Worked on backend tasks occasionally.',
+      );
       expect(acmeBullets).toContain('Mentored juniors.');
       expect(result.skills).toContain('TypeScript');
     });
@@ -486,16 +851,37 @@ describe('applySelectionsToCV', () => {
   describe('acronym issues', () => {
     it('replaces a matching skill entry with placement "skills"', () => {
       const cv: CvStructuredData = { ...BASE_CV, skills: ['ML', 'HTML'] };
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['ML'] };
-      const result = applySelectionsToCV(cv, selections, null, null, ACRONYM_RESULT);
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedAcronymIssues: ['ML'],
+      };
+      const result = applySelectionsToCV(
+        cv,
+        selections,
+        null,
+        null,
+        ACRONYM_RESULT,
+      );
       expect(result.skills).toContain('Machine Learning');
       expect(result.skills).not.toContain('ML');
     });
 
     it('replaces a skill entry containing the term as a substring with placement "skills"', () => {
-      const cv: CvStructuredData = { ...BASE_CV, skills: ['ML (basic)', 'HTML'] };
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['ML'] };
-      const result = applySelectionsToCV(cv, selections, null, null, ACRONYM_RESULT);
+      const cv: CvStructuredData = {
+        ...BASE_CV,
+        skills: ['ML (basic)', 'HTML'],
+      };
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedAcronymIssues: ['ML'],
+      };
+      const result = applySelectionsToCV(
+        cv,
+        selections,
+        null,
+        null,
+        ACRONYM_RESULT,
+      );
       expect(result.skills).toContain('Machine Learning (basic)');
       expect(result.skills).not.toContain('ML (basic)');
     });
@@ -504,43 +890,102 @@ describe('applySelectionsToCV', () => {
       const kwResult: KeywordGapResult = {
         ...ACRONYM_RESULT,
         acronymIssues: [
-          { term: 'React', issue: 'x', fix: 'React.js', actionType: 'replace', suggestedPlacement: 'experience_bullet' },
+          {
+            term: 'React',
+            issue: 'x',
+            fix: 'React.js',
+            actionType: 'replace',
+            suggestedPlacement: 'experience_bullet',
+          },
         ],
       };
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['React'] };
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedAcronymIssues: ['React'],
+      };
       const acronymBulletPositions = new Map([['React', 0]]);
       const result = applySelectionsToCV(
-        BASE_CV, selections, null, null, kwResult,
-        new Map(), [], [], new Map(), new Map(), new Map(), new Map(), acronymBulletPositions,
+        BASE_CV,
+        selections,
+        null,
+        null,
+        kwResult,
+        new Map(),
+        [],
+        [],
+        new Map(),
+        new Map(),
+        new Map(),
+        new Map(),
+        acronymBulletPositions,
       );
-      expect(result.experience[0].bullets).toContain('Did things with React.js.');
+      expect(result.experience[0].bullets).toContain(
+        'Did things with React.js.',
+      );
     });
 
     it('leaves bullets unchanged when the term is not found in any bullet at the chosen position', () => {
       const kwResult: KeywordGapResult = {
         ...ACRONYM_RESULT,
         acronymIssues: [
-          { term: 'CI', issue: 'x', fix: 'CI (Continuous Integration)', actionType: 'replace', suggestedPlacement: 'experience_bullet' },
+          {
+            term: 'CI',
+            issue: 'x',
+            fix: 'CI (Continuous Integration)',
+            actionType: 'replace',
+            suggestedPlacement: 'experience_bullet',
+          },
         ],
       };
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['CI'] };
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedAcronymIssues: ['CI'],
+      };
       const acronymBulletPositions = new Map([['CI', 0]]);
       const result = applySelectionsToCV(
-        BASE_CV, selections, null, null, kwResult,
-        new Map(), [], [], new Map(), new Map(), new Map(), new Map(), acronymBulletPositions,
+        BASE_CV,
+        selections,
+        null,
+        null,
+        kwResult,
+        new Map(),
+        [],
+        [],
+        new Map(),
+        new Map(),
+        new Map(),
+        new Map(),
+        acronymBulletPositions,
       );
-      expect(result.experience[0].bullets).toEqual(BASE_CV.experience[0].bullets);
+      expect(result.experience[0].bullets).toEqual(
+        BASE_CV.experience[0].bullets,
+      );
     });
 
     it('replaces the substring in summary for "replace" with placement "summary"', () => {
       const kwResult: KeywordGapResult = {
         ...ACRONYM_RESULT,
         acronymIssues: [
-          { term: 'Original', issue: 'x', fix: 'Updated', actionType: 'replace', suggestedPlacement: 'summary' },
+          {
+            term: 'Original',
+            issue: 'x',
+            fix: 'Updated',
+            actionType: 'replace',
+            suggestedPlacement: 'summary',
+          },
         ],
       };
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['Original'] };
-      const result = applySelectionsToCV(BASE_CV, selections, null, null, kwResult);
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedAcronymIssues: ['Original'],
+      };
+      const result = applySelectionsToCV(
+        BASE_CV,
+        selections,
+        null,
+        null,
+        kwResult,
+      );
       expect(result.summary).toBe('Updated summary');
     });
 
@@ -557,14 +1002,25 @@ describe('applySelectionsToCV', () => {
       const kwResult: KeywordGapResult = {
         ...ACRONYM_RESULT,
         acronymIssues: [
-          { term: 'AWS', issue: 'x', fix: 'Amazon Web Services', actionType: 'replace', suggestedPlacement: 'multiple' },
+          {
+            term: 'AWS',
+            issue: 'x',
+            fix: 'Amazon Web Services',
+            actionType: 'replace',
+            suggestedPlacement: 'multiple',
+          },
         ],
       };
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['AWS'] };
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedAcronymIssues: ['AWS'],
+      };
       const result = applySelectionsToCV(cv, selections, null, null, kwResult);
       expect(result.summary).toBe('Expert in Amazon Web Services.');
       expect(result.skills).toContain('Amazon Web Services');
-      expect(result.experience[0].bullets).toContain('Used Amazon Web Services extensively.');
+      expect(result.experience[0].bullets).toContain(
+        'Used Amazon Web Services extensively.',
+      );
     });
 
     it('treats placement "title" the same as "multiple"', () => {
@@ -572,10 +1028,19 @@ describe('applySelectionsToCV', () => {
       const kwResult: KeywordGapResult = {
         ...ACRONYM_RESULT,
         acronymIssues: [
-          { term: 'DBA', issue: 'x', fix: 'Database Administrator', actionType: 'replace', suggestedPlacement: 'title' },
+          {
+            term: 'DBA',
+            issue: 'x',
+            fix: 'Database Administrator',
+            actionType: 'replace',
+            suggestedPlacement: 'title',
+          },
         ],
       };
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['DBA'] };
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedAcronymIssues: ['DBA'],
+      };
       const result = applySelectionsToCV(cv, selections, null, null, kwResult);
       expect(result.summary).toBe('Expert in Database Administrator.');
     });
@@ -584,21 +1049,49 @@ describe('applySelectionsToCV', () => {
       const kwResult: KeywordGapResult = {
         ...ACRONYM_RESULT,
         acronymIssues: [
-          { term: 'NOTFOUND', issue: 'x', fix: 'Something Else', actionType: 'replace', suggestedPlacement: 'summary' },
+          {
+            term: 'NOTFOUND',
+            issue: 'x',
+            fix: 'Something Else',
+            actionType: 'replace',
+            suggestedPlacement: 'summary',
+          },
         ],
       };
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['NOTFOUND'] };
-      const result = applySelectionsToCV(BASE_CV, selections, null, null, kwResult);
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedAcronymIssues: ['NOTFOUND'],
+      };
+      const result = applySelectionsToCV(
+        BASE_CV,
+        selections,
+        null,
+        null,
+        kwResult,
+      );
       expect(result.summary).toBe('Original summary');
     });
 
     it('uses acronymEdits override instead of entry.fix', () => {
       const cv: CvStructuredData = { ...BASE_CV, skills: ['JS', 'HTML'] };
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['JS'] };
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedAcronymIssues: ['JS'],
+      };
       const acronymEdits = new Map([['JS', 'Vanilla JavaScript']]);
       const result = applySelectionsToCV(
-        cv, selections, null, null, ACRONYM_RESULT,
-        new Map(), [], [], new Map(), new Map(), new Map(), acronymEdits,
+        cv,
+        selections,
+        null,
+        null,
+        ACRONYM_RESULT,
+        new Map(),
+        [],
+        [],
+        new Map(),
+        new Map(),
+        new Map(),
+        acronymEdits,
       );
       expect(result.skills).toContain('Vanilla JavaScript');
       expect(result.skills).not.toContain('JS');
@@ -607,18 +1100,96 @@ describe('applySelectionsToCV', () => {
     it('skips historical acronym issues with no actionType without throwing', () => {
       const kwResult: KeywordGapResult = {
         ...ACRONYM_RESULT,
-        acronymIssues: [
-          { term: 'JS', issue: 'x', fix: 'JavaScript' },
-        ],
+        acronymIssues: [{ term: 'JS', issue: 'x', fix: 'JavaScript' }],
       };
-      const selections: UserSelections = { ...EMPTY_SELECTIONS, selectedAcronymIssues: ['JS'] };
-      const result = applySelectionsToCV(BASE_CV, selections, null, null, kwResult);
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedAcronymIssues: ['JS'],
+      };
+      const result = applySelectionsToCV(
+        BASE_CV,
+        selections,
+        null,
+        null,
+        kwResult,
+      );
       expect(result.skills).toEqual(BASE_CV.skills);
     });
 
     it('does not add acronym fixes when selectedAcronymIssues is empty', () => {
-      const result = applySelectionsToCV(BASE_CV, EMPTY_SELECTIONS, null, null, ACRONYM_RESULT);
+      const result = applySelectionsToCV(
+        BASE_CV,
+        EMPTY_SELECTIONS,
+        null,
+        null,
+        ACRONYM_RESULT,
+      );
       expect(result.skills).toEqual(BASE_CV.skills);
+    });
+  });
+
+  describe('gdpr clause', () => {
+    it('sets gdprClause to null when includeGdprClause is false, regardless of originalGdprClause', () => {
+      const result = applySelectionsToCV(
+        BASE_CV,
+        EMPTY_SELECTIONS,
+        null,
+        null,
+        null,
+        new Map(),
+        [],
+        [],
+        new Map(),
+        new Map(),
+        new Map(),
+        new Map(),
+        new Map(),
+        false,
+        'Original extracted clause.',
+      );
+      expect(result.gdprClause).toBeNull();
+    });
+
+    it('uses the original extracted clause when includeGdprClause is true and one exists', () => {
+      const result = applySelectionsToCV(
+        BASE_CV,
+        EMPTY_SELECTIONS,
+        null,
+        null,
+        null,
+        new Map(),
+        [],
+        [],
+        new Map(),
+        new Map(),
+        new Map(),
+        new Map(),
+        new Map(),
+        true,
+        'Original extracted clause.',
+      );
+      expect(result.gdprClause).toBe('Original extracted clause.');
+    });
+
+    it('uses the default clause text when includeGdprClause is true and no original clause exists', () => {
+      const result = applySelectionsToCV(
+        BASE_CV,
+        EMPTY_SELECTIONS,
+        null,
+        null,
+        null,
+        new Map(),
+        [],
+        [],
+        new Map(),
+        new Map(),
+        new Map(),
+        new Map(),
+        new Map(),
+        true,
+        null,
+      );
+      expect(result.gdprClause).toBe(DEFAULT_GDPR_CLAUSE);
     });
   });
 });

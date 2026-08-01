@@ -64,6 +64,7 @@ const mockCvStructuredData: CvStructuredData = {
   projects: [],
   languages: [],
   other: null,
+  gdprClause: null,
 };
 
 const mockJobSubmittedData: JobSubmittedData = {
@@ -131,7 +132,11 @@ describe('CvOptimization', () => {
     saveUserOutput: ReturnType<typeof vi.fn>;
   };
   let userSettingsApiService: {
-    userProfile: { value: ReturnType<typeof signal<{ subscription: { tier: string } } | null>> };
+    userProfile: {
+      value: ReturnType<
+        typeof signal<{ subscription: { tier: string } } | null>
+      >;
+    };
   };
   let jobApplicationApiService: {
     getJobApplication: ReturnType<typeof vi.fn>;
@@ -175,9 +180,7 @@ describe('CvOptimization', () => {
       retryFailedJob: vi.fn().mockReturnValue(of({ runId: 'run-id-1' })),
       streamOptimizationEvents: vi.fn().mockReturnValue(of()),
       retryOptimization: vi.fn(),
-      saveUserOutput: vi
-        .fn()
-        .mockReturnValue(of({ userEditedOutput: '{}' })),
+      saveUserOutput: vi.fn().mockReturnValue(of({ userEditedOutput: '{}' })),
     };
     jobApplicationApiService = {
       getJobApplication: vi.fn().mockReturnValue(of(mockJobApplicationWithCv)),
@@ -689,6 +692,42 @@ describe('CvOptimization', () => {
 
       const processingValues = Array.from(component.isProcessing().values());
       expect(processingValues.filter(Boolean).length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('sets includeGdprClause to true when extractedData has a non-null gdprClause', () => {
+      component.runOptimization({
+        ...mockJobSubmittedData,
+        extractedData: {
+          ...mockCvStructuredData,
+          gdprClause: 'Original clause.',
+        },
+      });
+
+      expect(component.includeGdprClause()).toBe(true);
+    });
+
+    it('sets includeGdprClause to false when extractedData has a null gdprClause', () => {
+      component.runOptimization({
+        ...mockJobSubmittedData,
+        extractedData: { ...mockCvStructuredData, gdprClause: null },
+      });
+
+      expect(component.includeGdprClause()).toBe(false);
+    });
+
+    it('sets includeGdprClause to false when extractedData has an undefined gdprClause (data predating the field)', () => {
+      const legacyExtractedData = { ...mockCvStructuredData } as Record<
+        string,
+        unknown
+      >;
+      delete legacyExtractedData['gdprClause'];
+
+      component.runOptimization({
+        ...mockJobSubmittedData,
+        extractedData: legacyExtractedData as unknown as CvStructuredData,
+      });
+
+      expect(component.includeGdprClause()).toBe(false);
     });
 
     it('updates results and clears isProcessing on a completed SSE event', () => {
@@ -1220,6 +1259,49 @@ describe('CvOptimization', () => {
       expect(component.cvStructuredData()).toEqual(mockCvStructuredData);
     });
 
+    it('sets includeGdprClause to true when the loaded CV has a non-null gdprClause', async () => {
+      await createComponent({
+        jobApplicationId: 'job-app-id-1',
+        getStructuredData: vi.fn().mockReturnValue(
+          of({
+            data: { ...mockCvStructuredData, gdprClause: 'Original clause.' },
+          }),
+        ),
+      });
+
+      expect(component.includeGdprClause()).toBe(true);
+    });
+
+    it('sets includeGdprClause to false when the loaded CV has a null gdprClause', async () => {
+      await createComponent({
+        jobApplicationId: 'job-app-id-1',
+        getStructuredData: vi
+          .fn()
+          .mockReturnValue(
+            of({ data: { ...mockCvStructuredData, gdprClause: null } }),
+          ),
+      });
+
+      expect(component.includeGdprClause()).toBe(false);
+    });
+
+    it('sets includeGdprClause to false when the loaded CV predates the gdprClause field (undefined)', async () => {
+      const legacyStoredData = { ...mockCvStructuredData } as Record<
+        string,
+        unknown
+      >;
+      delete legacyStoredData['gdprClause'];
+
+      await createComponent({
+        jobApplicationId: 'job-app-id-1',
+        getStructuredData: vi
+          .fn()
+          .mockReturnValue(of({ data: legacyStoredData })),
+      });
+
+      expect(component.includeGdprClause()).toBe(false);
+    });
+
     it('sets loadError when the API call fails', async () => {
       await createComponent({
         jobApplicationId: 'job-app-id-1',
@@ -1457,6 +1539,16 @@ describe('CvOptimization', () => {
       component.onMissingBulletEditSaved({ key: 'Pos|Bullet', text: 'saved' });
       expect(component.activeBulletEditKey()).toBeNull();
       expect(component.editedBulletText()).toBe('');
+    });
+  });
+
+  describe('onGdprClauseToggled', () => {
+    it('sets includeGdprClause to the given value', () => {
+      component.onGdprClauseToggled(true);
+      expect(component.includeGdprClause()).toBe(true);
+
+      component.onGdprClauseToggled(false);
+      expect(component.includeGdprClause()).toBe(false);
     });
   });
 
@@ -1698,9 +1790,7 @@ describe('CvOptimization', () => {
       component.onResultsTabChanged('additional-materials');
       fixture.detectChanges();
 
-      expect(component.isSectionCollapsed(PromptType.COVER_LETTER)).toBe(
-        false,
-      );
+      expect(component.isSectionCollapsed(PromptType.COVER_LETTER)).toBe(false);
       expect(component.isSectionCollapsed(PromptType.INTERVIEW_PREP)).toBe(
         true,
       );
@@ -1737,9 +1827,7 @@ describe('CvOptimization', () => {
 
       // Trigger another pageState-affecting change; the effect must not
       // overwrite the user's manual choice since initializedDefaults is set.
-      component.isProcessing.set(
-        new Map([[PromptType.RESUME_AUTOPSY, false]]),
-      );
+      component.isProcessing.set(new Map([[PromptType.RESUME_AUTOPSY, false]]));
       fixture.detectChanges();
 
       expect(component.isSectionCollapsed(PromptType.KEYWORD_GAP)).toBe(false);
@@ -1813,9 +1901,7 @@ describe('CvOptimization', () => {
     it('does not affect the inactive tab (Additional Materials) sections', () => {
       component.toggleAllSections();
 
-      expect(component.isSectionCollapsed(PromptType.COVER_LETTER)).toBe(
-        false,
-      );
+      expect(component.isSectionCollapsed(PromptType.COVER_LETTER)).toBe(false);
       expect(component.isSectionCollapsed(PromptType.INTERVIEW_PREP)).toBe(
         false,
       );
@@ -2843,7 +2929,9 @@ describe('CvOptimization', () => {
         getOptimizationResults: vi
           .fn()
           .mockReturnValue(of([keywordGapResultRow, bulletResult])),
-        getStructuredData: vi.fn().mockReturnValue(of({ data: structuredData })),
+        getStructuredData: vi
+          .fn()
+          .mockReturnValue(of({ data: structuredData })),
       });
       fixture.detectChanges();
 
@@ -2851,7 +2939,9 @@ describe('CvOptimization', () => {
         fixture.nativeElement.querySelector('#kw-pos-React');
       if (select === null) throw new Error('Position select not found');
       expect(select.value).toBe('1');
-      expect(select.selectedOptions[0].textContent).toContain('Beta Inc - Engineer');
+      expect(select.selectedOptions[0].textContent).toContain(
+        'Beta Inc - Engineer',
+      );
     });
   });
 });

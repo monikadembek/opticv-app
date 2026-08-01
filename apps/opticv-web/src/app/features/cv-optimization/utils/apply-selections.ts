@@ -6,6 +6,7 @@ import type {
   SummaryRewriteResult,
   UserSelections,
 } from '@opticv/datatypes';
+import { DEFAULT_GDPR_CLAUSE } from '../cv-templates';
 
 function replaceFirstCaseInsensitive(
   text: string,
@@ -34,6 +35,8 @@ export function applySelectionsToCV(
   keywordBulletPositions: Map<string, number> = new Map(),
   acronymEdits: Map<string, string> = new Map(),
   acronymBulletPositions: Map<string, number> = new Map(),
+  includeGdprClause = false,
+  originalGdprClause: string | null = null,
 ): CvStructuredData {
   const clone: CvStructuredData = structuredClone(cv);
 
@@ -200,6 +203,10 @@ export function applySelectionsToCV(
       }
     }
   }
+
+  clone.gdprClause = !includeGdprClause
+    ? null
+    : (originalGdprClause ?? DEFAULT_GDPR_CLAUSE);
 
   return clone;
 }

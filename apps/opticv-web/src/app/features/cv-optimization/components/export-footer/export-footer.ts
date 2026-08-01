@@ -32,6 +32,7 @@ export class ExportFooter {
   readonly sidebarExpanded = input<boolean>(true);
   readonly selectedTemplate = model<CvTemplateId>('default');
   readonly accentColor = model<string>(DEFAULT_ACCENT_COLOR);
+  readonly includeGdprClause = model<boolean>(false);
   readonly isExportingPdf = input<boolean>(false);
   readonly isExportingDocx = input<boolean>(false);
   readonly mergedCv = input<CvStructuredData | null>(null);

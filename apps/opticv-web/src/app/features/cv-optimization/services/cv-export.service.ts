@@ -922,6 +922,15 @@ export class CvExportService {
       addWrappedText(langLine, profile.bodySize, 'normal');
     }
 
+    // ── GDPR Clause ──────────────────────────────────────────────────────────
+    if (cv.gdprClause) {
+      y += 10;
+      checkPage(20);
+      setGrey();
+      addWrappedText(cv.gdprClause, 8, 'italic');
+      setBlack();
+    }
+
     doc.save('optimized-cv.pdf');
   }
 
@@ -1381,6 +1390,11 @@ export class CvExportService {
         )
         .join(' · ');
       children.push(para(langLine));
+    }
+
+    // ── GDPR Clause ──────────────────────────────────────────────────────────
+    if (cv.gdprClause) {
+      children.push(para(cv.gdprClause, false, true, 16, '666666'));
     }
 
     const document = new Document({ sections: [{ children }] });

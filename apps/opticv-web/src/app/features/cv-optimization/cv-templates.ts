@@ -69,3 +69,6 @@ export const ACCENT_AWARE_TEMPLATE_IDS: CvTemplateId[] = [
   'corporate',
   'impact',
 ];
+
+export const DEFAULT_GDPR_CLAUSE =
+  'I hereby give consent for my personal data included in this application to be processed for the purposes of the recruitment process, in accordance with Regulation (EU) 2016/679 (GDPR).';
