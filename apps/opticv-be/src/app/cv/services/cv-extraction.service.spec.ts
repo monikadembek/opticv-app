@@ -28,6 +28,7 @@ const mockStructuredData: CvStructuredData = {
   projects: [],
   languages: [],
   other: null,
+  gdprClause: null,
 };
 
 const makeDoc = (overrides: Record<string, unknown> = {}) => ({
