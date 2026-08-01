@@ -44,6 +44,7 @@
 /* Inner area = A4 height minus the page shell padding (1123 - 32*2 = 1059px).
    The 60px top/bottom padding creates the content margins (matches PDF). */
 .a4-page-content {
+  position: relative;
   width: 794px;
   height: 1059px;
   padding: 60px 0;
@@ -60,4 +61,19 @@
 
 .a4-page-clip {
   width: 794px;
+}
+
+/* Repeated on every page, inside the bottom content margin band, matching
+   the PDF export's per-page footer placement. */
+.a4-page-gdpr-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 794px;
+  padding: 0 56px 12px;
+  box-sizing: border-box;
+  font-size: 8px;
+  line-height: 1.5;
+  font-style: italic;
+  color: #555;
 }

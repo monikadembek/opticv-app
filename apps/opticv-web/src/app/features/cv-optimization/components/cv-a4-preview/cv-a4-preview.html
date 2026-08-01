@@ -4,6 +4,7 @@
       [cv]="cv()"
       [templateId]="templateId()"
       [accentColor]="accentColor()"
+      [showGdprClauseInline]="false"
     />
   </div>
 
@@ -28,9 +29,15 @@
               [cv]="cv()"
               [templateId]="templateId()"
               [accentColor]="accentColor()"
+              [showGdprClauseInline]="false"
             />
           </div>
         </div>
+        @if (cv()?.gdprClause) {
+        <div class="a4-page-gdpr-footer">
+          {{ cv()!.gdprClause }}
+        </div>
+        }
       </div>
     </div>
     }

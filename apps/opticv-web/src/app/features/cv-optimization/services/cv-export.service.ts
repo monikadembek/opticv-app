@@ -386,8 +386,24 @@ export class CvExportService {
       doc.setTextColor(100, 100, 100);
     };
 
+    // Reserve space at the bottom of every page for the repeated GDPR
+    // clause footer so flowing content never overlaps it.
+    const gdprFooterFontSize = 8;
+    let gdprFooterLines: string[] = [];
+    let gdprFooterHeight = 0;
+    if (cv.gdprClause) {
+      doc.setFontSize(gdprFooterFontSize);
+      doc.setFont(profile.bodyFont, 'italic');
+      gdprFooterLines = doc.splitTextToSize(cv.gdprClause, maxWidth);
+      gdprFooterHeight =
+        gdprFooterLines.length * gdprFooterFontSize * 1.4 + 10;
+      doc.setFontSize(profile.bodySize);
+      doc.setFont(profile.bodyFont, 'normal');
+    }
+    const contentBottom = pageBottom - gdprFooterHeight;
+
     const checkPage = (needed = 14): void => {
-      if (y + needed > pageBottom) {
+      if (y + needed > contentBottom) {
         doc.addPage();
         y = 60;
       }
@@ -922,13 +938,23 @@ export class CvExportService {
       addWrappedText(langLine, profile.bodySize, 'normal');
     }
 
-    // ── GDPR Clause ──────────────────────────────────────────────────────────
+    // ── GDPR Clause (repeated in the footer of every page) ─────────────────────
     if (cv.gdprClause) {
-      y += 10;
-      checkPage(20);
-      setGrey();
-      addWrappedText(cv.gdprClause, 8, 'italic');
-      setBlack();
+      const totalPages = doc.getNumberOfPages();
+      const textHeight = gdprFooterLines.length * gdprFooterFontSize * 1.4;
+
+      for (let page = 1; page <= totalPages; page++) {
+        doc.setPage(page);
+        setGrey();
+        doc.setFontSize(gdprFooterFontSize);
+        doc.setFont(profile.bodyFont, 'italic');
+        let footerY = pageBottom - textHeight + gdprFooterFontSize;
+        for (const line of gdprFooterLines) {
+          doc.text(line, marginLeft, footerY);
+          footerY += gdprFooterFontSize * 1.4;
+        }
+        setBlack();
+      }
     }
 
     doc.save('optimized-cv.pdf');
