@@ -17,4 +17,5 @@ export class CvTemplatePreview {
   readonly cv = input.required<CvStructuredData | null>();
   readonly templateId = input.required<CvTemplateId | null>();
   readonly accentColor = input<string>(DEFAULT_ACCENT_COLOR);
+  readonly showGdprClauseInline = input<boolean>(true);
 }

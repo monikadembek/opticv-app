@@ -54,7 +54,8 @@ export const EXTRACTION_SYSTEM_PROMPT = `You are a CV data extraction assistant.
       "proficiency": string or null
     }
   ],
-  "other": string or null
+  "other": string or null,
+  "gdprClause": string or null
 }
 
 Rules:
@@ -62,4 +63,5 @@ Rules:
 - "contact.position" is the candidate's professional title/headline shown near their name (e.g. "Software Engineer"). Use null if no position title can be determined.
 - "current" is true only if the position is explicitly ongoing (e.g. "Present", "Current").
 - "other" captures any section that does not fit the above categories.
+- "gdprClause" captures an existing GDPR/data-processing consent statement if present verbatim in the CV text (do not summarize or truncate it), else null.
 - Respond ONLY with the JSON object, no markdown fences.`;

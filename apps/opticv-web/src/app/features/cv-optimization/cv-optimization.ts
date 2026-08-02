@@ -219,6 +219,7 @@ export class CvOptimization implements OnInit {
     selectedKeywords: [],
     selectedAcronymIssues: [],
   });
+  readonly includeGdprClause = signal<boolean>(false);
   readonly isExportingPdf = signal(false);
   readonly isExportingDocx = signal(false);
   readonly selectedTemplate = signal<CvTemplateId>('default');
@@ -327,6 +328,8 @@ export class CvOptimization implements OnInit {
       this.keywordBulletPositions(),
       this.acronymEdits(),
       this.acronymBulletPositions(),
+      this.includeGdprClause(),
+      this.cvStructuredData()?.gdprClause ?? null,
     );
   });
 
@@ -772,6 +775,7 @@ export class CvOptimization implements OnInit {
       .subscribe({
         next: ({ data }) => {
           this.cvStructuredData.set(data);
+          this.includeGdprClause.set(!!data.gdprClause);
         },
         error: (err) => {
           const message =
@@ -817,6 +821,7 @@ export class CvOptimization implements OnInit {
     this.jobApplicationId.set(jobApplication.id);
     this.submittedJobApplication.set(jobApplication);
     this.cvStructuredData.set(extractedData);
+    this.includeGdprClause.set(!!extractedData.gdprClause);
 
     posthog.capture('optimization_started');
 
@@ -1416,6 +1421,10 @@ export class CvOptimization implements OnInit {
           });
         },
       });
+  }
+
+  onGdprClauseToggled(checked: boolean): void {
+    this.includeGdprClause.set(checked);
   }
 
   openOriginalCv(): void {

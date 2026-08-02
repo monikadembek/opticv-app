@@ -21,6 +21,8 @@ const setTextColorMock = vi.fn();
 const setLineWidthMock = vi.fn();
 const addFileToVFSMock = vi.fn();
 const addFontMock = vi.fn();
+const getNumberOfPagesMock = vi.fn().mockReturnValue(1);
+const setPageMock = vi.fn();
 
 vi.mock('jspdf', () => {
   function jsPDF() {
@@ -41,6 +43,8 @@ vi.mock('jspdf', () => {
       setLineWidth: setLineWidthMock,
       addFileToVFS: addFileToVFSMock,
       addFont: addFontMock,
+      getNumberOfPages: getNumberOfPagesMock,
+      setPage: setPageMock,
     };
   }
   return { jsPDF };
@@ -69,6 +73,21 @@ vi.mock('docx', () => {
     BorderStyle: { SINGLE: 'single' },
     ShadingType: { SOLID: 'solid' },
     TabStopType: { RIGHT: 'right' },
+    FrameAnchorType: { MARGIN: 'margin', PAGE: 'page', TEXT: 'text' },
+    HorizontalPositionAlign: {
+      LEFT: 'left',
+      RIGHT: 'right',
+      CENTER: 'center',
+      INSIDE: 'inside',
+      OUTSIDE: 'outside',
+    },
+    VerticalPositionAlign: {
+      TOP: 'top',
+      BOTTOM: 'bottom',
+      CENTER: 'center',
+      INSIDE: 'inside',
+      OUTSIDE: 'outside',
+    },
   };
 });
 
@@ -82,7 +101,11 @@ const ALL_TEMPLATE_IDS: CvTemplateId[] = [
 ];
 
 // Templates where setTextColor is called with the accent RGB in PDF export
-const PDF_ACCENT_TEXT_COLOR_IDS: CvTemplateId[] = ['default', 'modern', 'impact'];
+const PDF_ACCENT_TEXT_COLOR_IDS: CvTemplateId[] = [
+  'default',
+  'modern',
+  'impact',
+];
 // Templates where accentAware=true and accentHex appears in docx TextRun color fields
 const DOCX_ACCENT_COLOR_IDS: CvTemplateId[] = [
   'default',
@@ -129,6 +152,7 @@ const makeCv = (): CvStructuredData => ({
   projects: [],
   languages: [],
   other: null,
+  gdprClause: null,
 });
 
 describe('CvExportService (browser)', () => {
@@ -183,6 +207,24 @@ describe('CvExportService (browser)', () => {
         expect(setTextColorMock).not.toHaveBeenCalledWith(37, 99, 235);
       },
     );
+
+    it('renders the gdprClause text when present', async () => {
+      const cv = { ...makeCv(), gdprClause: 'I consent to data processing.' };
+      await service.exportToPdf(cv, 'default');
+      expect(splitTextToSizeMock).toHaveBeenCalledWith(
+        'I consent to data processing.',
+        expect.any(Number),
+      );
+    });
+
+    it('does not render a gdprClause block when null', async () => {
+      const cv = { ...makeCv(), gdprClause: null };
+      await service.exportToPdf(cv, 'default');
+      expect(splitTextToSizeMock).not.toHaveBeenCalledWith(
+        expect.stringContaining('consent'),
+        expect.any(Number),
+      );
+    });
   });
 
   describe('exportToDocx', () => {
@@ -289,6 +331,68 @@ describe('CvExportService (browser)', () => {
         expect(allRuns.some((r) => r.color === '2563EB')).toBe(false);
       },
     );
+
+    it('includes the gdprClause paragraph when present', async () => {
+      const anchor = {
+        href: '',
+        download: '',
+        click: vi.fn(),
+      } as unknown as HTMLAnchorElement;
+      vi.spyOn(window.document.body, 'appendChild').mockImplementation(
+        () => anchor,
+      );
+      vi.spyOn(window.document.body, 'removeChild').mockImplementation(
+        () => anchor,
+      );
+      vi.spyOn(window.document, 'createElement').mockReturnValue(anchor);
+
+      const cv = { ...makeCv(), gdprClause: 'I consent to data processing.' };
+      await service.exportToDocx(cv, 'default');
+
+      const docArg = toBlob.mock.calls[0][0] as {
+        sections: Array<{
+          children: Array<{
+            children?: Array<{ text?: string; italics?: boolean }>;
+          }>;
+        }>;
+      };
+      const allRuns = docArg.sections[0].children.flatMap(
+        (p) => p.children ?? [],
+      );
+      const gdprRun = allRuns.find(
+        (r) => r.text === 'I consent to data processing.',
+      );
+      expect(gdprRun).toBeTruthy();
+      expect(gdprRun?.italics).toBe(true);
+    });
+
+    it('does not include a gdprClause paragraph when null', async () => {
+      const anchor = {
+        href: '',
+        download: '',
+        click: vi.fn(),
+      } as unknown as HTMLAnchorElement;
+      vi.spyOn(window.document.body, 'appendChild').mockImplementation(
+        () => anchor,
+      );
+      vi.spyOn(window.document.body, 'removeChild').mockImplementation(
+        () => anchor,
+      );
+      vi.spyOn(window.document, 'createElement').mockReturnValue(anchor);
+
+      const cv = { ...makeCv(), gdprClause: null };
+      await service.exportToDocx(cv, 'default');
+
+      const docArg = toBlob.mock.calls[0][0] as {
+        sections: Array<{
+          children: Array<{ children?: Array<{ text?: string }> }>;
+        }>;
+      };
+      const allRuns = docArg.sections[0].children.flatMap(
+        (p) => p.children ?? [],
+      );
+      expect(allRuns.some((r) => r.text?.includes('consent'))).toBe(false);
+    });
   });
 });
 

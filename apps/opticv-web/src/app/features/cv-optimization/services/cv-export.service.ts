@@ -386,8 +386,24 @@ export class CvExportService {
       doc.setTextColor(100, 100, 100);
     };
 
+    // Reserve space at the bottom of every page for the repeated GDPR
+    // clause footer so flowing content never overlaps it.
+    const gdprFooterFontSize = 8;
+    let gdprFooterLines: string[] = [];
+    let gdprFooterHeight = 0;
+    if (cv.gdprClause) {
+      doc.setFontSize(gdprFooterFontSize);
+      doc.setFont(profile.bodyFont, 'italic');
+      gdprFooterLines = doc.splitTextToSize(cv.gdprClause, maxWidth);
+      gdprFooterHeight =
+        gdprFooterLines.length * gdprFooterFontSize * 1.4 + 10;
+      doc.setFontSize(profile.bodySize);
+      doc.setFont(profile.bodyFont, 'normal');
+    }
+    const contentBottom = pageBottom - gdprFooterHeight;
+
     const checkPage = (needed = 14): void => {
-      if (y + needed > pageBottom) {
+      if (y + needed > contentBottom) {
         doc.addPage();
         y = 60;
       }
@@ -922,6 +938,25 @@ export class CvExportService {
       addWrappedText(langLine, profile.bodySize, 'normal');
     }
 
+    // ── GDPR Clause (repeated in the footer of every page) ─────────────────────
+    if (cv.gdprClause) {
+      const totalPages = doc.getNumberOfPages();
+      const textHeight = gdprFooterLines.length * gdprFooterFontSize * 1.4;
+
+      for (let page = 1; page <= totalPages; page++) {
+        doc.setPage(page);
+        setGrey();
+        doc.setFontSize(gdprFooterFontSize);
+        doc.setFont(profile.bodyFont, 'italic');
+        let footerY = pageBottom - textHeight + gdprFooterFontSize;
+        for (const line of gdprFooterLines) {
+          doc.text(line, marginLeft, footerY);
+          footerY += gdprFooterFontSize * 1.4;
+        }
+        setBlack();
+      }
+    }
+
     doc.save('optimized-cv.pdf');
   }
 
@@ -936,12 +971,15 @@ export class CvExportService {
       AlignmentType,
       BorderStyle,
       Document,
+      FrameAnchorType,
       HeadingLevel,
+      HorizontalPositionAlign,
       Packer,
       Paragraph,
       ShadingType,
       TabStopType,
       TextRun,
+      VerticalPositionAlign,
     } = await import('docx');
 
     type Para = InstanceType<typeof Paragraph>;
@@ -1381,6 +1419,40 @@ export class CvExportService {
         )
         .join(' · ');
       children.push(para(langLine));
+    }
+
+    // ── GDPR Clause (anchored to the bottom of the last page) ──────────────────
+    if (cv.gdprClause) {
+      // A Word text frame keeps this as a normal body paragraph (still
+      // ATS-readable, unlike a real header/footer part) while letting Word
+      // pin it to the bottom of whichever page it lands on — no page-fit
+      // estimation needed.
+      children.push(
+        new Paragraph({
+          frame: {
+            type: 'alignment',
+            anchor: {
+              horizontal: FrameAnchorType.MARGIN,
+              vertical: FrameAnchorType.PAGE,
+            },
+            alignment: {
+              x: HorizontalPositionAlign.LEFT,
+              y: VerticalPositionAlign.BOTTOM,
+            },
+            width: 9026,
+            height: 720,
+          },
+          children: [
+            new TextRun({
+              text: cv.gdprClause,
+              italics: true,
+              font: profile.bodyFont,
+              size: 16,
+              color: '666666',
+            }),
+          ],
+        }),
+      );
     }
 
     const document = new Document({ sections: [{ children }] });

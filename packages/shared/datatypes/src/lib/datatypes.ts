@@ -59,6 +59,7 @@ export type CvStructuredData = {
   projects: CvProject[];
   languages: CvLanguage[];
   other: string | null;
+  gdprClause: string | null;
 };
 
 export type User = {

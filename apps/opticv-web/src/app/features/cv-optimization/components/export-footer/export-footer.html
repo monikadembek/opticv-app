@@ -56,6 +56,21 @@
       title="ATS template information"
       (onClick)="infoDialogVisible.set(true)"
     />
+
+    <!-- GDPR clause checkbox -->
+    <label
+      class="gdpr-checkbox-label flex items-center gap-2 cursor-pointer"
+      title="Include if you're applying to companies based in the EU, EEA, UK, or Switzerland"
+    >
+      <input
+        type="checkbox"
+        [checked]="includeGdprClause()"
+        (change)="includeGdprClause.set($any($event.target).checked)"
+        class="accent-primary shrink-0"
+        aria-label="Include GDPR clause"
+      />
+      <span class="text-xs md:text-sm">GDPR Clause</span>
+    </label>
   </div>
 
   <div class="export-actions">

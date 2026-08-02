@@ -44,7 +44,10 @@ describe('ExportFooter', () => {
     });
 
     it('marks templates outside allowedTemplateIds as disabled', () => {
-      fixture.componentRef.setInput('allowedTemplateIds', ['default', 'classic']);
+      fixture.componentRef.setInput('allowedTemplateIds', [
+        'default',
+        'classic',
+      ]);
       fixture.detectChanges();
 
       const disabledIds = component
@@ -56,9 +59,9 @@ describe('ExportFooter', () => {
           (t) => t.id,
         ),
       );
-      expect(component.templates().find((t) => t.id === 'default')?.disabled).toBe(
-        false,
-      );
+      expect(
+        component.templates().find((t) => t.id === 'default')?.disabled,
+      ).toBe(false);
     });
 
     it('defaults selectedTemplate to default', () => {
@@ -201,6 +204,40 @@ describe('ExportFooter', () => {
       component.previewVisible.set(false);
       fixture.detectChanges();
       expect(component.previewVisible()).toBe(false);
+    });
+  });
+
+  describe('GDPR clause checkbox', () => {
+    it('defaults includeGdprClause to false', () => {
+      expect(component.includeGdprClause()).toBe(false);
+    });
+
+    it('reflects includeGdprClause input as the checkbox checked state', () => {
+      fixture.componentRef.setInput('includeGdprClause', true);
+      fixture.detectChanges();
+      const checkbox = fixture.debugElement.query(
+        By.css('input[type="checkbox"][aria-label="Include GDPR clause"]'),
+      );
+      expect(checkbox.nativeElement.checked).toBe(true);
+    });
+
+    it('updates the includeGdprClause model when the checkbox is toggled', () => {
+      const checkbox = fixture.debugElement.query(
+        By.css('input[type="checkbox"][aria-label="Include GDPR clause"]'),
+      );
+      checkbox.nativeElement.checked = true;
+      checkbox.nativeElement.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+      expect(component.includeGdprClause()).toBe(true);
+    });
+
+    it('has the required tooltip title text', () => {
+      const checkbox = fixture.debugElement.query(
+        By.css('.gdpr-checkbox-label'),
+      );
+      expect(checkbox.nativeElement.getAttribute('title')).toBe(
+        "Include if you're applying to companies based in the EU, EEA, UK, or Switzerland",
+      );
     });
   });
 
