@@ -971,12 +971,15 @@ export class CvExportService {
       AlignmentType,
       BorderStyle,
       Document,
+      FrameAnchorType,
       HeadingLevel,
+      HorizontalPositionAlign,
       Packer,
       Paragraph,
       ShadingType,
       TabStopType,
       TextRun,
+      VerticalPositionAlign,
     } = await import('docx');
 
     type Para = InstanceType<typeof Paragraph>;
@@ -1418,9 +1421,38 @@ export class CvExportService {
       children.push(para(langLine));
     }
 
-    // ── GDPR Clause ──────────────────────────────────────────────────────────
+    // ── GDPR Clause (anchored to the bottom of the last page) ──────────────────
     if (cv.gdprClause) {
-      children.push(para(cv.gdprClause, false, true, 16, '666666'));
+      // A Word text frame keeps this as a normal body paragraph (still
+      // ATS-readable, unlike a real header/footer part) while letting Word
+      // pin it to the bottom of whichever page it lands on — no page-fit
+      // estimation needed.
+      children.push(
+        new Paragraph({
+          frame: {
+            type: 'alignment',
+            anchor: {
+              horizontal: FrameAnchorType.MARGIN,
+              vertical: FrameAnchorType.PAGE,
+            },
+            alignment: {
+              x: HorizontalPositionAlign.LEFT,
+              y: VerticalPositionAlign.BOTTOM,
+            },
+            width: 9026,
+            height: 720,
+          },
+          children: [
+            new TextRun({
+              text: cv.gdprClause,
+              italics: true,
+              font: profile.bodyFont,
+              size: 16,
+              color: '666666',
+            }),
+          ],
+        }),
+      );
     }
 
     const document = new Document({ sections: [{ children }] });

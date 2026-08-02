@@ -73,6 +73,21 @@ vi.mock('docx', () => {
     BorderStyle: { SINGLE: 'single' },
     ShadingType: { SOLID: 'solid' },
     TabStopType: { RIGHT: 'right' },
+    FrameAnchorType: { MARGIN: 'margin', PAGE: 'page', TEXT: 'text' },
+    HorizontalPositionAlign: {
+      LEFT: 'left',
+      RIGHT: 'right',
+      CENTER: 'center',
+      INSIDE: 'inside',
+      OUTSIDE: 'outside',
+    },
+    VerticalPositionAlign: {
+      TOP: 'top',
+      BOTTOM: 'bottom',
+      CENTER: 'center',
+      INSIDE: 'inside',
+      OUTSIDE: 'outside',
+    },
   };
 });
 
