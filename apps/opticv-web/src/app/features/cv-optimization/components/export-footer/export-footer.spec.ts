@@ -233,7 +233,7 @@ describe('ExportFooter', () => {
 
     it('has the required tooltip title text', () => {
       const checkbox = fixture.debugElement.query(
-        By.css('input[type="checkbox"][aria-label="Include GDPR clause"]'),
+        By.css('.gdpr-checkbox-label'),
       );
       expect(checkbox.nativeElement.getAttribute('title')).toBe(
         "Include if you're applying to companies based in the EU, EEA, UK, or Switzerland",
