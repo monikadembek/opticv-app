@@ -50,7 +50,12 @@ export class CvController {
 
   @Post('upload')
   @HttpCode(HttpStatus.CREATED)
-  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+    }),
+  )
   @ApiOperation({ summary: 'Upload a CV file' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -59,7 +64,11 @@ export class CvController {
       properties: { file: { type: 'string', format: 'binary' } },
     },
   })
-  @ApiResponse({ status: 201, type: UploadCvResponseDto, description: 'CV uploaded successfully' })
+  @ApiResponse({
+    status: 201,
+    type: UploadCvResponseDto,
+    description: 'CV uploaded successfully',
+  })
   @ApiResponse({ status: 400, description: 'Invalid file' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   uploadCv(
@@ -71,7 +80,11 @@ export class CvController {
 
   @Get()
   @ApiOperation({ summary: 'List all CVs for the current user' })
-  @ApiResponse({ status: 200, type: [CvDocumentListItemDto], description: 'List of CV documents' })
+  @ApiResponse({
+    status: 200,
+    type: [CvDocumentListItemDto],
+    description: 'List of CV documents',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   getUserCvs(@CurrentUser() user: UserModel): Promise<CvDocumentListItem[]> {
     return this.cvService.getUserCvs(user.id);
@@ -79,7 +92,11 @@ export class CvController {
 
   @Get(':id/download')
   @ApiOperation({ summary: 'Get a signed download URL for a CV' })
-  @ApiResponse({ status: 200, type: CvDownloadUrlResponseDto, description: 'Signed download URL' })
+  @ApiResponse({
+    status: 200,
+    type: CvDownloadUrlResponseDto,
+    description: 'Signed download URL',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'CV not found' })
   getDownloadUrl(
@@ -104,9 +121,16 @@ export class CvController {
 
   @Get(':id/structured-data')
   @ApiOperation({ summary: 'Get extracted structured data for a CV' })
-  @ApiResponse({ status: 200, type: CvExtractResponseDto, description: 'Structured CV data' })
+  @ApiResponse({
+    status: 200,
+    type: CvExtractResponseDto,
+    description: 'Structured CV data',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'CV not found or extraction not completed' })
+  @ApiResponse({
+    status: 404,
+    description: 'CV not found or extraction not completed',
+  })
   getStructuredData(
     @Param('id') id: string,
     @CurrentUser() user: UserModel,
@@ -118,7 +142,11 @@ export class CvController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(AiThrottlerGuard)
   @ApiOperation({ summary: 'Extract structured data from a CV' })
-  @ApiResponse({ status: 200, type: CvExtractResponseDto, description: 'Extracted CV data' })
+  @ApiResponse({
+    status: 200,
+    type: CvExtractResponseDto,
+    description: 'Extracted CV data',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'CV not found' })
   async extractCv(

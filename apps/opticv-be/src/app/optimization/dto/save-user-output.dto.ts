@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsString, MaxLength } from 'class-validator';
 
 export class SaveUserOutputDto {
   @ApiProperty({ example: 'My edited output text...' })
   @IsString()
+  @MaxLength(50000)
   userEditedOutput!: string;
 }

@@ -83,22 +83,27 @@ export class Supabase {
   }
 
   initAuth() {
-    console.log('initAuth() - listen for auth state changes');
     this.supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'INITIAL_SESSION') {
         // handle initial session
         this.#currentSession.set(session);
         this.#currentUser.set(session?.user ? session.user : null);
         this.#pendingEmail.set(null);
-        console.log(event, session);
+        if (!environment.production) {
+          console.log(event, session);
+        }
       } else if (event === 'SIGNED_IN') {
         // handle sign in event
         this.#currentSession.set(session);
         this.#currentUser.set(session?.user ? session.user : null);
         this.#pendingEmail.set(null);
-        console.log(event, session);
+        if (!environment.production) {
+          console.log(event, session);
+        }
       } else if (event === 'SIGNED_OUT') {
-        console.log(event, session);
+        if (!environment.production) {
+          console.log(event, session);
+        }
         this.#currentSession.set(null);
         this.#currentUser.set(null);
       }
