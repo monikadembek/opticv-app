@@ -56,3 +56,8 @@ __screenshots__/
 vitest.config.*.timestamp*
 # Sentry Config File
 .sentryclirc
+
+# Secrets / environment files
+.env
+.env.*
+apps/opticv-be/config/env/*.env
