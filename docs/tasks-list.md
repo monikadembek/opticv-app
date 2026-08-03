@@ -1365,7 +1365,69 @@ One nuance: many HR/legal experts now consider this clause unnecessary even in t
 
 ---
 
-### Test differenet jobs with different models and compare results
+### 105. Security check - especially related to AI attacks
+
+**status: in progress**
+
+**time: 03.08.2026**
+
+- make security review of the app, fix issues,
+
+- review app for the prompt injections or AI-specific attacks, get to know about security in terms of AI, what kind of attacks the app should be protected from - prompt injections
+
+report is under that link:
+https://claude.ai/code/artifact/b00de1f1-9afc-4a07-a847-a6ca3a77b98d?via=auto_preview
+
+- implement things from security list that need to be fixed before launch
+
+---
+
+## 106. UI/UX - Export footer redesing
+
+**status: todo**
+
+**time: **
+
+- currently there is too much elements in the export footer, it fits on big screen, but on smaller resolutions it gets cramped,
+- export settings and template settings should be displayed in a modal window, a popover or sth similar,
+- on export footer display only a button for export which opens the popover and maybe button for preview
+
+---
+
+## 107. Connect landing page with app
+
+**status: todo**
+
+**time:**
+
+- connect landing page with the app, make the login or optimize CV navigate to the app
+- consider whether we should keep the home page in the app, should we move user after login directly to dashboard, and home menu item should move back to landing page?
+- check if it would be possible to show login status in the landing page
+
+---
+
+## 108. Supabase session expires too quickly
+
+**status: todo**
+
+**time:**
+
+- after longer inactivity Supabase session times out and user needs to refresh the page to be logged in back. How can we avoid it? Can w make the token expiry time longer? Can we identify the issue and show button to refresh page or sth similar?
+  Currently user will not know what is going on.
+
+---
+
+## 109. Setup Stripe
+
+**status: todo**
+
+**time: **
+
+- setup Stripe payments, for now in dev mode
+
+---
+
+### Test different jobs with different models and compare results
 
 **status: todo**
 
@@ -1387,16 +1449,6 @@ Use more intelligent models for the most demanding, more important sections:
 
 ---
 
-### Security check - especially related to AI attacks
-
-**status: todo**
-
-**time:**
-
-- get to know about security in terms of AI, what kind of attacks the app should be protected from
-
----
-
 ### UX/UI - Update section with 3-step process on homepage
 
 **status: todo**
@@ -1412,13 +1464,6 @@ Use more intelligent models for the most demanding, more important sections:
 **time:**
 
 Implement a guided tour specific to the cv-optimization page, highlighting its key areas step by step.
-
----
-
-### Connect landing page with app
-
-**status: todo**
-**time:**
 
 ---
 
@@ -1449,10 +1494,6 @@ Implement a guided tour specific to the cv-optimization page, highlighting its k
 ---
 
 ### Add functionality to remove bullet point
-
----
-
-### Setup Stripe
 
 ---
 
