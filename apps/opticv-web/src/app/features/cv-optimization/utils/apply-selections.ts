@@ -35,6 +35,8 @@ export function applySelectionsToCV(
   keywordBulletPositions: Map<string, number> = new Map(),
   acronymEdits: Map<string, string> = new Map(),
   acronymBulletPositions: Map<string, number> = new Map(),
+  selectedJobTitle = false,
+  jobTitleEdit: string | undefined = undefined,
   includeGdprClause = false,
   originalGdprClause: string | null = null,
 ): CvStructuredData {
@@ -202,6 +204,11 @@ export function applySelectionsToCV(
         }
       }
     }
+  }
+
+  if (selectedJobTitle && keywordResult?.jobTitleMatch?.suggestedTitle) {
+    clone.contact.position =
+      jobTitleEdit ?? keywordResult.jobTitleMatch.suggestedTitle;
   }
 
   clone.gdprClause = !includeGdprClause

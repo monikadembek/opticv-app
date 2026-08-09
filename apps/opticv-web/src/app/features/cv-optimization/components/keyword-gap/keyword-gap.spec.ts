@@ -634,4 +634,125 @@ describe('KeywordGap', () => {
       expect(fixture.nativeElement.textContent).toContain('Old issue');
     });
   });
+
+  describe('job title match', () => {
+    const mismatchJobTitleMatch = {
+      candidateTitle: 'Backend Developer',
+      targetTitle: 'Staff Software Engineer',
+      matchLevel: 'mismatch' as const,
+      suggestedTitle: 'Staff Software Engineer',
+      reasoning: 'Candidate title is several levels below target seniority.',
+    };
+    const withMismatch: KeywordGapResult = {
+      ...MOCK_RESULT,
+      jobTitleMatch: mismatchJobTitleMatch,
+    };
+
+    it('does not render the banner when jobTitleMatch is absent', () => {
+      expect(fixture.nativeElement.textContent).not.toContain('Your title:');
+    });
+
+    it('renders candidate title, target title, badge, and reasoning when jobTitleMatch is present', () => {
+      fixture.componentRef.setInput('result', withMismatch);
+      fixture.detectChanges();
+      const text = fixture.nativeElement.textContent;
+      expect(text).toContain('Backend Developer');
+      expect(text).toContain('Staff Software Engineer');
+      expect(text).toContain('mismatch');
+      expect(text).toContain(
+        'Candidate title is several levels below target seniority.',
+      );
+    });
+
+    it('renders — as a placeholder when candidateTitle is null', () => {
+      const noCandidateTitle: KeywordGapResult = {
+        ...MOCK_RESULT,
+        jobTitleMatch: { ...mismatchJobTitleMatch, candidateTitle: null },
+      };
+      fixture.componentRef.setInput('result', noCandidateTitle);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain('—');
+    });
+
+    it('shows "Use suggested title" toggle when matchLevel is mismatch and suggestedTitle is present', () => {
+      fixture.componentRef.setInput('result', withMismatch);
+      fixture.detectChanges();
+      const checkbox = fixture.nativeElement.querySelector(
+        '#job-title-use-suggested',
+      );
+      expect(checkbox).not.toBeNull();
+    });
+
+    it('hides "Use suggested title" toggle when matchLevel is exact', () => {
+      const exactMatch: KeywordGapResult = {
+        ...MOCK_RESULT,
+        jobTitleMatch: {
+          candidateTitle: 'Staff Software Engineer',
+          targetTitle: 'Staff Software Engineer',
+          matchLevel: 'exact',
+          suggestedTitle: null,
+          reasoning: 'Exact match.',
+        },
+      };
+      fixture.componentRef.setInput('result', exactMatch);
+      fixture.detectChanges();
+      const checkbox = fixture.nativeElement.querySelector(
+        '#job-title-use-suggested',
+      );
+      expect(checkbox).toBeNull();
+    });
+
+    it('jobTitleToggled emits when the checkbox is toggled', () => {
+      fixture.componentRef.setInput('result', withMismatch);
+      fixture.detectChanges();
+      let emitted = false;
+      component.jobTitleToggled.subscribe(() => (emitted = true));
+      const checkbox: HTMLInputElement = fixture.nativeElement.querySelector(
+        '#job-title-use-suggested',
+      );
+      checkbox.dispatchEvent(new Event('change'));
+      expect(emitted).toBe(true);
+    });
+
+    it('edit flow: start, text change, save, cancel all emit correctly', () => {
+      fixture.componentRef.setInput('result', withMismatch);
+      fixture.detectChanges();
+
+      let startedCalled = false;
+      component.jobTitleEditStarted.subscribe(() => (startedCalled = true));
+      component.jobTitleEditStarted.emit();
+      expect(startedCalled).toBe(true);
+
+      const textChanges: string[] = [];
+      component.jobTitleEditTextChanged.subscribe((t) => textChanges.push(t));
+      component.jobTitleEditTextChanged.emit('Principal Engineer');
+      expect(textChanges).toEqual(['Principal Engineer']);
+
+      const saved: string[] = [];
+      component.jobTitleEditSaved.subscribe((t) => saved.push(t));
+      component.jobTitleEditSaved.emit('Principal Engineer');
+      expect(saved).toEqual(['Principal Engineer']);
+
+      let cancelled = false;
+      component.jobTitleEditCancelled.subscribe(() => (cancelled = true));
+      component.jobTitleEditCancelled.emit();
+      expect(cancelled).toBe(true);
+    });
+
+    it('getJobTitleDisplayText returns editedJobTitleText while editing', () => {
+      fixture.componentRef.setInput('result', withMismatch);
+      fixture.componentRef.setInput('activeJobTitleEdit', true);
+      fixture.componentRef.setInput('editedJobTitleText', 'Principal Engineer');
+      fixture.detectChanges();
+      expect(component.getJobTitleDisplayText()).toBe('Principal Engineer');
+    });
+
+    it('getJobTitleDisplayText returns the AI suggestion when not editing', () => {
+      fixture.componentRef.setInput('result', withMismatch);
+      fixture.detectChanges();
+      expect(component.getJobTitleDisplayText()).toBe(
+        'Staff Software Engineer',
+      );
+    });
+  });
 });

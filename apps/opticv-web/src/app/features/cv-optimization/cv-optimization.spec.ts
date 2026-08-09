@@ -2683,6 +2683,8 @@ describe('CvOptimization', () => {
           acronymEdits: [],
           acronymBulletPositions: [],
           selectedAcronymIssues: [],
+          selectedJobTitle: false,
+          jobTitleEdit: undefined,
         }),
       );
     });
@@ -2776,6 +2778,8 @@ describe('CvOptimization', () => {
           acronymEdits: [],
           acronymBulletPositions: [],
           selectedAcronymIssues: [],
+          selectedJobTitle: false,
+          jobTitleEdit: undefined,
         }),
       );
     });
@@ -2798,6 +2802,145 @@ describe('CvOptimization', () => {
         'bullet-result-1',
         expect.stringContaining('"keywordBulletPositions":[]'),
       );
+    });
+  });
+
+  describe('job title match — toggling and applying', () => {
+    it('onJobTitleToggled flips selectedJobTitle and persists', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      component.bulletUpgradeResultId.set('bullet-result-1');
+
+      component.onJobTitleToggled();
+
+      expect(component.selections().selectedJobTitle).toBe(true);
+      expect(apiService.saveUserOutput).toHaveBeenLastCalledWith(
+        'bullet-result-1',
+        expect.stringContaining('"selectedJobTitle":true'),
+      );
+    });
+
+    it('onJobTitleToggled twice returns selectedJobTitle to false', () => {
+      component.onJobTitleToggled();
+      component.onJobTitleToggled();
+      expect(component.selections().selectedJobTitle).toBe(false);
+    });
+
+    it('mergedCv reflects the applied suggested title once toggled on', () => {
+      component.cvStructuredData.set(mockCvStructuredData);
+      component.results.set(
+        new Map([
+          [
+            PromptType.KEYWORD_GAP,
+            {
+              promptType: PromptType.KEYWORD_GAP,
+              status: 'completed' as const,
+              result: {
+                matchScore: 60,
+                matchScoreBreakdown: {
+                  requiredMatched: 2,
+                  requiredTotal: 5,
+                  preferredMatched: 1,
+                  preferredTotal: 3,
+                },
+                matchedKeywords: [],
+                missingKeywords: [],
+                underweightedKeywords: [],
+                fabricationWarnings: [],
+                acronymIssues: [],
+                jobTitleMatch: {
+                  candidateTitle: null,
+                  targetTitle: 'Staff Software Engineer',
+                  matchLevel: 'mismatch' as const,
+                  suggestedTitle: 'Staff Software Engineer',
+                  reasoning: 'No current title found.',
+                },
+              },
+            },
+          ],
+        ]),
+      );
+
+      component.onJobTitleToggled();
+
+      expect(component.mergedCv()?.contact.position).toBe(
+        'Staff Software Engineer',
+      );
+    });
+
+    it('onJobTitleEditSaved stores an edited title and persists it', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      component.bulletUpgradeResultId.set('bullet-result-1');
+
+      component.onJobTitleEditSaved('Principal Engineer');
+
+      expect(component.jobTitleEdit()).toBe('Principal Engineer');
+      expect(apiService.saveUserOutput).toHaveBeenLastCalledWith(
+        'bullet-result-1',
+        expect.stringContaining('"jobTitleEdit":"Principal Engineer"'),
+      );
+    });
+
+    it('onJobTitleEditSaved ignores blank text', () => {
+      component.onJobTitleEditSaved('   ');
+      expect(component.jobTitleEdit()).toBeUndefined();
+    });
+
+    it('onJobTitleEditCancelled clears edit state without saving', () => {
+      component.onJobTitleEditStarted();
+      component.onJobTitleEditTextChanged('Something');
+      component.onJobTitleEditCancelled();
+
+      expect(component.activeJobTitleEditState()).toBe(false);
+      expect(component.editedJobTitleText()).toBe('');
+    });
+  });
+
+  describe('loadStoredOptimization — restores job title selection', () => {
+    it('restores selectedJobTitle and jobTitleEdit from BULLET_UPGRADE userEditedOutput', async () => {
+      const bulletResult: OptimizationResultSummary = {
+        id: 'bullet-result-1',
+        promptType: PromptType.BULLET_UPGRADE,
+        status: 'COMPLETED',
+        userEditedOutput: JSON.stringify({
+          edits: [],
+          selectedBullets: [],
+          selectedMissingBullets: [],
+          removedBullets: [],
+          selectedJobTitle: true,
+          jobTitleEdit: 'Principal Engineer',
+        }),
+        structuredOutput: null,
+      };
+
+      await createComponent({
+        jobApplicationId: 'job-app-id-1',
+        getOptimizationResults: vi.fn().mockReturnValue(of([bulletResult])),
+      });
+
+      expect(component.selections().selectedJobTitle).toBe(true);
+      expect(component.jobTitleEdit()).toBe('Principal Engineer');
+    });
+
+    it('defaults selectedJobTitle to false when absent from stored state', async () => {
+      const bulletResult: OptimizationResultSummary = {
+        id: 'bullet-result-1',
+        promptType: PromptType.BULLET_UPGRADE,
+        status: 'COMPLETED',
+        userEditedOutput: JSON.stringify({
+          edits: [],
+          selectedBullets: [],
+          selectedMissingBullets: [],
+          removedBullets: [],
+        }),
+        structuredOutput: null,
+      };
+
+      await createComponent({
+        jobApplicationId: 'job-app-id-1',
+        getOptimizationResults: vi.fn().mockReturnValue(of([bulletResult])),
+      });
+
+      expect(component.selections().selectedJobTitle).toBe(false);
     });
   });
 

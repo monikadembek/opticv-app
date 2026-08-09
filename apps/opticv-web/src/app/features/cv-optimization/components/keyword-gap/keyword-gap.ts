@@ -57,6 +57,9 @@ export class KeywordGap {
   readonly activeAcronymEditKey = input<string | null>(null);
   readonly editedAcronymText = input<string>('');
   readonly acronymBulletPositions = input<Map<string, number>>(new Map());
+  readonly selectedJobTitle = input<boolean>(false);
+  readonly activeJobTitleEdit = input<boolean>(false);
+  readonly editedJobTitleText = input<string>('');
 
   readonly keywordToggled = output<string>();
   readonly keywordEditStarted = output<string>();
@@ -76,6 +79,11 @@ export class KeywordGap {
     term: string;
     experienceIndex: number | null;
   }>();
+  readonly jobTitleToggled = output<void>();
+  readonly jobTitleEditStarted = output<void>();
+  readonly jobTitleEditSaved = output<string>();
+  readonly jobTitleEditCancelled = output<void>();
+  readonly jobTitleEditTextChanged = output<string>();
 
   readonly ringCircumference = RING_CIRCUMFERENCE;
 
@@ -189,4 +197,20 @@ export class KeywordGap {
     const experienceIndex = value === '' ? null : Number(value);
     this.acronymBulletPositionSelected.emit({ term, experienceIndex });
   }
+
+  isEditingJobTitle(): boolean {
+    return this.activeJobTitleEdit();
+  }
+
+  getJobTitleDisplayText(): string {
+    if (this.isEditingJobTitle()) return this.editedJobTitleText();
+    return this.result().jobTitleMatch?.suggestedTitle ?? '';
+  }
+
+  readonly jobTitleBadgeClass = computed(() => {
+    const matchLevel = this.result().jobTitleMatch?.matchLevel;
+    if (matchLevel === 'exact') return 'bg-emerald-100 text-emerald-700';
+    if (matchLevel === 'close') return 'bg-amber-100 text-amber-700';
+    return 'bg-red-100 text-red-700';
+  });
 }

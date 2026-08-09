@@ -60,6 +60,29 @@ const EMPTY_SELECTIONS: UserSelections = {
   selectedBullets: [],
   selectedKeywords: [],
   selectedAcronymIssues: [],
+  selectedJobTitle: false,
+};
+
+const JOB_TITLE_RESULT: KeywordGapResult = {
+  matchScore: 60,
+  matchScoreBreakdown: {
+    requiredMatched: 2,
+    requiredTotal: 6,
+    preferredMatched: 1,
+    preferredTotal: 3,
+  },
+  matchedKeywords: [],
+  missingKeywords: [],
+  underweightedKeywords: [],
+  fabricationWarnings: [],
+  acronymIssues: [],
+  jobTitleMatch: {
+    candidateTitle: 'Backend Developer',
+    targetTitle: 'Staff Software Engineer',
+    matchLevel: 'mismatch',
+    suggestedTitle: 'Staff Software Engineer',
+    reasoning: 'Candidate title is several levels below the target seniority.',
+  },
 };
 
 const BULLET_RESULT: BulletUpgradeResult = {
@@ -821,6 +844,7 @@ describe('applySelectionsToCV', () => {
         selectedBullets: [selectedBullet],
         selectedKeywords: ['TypeScript'],
         selectedAcronymIssues: [],
+        selectedJobTitle: false,
       };
 
       const result = applySelectionsToCV(
@@ -1128,6 +1152,92 @@ describe('applySelectionsToCV', () => {
     });
   });
 
+  describe('job title match', () => {
+    it('sets contact.position to the AI suggestedTitle when selected', () => {
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedJobTitle: true,
+      };
+      const result = applySelectionsToCV(
+        BASE_CV,
+        selections,
+        null,
+        null,
+        JOB_TITLE_RESULT,
+        new Map(),
+        [],
+        [],
+        new Map(),
+        new Map(),
+        new Map(),
+        new Map(),
+        new Map(),
+        true,
+      );
+      expect(result.contact.position).toBe('Staff Software Engineer');
+    });
+
+    it('uses jobTitleEdit override instead of the AI suggestedTitle', () => {
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedJobTitle: true,
+      };
+      const result = applySelectionsToCV(
+        BASE_CV,
+        selections,
+        null,
+        null,
+        JOB_TITLE_RESULT,
+        new Map(),
+        [],
+        [],
+        new Map(),
+        new Map(),
+        new Map(),
+        new Map(),
+        new Map(),
+        true,
+        'Principal Software Engineer',
+      );
+      expect(result.contact.position).toBe('Principal Software Engineer');
+    });
+
+    it('does not change contact.position when selectedJobTitle is false', () => {
+      const result = applySelectionsToCV(
+        BASE_CV,
+        EMPTY_SELECTIONS,
+        null,
+        null,
+        JOB_TITLE_RESULT,
+      );
+      expect(result.contact.position).toBeNull();
+    });
+
+    it('does not change contact.position when keywordResult has no jobTitleMatch', () => {
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedJobTitle: true,
+      };
+      const result = applySelectionsToCV(
+        BASE_CV,
+        selections,
+        null,
+        null,
+        KEYWORD_RESULT,
+      );
+      expect(result.contact.position).toBeNull();
+    });
+
+    it('does not change contact.position when keywordResult is null', () => {
+      const selections: UserSelections = {
+        ...EMPTY_SELECTIONS,
+        selectedJobTitle: true,
+      };
+      const result = applySelectionsToCV(BASE_CV, selections, null, null, null);
+      expect(result.contact.position).toBeNull();
+    });
+  });
+
   describe('gdpr clause', () => {
     it('sets gdprClause to null when includeGdprClause is false, regardless of originalGdprClause', () => {
       const result = applySelectionsToCV(
@@ -1144,6 +1254,8 @@ describe('applySelectionsToCV', () => {
         new Map(),
         new Map(),
         new Map(),
+        false,
+        undefined,
         false,
         'Original extracted clause.',
       );
@@ -1165,6 +1277,8 @@ describe('applySelectionsToCV', () => {
         new Map(),
         new Map(),
         new Map(),
+        false,
+        undefined,
         true,
         'Original extracted clause.',
       );
@@ -1186,6 +1300,8 @@ describe('applySelectionsToCV', () => {
         new Map(),
         new Map(),
         new Map(),
+        false,
+        undefined,
         true,
         null,
       );
