@@ -1384,11 +1384,11 @@ https://claude.ai/code/artifact/b00de1f1-9afc-4a07-a847-a6ca3a77b98d?via=auto_pr
 
 ## 106. Job title match checked automatically
 
-**status: in progress**
+**status: done**
 
-**time: 06.08.2026**
+**time: 06.08.2026 - 09.08.2026**
 
-- add section or incorporate in already existing section (for example keyword gap) job title check
+- add job title match section inside keyword gap section
 - allow updating or adding suggested job title to the optimized cv
 
 Research:
@@ -1416,7 +1416,17 @@ What the functionality should include
 
 ---
 
-## 107. Connect landing page with app
+## 107. Setup Stripe for development testing
+
+**status: todo**
+
+**time: **
+
+- setup Stripe payments, for now in dev mode
+
+---
+
+## 108. Connect landing page with app
 
 **status: todo**
 
@@ -1425,16 +1435,6 @@ What the functionality should include
 - connect landing page with the app, make the login or optimize CV navigate to the app
 - consider whether we should keep the home page in the app, should we move user after login directly to dashboard, and home menu item should move back to landing page?
 - check if it would be possible to show login status in the landing page
-
----
-
-## 108. Setup Stripe for development testing
-
-**status: todo**
-
-**time: **
-
-- setup Stripe payments, for now in dev mode
 
 ---
 
