@@ -8,10 +8,11 @@ import type {
 export function recomputeKeywordGapResult(
   original: KeywordGapResult,
   selectedKeywords: string[],
+  selectedJobTitle = false,
 ): KeywordGapResult {
   const clone = structuredClone(original);
 
-  if (selectedKeywords.length === 0) return clone;
+  if (selectedKeywords.length === 0 && !selectedJobTitle) return clone;
 
   const selectedSet = new Set<string>(selectedKeywords);
 
@@ -28,6 +29,17 @@ export function recomputeKeywordGapResult(
         clone.matchScoreBreakdown.preferredTotal,
       );
     }
+  }
+
+  if (
+    selectedJobTitle &&
+    original.jobTitleMatch &&
+    original.jobTitleMatch.matchLevel !== 'exact'
+  ) {
+    clone.matchScoreBreakdown.requiredMatched = Math.min(
+      clone.matchScoreBreakdown.requiredMatched + 1,
+      clone.matchScoreBreakdown.requiredTotal,
+    );
   }
 
   const { requiredTotal, requiredMatched, preferredTotal, preferredMatched } =

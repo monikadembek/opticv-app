@@ -36,6 +36,7 @@ export class OptimizationProcessor extends WorkerHost {
       cvText,
       parsedSections,
       jobDescription,
+      jobTitle,
     } = job.data;
 
     await this.prisma.optimizationResult.update({
@@ -58,7 +59,7 @@ export class OptimizationProcessor extends WorkerHost {
           resumeText: cvText,
           parsedSectionsJson: JSON.stringify(parsedSections),
           jobDescription,
-          targetRole: '',
+          jobTitle: jobTitle ?? '',
           seniority: '',
           industry: '',
           yearsExperience: '',

@@ -95,6 +95,7 @@ function makeSelections(overrides: Partial<UserSelections> = {}): UserSelections
     selectedBullets: [],
     selectedKeywords: [],
     selectedAcronymIssues: [],
+    selectedJobTitle: false,
     ...overrides,
   };
 }
@@ -213,6 +214,84 @@ describe('recomputeKeywordGapResult', () => {
     expect(result.matchScoreBreakdown.preferredMatched).toBe(
       original.matchScoreBreakdown.preferredMatched,
     );
+  });
+
+  it('9: job title selected with mismatch → requiredMatched increments and score rises', () => {
+    const original = makeKeywordGapResult({
+      jobTitleMatch: {
+        candidateTitle: 'Backend Developer',
+        targetTitle: 'Staff Software Engineer',
+        matchLevel: 'mismatch',
+        suggestedTitle: 'Staff Software Engineer',
+        reasoning: 'Seniority gap.',
+      },
+    });
+    const result = recomputeKeywordGapResult(original, [], true);
+    expect(result.matchScoreBreakdown.requiredMatched).toBe(
+      original.matchScoreBreakdown.requiredMatched + 1,
+    );
+    expect(result.matchScore).toBeGreaterThanOrEqual(original.matchScore);
+  });
+
+  it('10: job title selected with close match → requiredMatched increments', () => {
+    const original = makeKeywordGapResult({
+      jobTitleMatch: {
+        candidateTitle: 'Backend Developer',
+        targetTitle: 'Backend Engineer',
+        matchLevel: 'close',
+        suggestedTitle: 'Backend Engineer',
+        reasoning: 'Different wording, same seniority.',
+      },
+    });
+    const result = recomputeKeywordGapResult(original, [], true);
+    expect(result.matchScoreBreakdown.requiredMatched).toBe(
+      original.matchScoreBreakdown.requiredMatched + 1,
+    );
+  });
+
+  it('11: job title selected with exact match → no increment (already counted by AI)', () => {
+    const original = makeKeywordGapResult({
+      jobTitleMatch: {
+        candidateTitle: 'Staff Software Engineer',
+        targetTitle: 'Staff Software Engineer',
+        matchLevel: 'exact',
+        suggestedTitle: null,
+        reasoning: 'Exact match.',
+      },
+    });
+    const result = recomputeKeywordGapResult(original, [], true);
+    expect(result.matchScoreBreakdown.requiredMatched).toBe(
+      original.matchScoreBreakdown.requiredMatched,
+    );
+  });
+
+  it('12: job title selected but no jobTitleMatch on result → no-op', () => {
+    const original = makeKeywordGapResult();
+    const result = recomputeKeywordGapResult(original, [], true);
+    expect(result.matchScoreBreakdown.requiredMatched).toBe(
+      original.matchScoreBreakdown.requiredMatched,
+    );
+    expect(result.matchScore).toBe(original.matchScore);
+  });
+
+  it('13: job title requiredMatched clamps at requiredTotal', () => {
+    const original = makeKeywordGapResult({
+      matchScoreBreakdown: {
+        requiredMatched: 5,
+        requiredTotal: 5,
+        preferredMatched: 2,
+        preferredTotal: 4,
+      },
+      jobTitleMatch: {
+        candidateTitle: 'Backend Developer',
+        targetTitle: 'Staff Software Engineer',
+        matchLevel: 'mismatch',
+        suggestedTitle: 'Staff Software Engineer',
+        reasoning: 'Seniority gap.',
+      },
+    });
+    const result = recomputeKeywordGapResult(original, [], true);
+    expect(result.matchScoreBreakdown.requiredMatched).toBe(5);
   });
 });
 

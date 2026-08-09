@@ -1367,9 +1367,9 @@ One nuance: many HR/legal experts now consider this clause unnecessary even in t
 
 ### 105. Security check - especially related to AI attacks
 
-**status: in progress**
+**status: done**
 
-**time: 03.08.2026**
+**time: 03.08.2026-05.08.2026**
 
 - make security review of the app, fix issues,
 
@@ -1382,19 +1382,51 @@ https://claude.ai/code/artifact/b00de1f1-9afc-4a07-a847-a6ca3a77b98d?via=auto_pr
 
 ---
 
-## 106. UI/UX - Export footer redesing
+## 106. Job title match checked automatically
+
+**status: done**
+
+**time: 06.08.2026 - 09.08.2026**
+
+- add job title match section inside keyword gap section
+- allow updating or adding suggested job title to the optimized cv
+
+Research:
+
+Incorporate it into the existing Keyword Gap section, not a new one, it fits the existing pattern well:
+
+- KeywordGapResult already has a suggestedPlacement: 'title' option on missing keywords — meaning the model already flags when a keyword should live in the job title, it's just not surfaced as its own thing today.
+- The KEYWORD_GAP AI job already receives both texts: the CV's contact.position (extracted candidate title) and the job posting's jobTitle/jobDescription, via the seeded prompt in apps/opticv-be/prisma/seed.ts and PromptService's SHARED_CONTEXT. No new AI call is needed — this can be one more field in the existing structured JSON output the model already returns.
+- The Keyword Gap UI (apps/opticv-web/.../components/keyword-gap/keyword-gap.ts) already renders the match score, matched/missing keywords, underweighted keywords, and acronym issues in one card — a "Job Title Match" sub-block at the top (right under the score ring, before the keyword lists) reads naturally as "here's your overall alignment, and here's specifically whether your title matches."
+
+What the functionality should include
+
+1. A jobTitleMatch field on KeywordGapResult (new type in datatypes.ts), something like:
+   export type KeywordGapJobTitleMatch = {
+   candidateTitle: string | null; // from CvStructuredData.contact.position
+   targetTitle: string; // from JobApplication.jobTitle
+   matchLevel: 'exact' | 'close' | 'mismatch';
+   suggestedTitle: string | null; // AI-suggested title to use instead
+   reasoning: string; // short explanation of the gap
+   };
+2. Prompt change: extend the KEYWORD_GAP prompt in seed.ts to also compare the candidate's current title against the job's title and return this block — reusing the same call rather than adding a second AI round-trip.
+3. UI: a compact banner/row in keyword-gap.html, e.g. "Your title: Senior Backend Developer → Job wants: Staff Software Engineer" with a match badge (exact/close/mismatch) and a one-line reasoning.
+4. Actionable fix (task #106 explicitly asks for this): a button "Use suggested title" that updates the title used in the optimized/exported CV — reusing the existing edit/override pattern already used for keywords and acronyms (keywordEdits map, apply-selections.ts), just targeting contact.position (and optionally the most recent experience[0].title) instead of a keyword string.
+5. Score contribution (optional, worth deciding explicitly): whether title mismatch factors into matchScore/matchScoreBreakdown, or stays purely informational. Given title is one of the highest-weight ATS signals, I'd lean toward folding it into the score rather than leaving it decorative — but that's a product call worth confirming with you before implementing.
+
+---
+
+## 107. Setup Stripe for development testing
 
 **status: todo**
 
 **time: **
 
-- currently there is too much elements in the export footer, it fits on big screen, but on smaller resolutions it gets cramped,
-- export settings and template settings should be displayed in a modal window, a popover or sth similar,
-- on export footer display only a button for export which opens the popover and maybe button for preview
+- setup Stripe payments, for now in dev mode
 
 ---
 
-## 107. Connect landing page with app
+## 108. Connect landing page with app
 
 **status: todo**
 
@@ -1406,7 +1438,23 @@ https://claude.ai/code/artifact/b00de1f1-9afc-4a07-a847-a6ca3a77b98d?via=auto_pr
 
 ---
 
-## 108. Supabase session expires too quickly
+## 109. UI/UX - Export footer redesing
+
+**status: todo**
+
+**time: **
+
+- currently there is too much elements in the export footer, it fits on big screen, but on smaller resolutions it gets cramped,
+- export settings and template settings should be displayed in a modal window, a popover or sth similar,
+- on export footer display only a button for export which opens the popover and maybe button for preview
+
+---
+
+## Review AI-tailored version side-by-side with original
+
+---
+
+## Supabase session expires too quickly
 
 **status: todo**
 
@@ -1414,16 +1462,6 @@ https://claude.ai/code/artifact/b00de1f1-9afc-4a07-a847-a6ca3a77b98d?via=auto_pr
 
 - after longer inactivity Supabase session times out and user needs to refresh the page to be logged in back. How can we avoid it? Can w make the token expiry time longer? Can we identify the issue and show button to refresh page or sth similar?
   Currently user will not know what is going on.
-
----
-
-## 109. Setup Stripe
-
-**status: todo**
-
-**time: **
-
-- setup Stripe payments, for now in dev mode
 
 ---
 

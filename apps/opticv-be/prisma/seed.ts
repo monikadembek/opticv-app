@@ -180,6 +180,7 @@ Analysis principles:
 - Account for ATS quirks: acronyms typically need to appear in both expanded and abbreviated form. When you flag an acronym issue, set "term" to the exact substring as it literally appears in the resume text (matching case and punctuation) so it can be found and replaced programmatically, and set "fix" to the exact replacement text that should replace the "term", for example text that could include both the abbreviated and expanded form together (e.g., "CI/CD (Continuous Integration/Continuous Deployment)"), so a single in-place replacement leaves both forms present.
 - Consider keyword frequency — appearing once vs three times in a resume affects ATS ranking.
 - Include soft skills and methodologies (e.g., "Agile", "stakeholder management") not just hard skills.
+- Job title is one of the highest-weight ATS signals: compare the candidate's current title (from the parsed resume's contact.position) against the job's title provided in the shared context. Classify the match as "exact" (same title or trivial variation), "close" (same seniority/family but different wording, e.g. "Backend Developer" vs "Backend Engineer"), or "mismatch" (different role, seniority, or discipline). If the job title was not provided, set matchLevel to "mismatch", suggestedTitle to null, and explain in reasoning that no job title was available for comparison — do not fabricate a target title.
 
 Respond in json format. Output your analysis using the submit_keyword_analysis tool. Do not output anything else.`,
     userPromptTemplate: `Compare the job description against the resume and identify every important keyword, skill, technology, methodology, or qualification that is either missing entirely or under-represented in the resume.
@@ -192,6 +193,8 @@ For each keyword gap:
 3. If they do — suggest how to surface it
 4. If they don't — note it as a genuine gap (do not suggest fabricating it)
 5. Estimate the impact on ATS ranking and recruiter interest
+
+Also compare the candidate's current title against the target job title (see jobTitleMatch in the schema). Treat this comparison as one additional required item: if the titles match exactly, count it as matched; if they are close or mismatched, count it as unmatched. Include this item in matchScoreBreakdown.requiredMatched and matchScoreBreakdown.requiredTotal accordingly, and reflect it in the overall matchScore.
 
 Also calculate an overall keyword match score (percentage of important job description keywords present in resume).`,
     outputSchema: {
@@ -206,6 +209,7 @@ Also calculate an overall keyword match score (percentage of important job descr
           'underweightedKeywords',
           'fabricationWarnings',
           'acronymIssues',
+          'jobTitleMatch',
         ],
         properties: {
           matchScore: {
@@ -392,6 +396,42 @@ Also calculate an overall keyword match score (percentage of important job descr
                   ],
                   description: 'Where in the resume this acronym fix applies',
                 },
+              },
+            },
+          },
+          jobTitleMatch: {
+            type: 'object',
+            description:
+              "Comparison between the candidate's current resume title and the job's target title",
+            required: [
+              'candidateTitle',
+              'targetTitle',
+              'matchLevel',
+              'suggestedTitle',
+              'reasoning',
+            ],
+            properties: {
+              candidateTitle: {
+                type: ['string', 'null'],
+                description:
+                  "The candidate's current title from the resume (contact.position), or null if not present",
+              },
+              targetTitle: {
+                type: 'string',
+                description: 'The target job title provided in the shared context',
+              },
+              matchLevel: {
+                type: 'string',
+                enum: ['exact', 'close', 'mismatch'],
+              },
+              suggestedTitle: {
+                type: ['string', 'null'],
+                description:
+                  'AI-suggested replacement title to use instead, or null if the current title is already an exact match or no reasonable suggestion applies',
+              },
+              reasoning: {
+                type: 'string',
+                description: 'One-line explanation of the title match or gap',
               },
             },
           },

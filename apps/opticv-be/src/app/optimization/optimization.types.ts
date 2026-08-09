@@ -8,6 +8,7 @@ export interface OptimizationJobPayload {
   cvText: string;
   parsedSections: unknown;
   jobDescription: string;
+  jobTitle: string | null;
 }
 
 export interface OptimizationJobEvent {

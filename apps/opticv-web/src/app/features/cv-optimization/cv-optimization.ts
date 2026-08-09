@@ -218,6 +218,7 @@ export class CvOptimization implements OnInit {
     selectedBullets: [],
     selectedKeywords: [],
     selectedAcronymIssues: [],
+    selectedJobTitle: false,
   });
   readonly includeGdprClause = signal<boolean>(false);
   readonly isExportingPdf = signal(false);
@@ -260,6 +261,9 @@ export class CvOptimization implements OnInit {
   readonly activeAcronymEditKey = signal<string | null>(null);
   readonly editedAcronymText = signal<string>('');
   readonly acronymBulletPositions = signal<Map<string, number>>(new Map());
+  readonly activeJobTitleEditState = signal<boolean>(false);
+  readonly editedJobTitleText = signal<string>('');
+  readonly jobTitleEdit = signal<string | undefined>(undefined);
 
   readonly sidebarExpanded = signal(true);
   private readonly breakpointObserver = inject(BreakpointObserver);
@@ -328,6 +332,8 @@ export class CvOptimization implements OnInit {
       this.keywordBulletPositions(),
       this.acronymEdits(),
       this.acronymBulletPositions(),
+      this.selections().selectedJobTitle,
+      this.jobTitleEdit(),
       this.includeGdprClause(),
       this.cvStructuredData()?.gdprClause ?? null,
     );
@@ -366,7 +372,11 @@ export class CvOptimization implements OnInit {
     () => {
       const r = this.keywordGapResult();
       if (!r) return null;
-      return recomputeKeywordGapResult(r, this.selections().selectedKeywords);
+      return recomputeKeywordGapResult(
+        r,
+        this.selections().selectedKeywords,
+        this.selections().selectedJobTitle,
+      );
     },
   );
 
@@ -702,7 +712,9 @@ export class CvOptimization implements OnInit {
                     selectedBullets: state.selectedBullets,
                     selectedKeywords: state.selectedKeywords ?? [],
                     selectedAcronymIssues: state.selectedAcronymIssues ?? [],
+                    selectedJobTitle: state.selectedJobTitle ?? false,
                   }));
+                  this.jobTitleEdit.set(state.jobTitleEdit);
                   this.selectedMissingBullets.set(
                     (state.selectedMissingBullets ?? []).map((s) => ({
                       forPosition: s.forPosition,
@@ -798,6 +810,7 @@ export class CvOptimization implements OnInit {
       selectedBullets: [],
       selectedKeywords: [],
       selectedAcronymIssues: [],
+      selectedJobTitle: false,
     });
     this.bulletEdits.set(new Map());
     this.bulletUpgradeResultId.set(null);
@@ -818,6 +831,9 @@ export class CvOptimization implements OnInit {
     this.activeAcronymEditKey.set(null);
     this.editedAcronymText.set('');
     this.acronymBulletPositions.set(new Map());
+    this.activeJobTitleEditState.set(false);
+    this.editedJobTitleText.set('');
+    this.jobTitleEdit.set(undefined);
     this.jobApplicationId.set(jobApplication.id);
     this.submittedJobApplication.set(jobApplication);
     this.cvStructuredData.set(extractedData);
@@ -1094,6 +1110,45 @@ export class CvOptimization implements OnInit {
     this.persistBulletState();
   }
 
+  onJobTitleToggled(): void {
+    this.selections.update((s) => ({
+      ...s,
+      selectedJobTitle: !s.selectedJobTitle,
+    }));
+    this.persistBulletState();
+  }
+
+  onJobTitleEditStarted(): void {
+    this.activeJobTitleEditState.set(true);
+    const existing = this.jobTitleEdit();
+    if (existing !== undefined) {
+      this.editedJobTitleText.set(existing);
+      return;
+    }
+    this.editedJobTitleText.set(
+      this.keywordGapResult()?.jobTitleMatch?.suggestedTitle ?? '',
+    );
+  }
+
+  onJobTitleEditTextChanged(text: string): void {
+    this.editedJobTitleText.set(text);
+  }
+
+  onJobTitleEditCancelled(): void {
+    this.activeJobTitleEditState.set(false);
+    this.editedJobTitleText.set('');
+  }
+
+  onJobTitleEditSaved(text: string): void {
+    const trimmed = text.trim();
+    if (trimmed === '') return;
+    const suggested = this.keywordGapResult()?.jobTitleMatch?.suggestedTitle;
+    this.jobTitleEdit.set(trimmed === suggested ? undefined : trimmed);
+    this.activeJobTitleEditState.set(false);
+    this.editedJobTitleText.set('');
+    this.persistBulletState();
+  }
+
   onBulletEditStarted(key: string): void {
     this.activeBulletEditKey.set(key);
     const existing = this.bulletEdits().get(key);
@@ -1275,6 +1330,8 @@ export class CvOptimization implements OnInit {
         acronymEdits: acronymEditsArr,
         acronymBulletPositions: acronymBulletPositionsArr,
         selectedAcronymIssues: this.selections().selectedAcronymIssues,
+        selectedJobTitle: this.selections().selectedJobTitle,
+        jobTitleEdit: this.jobTitleEdit(),
       };
       this.cvOptimizationApiService
         .saveUserOutput(resultId, JSON.stringify(state))

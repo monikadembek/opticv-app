@@ -41,6 +41,7 @@ const mockQuotaService = {
 const baseJobApplication = {
   id: 'app-1',
   userId: 'user-1',
+  jobTitle: 'Software Engineer',
   jobDescription: 'Software Engineer at Acme',
   cvDocument: {
     parseStatus: 'COMPLETED',
@@ -179,7 +180,11 @@ describe('OptimizationService', () => {
         );
         expect(mockQueue.add).toHaveBeenCalledWith(
           'optimize',
-          expect.objectContaining({ promptType, jobApplicationId: 'app-1' }),
+          expect.objectContaining({
+            promptType,
+            jobApplicationId: 'app-1',
+            jobTitle: 'Software Engineer',
+          }),
           expect.objectContaining({ attempts: 2 }),
         );
       }
@@ -322,6 +327,7 @@ describe('OptimizationService', () => {
           jobApplicationId: 'app-1',
           cvText: 'My resume text',
           jobDescription: 'Software Engineer at Acme',
+          jobTitle: 'Software Engineer',
         }),
         expect.objectContaining({ attempts: 2 }),
       );
@@ -412,7 +418,11 @@ describe('OptimizationService', () => {
       expect(mockQueue.add).toHaveBeenCalledTimes(1);
       expect(mockQueue.add).toHaveBeenCalledWith(
         'optimize',
-        expect.objectContaining({ promptType: PROMPT_TYPE, jobApplicationId: 'app-1' }),
+        expect.objectContaining({
+          promptType: PROMPT_TYPE,
+          jobApplicationId: 'app-1',
+          jobTitle: 'Software Engineer',
+        }),
         expect.objectContaining({ attempts: 2 }),
       );
     });

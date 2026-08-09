@@ -51,7 +51,7 @@ export class OptimizationService {
     jobApplicationId: string,
     userId: string,
   ): Promise<{ runId: string }> {
-    const { cvText, parsedSections, jobDescription } =
+    const { cvText, parsedSections, jobDescription, jobTitle } =
       await this.loadAndValidateApplication(jobApplicationId, userId);
 
     const tier = await this.resolveTier(userId);
@@ -66,6 +66,7 @@ export class OptimizationService {
       cvText,
       parsedSections,
       jobDescription,
+      jobTitle,
     };
 
     await Promise.all(
@@ -115,7 +116,7 @@ export class OptimizationService {
     userId: string,
   ): Promise<{ runId: string }> {
     runId = runId ?? randomUUID();
-    const { cvText, parsedSections, jobDescription } =
+    const { cvText, parsedSections, jobDescription, jobTitle } =
       await this.loadAndValidateApplication(jobApplicationId, userId);
 
     const tier = await this.resolveTier(userId);
@@ -155,6 +156,7 @@ export class OptimizationService {
         cvText,
         parsedSections,
         jobDescription,
+        jobTitle,
       } satisfies OptimizationJobPayload,
       { attempts: 2, backoff: { type: 'exponential', delay: 2000 } },
     );
@@ -167,7 +169,7 @@ export class OptimizationService {
     promptType: PromptType,
     userId: string,
   ): Promise<{ runId: string }> {
-    const { cvText, parsedSections, jobDescription } =
+    const { cvText, parsedSections, jobDescription, jobTitle } =
       await this.loadAndValidateApplication(jobApplicationId, userId);
 
     const existing = await this.prisma.optimizationResult.findUnique({
@@ -210,6 +212,7 @@ export class OptimizationService {
         cvText,
         parsedSections,
         jobDescription,
+        jobTitle,
       } satisfies OptimizationJobPayload,
       { attempts: 2, backoff: { type: 'exponential', delay: 2000 } },
     );
@@ -287,6 +290,7 @@ export class OptimizationService {
     cvText: string;
     parsedSections: unknown;
     jobDescription: string;
+    jobTitle: string | null;
   }> {
     const record = await this.prisma.jobApplication.findUnique({
       where: { id: jobApplicationId },
@@ -309,6 +313,7 @@ export class OptimizationService {
       cvText: record.cvDocument.parsedText ?? '',
       parsedSections: record.cvDocument.structuredData ?? {},
       jobDescription: record.jobDescription,
+      jobTitle: record.jobTitle,
     };
   }
 }

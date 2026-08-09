@@ -59,16 +59,17 @@ describe('QuotaService', () => {
       );
     });
 
-    it('falls back to the existing row when a concurrent insert wins the unique constraint race', async () => {
-      mockPrisma.usageQuota.upsert.mockRejectedValue(uniqueConstraintError());
-      mockPrisma.usageQuota.findUniqueOrThrow.mockResolvedValue({ id: 'row-1' });
+    it('retries in a fresh transaction when a concurrent insert wins the unique constraint race', async () => {
+      mockPrisma.usageQuota.upsert
+        .mockRejectedValueOnce(uniqueConstraintError())
+        .mockResolvedValueOnce({ id: 'row-1' });
       mockPrisma.usageQuota.updateMany.mockResolvedValue({ count: 1 });
 
       await expect(
         service.checkAndConsume('user-1', 'CV_OPTIMIZATION', 'FREE'),
       ).resolves.toBeUndefined();
 
-      expect(mockPrisma.usageQuota.findUniqueOrThrow).toHaveBeenCalled();
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(2);
       expect(mockPrisma.usageQuota.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ id: 'row-1', count: { lt: 1 } }),

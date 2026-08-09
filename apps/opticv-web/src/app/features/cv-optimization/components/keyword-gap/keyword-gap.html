@@ -64,6 +64,109 @@
     </div>
   </div>
 
+  <!-- Job Title Match -->
+  @if (result().jobTitleMatch; as titleMatch) {
+  <div class="mb-4">
+    <h3 class="text-xl font-semibold text-surface-800 mb-2">Job Title Match</h3>
+    <p class="text-sm text-(--text-muted)">
+      Select suggested title to match the one in job posting.
+    </p>
+  </div>
+  <div
+    class="mb-8 rounded-lg border px-4 pt-4 pb-5 transition-colors"
+    [class]="selectedJobTitle() ? 'border-emerald-600 bg-emerald-100/40' : 'border-(--border-subtle)'"
+  >
+    @if (titleMatch.matchLevel !== 'exact' && titleMatch.suggestedTitle) {
+    <div class="flex items-center gap-2 flex-wrap mb-2">
+      <input
+        type="checkbox"
+        id="job-title-use-suggested"
+        [checked]="selectedJobTitle()"
+        (change)="jobTitleToggled.emit()"
+        class="accent-primary"
+        aria-label="Use suggested title"
+      />
+      <label
+        for="job-title-use-suggested"
+        class="text-md text-surface-800 cursor-pointer"
+      >
+        <span class="font-semibold"
+          >{{ titleMatch.suggestedTitle }}</span
+        ></label
+      >
+      @if (!isEditingJobTitle()) {
+      <p-button
+        type="button"
+        variant="outlined"
+        severity="success"
+        size="small"
+        class="py-0! ml-auto"
+        (click)="jobTitleEditStarted.emit()"
+        aria-label="Edit suggested title"
+      >
+        <i class="pi pi-pencil text-xs!"></i> Edit
+      </p-button>
+      }
+    </div>
+    @if (isEditingJobTitle()) {
+    <div class="space-y-2 mt-2 ml-5">
+      <p
+        class="uppercase mb-1 text-sm font-semibold font-(family-name:--font-heading) text-(--text-muted)"
+      >
+        Edit the title that will be applied
+      </p>
+      <input
+        pInputText
+        type="text"
+        [value]="editedJobTitleText()"
+        (input)="jobTitleEditTextChanged.emit($any($event.target).value)"
+        class="w-full text-sm"
+        aria-label="Edit job title text"
+      />
+      <div class="flex gap-2">
+        <p-button
+          label="Save"
+          size="small"
+          (onClick)="jobTitleEditSaved.emit(editedJobTitleText())"
+        />
+        <p-button
+          label="Cancel"
+          size="small"
+          severity="secondary"
+          [text]="true"
+          (onClick)="jobTitleEditCancelled.emit()"
+        />
+      </div>
+    </div>
+    } } @if (!isEditingJobTitle()) {
+    <div class="ml-5">
+      <p class="text-sm text-surface-800 mb-2">
+        Original title:<br />
+        <span class="font-semibold mr-4"
+          >{{ titleMatch.candidateTitle ?? '—' }}</span
+        >
+        <span
+          class="text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full ml-auto"
+          [class]="jobTitleBadgeClass()"
+          title="Title match level"
+          >{{ titleMatch.matchLevel }}</span
+        >
+      </p>
+
+      <p class="text-sm text-surface-800">
+        Title in job posting: <br />
+        <span class="font-semibold">{{ titleMatch.targetTitle }}</span>
+      </p>
+    </div>
+    <p
+      class="mt-2 ml-5 text-xs italic text-surface-400 border-l border-surface-200 bg-(--neutral-100) p-2 rounded-sm"
+    >
+      {{ titleMatch.reasoning }}
+    </p>
+    }
+  </div>
+  }
+
   <!-- Missing Keywords -->
   @if (result().missingKeywords.length > 0) {
   <div class="mb-8">

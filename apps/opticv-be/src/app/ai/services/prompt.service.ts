@@ -27,7 +27,7 @@ output schema.
 </job_description>
 
 <context>
-Target role: {{targetRole}}
+Target job title: {{jobTitle}}
 Target seniority: {{seniority}}
 Industry: {{industry}}
 Years of experience: {{yearsExperience}}
