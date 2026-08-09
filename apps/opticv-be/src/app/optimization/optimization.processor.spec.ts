@@ -22,6 +22,7 @@ const basePayload: OptimizationJobPayload = {
   cvText: 'resume text',
   parsedSections: { name: 'John' },
   jobDescription: 'Engineer at Acme',
+  jobTitle: 'Senior Engineer',
 };
 
 const makeJob = (data: OptimizationJobPayload) => ({ data } as Job<OptimizationJobPayload>);
@@ -110,6 +111,10 @@ describe('OptimizationProcessor', () => {
       'built prompt',
       activePrompt.modelPreference,
       activePrompt.outputSchema,
+    );
+    expect(mockPromptService.buildUserPrompt).toHaveBeenCalledWith(
+      activePrompt.userPromptTemplate,
+      expect.objectContaining({ jobTitle: 'Senior Engineer' }),
     );
     expect(mockPrisma.optimizationResult.update).toHaveBeenCalledWith(
       expect.objectContaining({

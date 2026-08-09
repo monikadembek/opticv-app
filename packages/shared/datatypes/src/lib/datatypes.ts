@@ -340,6 +340,14 @@ export type KeywordGapAcronymIssue = {
     | 'multiple';
 };
 
+export type KeywordGapJobTitleMatch = {
+  candidateTitle: string | null;
+  targetTitle: string;
+  matchLevel: 'exact' | 'close' | 'mismatch';
+  suggestedTitle: string | null;
+  reasoning: string;
+};
+
 export type KeywordGapResult = {
   matchScore: number;
   matchScoreBreakdown: KeywordGapMatchScoreBreakdown;
@@ -348,6 +356,7 @@ export type KeywordGapResult = {
   underweightedKeywords: KeywordGapUnderweightedKeyword[];
   fabricationWarnings: KeywordGapFabricationWarning[];
   acronymIssues: KeywordGapAcronymIssue[];
+  jobTitleMatch?: KeywordGapJobTitleMatch;
 };
 
 export type SummaryRewriteVariantAngle =
@@ -557,6 +566,7 @@ export type UserSelections = {
   selectedBullets: BulletSelectionKey[];
   selectedKeywords: string[];
   selectedAcronymIssues: string[];
+  selectedJobTitle: boolean;
 };
 
 export type BulletEditKey = {
@@ -580,6 +590,8 @@ export type BulletUserState = {
   acronymEdits?: Array<{ originalTerm: string; editedText: string }>;
   acronymBulletPositions?: Array<{ term: string; experienceIndex: number }>;
   selectedAcronymIssues?: string[];
+  selectedJobTitle?: boolean;
+  jobTitleEdit?: string;
 };
 
 export type SummaryUserState = {

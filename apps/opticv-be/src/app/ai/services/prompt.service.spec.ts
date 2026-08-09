@@ -7,7 +7,7 @@ const BASE_VARS = {
   resumeText: 'My resume text',
   parsedSectionsJson: '{}',
   jobDescription: 'Job desc',
-  targetRole: 'Engineer',
+  jobTitle: 'Staff Engineer',
   seniority: 'Senior',
   industry: 'Tech',
   yearsExperience: '5',
@@ -47,10 +47,17 @@ describe('PromptService', () => {
       expect(result).toContain('My resume text');
       expect(result).toContain('{}');
       expect(result).toContain('Job desc');
+      expect(result).toContain('Staff Engineer');
       expect(result).toContain('Engineer');
       expect(result).toContain('Senior');
       expect(result).toContain('Tech');
       expect(result).toContain('5');
+    });
+
+    it('interpolates the target job title into the shared context', () => {
+      const result = service.buildUserPrompt('{{SHARED_CONTEXT}}', BASE_VARS);
+
+      expect(result).toContain('Target job title: Staff Engineer');
     });
 
     it('leaves unknown placeholders as-is when optional var is not provided', () => {

@@ -2,7 +2,7 @@ export type SharedPromptVariables = {
   resumeText: string;
   parsedSectionsJson: string;
   jobDescription: string;
-  targetRole: string;
+  jobTitle: string;
   seniority: string;
   industry: string;
   yearsExperience: string;
