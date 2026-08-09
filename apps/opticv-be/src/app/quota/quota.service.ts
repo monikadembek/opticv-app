@@ -39,34 +39,35 @@ export class QuotaService {
       });
     }
 
-    const consumed = await this.prisma.$transaction(async (tx) => {
-      let row;
-      try {
-        row = await tx.usageQuota.upsert({
+    const runAttempt = () =>
+      this.prisma.$transaction(async (tx) => {
+        const row = await tx.usageQuota.upsert({
           where: { userId_feature_periodStart: { userId, feature, periodStart } },
           create: { userId, feature, periodStart, count: 0 },
           update: {},
         });
-      } catch (error) {
-        if (
-          error instanceof Prisma.PrismaClientKnownRequestError &&
-          error.code === UNIQUE_CONSTRAINT_VIOLATION
-        ) {
-          row = await tx.usageQuota.findUniqueOrThrow({
-            where: { userId_feature_periodStart: { userId, feature, periodStart } },
-          });
-        } else {
-          throw error;
-        }
-      }
 
-      const result = await tx.usageQuota.updateMany({
-        where: { id: row.id, count: { lt: limit } },
-        data: { count: { increment: 1 } },
+        const result = await tx.usageQuota.updateMany({
+          where: { id: row.id, count: { lt: limit } },
+          data: { count: { increment: 1 } },
+        });
+
+        return result.count > 0;
       });
 
-      return result.count > 0;
-    });
+    let consumed: boolean;
+    try {
+      consumed = await runAttempt();
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === UNIQUE_CONSTRAINT_VIOLATION
+      ) {
+        consumed = await runAttempt();
+      } else {
+        throw error;
+      }
+    }
 
     if (!consumed) {
       throw new ForbiddenException({
