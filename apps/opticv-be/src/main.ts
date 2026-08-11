@@ -13,7 +13,7 @@ import { ThrottlerExceptionFilter } from './app/throttler/throttler-exception.fi
 import helmet from 'helmet';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
   const configService = app.get(ConfigService);
   const globalPrefix = 'api';
   const port = configService.get<number>('port', 3000);

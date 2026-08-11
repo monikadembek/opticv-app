@@ -27,6 +27,12 @@ export const configuration = () => ({
     concurrency: parseInt(process.env.BULLMQ_CONCURRENCY || '5', 10),
   },
   frontendUrl: process.env.FRONTEND_URL,
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY,
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+    priceBasic: process.env.STRIPE_PRICE_BASIC,
+    pricePro: process.env.STRIPE_PRICE_PRO,
+  },
   throttler: {
     apiIpTtl: parseInt(process.env.THROTTLER_API_IP_TTL || '900', 10),
     apiIpLimit: parseInt(process.env.THROTTLER_API_IP_LIMIT || '300', 10),
