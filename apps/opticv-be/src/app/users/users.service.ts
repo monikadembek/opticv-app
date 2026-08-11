@@ -70,7 +70,13 @@ export class UsersService {
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
       subscription: user.subscription
-        ? { tier: user.subscription.tier, status: user.subscription.status }
+        ? {
+            tier: user.subscription.tier,
+            status: user.subscription.status,
+            cancelAtPeriodEnd: user.subscription.cancelAtPeriodEnd,
+            currentPeriodEnd:
+              user.subscription.currentPeriodEnd?.toISOString() ?? null,
+          }
         : null,
       notifications,
     };
@@ -108,6 +114,10 @@ export class UsersService {
         ? {
             tier: updatedUser.subscription.tier,
             status: updatedUser.subscription.status,
+            cancelAtPeriodEnd: updatedUser.subscription.cancelAtPeriodEnd,
+            currentPeriodEnd:
+              updatedUser.subscription.currentPeriodEnd?.toISOString() ??
+              null,
           }
         : null,
       notifications,
@@ -144,7 +154,13 @@ export class UsersService {
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
       subscription: user.subscription
-        ? { tier: user.subscription.tier, status: user.subscription.status }
+        ? {
+            tier: user.subscription.tier,
+            status: user.subscription.status,
+            cancelAtPeriodEnd: user.subscription.cancelAtPeriodEnd,
+            currentPeriodEnd:
+              user.subscription.currentPeriodEnd?.toISOString() ?? null,
+          }
         : null,
       notifications: {
         productUpdatesEnabled: notification.productUpdatesEnabled,

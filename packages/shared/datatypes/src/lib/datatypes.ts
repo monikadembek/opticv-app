@@ -162,6 +162,8 @@ export type UserProfile = {
   subscription: {
     tier: SubscriptionTier;
     status: SubscriptionStatus;
+    cancelAtPeriodEnd: boolean;
+    currentPeriodEnd: string | null;
   } | null;
   notifications: NotificationPreferences;
 };

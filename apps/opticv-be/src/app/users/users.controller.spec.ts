@@ -14,7 +14,12 @@ const mockProfile: UserProfile = {
   email: 'test@example.com',
   displayName: 'Jane Doe',
   avatarUrl: null,
-  subscription: { tier: 'FREE', status: 'ACTIVE' },
+  subscription: {
+    tier: 'FREE',
+    status: 'ACTIVE',
+    cancelAtPeriodEnd: false,
+    currentPeriodEnd: null,
+  },
   notifications: { productUpdatesEnabled: true, weeklyTipsEnabled: false },
 };
 
