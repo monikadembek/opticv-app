@@ -31,12 +31,13 @@ This does two things at once: confirms the payload really came from Stripe (not 
 Stripe **can and will** redeliver the same event (retries on timeout/non-2xx, or duplicate delivery), and events aren't guaranteed to arrive in the order they occurred. Two implications:
 
 - **`handleSubscriptionUpdated`/`handleSubscriptionDeleted` are idempotent by construction** — they upsert against `stripeCustomerId` using the latest data straight from the event, so replaying the same event twice is harmless (it just re-writes the same values).
-- **Ordering risk**: if `customer.subscription.updated` for a downgrade arrives before `checkout.session.completed` for an upgrade (out of order), you could momentarily process stale state. This is fairly low risk here since each event fetches/uses the subscription's *current* state from Stripe rather than trusting deltas — `handleCheckoutSessionCompleted` calls `this.stripe.subscriptions.retrieve(...)` instead of trusting only the session object.
+- **Ordering risk**: if `customer.subscription.updated` for a downgrade arrives before `checkout.session.completed` for an upgrade (out of order), you could momentarily process stale state. This is fairly low risk here since each event fetches/uses the subscription's _current_ state from Stripe rather than trusting deltas — `handleCheckoutSessionCompleted` calls `this.stripe.subscriptions.retrieve(...)` instead of trusting only the session object.
 
 ### 4. Fast, unauthenticated, unthrottled by design
 
 Three things stand out in the controller and are intentional for webhooks specifically:
-- **No auth guard** — Stripe can't send a Supabase JWT; signature verification *is* the auth.
+
+- **No auth guard** — Stripe can't send a Supabase JWT; signature verification _is_ the auth.
 - **`@SkipThrottle()`** — Stripe can burst-deliver many events; rate-limiting them would cause dropped/retried webhooks.
 - **Always returns 200** (`{ received: true }`) once signature verification passes, even for unhandled event types (the `default: break` in the switch). Returning non-2xx tells Stripe to retry — you only want that for genuine processing failures, not "we don't care about this event type."
 
@@ -77,6 +78,7 @@ On a normal automatic renewal (subscription hits the end of its billing period, 
 That third one is the catch. Whether a routine renewal produces a `customer.subscription.updated` event is inconsistent — straightforward renewals with no plan/quantity/status change don't reliably trigger it. `invoice.paid` is the reliable, Stripe-recommended signal for "a billing cycle successfully renewed" — Stripe's own docs point at `invoice.paid`/`invoice.payment_succeeded` for updating period dates and granting continued access, not `customer.subscription.updated`.
 
 Currently the controller only handles:
+
 - `checkout.session.completed` (initial subscribe)
 - `customer.subscription.updated` (plan/status changes)
 - `customer.subscription.deleted` (cancellation)
@@ -128,3 +130,34 @@ So Stripe automates chasing the card holder. **It does not automatically restric
 - Surface a "payment failed, update your card" banner in the frontend when `status === 'PAST_DUE'`, pointing the user at the billing portal session (`createPortalSession`, `stripe.controller.ts`), since Stripe's portal lets customers update their payment method directly.
 
 **Status: not yet implemented — follow-up work.**
+
+---
+
+### Prepare staging environemnt to handle Stripe webhook
+
+Stripe CLI's listen command can forward events to any reachable URL, not just localhost, so it works against your Render staging deployment too. You have two real options:
+
+Option 1: Point the CLI listener at your Render staging URL (closest to what you're doing now)
+
+stripe listen --forward-to https://your-staging-app.onrender.com/api/stripe/webhook
+
+This still runs stripe listen locally, but instead of forwarding to localhost:3000, it forwards straight to your deployed staging backend. Two things to get right:
+
+- Webhook secret: stripe listen generates its own ephemeral whsec\_... signing secret each time you start it (printed in the terminal). Your staging environment's STRIPE_WEBHOOK_SECRET env var must match that value for constructEvent to pass — so you'd need to update Render's env var to the CLI's printed secret before testing, and remember it's different from whatever secret you use for a "real" webhook endpoint.
+- This is genuinely just for ad hoc testing — you wouldn't leave stripe listen running against staging long-term since it depends on your local terminal session staying open.
+
+Option 2: Register a real webhook endpoint in the Stripe Dashboard pointing at staging (recommended for actual staging validation)
+
+Since staging is a real publicly reachable URL (not localhost), you don't need the CLI listener/forwarding trick at all — you can register it as a proper webhook endpoint:
+
+1. Stripe Dashboard → Developers → Webhooks → Add endpoint
+2. URL: https://your-staging-app.onrender.com/api/stripe/webhook
+3. Select the events you handle: checkout.session.completed, customer.subscription.updated, customer.subscription.deleted, invoice.paid, invoice.payment_failed
+4. Stripe gives you a stable signing secret for that endpoint — set that as STRIPE_WEBHOOK_SECRET in Render's env vars for the staging service
+5. Do this in test mode (toggle top-left in Dashboard) so you're using test API keys/cards, not live ones — assuming staging uses your sk*test*... key already
+
+This is better for staging specifically because: it doesn't depend on your laptop/terminal being open, it's how production will work anyway (validating the real deployed flow end-to-end), and Stripe's Dashboard gives you a webhook event log with retry/replay buttons per endpoint for debugging failed deliveries — genuinely useful once you're past local dev.
+
+My recommendation: use Option 2. It tests the actual thing you're shipping (a public HTTPS endpoint Stripe hits directly), rather than a CLI relay that only exists while your terminal is open.
+
+One thing worth confirming on your end: does your Render staging service actually run with NODE_ENV pointed at an env file that has stripe.webhookSecret/stripe.secretKey set to test-mode values? Want me to check apps/opticv-be/config/env/ and how the Stripe config keys are validated, to make sure staging is wired to read them correctly?

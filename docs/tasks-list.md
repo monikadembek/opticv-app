@@ -1416,11 +1416,11 @@ What the functionality should include
 
 ---
 
-## 107. Setup Stripe for development testing
+## 107. Setup Stripe in development/test mode
 
-**status: in progress**
+**status: done**
 
-**time: 09.08.2026**
+**time: 09.08.2026-11.08.2026**
 
 - setup Stripe payments, for now in dev mode
 
@@ -1435,7 +1435,19 @@ Plan for dev-mode Stripe setup (no real bank account needed — Stripe test mode
 
 ---
 
-## 108. Connect landing page with app
+## 108. Bug - wrong date displayed for when subscription renews
+
+---
+
+## 109. Handle PAST_DUE status in backend, frontend and Stripe dashboard
+
+---
+
+## 110. Handle Stripe webhook in staging environment on Render
+
+---
+
+## 111. Connect landing page with app
 
 **status: todo**
 
@@ -1447,7 +1459,7 @@ Plan for dev-mode Stripe setup (no real bank account needed — Stripe test mode
 
 ---
 
-## 109. UI/UX - Export footer redesing
+## 112. UI/UX - Export footer redesing
 
 **status: todo**
 
