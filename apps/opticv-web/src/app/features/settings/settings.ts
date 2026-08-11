@@ -17,7 +17,7 @@ import {
   required,
   validate,
 } from '@angular/forms/signals';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
@@ -66,6 +66,7 @@ export class Settings implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly supabase = inject(Supabase);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly cvStore = inject(CvStore);
 
   readonly userProfile = this.userSettingsApiService.userProfile;
@@ -78,6 +79,8 @@ export class Settings implements OnInit {
   readonly emailChangePendingFor = signal<string | null>(null);
   readonly productUpdatesEnabled = signal(true);
   readonly weeklyTipsEnabled = signal(false);
+  readonly isRedirectingToCheckout = signal<'BASIC' | 'PRO' | null>(null);
+  readonly isRedirectingToPortal = signal(false);
 
   readonly fullNameModel = signal({ displayName: '' });
   readonly fullNameForm = form(this.fullNameModel, (path) => {
@@ -130,6 +133,21 @@ export class Settings implements OnInit {
   ngOnInit() {
     this.userSettingsApiService.reloadUserProfile();
     this.userSettingsApiService.reloadUsageStatus();
+
+    const billing = this.route.snapshot.queryParamMap.get('billing');
+    if (billing === 'success') {
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Subscription updated.',
+      });
+    } else if (billing === 'canceled') {
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Checkout canceled',
+        detail: 'Checkout canceled.',
+      });
+    }
   }
 
   featureLabel(feature: LimitedFeature): string {
@@ -287,6 +305,54 @@ export class Settings implements OnInit {
         this.emailChangePendingFor.set(newEmail);
       },
     });
+  }
+
+  onUpgrade(tier: 'BASIC' | 'PRO'): void {
+    this.isRedirectingToCheckout.set(tier);
+
+    this.userSettingsApiService
+      .createCheckoutSession(tier)
+      .pipe(
+        catchError((err) => {
+          const message =
+            (err as { error?: { message?: string } })?.error?.message ??
+            'Failed to start checkout. Please try again.';
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Checkout Error',
+            detail: message,
+          });
+          this.isRedirectingToCheckout.set(null);
+          return EMPTY;
+        }),
+      )
+      .subscribe((response) => {
+        window.location.href = response.url;
+      });
+  }
+
+  onManageBilling(): void {
+    this.isRedirectingToPortal.set(true);
+
+    this.userSettingsApiService
+      .createPortalSession()
+      .pipe(
+        catchError((err) => {
+          const message =
+            (err as { error?: { message?: string } })?.error?.message ??
+            'Failed to open billing portal. Please try again.';
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Billing Portal Error',
+            detail: message,
+          });
+          this.isRedirectingToPortal.set(false);
+          return EMPTY;
+        }),
+      )
+      .subscribe((response) => {
+        window.location.href = response.url;
+      });
   }
 
   getAvatarLabel(profile: UserProfile | null): string {

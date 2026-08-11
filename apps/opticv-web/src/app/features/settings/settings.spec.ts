@@ -13,7 +13,12 @@ const mockProfile: UserProfile = {
   email: 'test@example.com',
   displayName: 'Test User',
   avatarUrl: null,
-  subscription: { tier: 'FREE', status: 'ACTIVE' },
+  subscription: {
+    tier: 'FREE',
+    status: 'ACTIVE',
+    cancelAtPeriodEnd: false,
+    currentPeriodEnd: null,
+  },
   notifications: { productUpdatesEnabled: true, weeklyTipsEnabled: false },
 };
 
@@ -45,6 +50,12 @@ function createUserSettingsMock(
     updateNotificationPreference: vi.fn().mockReturnValue(of(mockProfile)),
     reloadUserProfile: vi.fn(),
     reloadUsageStatus: vi.fn(),
+    createCheckoutSession: vi
+      .fn()
+      .mockReturnValue(of({ url: 'https://checkout.stripe.com/session' })),
+    createPortalSession: vi
+      .fn()
+      .mockReturnValue(of({ url: 'https://billing.stripe.com/session' })),
   };
 }
 
@@ -200,7 +211,12 @@ describe('Settings', () => {
         {
           value: {
             ...mockProfile,
-            subscription: { tier: 'BASIC', status: 'ACTIVE' },
+            subscription: {
+              tier: 'BASIC',
+              status: 'ACTIVE',
+              cancelAtPeriodEnd: false,
+              currentPeriodEnd: null,
+            },
           },
           hasValue: true,
         },
@@ -228,7 +244,12 @@ describe('Settings', () => {
         {
           value: {
             ...mockProfile,
-            subscription: { tier: 'PRO', status: 'ACTIVE' },
+            subscription: {
+              tier: 'PRO',
+              status: 'ACTIVE',
+              cancelAtPeriodEnd: false,
+              currentPeriodEnd: null,
+            },
           },
           hasValue: true,
         },
@@ -697,7 +718,12 @@ describe('Settings', () => {
         {
           value: {
             ...mockProfile,
-            subscription: { tier: 'PRO', status: 'ACTIVE' },
+            subscription: {
+              tier: 'PRO',
+              status: 'ACTIVE',
+              cancelAtPeriodEnd: false,
+              currentPeriodEnd: null,
+            },
           },
           hasValue: true,
         },
@@ -719,30 +745,51 @@ describe('Settings', () => {
       expect(text).not.toContain('plan renews on');
     });
 
-    it('disables the Manage billing button', async () => {
+    it('shows upgrade buttons (not Manage billing) for a FREE tier user', async () => {
       await setup({ value: mockProfile, hasValue: true });
       const fixture = TestBed.createComponent(Settings);
       fixture.detectChanges();
 
-      const manageBillingButton = Array.from(
+      const buttons = Array.from(
         fixture.nativeElement.querySelectorAll('button'),
-      ).find((el) =>
-        (el as HTMLButtonElement).textContent?.includes('Manage billing'),
-      ) as HTMLButtonElement | undefined;
-      expect(manageBillingButton?.disabled).toBe(true);
+      ) as HTMLButtonElement[];
+      expect(
+        buttons.some((el) => el.textContent?.includes('Upgrade to Basic')),
+      ).toBe(true);
+      expect(
+        buttons.some((el) => el.textContent?.includes('Upgrade to Pro')),
+      ).toBe(true);
+      expect(
+        buttons.some((el) => el.textContent?.includes('Manage billing')),
+      ).toBe(false);
     });
 
-    it('disables the View invoices button', async () => {
-      await setup({ value: mockProfile, hasValue: true });
+    it('shows an enabled Manage billing button (not upgrade buttons) for a paid tier user', async () => {
+      await setup({
+        value: {
+          ...mockProfile,
+          subscription: {
+            tier: 'PRO',
+            status: 'ACTIVE',
+            cancelAtPeriodEnd: false,
+            currentPeriodEnd: null,
+          },
+        },
+        hasValue: true,
+      });
       const fixture = TestBed.createComponent(Settings);
       fixture.detectChanges();
 
-      const viewInvoicesButton = Array.from(
+      const buttons = Array.from(
         fixture.nativeElement.querySelectorAll('button'),
-      ).find((el) =>
-        (el as HTMLButtonElement).textContent?.includes('View invoices'),
-      ) as HTMLButtonElement | undefined;
-      expect(viewInvoicesButton?.disabled).toBe(true);
+      ) as HTMLButtonElement[];
+      const manageBillingButton = buttons.find((el) =>
+        el.textContent?.includes('Manage billing'),
+      );
+      expect(manageBillingButton?.disabled).toBe(false);
+      expect(
+        buttons.some((el) => el.textContent?.includes('Upgrade to Basic')),
+      ).toBe(false);
     });
 
     it('does not render "Visa ending" text', async () => {
