@@ -136,14 +136,24 @@ describe('UsersService', () => {
     it('updates the display name and returns the mapped profile', async () => {
       mockPrisma.user.findUnique.mockResolvedValueOnce({
         id: 'user-id',
-        subscription: { tier: 'FREE', status: 'ACTIVE' },
+        subscription: {
+          tier: 'FREE',
+          status: 'ACTIVE',
+          cancelAtPeriodEnd: false,
+          currentPeriodEnd: null,
+        },
       });
       mockPrisma.user.update.mockResolvedValueOnce({
         id: 'user-id',
         email: 'test@example.com',
         displayName: 'Jane Doe',
         avatarUrl: null,
-        subscription: { tier: 'FREE', status: 'ACTIVE' },
+        subscription: {
+          tier: 'FREE',
+          status: 'ACTIVE',
+          cancelAtPeriodEnd: false,
+          currentPeriodEnd: null,
+        },
       });
 
       const result = await service.updateDisplayName('sb-id', {
@@ -160,7 +170,12 @@ describe('UsersService', () => {
         email: 'test@example.com',
         displayName: 'Jane Doe',
         avatarUrl: null,
-        subscription: { tier: 'FREE', status: 'ACTIVE' },
+        subscription: {
+          tier: 'FREE',
+          status: 'ACTIVE',
+          cancelAtPeriodEnd: false,
+          currentPeriodEnd: null,
+        },
         notifications: { productUpdatesEnabled: true, weeklyTipsEnabled: false },
       });
     });
@@ -202,7 +217,12 @@ describe('UsersService', () => {
         email: 'test@example.com',
         displayName: null,
         avatarUrl: null,
-        subscription: { tier: 'FREE', status: 'ACTIVE' },
+        subscription: {
+          tier: 'FREE',
+          status: 'ACTIVE',
+          cancelAtPeriodEnd: false,
+          currentPeriodEnd: null,
+        },
       });
 
       const result = await service.getProfile('sb-id');
@@ -259,7 +279,12 @@ describe('UsersService', () => {
         email: 'test@example.com',
         displayName: null,
         avatarUrl: null,
-        subscription: { tier: 'FREE', status: 'ACTIVE' },
+        subscription: {
+          tier: 'FREE',
+          status: 'ACTIVE',
+          cancelAtPeriodEnd: false,
+          currentPeriodEnd: null,
+        },
       });
       mockPrisma.notification.upsert.mockResolvedValueOnce({
         productUpdatesEnabled: false,
@@ -338,7 +363,7 @@ describe('UsersService', () => {
     it('returns quotas and stored CV usage for the resolved tier', async () => {
       mockPrisma.user.findUnique.mockResolvedValueOnce({
         id: 'user-id',
-        subscription: { tier: 'BASIC' },
+        subscription: { tier: 'BASIC', status: 'ACTIVE' },
       });
       mockQuotaService.getQuotaStatus.mockResolvedValueOnce([
         {

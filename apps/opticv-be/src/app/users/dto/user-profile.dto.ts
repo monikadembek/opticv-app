@@ -7,6 +7,12 @@ class SubscriptionDto {
 
   @ApiProperty({ enum: ['ACTIVE', 'CANCELED', 'PAST_DUE', 'TRIALING'] })
   status!: SubscriptionStatus;
+
+  @ApiProperty()
+  cancelAtPeriodEnd!: boolean;
+
+  @ApiPropertyOptional({ nullable: true })
+  currentPeriodEnd!: string | null;
 }
 
 class NotificationPreferencesDto {

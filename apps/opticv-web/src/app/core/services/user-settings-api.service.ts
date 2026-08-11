@@ -54,4 +54,18 @@ export class UserSettingsApiService {
   deleteAccount(): Observable<void> {
     return this.http.delete<void>(`${environment.apiUrl}/users/me`);
   }
+
+  createCheckoutSession(tier: 'BASIC' | 'PRO'): Observable<{ url: string }> {
+    return this.http.post<{ url: string }>(
+      `${environment.apiUrl}/stripe/checkout-session`,
+      { tier },
+    );
+  }
+
+  createPortalSession(): Observable<{ url: string }> {
+    return this.http.post<{ url: string }>(
+      `${environment.apiUrl}/stripe/portal-session`,
+      {},
+    );
+  }
 }
