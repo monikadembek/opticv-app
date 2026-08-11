@@ -25,6 +25,7 @@ const STRIPE_STATUS_TO_SUBSCRIPTION_STATUS: Record<
 export class StripeService {
   private readonly logger = new Logger(StripeService.name);
   private readonly stripe: Stripe;
+  private readonly priceForTier: Record<'BASIC' | 'PRO', string>;
 
   constructor(
     private readonly config: ConfigService,
@@ -36,10 +37,7 @@ export class StripeService {
         apiVersion: '2026-07-29.dahlia',
       },
     );
-  }
-
-  private get priceForTier(): Record<'BASIC' | 'PRO', string> {
-    return {
+    this.priceForTier = {
       BASIC: this.config.getOrThrow<string>('stripe.priceBasic'),
       PRO: this.config.getOrThrow<string>('stripe.pricePro'),
     };
@@ -174,6 +172,10 @@ export class StripeService {
     }
 
     const item = subscription.items.data[0];
+    const stripeCustomerId =
+      typeof subscription.customer === 'string'
+        ? subscription.customer
+        : subscription.customer.id;
 
     await this.prisma.subscription.upsert({
       where: { userId },
@@ -181,7 +183,7 @@ export class StripeService {
         userId,
         ...(tier ? { tier } : {}),
         status: 'ACTIVE',
-        stripeCustomerId: subscription.customer as string,
+        stripeCustomerId,
         stripeSubscriptionId: subscription.id,
         stripePriceId: priceId ?? null,
         currentPeriodStart: item
@@ -194,7 +196,7 @@ export class StripeService {
       update: {
         ...(tier ? { tier } : {}),
         status: 'ACTIVE',
-        stripeCustomerId: subscription.customer as string,
+        stripeCustomerId,
         stripeSubscriptionId: subscription.id,
         stripePriceId: priceId ?? null,
         currentPeriodStart: item
@@ -209,7 +211,17 @@ export class StripeService {
 
   async handleSubscriptionUpdated(event: Stripe.Event): Promise<void> {
     const subscription = event.data.object as Stripe.Subscription;
-    const stripeCustomerId = subscription.customer as string;
+    const stripeCustomerId =
+      typeof subscription.customer === 'string'
+        ? subscription.customer
+        : subscription.customer?.id;
+
+    if (!stripeCustomerId) {
+      this.logger.warn(
+        `customer.subscription.updated: missing customer id (subscription ${subscription.id})`,
+      );
+      return;
+    }
 
     const existing = await this.prisma.subscription.findUnique({
       where: { stripeCustomerId },
@@ -348,7 +360,17 @@ export class StripeService {
 
   async handleSubscriptionDeleted(event: Stripe.Event): Promise<void> {
     const subscription = event.data.object as Stripe.Subscription;
-    const stripeCustomerId = subscription.customer as string;
+    const stripeCustomerId =
+      typeof subscription.customer === 'string'
+        ? subscription.customer
+        : subscription.customer?.id;
+
+    if (!stripeCustomerId) {
+      this.logger.warn(
+        `customer.subscription.deleted: missing customer id (subscription ${subscription.id})`,
+      );
+      return;
+    }
 
     const existing = await this.prisma.subscription.findUnique({
       where: { stripeCustomerId },
