@@ -9,6 +9,7 @@ import { createClient } from '@supabase/supabase-js';
 import { PrismaService } from '../prisma/prisma.service';
 import { R2Service } from '../storage/r2.service';
 import { QuotaService } from '../quota/quota.service';
+import { SubscriptionService } from '../subscription/subscription.service';
 import { UserModel } from '../../generated/prisma/models.js';
 import type {
   NotificationPreferences,
@@ -29,6 +30,7 @@ export class UsersService {
     private readonly r2: R2Service,
     private readonly config: ConfigService,
     private readonly quotaService: QuotaService,
+    private readonly subscriptionService: SubscriptionService,
   ) {}
 
   async upsertUser(data: {
@@ -44,7 +46,12 @@ export class UsersService {
 
       await tx.subscription.upsert({
         where: { userId: user.id },
-        create: { userId: user.id, tier: 'FREE', status: 'ACTIVE' },
+        create: {
+          userId: user.id,
+          tier: 'FREE',
+          status: 'ACTIVE',
+          ...this.subscriptionService.freeTierCycleFrom(),
+        },
         update: {},
       });
 
@@ -195,7 +202,15 @@ export class UsersService {
     }
 
     const tier = (user.subscription?.tier ?? 'FREE') as SubscriptionTier;
-    const quotas = await this.quotaService.getQuotaStatus(user.id, tier);
+    // Period rollover happens only via the daily FreeTierRenewalCron, not lazily here on read.
+    const periodStart = user.subscription?.currentPeriodStart ?? new Date();
+    const periodEnd = user.subscription?.currentPeriodEnd ?? new Date();
+    const quotas = await this.quotaService.getQuotaStatus(
+      user.id,
+      tier,
+      periodStart,
+      periodEnd,
+    );
     const maxStoredCvs = TIER_LIMITS[tier].maxStoredCvs;
     const storedCvsUsed = await this.prisma.cvDocument.count({
       where: { userId: user.id, isActive: true },

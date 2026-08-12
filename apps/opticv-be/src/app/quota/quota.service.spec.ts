@@ -20,6 +20,9 @@ const uniqueConstraintError = () =>
     clientVersion: 'test',
   });
 
+const PERIOD_START = new Date('2026-03-17T00:00:00.000Z');
+const PERIOD_END = new Date('2026-04-17T00:00:00.000Z');
+
 describe('QuotaService', () => {
   let service: QuotaService;
 
@@ -37,7 +40,13 @@ describe('QuotaService', () => {
   describe('checkAndConsume', () => {
     it('throws FEATURE_NOT_AVAILABLE when the tier limit is 0', async () => {
       await expect(
-        service.checkAndConsume('user-1', 'LINKEDIN', 'FREE'),
+        service.checkAndConsume(
+          'user-1',
+          'LINKEDIN',
+          'FREE',
+          PERIOD_START,
+          PERIOD_END,
+        ),
       ).rejects.toThrow(ForbiddenException);
 
       expect(mockPrisma.usageQuota.upsert).not.toHaveBeenCalled();
@@ -48,7 +57,13 @@ describe('QuotaService', () => {
       mockPrisma.usageQuota.updateMany.mockResolvedValue({ count: 1 });
 
       await expect(
-        service.checkAndConsume('user-1', 'CV_OPTIMIZATION', 'FREE'),
+        service.checkAndConsume(
+          'user-1',
+          'CV_OPTIMIZATION',
+          'FREE',
+          PERIOD_START,
+          PERIOD_END,
+        ),
       ).resolves.toBeUndefined();
 
       expect(mockPrisma.usageQuota.updateMany).toHaveBeenCalledWith(
@@ -66,7 +81,13 @@ describe('QuotaService', () => {
       mockPrisma.usageQuota.updateMany.mockResolvedValue({ count: 1 });
 
       await expect(
-        service.checkAndConsume('user-1', 'CV_OPTIMIZATION', 'FREE'),
+        service.checkAndConsume(
+          'user-1',
+          'CV_OPTIMIZATION',
+          'FREE',
+          PERIOD_START,
+          PERIOD_END,
+        ),
       ).resolves.toBeUndefined();
 
       expect(mockPrisma.$transaction).toHaveBeenCalledTimes(2);
@@ -86,7 +107,13 @@ describe('QuotaService', () => {
       mockPrisma.usageQuota.upsert.mockRejectedValue(otherError);
 
       await expect(
-        service.checkAndConsume('user-1', 'CV_OPTIMIZATION', 'FREE'),
+        service.checkAndConsume(
+          'user-1',
+          'CV_OPTIMIZATION',
+          'FREE',
+          PERIOD_START,
+          PERIOD_END,
+        ),
       ).rejects.toThrow(otherError);
 
       expect(mockPrisma.usageQuota.findUniqueOrThrow).not.toHaveBeenCalled();
@@ -97,29 +124,62 @@ describe('QuotaService', () => {
       mockPrisma.usageQuota.updateMany.mockResolvedValue({ count: 0 });
 
       await expect(
-        service.checkAndConsume('user-1', 'CV_OPTIMIZATION', 'FREE'),
+        service.checkAndConsume(
+          'user-1',
+          'CV_OPTIMIZATION',
+          'FREE',
+          PERIOD_START,
+          PERIOD_END,
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('uses the current calendar month as periodStart', async () => {
+    it('passes the given periodStart through verbatim without recomputing it', async () => {
       mockPrisma.usageQuota.upsert.mockResolvedValue({ id: 'row-1' });
       mockPrisma.usageQuota.updateMany.mockResolvedValue({ count: 1 });
 
-      await service.checkAndConsume('user-1', 'CV_OPTIMIZATION', 'FREE');
+      await service.checkAndConsume(
+        'user-1',
+        'CV_OPTIMIZATION',
+        'FREE',
+        PERIOD_START,
+        PERIOD_END,
+      );
 
       const upsertArg = mockPrisma.usageQuota.upsert.mock.calls[0][0];
-      const periodStart: Date = upsertArg.create.periodStart;
-      const now = new Date();
-      expect(periodStart.getUTCFullYear()).toBe(now.getUTCFullYear());
-      expect(periodStart.getUTCMonth()).toBe(now.getUTCMonth());
-      expect(periodStart.getUTCDate()).toBe(1);
+      expect(upsertArg.create.periodStart).toBe(PERIOD_START);
+    });
+
+    it('sets resetsAt to the given periodEnd on quota errors', async () => {
+      mockPrisma.usageQuota.upsert.mockResolvedValue({ id: 'row-1' });
+      mockPrisma.usageQuota.updateMany.mockResolvedValue({ count: 0 });
+
+      await expect(
+        service.checkAndConsume(
+          'user-1',
+          'CV_OPTIMIZATION',
+          'FREE',
+          PERIOD_START,
+          PERIOD_END,
+        ),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({
+          resetsAt: PERIOD_END.toISOString(),
+        }),
+      });
     });
 
     it('does not count usage from a previous period toward the current limit', async () => {
       mockPrisma.usageQuota.upsert.mockResolvedValue({ id: 'row-current' });
       mockPrisma.usageQuota.updateMany.mockResolvedValue({ count: 1 });
 
-      await service.checkAndConsume('user-1', 'CV_OPTIMIZATION', 'FREE');
+      await service.checkAndConsume(
+        'user-1',
+        'CV_OPTIMIZATION',
+        'FREE',
+        PERIOD_START,
+        PERIOD_END,
+      );
 
       const updateManyArg = mockPrisma.usageQuota.updateMany.mock.calls[0][0];
       expect(updateManyArg.where.id).toBe('row-current');
@@ -132,11 +192,21 @@ describe('QuotaService', () => {
         { feature: 'CV_OPTIMIZATION', count: 1 },
       ]);
 
-      const result = await service.getQuotaStatus('user-1', 'FREE');
+      const result = await service.getQuotaStatus(
+        'user-1',
+        'FREE',
+        PERIOD_START,
+        PERIOD_END,
+      );
 
       const cvOpt = result.find((r) => r.feature === 'CV_OPTIMIZATION');
       expect(cvOpt).toEqual(
-        expect.objectContaining({ used: 1, limit: 1, remaining: 0 }),
+        expect.objectContaining({
+          used: 1,
+          limit: 1,
+          remaining: 0,
+          resetsAt: PERIOD_END.toISOString(),
+        }),
       );
 
       const linkedin = result.find((r) => r.feature === 'LINKEDIN');
@@ -153,7 +223,12 @@ describe('QuotaService', () => {
     it('reflects BASIC tier limits', async () => {
       mockPrisma.usageQuota.findMany.mockResolvedValue([]);
 
-      const result = await service.getQuotaStatus('user-1', 'BASIC');
+      const result = await service.getQuotaStatus(
+        'user-1',
+        'BASIC',
+        PERIOD_START,
+        PERIOD_END,
+      );
 
       const linkedin = result.find((r) => r.feature === 'LINKEDIN');
       expect(linkedin).toEqual(

@@ -38,6 +38,9 @@ const mockQuotaService = {
   checkAndConsume: jest.fn(),
 };
 
+const PERIOD_START = new Date('2026-03-17T00:00:00.000Z');
+const PERIOD_END = new Date('2026-04-17T00:00:00.000Z');
+
 const baseJobApplication = {
   id: 'app-1',
   userId: 'user-1',
@@ -55,7 +58,11 @@ describe('OptimizationService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    mockPrisma.subscription.findUnique.mockResolvedValue({ tier: 'FREE' });
+    mockPrisma.subscription.findUnique.mockResolvedValue({
+      tier: 'FREE',
+      currentPeriodStart: PERIOD_START,
+      currentPeriodEnd: PERIOD_END,
+    });
     mockQuotaService.checkAndConsume.mockResolvedValue(undefined);
 
     const module: TestingModule = await Test.createTestingModule({
@@ -150,6 +157,8 @@ describe('OptimizationService', () => {
         'user-1',
         'CV_OPTIMIZATION',
         'FREE',
+        PERIOD_START,
+        PERIOD_END,
       );
     });
 
@@ -294,6 +303,8 @@ describe('OptimizationService', () => {
           'user-1',
           feature,
           'FREE',
+          PERIOD_START,
+          PERIOD_END,
         );
       },
     );

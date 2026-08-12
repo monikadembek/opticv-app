@@ -1435,7 +1435,18 @@ Plan for dev-mode Stripe setup (no real bank account needed — Stripe test mode
 
 ---
 
-## 108. Bug - wrong date displayed for when subscription renews
+## 108. Sync billing periods to Stripe (and give FREE tier a real cycle)
+
+**status: in progress**
+
+**time: 12.08.2026**
+
+In settings page we display 'Plan renews on' date, currently it always displays first day of next month date. Now that we have integrated Stripe payments we should display the currentPeriodEnd date from Subscription table.
+
+The first day of the month logic for periodStart in usage_quotas table is incorrect now.
+PeriodStart should be the same as currentPeriodStart from Subscriptions table.
+
+The FREE tier should also have the currentPeriodStart and currentPeriodEnd updated as we also have limits for FREE tier.
 
 ---
 

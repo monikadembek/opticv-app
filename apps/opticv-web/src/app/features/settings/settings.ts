@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   OnInit,
@@ -115,6 +116,30 @@ export class Settings implements OnInit {
     INTERVIEW_PREP: 'Interview prep generations',
     LINKEDIN: 'LinkedIn content generations',
   };
+
+  readonly subscriptionRenewal = computed<{
+    tier: string;
+    verb: string;
+    date: string;
+  } | null>(() => {
+    const subscription = this.userProfile.value()?.subscription;
+    if (!subscription || !subscription.currentPeriodEnd) {
+      return null;
+    }
+
+    const verb =
+      subscription.tier === 'FREE'
+        ? 'resets on'
+        : subscription.cancelAtPeriodEnd
+          ? 'will end on'
+          : 'renews on';
+
+    return {
+      tier: subscription.tier,
+      verb,
+      date: subscription.currentPeriodEnd,
+    };
+  });
 
   constructor() {
     effect(() => {

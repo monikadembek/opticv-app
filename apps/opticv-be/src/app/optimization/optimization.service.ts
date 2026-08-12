@@ -39,12 +39,20 @@ export class OptimizationService {
     @InjectQueue('optimization') private readonly queue: Queue,
   ) {}
 
-  private async resolveTier(userId: string): Promise<SubscriptionTier> {
+  private async resolveTierAndPeriod(userId: string): Promise<{
+    tier: SubscriptionTier;
+    periodStart: Date;
+    periodEnd: Date;
+  }> {
     const subscription = await this.prisma.subscription.findUnique({
       where: { userId },
-      select: { tier: true },
+      select: { tier: true, currentPeriodStart: true, currentPeriodEnd: true },
     });
-    return (subscription?.tier ?? 'FREE') as SubscriptionTier;
+    return {
+      tier: (subscription?.tier ?? 'FREE') as SubscriptionTier,
+      periodStart: subscription?.currentPeriodStart ?? new Date(),
+      periodEnd: subscription?.currentPeriodEnd ?? new Date(),
+    };
   }
 
   async triggerOptimization(
@@ -54,8 +62,15 @@ export class OptimizationService {
     const { cvText, parsedSections, jobDescription, jobTitle } =
       await this.loadAndValidateApplication(jobApplicationId, userId);
 
-    const tier = await this.resolveTier(userId);
-    await this.quotaService.checkAndConsume(userId, 'CV_OPTIMIZATION', tier);
+    const { tier, periodStart, periodEnd } =
+      await this.resolveTierAndPeriod(userId);
+    await this.quotaService.checkAndConsume(
+      userId,
+      'CV_OPTIMIZATION',
+      tier,
+      periodStart,
+      periodEnd,
+    );
 
     const runId = randomUUID();
 
@@ -119,9 +134,16 @@ export class OptimizationService {
     const { cvText, parsedSections, jobDescription, jobTitle } =
       await this.loadAndValidateApplication(jobApplicationId, userId);
 
-    const tier = await this.resolveTier(userId);
+    const { tier, periodStart, periodEnd } =
+      await this.resolveTierAndPeriod(userId);
     const feature = PROMPT_TYPE_TO_FEATURE[promptType];
-    await this.quotaService.checkAndConsume(userId, feature, tier);
+    await this.quotaService.checkAndConsume(
+      userId,
+      feature,
+      tier,
+      periodStart,
+      periodEnd,
+    );
 
     await this.prisma.optimizationResult.upsert({
       where: {

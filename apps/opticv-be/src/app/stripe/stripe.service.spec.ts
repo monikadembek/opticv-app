@@ -3,6 +3,16 @@ import { ConfigService } from '@nestjs/config';
 import { ForbiddenException, InternalServerErrorException } from '@nestjs/common';
 import { StripeService } from './stripe.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { SubscriptionService } from '../subscription/subscription.service.js';
+
+const FREE_TIER_CYCLE = {
+  currentPeriodStart: new Date('2026-08-12T00:00:00.000Z'),
+  currentPeriodEnd: new Date('2026-09-12T00:00:00.000Z'),
+};
+
+const mockSubscriptionService = {
+  freeTierCycleFrom: jest.fn().mockReturnValue(FREE_TIER_CYCLE),
+};
 
 const mockPrisma = {
   subscription: {
@@ -47,12 +57,14 @@ describe('StripeService', () => {
     mockConfigService.getOrThrow.mockImplementation(
       (key: string) => CONFIG_VALUES[key],
     );
+    mockSubscriptionService.freeTierCycleFrom.mockReturnValue(FREE_TIER_CYCLE);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         StripeService,
         { provide: ConfigService, useValue: mockConfigService },
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: SubscriptionService, useValue: mockSubscriptionService },
       ],
     }).compile();
 
@@ -251,6 +263,7 @@ describe('StripeService', () => {
           stripeSubscriptionId: null,
           stripePriceId: null,
           cancelAtPeriodEnd: false,
+          ...FREE_TIER_CYCLE,
         },
       });
     });

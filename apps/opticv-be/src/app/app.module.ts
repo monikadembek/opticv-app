@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { configuration } from '../../config/configuration';
@@ -15,6 +16,7 @@ import { CvModule } from './cv/cv.module';
 import { JobApplicationModule } from './job-application/job-application.module';
 import { OptimizationModule } from './optimization/optimization.module';
 import { StripeModule } from './stripe/stripe.module';
+import { SubscriptionModule } from './subscription/subscription.module';
 import { ApiThrottlerGuard } from './throttler/api-throttler.guard';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { APP_FILTER } from '@nestjs/core';
@@ -73,6 +75,7 @@ import { SentryGlobalFilter } from '@sentry/nestjs/setup';
         ],
       }),
     }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     UsersModule,
     AuthModule,
@@ -80,6 +83,7 @@ import { SentryGlobalFilter } from '@sentry/nestjs/setup';
     JobApplicationModule,
     OptimizationModule,
     StripeModule,
+    SubscriptionModule,
   ],
   controllers: [AppController],
   providers: [

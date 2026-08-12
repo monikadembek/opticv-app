@@ -5,8 +5,14 @@ import { UsersService } from './users.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { R2Service } from '../storage/r2.service';
 import { QuotaService } from '../quota/quota.service';
+import { SubscriptionService } from '../subscription/subscription.service';
 
 const mockUser = { id: 'user-id', supabaseId: 'sb-id', email: 'test@example.com' };
+
+const FREE_TIER_CYCLE = {
+  currentPeriodStart: new Date('2026-08-12T00:00:00.000Z'),
+  currentPeriodEnd: new Date('2026-09-12T00:00:00.000Z'),
+};
 
 const mockTx = {
   user: {
@@ -45,6 +51,10 @@ const mockQuotaService = {
   getQuotaStatus: jest.fn().mockResolvedValue([]),
 };
 
+const mockSubscriptionService = {
+  freeTierCycleFrom: jest.fn().mockReturnValue(FREE_TIER_CYCLE),
+};
+
 describe('UsersService', () => {
   let service: UsersService;
 
@@ -52,6 +62,7 @@ describe('UsersService', () => {
     jest.clearAllMocks();
     mockPrisma.cvDocument.count.mockResolvedValue(0);
     mockQuotaService.getQuotaStatus.mockResolvedValue([]);
+    mockSubscriptionService.freeTierCycleFrom.mockReturnValue(FREE_TIER_CYCLE);
     mockPrisma.notification.upsert.mockResolvedValue({
       productUpdatesEnabled: true,
       weeklyTipsEnabled: false,
@@ -63,6 +74,7 @@ describe('UsersService', () => {
         { provide: R2Service, useValue: mockR2 },
         { provide: ConfigService, useValue: mockConfig },
         { provide: QuotaService, useValue: mockQuotaService },
+        { provide: SubscriptionService, useValue: mockSubscriptionService },
       ],
     }).compile();
 
@@ -82,10 +94,25 @@ describe('UsersService', () => {
     });
     expect(mockTx.subscription.upsert).toHaveBeenCalledWith({
       where: { userId: 'user-id' },
-      create: { userId: 'user-id', tier: 'FREE', status: 'ACTIVE' },
+      create: {
+        userId: 'user-id',
+        tier: 'FREE',
+        status: 'ACTIVE',
+        ...FREE_TIER_CYCLE,
+      },
       update: {},
     });
     expect(result).toEqual(mockUser);
+  });
+
+  it('does not inject period fields into the update branch of the subscription upsert', async () => {
+    await service.upsertUser({
+      supabaseId: 'sb-id',
+      email: 'test@example.com',
+    });
+
+    const upsertArg = mockTx.subscription.upsert.mock.calls[0][0];
+    expect(upsertArg.update).toEqual({});
   });
 
   it('is idempotent when user already exists', async () => {
@@ -357,13 +384,20 @@ describe('UsersService', () => {
       expect(mockQuotaService.getQuotaStatus).toHaveBeenCalledWith(
         'user-id',
         'FREE',
+        expect.any(Date),
+        expect.any(Date),
       );
     });
 
     it('returns quotas and stored CV usage for the resolved tier', async () => {
       mockPrisma.user.findUnique.mockResolvedValueOnce({
         id: 'user-id',
-        subscription: { tier: 'BASIC', status: 'ACTIVE' },
+        subscription: {
+          tier: 'BASIC',
+          status: 'ACTIVE',
+          currentPeriodStart: FREE_TIER_CYCLE.currentPeriodStart,
+          currentPeriodEnd: FREE_TIER_CYCLE.currentPeriodEnd,
+        },
       });
       mockQuotaService.getQuotaStatus.mockResolvedValueOnce([
         {
@@ -381,6 +415,8 @@ describe('UsersService', () => {
       expect(mockQuotaService.getQuotaStatus).toHaveBeenCalledWith(
         'user-id',
         'BASIC',
+        FREE_TIER_CYCLE.currentPeriodStart,
+        FREE_TIER_CYCLE.currentPeriodEnd,
       );
       expect(result).toEqual({
         quotas: [
