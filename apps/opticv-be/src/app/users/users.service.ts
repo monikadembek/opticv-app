@@ -202,9 +202,8 @@ export class UsersService {
     }
 
     const tier = (user.subscription?.tier ?? 'FREE') as SubscriptionTier;
-    // Period rollover happens only via the daily FreeTierRenewalCron, not lazily here on read.
     const periodStart = user.subscription?.currentPeriodStart ?? new Date();
-    const periodEnd = user.subscription?.currentPeriodEnd ?? new Date();
+    const periodEnd = user.subscription?.currentPeriodEnd ?? null;
     const quotas = await this.quotaService.getQuotaStatus(
       user.id,
       tier,

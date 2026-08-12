@@ -1,3 +1,5 @@
+> **Superseded 2026-08-12**: this review evaluated the original cron-based rolling FREE cycle plan. FREE tier no longer renews — see `docs/sync-billing-periods-to-stripe.md` for the current, authoritative plan. Kept below as a historical record.
+
 ### Summary
 
 - Overall assessment: PASS

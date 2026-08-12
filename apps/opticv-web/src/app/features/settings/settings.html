@@ -194,7 +194,7 @@
       <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500">
         Usage this month
       </h2>
-      @if (usage.quotas.length > 0) {
+      @if (usage.quotas.length > 0 && usage.quotas[0].resetsAt) {
       <span class="text-sm text-gray-500">
         Resets {{ usage.quotas[0].resetsAt | date: 'mediumDate' }}
       </span>

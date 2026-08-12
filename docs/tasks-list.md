@@ -1446,7 +1446,7 @@ In settings page we display 'Plan renews on' date, currently it always displays 
 The first day of the month logic for periodStart in usage_quotas table is incorrect now.
 PeriodStart should be the same as currentPeriodStart from Subscriptions table.
 
-The FREE tier should also have the currentPeriodStart and currentPeriodEnd updated as we also have limits for FREE tier.
+The FREE tier should only allow to use the specified limits and after that it should show information to upgrade plan, it should not renew each month. The currentPeriodEnd should be null for Free plan.
 
 ---
 

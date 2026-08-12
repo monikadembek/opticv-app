@@ -1,5 +1,7 @@
 # Task Specification
 
+> **Superseded 2026-08-12**: FREE tier no longer renews — no cron, no rolling monthly cycle. It gets `currentPeriodStart = now()` / `currentPeriodEnd = null` once at signup (and again on downgrade from a paid tier), and stays that way until upgrade. See `docs/sync-billing-periods-to-stripe.md` for the current, authoritative plan. This spec is kept below as a historical record of what was originally reviewed and approved.
+
 ## Source
 
 Task 108 — Sync billing periods to Stripe (and give FREE tier a real cycle)

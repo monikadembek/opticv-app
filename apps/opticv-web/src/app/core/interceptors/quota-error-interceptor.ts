@@ -18,14 +18,20 @@ export const quotaErrorInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((error: unknown) => {
-      if (error instanceof HttpErrorResponse && isQuotaErrorPayload(error.error)) {
+      if (
+        error instanceof HttpErrorResponse &&
+        isQuotaErrorPayload(error.error)
+      ) {
         const payload = error.error;
 
         if (payload.code === 'QUOTA_EXCEEDED') {
+          const detail = payload.resetsAt
+            ? `You've used all your generations for this feature this month. Resets ${new Date(payload.resetsAt).toLocaleDateString()}. Upgrade your plan for a higher limit.`
+            : `You've used all your generations for this feature on the free plan. Upgrade your plan.`;
           messageService.add({
             severity: 'warn',
-            summary: 'Monthly limit reached',
-            detail: `You've used all your generations for this feature this month. Resets ${new Date(payload.resetsAt).toLocaleDateString()}. Upgrade your plan for a higher limit.`,
+            summary: 'Limit reached',
+            detail,
             life: 6000,
           });
         } else if (payload.code === 'FEATURE_NOT_AVAILABLE') {

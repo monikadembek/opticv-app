@@ -286,6 +286,22 @@ describe('Settings', () => {
       expect(text).toContain('Resets Aug 1, 2026');
     });
 
+    it('omits the "Resets" date when resetsAt is null (FREE tier never renews)', async () => {
+      const freeUsage: UsageStatus = {
+        quotas: usageStatus.quotas.map((q) => ({ ...q, resetsAt: null })),
+        storedCvs: { used: 4, limit: 10 },
+      };
+      await setup(
+        { value: mockProfile, hasValue: true },
+        { value: freeUsage, hasValue: true },
+      );
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+
+      const text = fixture.nativeElement.textContent as string;
+      expect(text).not.toContain('Resets');
+    });
+
     it('renders a progress bar for each quota row and the stored-CVs row', async () => {
       await setup(
         { value: mockProfile, hasValue: true },
@@ -700,26 +716,6 @@ describe('Settings', () => {
   // ─── subscription card ───────────────────────────────────────────────────
 
   describe('subscription card', () => {
-    it('renders "resets on" for a FREE tier user with a currentPeriodEnd', async () => {
-      await setup({
-        value: {
-          ...mockProfile,
-          subscription: {
-            tier: 'FREE',
-            status: 'ACTIVE',
-            cancelAtPeriodEnd: false,
-            currentPeriodEnd: '2026-08-01T00:00:00.000Z',
-          },
-        },
-        hasValue: true,
-      });
-      const fixture = TestBed.createComponent(Settings);
-      fixture.detectChanges();
-
-      const text = fixture.nativeElement.textContent as string;
-      expect(text).toContain('Your FREE plan resets on Aug 1, 2026');
-    });
-
     it('renders "will end on" for a paid tier user with cancelAtPeriodEnd true', async () => {
       await setup({
         value: {
@@ -760,7 +756,7 @@ describe('Settings', () => {
       expect(text).toContain('Your PRO plan renews on Aug 1, 2026');
     });
 
-    it('omits the renewal sentence when currentPeriodEnd is null', async () => {
+    it('omits the renewal sentence for a FREE tier user (currentPeriodEnd is always null)', async () => {
       await setup({ value: mockProfile, hasValue: true });
       const fixture = TestBed.createComponent(Settings);
       fixture.detectChanges();

@@ -5,7 +5,6 @@ import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
-import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { configuration } from '../../config/configuration';
@@ -75,7 +74,6 @@ import { SentryGlobalFilter } from '@sentry/nestjs/setup';
         ],
       }),
     }),
-    ScheduleModule.forRoot(),
     PrismaModule,
     UsersModule,
     AuthModule,

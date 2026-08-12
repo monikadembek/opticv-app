@@ -11,6 +11,11 @@ const mockUser = { id: 'user-id', supabaseId: 'sb-id', email: 'test@example.com'
 
 const FREE_TIER_CYCLE = {
   currentPeriodStart: new Date('2026-08-12T00:00:00.000Z'),
+  currentPeriodEnd: null,
+};
+
+const PAID_TIER_CYCLE = {
+  currentPeriodStart: new Date('2026-08-12T00:00:00.000Z'),
   currentPeriodEnd: new Date('2026-09-12T00:00:00.000Z'),
 };
 
@@ -385,7 +390,28 @@ describe('UsersService', () => {
         'user-id',
         'FREE',
         expect.any(Date),
-        expect.any(Date),
+        null,
+      );
+    });
+
+    it('passes a null periodEnd through for a FREE tier subscription (never renews)', async () => {
+      mockPrisma.user.findUnique.mockResolvedValueOnce({
+        id: 'user-id',
+        subscription: {
+          tier: 'FREE',
+          status: 'ACTIVE',
+          currentPeriodStart: FREE_TIER_CYCLE.currentPeriodStart,
+          currentPeriodEnd: FREE_TIER_CYCLE.currentPeriodEnd,
+        },
+      });
+
+      await service.getUsageStatus('sb-id');
+
+      expect(mockQuotaService.getQuotaStatus).toHaveBeenCalledWith(
+        'user-id',
+        'FREE',
+        FREE_TIER_CYCLE.currentPeriodStart,
+        null,
       );
     });
 
@@ -395,8 +421,8 @@ describe('UsersService', () => {
         subscription: {
           tier: 'BASIC',
           status: 'ACTIVE',
-          currentPeriodStart: FREE_TIER_CYCLE.currentPeriodStart,
-          currentPeriodEnd: FREE_TIER_CYCLE.currentPeriodEnd,
+          currentPeriodStart: PAID_TIER_CYCLE.currentPeriodStart,
+          currentPeriodEnd: PAID_TIER_CYCLE.currentPeriodEnd,
         },
       });
       mockQuotaService.getQuotaStatus.mockResolvedValueOnce([
@@ -415,8 +441,8 @@ describe('UsersService', () => {
       expect(mockQuotaService.getQuotaStatus).toHaveBeenCalledWith(
         'user-id',
         'BASIC',
-        FREE_TIER_CYCLE.currentPeriodStart,
-        FREE_TIER_CYCLE.currentPeriodEnd,
+        PAID_TIER_CYCLE.currentPeriodStart,
+        PAID_TIER_CYCLE.currentPeriodEnd,
       );
       expect(result).toEqual({
         quotas: [

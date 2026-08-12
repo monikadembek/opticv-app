@@ -127,12 +127,7 @@ export class Settings implements OnInit {
       return null;
     }
 
-    const verb =
-      subscription.tier === 'FREE'
-        ? 'resets on'
-        : subscription.cancelAtPeriodEnd
-          ? 'will end on'
-          : 'renews on';
+    const verb = subscription.cancelAtPeriodEnd ? 'will end on' : 'renews on';
 
     return {
       tier: subscription.tier,

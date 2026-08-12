@@ -42,7 +42,7 @@ export class OptimizationService {
   private async resolveTierAndPeriod(userId: string): Promise<{
     tier: SubscriptionTier;
     periodStart: Date;
-    periodEnd: Date;
+    periodEnd: Date | null;
   }> {
     const subscription = await this.prisma.subscription.findUnique({
       where: { userId },
@@ -51,7 +51,7 @@ export class OptimizationService {
     return {
       tier: (subscription?.tier ?? 'FREE') as SubscriptionTier,
       periodStart: subscription?.currentPeriodStart ?? new Date(),
-      periodEnd: subscription?.currentPeriodEnd ?? new Date(),
+      periodEnd: subscription?.currentPeriodEnd ?? null,
     };
   }
 

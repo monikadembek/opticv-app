@@ -15,10 +15,10 @@ export class QuotaService {
     feature: LimitedFeature,
     tier: SubscriptionTier,
     periodStart: Date,
-    periodEnd: Date,
+    periodEnd: Date | null,
   ): Promise<void> {
     const limit = TIER_LIMITS[tier].features[feature];
-    const resetsAt = periodEnd.toISOString();
+    const resetsAt = periodEnd?.toISOString() ?? null;
 
     if (limit === 0) {
       throw new ForbiddenException({
@@ -73,9 +73,9 @@ export class QuotaService {
     userId: string,
     tier: SubscriptionTier,
     periodStart: Date,
-    periodEnd: Date,
+    periodEnd: Date | null,
   ): Promise<QuotaStatus[]> {
-    const resetsAt = periodEnd.toISOString();
+    const resetsAt = periodEnd?.toISOString() ?? null;
 
     const rows = await this.prisma.usageQuota.findMany({
       where: { userId, periodStart },

@@ -7,7 +7,7 @@ import { SubscriptionService } from '../subscription/subscription.service.js';
 
 const FREE_TIER_CYCLE = {
   currentPeriodStart: new Date('2026-08-12T00:00:00.000Z'),
-  currentPeriodEnd: new Date('2026-09-12T00:00:00.000Z'),
+  currentPeriodEnd: null,
 };
 
 const mockSubscriptionService = {

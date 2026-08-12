@@ -184,6 +184,23 @@ describe('QuotaService', () => {
       const updateManyArg = mockPrisma.usageQuota.updateMany.mock.calls[0][0];
       expect(updateManyArg.where.id).toBe('row-current');
     });
+
+    it('sets resetsAt to null when periodEnd is null (FREE tier never renews)', async () => {
+      mockPrisma.usageQuota.upsert.mockResolvedValue({ id: 'row-1' });
+      mockPrisma.usageQuota.updateMany.mockResolvedValue({ count: 0 });
+
+      await expect(
+        service.checkAndConsume(
+          'user-1',
+          'CV_OPTIMIZATION',
+          'FREE',
+          PERIOD_START,
+          null,
+        ),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ resetsAt: null }),
+      });
+    });
   });
 
   describe('getQuotaStatus', () => {
@@ -234,6 +251,20 @@ describe('QuotaService', () => {
       expect(linkedin).toEqual(
         expect.objectContaining({ used: 0, limit: 10, remaining: 10 }),
       );
+    });
+
+    it('returns resetsAt: null when periodEnd is null (FREE tier never renews)', async () => {
+      mockPrisma.usageQuota.findMany.mockResolvedValue([]);
+
+      const result = await service.getQuotaStatus(
+        'user-1',
+        'FREE',
+        PERIOD_START,
+        null,
+      );
+
+      const cvOpt = result.find((r) => r.feature === 'CV_OPTIMIZATION');
+      expect(cvOpt?.resetsAt).toBeNull();
     });
   });
 });
