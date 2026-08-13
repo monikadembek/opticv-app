@@ -10,25 +10,16 @@ const UNIQUE_CONSTRAINT_VIOLATION = 'P2002';
 export class QuotaService {
   constructor(private readonly prisma: PrismaService) {}
 
-  resolvePeriodStart(): Date {
-    const now = new Date();
-    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-  }
-
-  private resolveNextPeriodStart(periodStart: Date): Date {
-    return new Date(
-      Date.UTC(periodStart.getUTCFullYear(), periodStart.getUTCMonth() + 1, 1),
-    );
-  }
-
   async checkAndConsume(
     userId: string,
     feature: LimitedFeature,
     tier: SubscriptionTier,
+    periodStart: Date,
+    periodEnd: Date | null,
+    cancelAtPeriodEnd: boolean,
   ): Promise<void> {
     const limit = TIER_LIMITS[tier].features[feature];
-    const periodStart = this.resolvePeriodStart();
-    const resetsAt = this.resolveNextPeriodStart(periodStart).toISOString();
+    const resetsAt = periodEnd?.toISOString() ?? null;
 
     if (limit === 0) {
       throw new ForbiddenException({
@@ -36,6 +27,7 @@ export class QuotaService {
         feature,
         limit,
         resetsAt,
+        cancelAtPeriodEnd,
       });
     }
 
@@ -75,6 +67,7 @@ export class QuotaService {
         feature,
         limit,
         resetsAt,
+        cancelAtPeriodEnd,
       });
     }
   }
@@ -82,9 +75,10 @@ export class QuotaService {
   async getQuotaStatus(
     userId: string,
     tier: SubscriptionTier,
+    periodStart: Date,
+    periodEnd: Date | null,
   ): Promise<QuotaStatus[]> {
-    const periodStart = this.resolvePeriodStart();
-    const resetsAt = this.resolveNextPeriodStart(periodStart).toISOString();
+    const resetsAt = periodEnd?.toISOString() ?? null;
 
     const rows = await this.prisma.usageQuota.findMany({
       where: { userId, periodStart },

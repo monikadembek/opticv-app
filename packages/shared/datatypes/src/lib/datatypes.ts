@@ -124,7 +124,7 @@ export type QuotaStatus = {
   used: number;
   limit: number;
   remaining: number;
-  resetsAt: string;
+  resetsAt: string | null;
 };
 
 export type UsageStatus = {
@@ -137,7 +137,8 @@ export type QuotaErrorPayload =
       code: 'QUOTA_EXCEEDED' | 'FEATURE_NOT_AVAILABLE';
       feature: LimitedFeature;
       limit: number;
-      resetsAt: string;
+      resetsAt: string | null;
+      cancelAtPeriodEnd: boolean;
     }
   | { code: 'CV_LIMIT_EXCEEDED'; limit: number };
 

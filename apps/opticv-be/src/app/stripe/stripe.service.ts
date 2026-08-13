@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import type { SubscriptionStatus } from '@opticv/datatypes';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { SubscriptionService } from '../subscription/subscription.service.js';
 
 const STRIPE_STATUS_TO_SUBSCRIPTION_STATUS: Record<
   string,
@@ -30,6 +31,7 @@ export class StripeService {
   constructor(
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly subscriptionService: SubscriptionService,
   ) {
     this.stripe = new Stripe(
       this.config.getOrThrow<string>('stripe.secretKey'),
@@ -265,7 +267,8 @@ export class StripeService {
         currentPeriodEnd: item
           ? new Date(item.current_period_end * 1000)
           : existing.currentPeriodEnd,
-        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        cancelAtPeriodEnd:
+          subscription.cancel_at_period_end || subscription.cancel_at != null,
       },
     });
   }
@@ -391,6 +394,7 @@ export class StripeService {
         stripeSubscriptionId: null,
         stripePriceId: null,
         cancelAtPeriodEnd: false,
+        ...this.subscriptionService.freeTierCycleFrom(),
       },
     });
   }

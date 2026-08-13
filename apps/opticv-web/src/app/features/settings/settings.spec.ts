@@ -286,6 +286,46 @@ describe('Settings', () => {
       expect(text).toContain('Resets Aug 1, 2026');
     });
 
+    it('omits the "Resets" date when resetsAt is null (FREE tier never renews)', async () => {
+      const freeUsage: UsageStatus = {
+        quotas: usageStatus.quotas.map((q) => ({ ...q, resetsAt: null })),
+        storedCvs: { used: 4, limit: 10 },
+      };
+      await setup(
+        { value: mockProfile, hasValue: true },
+        { value: freeUsage, hasValue: true },
+      );
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+
+      const text = fixture.nativeElement.textContent as string;
+      expect(text).not.toContain('Resets');
+    });
+
+    it('shows "Access ends" instead of "Resets" when the subscription is canceling at period end', async () => {
+      await setup(
+        {
+          value: {
+            ...mockProfile,
+            subscription: {
+              tier: 'PRO',
+              status: 'ACTIVE',
+              cancelAtPeriodEnd: true,
+              currentPeriodEnd: '2026-08-01T00:00:00.000Z',
+            },
+          },
+          hasValue: true,
+        },
+        { value: usageStatus, hasValue: true },
+      );
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+
+      const text = fixture.nativeElement.textContent as string;
+      expect(text).toContain('Access ends Aug 1, 2026');
+      expect(text).not.toContain('Resets Aug 1, 2026');
+    });
+
     it('renders a progress bar for each quota row and the stored-CVs row', async () => {
       await setup(
         { value: mockProfile, hasValue: true },
@@ -700,35 +740,39 @@ describe('Settings', () => {
   // ─── subscription card ───────────────────────────────────────────────────
 
   describe('subscription card', () => {
-    const usageStatus: UsageStatus = {
-      quotas: [
-        {
-          feature: 'CV_OPTIMIZATION',
-          used: 3,
-          limit: 10,
-          remaining: 7,
-          resetsAt: '2026-08-01T00:00:00.000Z',
-        },
-      ],
-      storedCvs: { used: 4, limit: 10 },
-    };
-
-    it('renders the renewal sentence when usage data is available', async () => {
-      await setup(
-        {
-          value: {
-            ...mockProfile,
-            subscription: {
-              tier: 'PRO',
-              status: 'ACTIVE',
-              cancelAtPeriodEnd: false,
-              currentPeriodEnd: null,
-            },
+    it('renders "will end on" for a paid tier user with cancelAtPeriodEnd true', async () => {
+      await setup({
+        value: {
+          ...mockProfile,
+          subscription: {
+            tier: 'PRO',
+            status: 'ACTIVE',
+            cancelAtPeriodEnd: true,
+            currentPeriodEnd: '2026-08-01T00:00:00.000Z',
           },
-          hasValue: true,
         },
-        { value: usageStatus, hasValue: true },
-      );
+        hasValue: true,
+      });
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+
+      const text = fixture.nativeElement.textContent as string;
+      expect(text).toContain('Your PRO plan will end on Aug 1, 2026');
+    });
+
+    it('renders "renews on" for a paid tier user with cancelAtPeriodEnd false', async () => {
+      await setup({
+        value: {
+          ...mockProfile,
+          subscription: {
+            tier: 'PRO',
+            status: 'ACTIVE',
+            cancelAtPeriodEnd: false,
+            currentPeriodEnd: '2026-08-01T00:00:00.000Z',
+          },
+        },
+        hasValue: true,
+      });
       const fixture = TestBed.createComponent(Settings);
       fixture.detectChanges();
 
@@ -736,13 +780,15 @@ describe('Settings', () => {
       expect(text).toContain('Your PRO plan renews on Aug 1, 2026');
     });
 
-    it('omits the renewal sentence when usage data is unavailable', async () => {
-      await setup({ value: mockProfile, hasValue: true }, { hasValue: false });
+    it('omits the renewal sentence for a FREE tier user (currentPeriodEnd is always null)', async () => {
+      await setup({ value: mockProfile, hasValue: true });
       const fixture = TestBed.createComponent(Settings);
       fixture.detectChanges();
 
       const text = fixture.nativeElement.textContent as string;
+      expect(text).not.toContain('plan resets on');
       expect(text).not.toContain('plan renews on');
+      expect(text).not.toContain('plan will end on');
     });
 
     it('shows upgrade buttons (not Manage billing) for a FREE tier user', async () => {
@@ -793,10 +839,7 @@ describe('Settings', () => {
     });
 
     it('does not render "Visa ending" text', async () => {
-      await setup(
-        { value: mockProfile, hasValue: true },
-        { value: usageStatus, hasValue: true },
-      );
+      await setup({ value: mockProfile, hasValue: true });
       const fixture = TestBed.createComponent(Settings);
       fixture.detectChanges();
 
