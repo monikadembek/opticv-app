@@ -58,17 +58,17 @@ The original plan added a daily `FreeTierRenewalCron` (`@nestjs/schedule`, `EVER
 `apps/opticv-be/src/app/quota/quota.service.ts`: delete `resolvePeriodStart()` and `resolveNextPeriodStart()`. Change signatures to take explicit `periodStart`/`periodEnd` params, with `periodEnd` nullable (FREE tier has no end date):
 
 ```ts
-checkAndConsume(userId: string, feature: LimitedFeature, tier: SubscriptionTier, periodStart: Date, periodEnd: Date | null): Promise<void>
+checkAndConsume(userId: string, feature: LimitedFeature, tier: SubscriptionTier, periodStart: Date, periodEnd: Date | null, cancelAtPeriodEnd: boolean): Promise<void>
 getQuotaStatus(userId: string, tier: SubscriptionTier, periodStart: Date, periodEnd: Date | null): Promise<QuotaStatus[]>
 ```
 
-`resetsAt` (used in both `QuotaStatus` and the `ForbiddenException` payloads for `FEATURE_NOT_AVAILABLE`/`QUOTA_EXCEEDED`) becomes `periodEnd?.toISOString() ?? null`. **Shared-type change needed** (unlike the original plan): `QuotaStatus.resetsAt` and `QuotaErrorPayload.resetsAt` in `packages/shared/datatypes/src/lib/datatypes.ts` were widened from `string` to `string | null`.
+`resetsAt` (used in both `QuotaStatus` and the `ForbiddenException` payloads for `FEATURE_NOT_AVAILABLE`/`QUOTA_EXCEEDED`) becomes `periodEnd?.toISOString() ?? null`. `checkAndConsume` additionally takes a `cancelAtPeriodEnd: boolean` param, which it passes straight through into the `ForbiddenException` payload — needed so the frontend quota-error toast can distinguish "will renew" from "won't renew" when a limit is hit (see Section 5). **Shared-type changes needed** (unlike the original plan): in `packages/shared/datatypes/src/lib/datatypes.ts`, `QuotaStatus.resetsAt` and `QuotaErrorPayload.resetsAt` were widened from `string` to `string | null`, and `QuotaErrorPayload` (the `QUOTA_EXCEEDED`/`FEATURE_NOT_AVAILABLE` variant) gained a new `cancelAtPeriodEnd: boolean` field.
 
 ### 5. Ripple to callers
 
-- **`optimization.service.ts`**: `resolveTier` (lines 42-48) → renamed `resolveTierAndPeriod`, additionally `select: { tier: true, currentPeriodStart: true, currentPeriodEnd: true }` and returns `{ tier, periodStart, periodEnd }` where `periodEnd: Date | null` (falls back to `new Date()` for `periodStart` only if a subscription row is somehow missing — defensive; `periodEnd` falls back to `null`, not `new Date()`, since `null` is now a valid, expected state). Both call sites pass `periodStart`/`periodEnd` into `checkAndConsume`.
+- **`optimization.service.ts`**: `resolveTier` (lines 42-48) → renamed `resolveTierAndPeriod`, additionally `select: { tier: true, currentPeriodStart: true, currentPeriodEnd: true, cancelAtPeriodEnd: true }` and returns `{ tier, periodStart, periodEnd, cancelAtPeriodEnd }` where `periodEnd: Date | null` (falls back to `new Date()` for `periodStart` only if a subscription row is somehow missing — defensive; `periodEnd` falls back to `null`, not `new Date()`, since `null` is now a valid, expected state; `cancelAtPeriodEnd` falls back to `false`). Both call sites (`triggerOptimization`, `triggerSingleJob`) pass `periodStart`/`periodEnd`/`cancelAtPeriodEnd` into `checkAndConsume`.
 - **`users.service.ts`**: `getUsageStatus` (lines 187-208) already does `include: { subscription: true }` — reads `currentPeriodStart`/`currentPeriodEnd` off the same object (no extra query) and passes into `getQuotaStatus`, with `periodEnd` defaulting to `null` rather than `new Date()`.
-- **Frontend quota-error toast** (`quota-error-interceptor.ts`): the `QUOTA_EXCEEDED` message previously always formatted `resetsAt` as a date; fixed to show an upgrade-focused message with no date when `resetsAt` is `null` (previously would have rendered a bogus epoch date like "1/1/1970").
+- **Frontend quota-error toast** (`quota-error-interceptor.ts`): the `QUOTA_EXCEEDED` message previously always formatted `resetsAt` as a date; now branches three ways off the payload's `resetsAt`/`cancelAtPeriodEnd`: a paid subscription that's canceling shows "your plan won't renew, access ends {date}"; a paid/FREE subscription with a real `resetsAt` shows "resets {date}, upgrade for a higher limit"; and a `null` `resetsAt` (FREE, which never renews) shows an upgrade-only message with no date (previously would have rendered a bogus epoch date like "1/1/1970"). Covered by `quota-error-interceptor.spec.ts`.
 
 ### 6. Frontend — `apps/opticv-web/src/app/features/settings/`
 
@@ -94,13 +94,14 @@ readonly subscriptionRenewal = computed<{ tier: string; verb: string; date: stri
 
 ### 7. Tests
 
-- `quota.service.spec.ts` — every `checkAndConsume`/`getQuotaStatus` call site takes 2 new `Date | null` args; includes cases asserting `resetsAt: null` when `periodEnd` is null.
-- `optimization.service.spec.ts` — extended `subscription.findUnique` mock to include period dates; `checkAndConsume` call assertions include the new args.
+- `quota.service.spec.ts` — every `checkAndConsume` call site takes 3 new args (`periodStart`, `periodEnd`, `cancelAtPeriodEnd`), every `getQuotaStatus` call site takes 2 (`periodStart`, `periodEnd`); includes cases asserting `resetsAt: null` when `periodEnd` is null and `cancelAtPeriodEnd` propagating into both the `QUOTA_EXCEEDED` and `FEATURE_NOT_AVAILABLE` payloads.
+- `optimization.service.spec.ts` — extended `subscription.findUnique` mock to include period dates and `cancelAtPeriodEnd`; `checkAndConsume` call assertions include all three new args, plus a case asserting `cancelAtPeriodEnd: true` is passed through when the subscription is canceling.
 - `users.service.spec.ts` — `upsertUser` create-payload assertion includes `currentPeriodStart`/`currentPeriodEnd: null`; `getUsageStatus` tests cover both a FREE subscription (periodEnd passed through as `null`) and a paid subscription (real periodEnd passed through).
 - `stripe.service.spec.ts` — `handleSubscriptionDeleted` test asserts `currentPeriodEnd: null` is set alongside the fresh `currentPeriodStart`.
 - `subscription.service.spec.ts` — covers `freeTierCycleFrom` returning `{ currentPeriodStart: now, currentPeriodEnd: null }`, including the default-param case.
 - `free-tier-renewal.cron.spec.ts` — **deleted**, along with the cron itself.
-- `settings.spec.ts` — renewal-sentence tests keyed off `userProfile`/`currentPeriodEnd`: "will end on" and "renews on" cases for paid tiers, and a case confirming FREE renders no sentence at all (no more FREE "resets on" case, since that state is unreachable). Added a case for the usage card's "Resets" line being hidden when `resetsAt` is null.
+- `settings.spec.ts` — renewal-sentence tests keyed off `userProfile`/`currentPeriodEnd`: "will end on" and "renews on" cases for paid tiers, and a case confirming FREE renders no sentence at all (no more FREE "resets on" case, since that state is unreachable). Added a case for the usage card's "Resets" line being hidden when `resetsAt` is null, and a case showing "Access ends" instead of "Resets" when canceling.
+- `quota-error-interceptor.spec.ts` — **new**. Covers all three `QUOTA_EXCEEDED` message branches (canceling with a date, active with a date, `null` resetsAt/upgrade-only), `FEATURE_NOT_AVAILABLE`, `CV_LIMIT_EXCEEDED`, non-quota-error passthrough, error re-throwing, and successful-response passthrough.
 
 ## Files
 
@@ -120,8 +121,8 @@ readonly subscriptionRenewal = computed<{ tier: string; verb: string; date: stri
 - `apps/opticv-be/src/app/app.module.ts` (`SubscriptionModule` added; `ScheduleModule.forRoot()` added then removed)
 - `apps/opticv-be/package.json` (`@nestjs/schedule` added then removed)
 - `apps/opticv-web/src/app/features/settings/settings.html`, `settings.ts` (+ spec)
-- `apps/opticv-web/src/app/core/interceptors/quota-error-interceptor.ts` (null-safe `resetsAt` handling)
-- `packages/shared/datatypes/src/lib/datatypes.ts` (`QuotaStatus.resetsAt`, `QuotaErrorPayload.resetsAt` widened to `string | null`)
+- `apps/opticv-web/src/app/core/interceptors/quota-error-interceptor.ts` (null-safe `resetsAt` handling, `cancelAtPeriodEnd` branch) (+ new spec)
+- `packages/shared/datatypes/src/lib/datatypes.ts` (`QuotaStatus.resetsAt`, `QuotaErrorPayload.resetsAt` widened to `string | null`; `QuotaErrorPayload` gained `cancelAtPeriodEnd: boolean`)
 
 ## Verification
 

@@ -1435,26 +1435,39 @@ Plan for dev-mode Stripe setup (no real bank account needed — Stripe test mode
 
 ---
 
-## 108. Sync billing periods to Stripe (and give FREE tier a real cycle)
+## 108. Sync billing periods to Stripe, make FREE tier never renew
 
-**status: in progress**
+**status: done**
 
-**time: 12.08.2026**
+**time: 12.08.2026-13.08.2026**
 
 In settings page we display 'Plan renews on' date, currently it always displays first day of next month date. Now that we have integrated Stripe payments we should display the currentPeriodEnd date from Subscription table.
 
 The first day of the month logic for periodStart in usage_quotas table is incorrect now.
 PeriodStart should be the same as currentPeriodStart from Subscriptions table.
 
+CurrentPeriodEnd and CurrentPeriodStart should be synced with Stripe.
+
 The FREE tier should only allow to use the specified limits and after that it should show information to upgrade plan, it should not renew each month. The currentPeriodEnd should be null for Free plan.
+When user cancells subscription it goes to Free plan.
+
+Update resets at and cancells at labels on settings page.
 
 ---
 
-## 109. Handle PAST_DUE status in backend, frontend and Stripe dashboard
+## 109. Handle Stripe webhook in staging environment on Render
+
+**status: todo**
+
+**time: 13.08.2026**
 
 ---
 
-## 110. Handle Stripe webhook in staging environment on Render
+## 110. Handle PAST_DUE status in backend, frontend and Stripe dashboard
+
+**status: todo**
+
+**time: 13.08.2026**
 
 ---
 
