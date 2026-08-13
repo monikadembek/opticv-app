@@ -159,6 +159,30 @@ describe('OptimizationService', () => {
         'FREE',
         PERIOD_START,
         PERIOD_END,
+        false,
+      );
+    });
+
+    it('passes cancelAtPeriodEnd: true through to checkAndConsume when the subscription is canceling', async () => {
+      mockPrisma.subscription.findUnique.mockResolvedValue({
+        tier: 'BASIC',
+        currentPeriodStart: PERIOD_START,
+        currentPeriodEnd: PERIOD_END,
+        cancelAtPeriodEnd: true,
+      });
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+      mockPrisma.optimizationResult.upsert.mockResolvedValue({});
+      mockQueue.add.mockResolvedValue({});
+
+      await service.triggerOptimization('app-1', 'user-1');
+
+      expect(mockQuotaService.checkAndConsume).toHaveBeenCalledWith(
+        'user-1',
+        'CV_OPTIMIZATION',
+        'BASIC',
+        PERIOD_START,
+        PERIOD_END,
+        true,
       );
     });
 
@@ -305,6 +329,7 @@ describe('OptimizationService', () => {
           'FREE',
           PERIOD_START,
           PERIOD_END,
+          false,
         );
       },
     );

@@ -43,15 +43,22 @@ export class OptimizationService {
     tier: SubscriptionTier;
     periodStart: Date;
     periodEnd: Date | null;
+    cancelAtPeriodEnd: boolean;
   }> {
     const subscription = await this.prisma.subscription.findUnique({
       where: { userId },
-      select: { tier: true, currentPeriodStart: true, currentPeriodEnd: true },
+      select: {
+        tier: true,
+        currentPeriodStart: true,
+        currentPeriodEnd: true,
+        cancelAtPeriodEnd: true,
+      },
     });
     return {
       tier: (subscription?.tier ?? 'FREE') as SubscriptionTier,
       periodStart: subscription?.currentPeriodStart ?? new Date(),
       periodEnd: subscription?.currentPeriodEnd ?? null,
+      cancelAtPeriodEnd: subscription?.cancelAtPeriodEnd ?? false,
     };
   }
 
@@ -62,7 +69,7 @@ export class OptimizationService {
     const { cvText, parsedSections, jobDescription, jobTitle } =
       await this.loadAndValidateApplication(jobApplicationId, userId);
 
-    const { tier, periodStart, periodEnd } =
+    const { tier, periodStart, periodEnd, cancelAtPeriodEnd } =
       await this.resolveTierAndPeriod(userId);
     await this.quotaService.checkAndConsume(
       userId,
@@ -70,6 +77,7 @@ export class OptimizationService {
       tier,
       periodStart,
       periodEnd,
+      cancelAtPeriodEnd,
     );
 
     const runId = randomUUID();
@@ -134,7 +142,7 @@ export class OptimizationService {
     const { cvText, parsedSections, jobDescription, jobTitle } =
       await this.loadAndValidateApplication(jobApplicationId, userId);
 
-    const { tier, periodStart, periodEnd } =
+    const { tier, periodStart, periodEnd, cancelAtPeriodEnd } =
       await this.resolveTierAndPeriod(userId);
     const feature = PROMPT_TYPE_TO_FEATURE[promptType];
     await this.quotaService.checkAndConsume(
@@ -143,6 +151,7 @@ export class OptimizationService {
       tier,
       periodStart,
       periodEnd,
+      cancelAtPeriodEnd,
     );
 
     await this.prisma.optimizationResult.upsert({

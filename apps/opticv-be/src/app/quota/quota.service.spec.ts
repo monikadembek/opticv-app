@@ -46,6 +46,7 @@ describe('QuotaService', () => {
           'FREE',
           PERIOD_START,
           PERIOD_END,
+          false,
         ),
       ).rejects.toThrow(ForbiddenException);
 
@@ -63,6 +64,7 @@ describe('QuotaService', () => {
           'FREE',
           PERIOD_START,
           PERIOD_END,
+          false,
         ),
       ).resolves.toBeUndefined();
 
@@ -87,6 +89,7 @@ describe('QuotaService', () => {
           'FREE',
           PERIOD_START,
           PERIOD_END,
+          false,
         ),
       ).resolves.toBeUndefined();
 
@@ -113,6 +116,7 @@ describe('QuotaService', () => {
           'FREE',
           PERIOD_START,
           PERIOD_END,
+          false,
         ),
       ).rejects.toThrow(otherError);
 
@@ -130,6 +134,7 @@ describe('QuotaService', () => {
           'FREE',
           PERIOD_START,
           PERIOD_END,
+          false,
         ),
       ).rejects.toThrow(ForbiddenException);
     });
@@ -144,6 +149,7 @@ describe('QuotaService', () => {
         'FREE',
         PERIOD_START,
         PERIOD_END,
+        false,
       );
 
       const upsertArg = mockPrisma.usageQuota.upsert.mock.calls[0][0];
@@ -161,6 +167,7 @@ describe('QuotaService', () => {
           'FREE',
           PERIOD_START,
           PERIOD_END,
+          false,
         ),
       ).rejects.toMatchObject({
         response: expect.objectContaining({
@@ -179,6 +186,7 @@ describe('QuotaService', () => {
         'FREE',
         PERIOD_START,
         PERIOD_END,
+        false,
       );
 
       const updateManyArg = mockPrisma.usageQuota.updateMany.mock.calls[0][0];
@@ -196,9 +204,43 @@ describe('QuotaService', () => {
           'FREE',
           PERIOD_START,
           null,
+          false,
         ),
       ).rejects.toMatchObject({
         response: expect.objectContaining({ resetsAt: null }),
+      });
+    });
+
+    it('propagates cancelAtPeriodEnd: true into the QUOTA_EXCEEDED payload', async () => {
+      mockPrisma.usageQuota.upsert.mockResolvedValue({ id: 'row-1' });
+      mockPrisma.usageQuota.updateMany.mockResolvedValue({ count: 0 });
+
+      await expect(
+        service.checkAndConsume(
+          'user-1',
+          'CV_OPTIMIZATION',
+          'BASIC',
+          PERIOD_START,
+          PERIOD_END,
+          true,
+        ),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ cancelAtPeriodEnd: true }),
+      });
+    });
+
+    it('propagates cancelAtPeriodEnd: true into the FEATURE_NOT_AVAILABLE payload', async () => {
+      await expect(
+        service.checkAndConsume(
+          'user-1',
+          'LINKEDIN',
+          'FREE',
+          PERIOD_START,
+          PERIOD_END,
+          true,
+        ),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ cancelAtPeriodEnd: true }),
       });
     });
   });

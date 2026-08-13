@@ -138,6 +138,7 @@ export type QuotaErrorPayload =
       feature: LimitedFeature;
       limit: number;
       resetsAt: string | null;
+      cancelAtPeriodEnd: boolean;
     }
   | { code: 'CV_LIMIT_EXCEEDED'; limit: number };
 

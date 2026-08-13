@@ -25,9 +25,14 @@ export const quotaErrorInterceptor: HttpInterceptorFn = (req, next) => {
         const payload = error.error;
 
         if (payload.code === 'QUOTA_EXCEEDED') {
-          const detail = payload.resetsAt
-            ? `You've used all your generations for this feature this month. Resets ${new Date(payload.resetsAt).toLocaleDateString()}. Upgrade your plan for a higher limit.`
-            : `You've used all your generations for this feature on the free plan. Upgrade your plan.`;
+          let detail: string;
+          if (payload.cancelAtPeriodEnd && payload.resetsAt) {
+            detail = `You've used all your generations for this feature, and your plan won't renew. Access ends ${new Date(payload.resetsAt).toLocaleDateString()}.`;
+          } else if (payload.resetsAt) {
+            detail = `You've used all your generations for this feature this month. Resets ${new Date(payload.resetsAt).toLocaleDateString()}. Upgrade your plan for a higher limit.`;
+          } else {
+            detail = `You've used all your generations for this feature on the free plan. Upgrade your plan.`;
+          }
           messageService.add({
             severity: 'warn',
             summary: 'Limit reached',

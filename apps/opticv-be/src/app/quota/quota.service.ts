@@ -16,6 +16,7 @@ export class QuotaService {
     tier: SubscriptionTier,
     periodStart: Date,
     periodEnd: Date | null,
+    cancelAtPeriodEnd: boolean,
   ): Promise<void> {
     const limit = TIER_LIMITS[tier].features[feature];
     const resetsAt = periodEnd?.toISOString() ?? null;
@@ -26,6 +27,7 @@ export class QuotaService {
         feature,
         limit,
         resetsAt,
+        cancelAtPeriodEnd,
       });
     }
 
@@ -65,6 +67,7 @@ export class QuotaService {
         feature,
         limit,
         resetsAt,
+        cancelAtPeriodEnd,
       });
     }
   }
