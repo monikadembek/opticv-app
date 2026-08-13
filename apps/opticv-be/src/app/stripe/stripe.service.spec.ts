@@ -297,6 +297,7 @@ describe('StripeService', () => {
             customer: 'cus_1',
             status: 'active',
             cancel_at_period_end: false,
+            cancel_at: null,
             items: {
               data: [
                 {
@@ -325,6 +326,7 @@ describe('StripeService', () => {
             customer: 'cus_1',
             status: 'active',
             cancel_at_period_end: false,
+            cancel_at: null,
             items: {
               data: [
                 {
@@ -353,6 +355,7 @@ describe('StripeService', () => {
             customer: 'cus_1',
             status: 'active',
             cancel_at_period_end: false,
+            cancel_at: null,
             items: {
               data: [
                 {
@@ -369,6 +372,93 @@ describe('StripeService', () => {
       const updateArg = mockPrisma.subscription.update.mock.calls[0][0];
       expect(updateArg.data.tier).toBeUndefined();
       expect(updateArg.data.status).toBe('ACTIVE');
+    });
+
+    it('sets cancelAtPeriodEnd true when cancel_at_period_end is true', async () => {
+      await service.handleSubscriptionUpdated({
+        data: {
+          object: {
+            id: 'sub_1',
+            customer: 'cus_1',
+            status: 'active',
+            cancel_at_period_end: true,
+            cancel_at: 1789246071,
+            items: {
+              data: [
+                {
+                  price: { id: 'price_basic' },
+                  current_period_start: 1700000000,
+                  current_period_end: 1702592000,
+                },
+              ],
+            },
+          },
+        },
+      } as never);
+
+      expect(mockPrisma.subscription.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ cancelAtPeriodEnd: true }),
+        }),
+      );
+    });
+
+    it('sets cancelAtPeriodEnd true when cancel_at is set even though cancel_at_period_end is false (billing-portal cancellation payload)', async () => {
+      await service.handleSubscriptionUpdated({
+        data: {
+          object: {
+            id: 'sub_1',
+            customer: 'cus_1',
+            status: 'active',
+            cancel_at_period_end: false,
+            cancel_at: 1789246071,
+            items: {
+              data: [
+                {
+                  price: { id: 'price_basic' },
+                  current_period_start: 1700000000,
+                  current_period_end: 1702592000,
+                },
+              ],
+            },
+          },
+        },
+      } as never);
+
+      expect(mockPrisma.subscription.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ cancelAtPeriodEnd: true }),
+        }),
+      );
+    });
+
+    it('sets cancelAtPeriodEnd false when both cancel_at_period_end and cancel_at are unset', async () => {
+      await service.handleSubscriptionUpdated({
+        data: {
+          object: {
+            id: 'sub_1',
+            customer: 'cus_1',
+            status: 'active',
+            cancel_at_period_end: false,
+            cancel_at: null,
+            items: {
+              data: [
+                {
+                  price: { id: 'price_basic' },
+                  current_period_start: 1700000000,
+                  current_period_end: 1702592000,
+                },
+              ],
+            },
+          },
+        },
+      } as never);
+
+      expect(mockPrisma.subscription.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ cancelAtPeriodEnd: false }),
+        }),
+      );
     });
   });
 

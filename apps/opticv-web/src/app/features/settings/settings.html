@@ -146,14 +146,13 @@
     </p>
     }
 
-    <div class="flex gap-3">
+    <div class="flex gap-3 pt-3">
       @if (userProfile.value()?.subscription?.tier === 'FREE') {
       <p-button
         type="button"
         label="Upgrade to Basic"
         icon="pi pi-arrow-up"
-        severity="success"
-        [outlined]="true"
+        size="small"
         [loading]="isRedirectingToCheckout() === 'BASIC'"
         [disabled]="isRedirectingToCheckout() !== null"
         (onClick)="onUpgrade('BASIC')"
@@ -163,7 +162,7 @@
         type="button"
         label="Upgrade to Pro"
         icon="pi pi-arrow-up"
-        severity="success"
+        size="small"
         [loading]="isRedirectingToCheckout() === 'PRO'"
         [disabled]="isRedirectingToCheckout() !== null"
         (onClick)="onUpgrade('PRO')"
@@ -196,7 +195,10 @@
       </h2>
       @if (usage.quotas.length > 0 && usage.quotas[0].resetsAt) {
       <span class="text-sm text-gray-500">
-        Resets {{ usage.quotas[0].resetsAt | date: 'mediumDate' }}
+        {{ usageResetLabel() }}
+        <span class="font-semibold"
+          >{{ usage.quotas[0].resetsAt | date: 'mediumDate' }}</span
+        >
       </span>
       }
     </div>

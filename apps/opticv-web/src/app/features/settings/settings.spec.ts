@@ -302,6 +302,30 @@ describe('Settings', () => {
       expect(text).not.toContain('Resets');
     });
 
+    it('shows "Access ends" instead of "Resets" when the subscription is canceling at period end', async () => {
+      await setup(
+        {
+          value: {
+            ...mockProfile,
+            subscription: {
+              tier: 'PRO',
+              status: 'ACTIVE',
+              cancelAtPeriodEnd: true,
+              currentPeriodEnd: '2026-08-01T00:00:00.000Z',
+            },
+          },
+          hasValue: true,
+        },
+        { value: usageStatus, hasValue: true },
+      );
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+
+      const text = fixture.nativeElement.textContent as string;
+      expect(text).toContain('Access ends Aug 1, 2026');
+      expect(text).not.toContain('Resets Aug 1, 2026');
+    });
+
     it('renders a progress bar for each quota row and the stored-CVs row', async () => {
       await setup(
         { value: mockProfile, hasValue: true },

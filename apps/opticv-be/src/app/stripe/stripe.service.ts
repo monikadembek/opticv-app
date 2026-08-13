@@ -267,7 +267,8 @@ export class StripeService {
         currentPeriodEnd: item
           ? new Date(item.current_period_end * 1000)
           : existing.currentPeriodEnd,
-        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        cancelAtPeriodEnd:
+          subscription.cancel_at_period_end || subscription.cancel_at != null,
       },
     });
   }

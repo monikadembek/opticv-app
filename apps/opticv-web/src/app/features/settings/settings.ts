@@ -136,6 +136,12 @@ export class Settings implements OnInit {
     };
   });
 
+  readonly usageResetLabel = computed<string>(() =>
+    this.userProfile.value()?.subscription?.cancelAtPeriodEnd
+      ? 'Access ends'
+      : 'Resets',
+  );
+
   constructor() {
     effect(() => {
       const profile = this.userProfile.value();
