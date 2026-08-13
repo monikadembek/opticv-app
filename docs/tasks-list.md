@@ -1457,9 +1457,23 @@ Update resets at and cancells at labels on settings page.
 
 ## 109. Handle Stripe webhook in staging environment on Render
 
-**status: todo**
+**status: Done**
 
 **time: 13.08.2026**
+
+1. Register webhook in Stripe Dashboard.
+
+Since staging is a real publicly reachable URL (not localhost), you don't need the CLI listener/forwarding trick at all — you can register it as a proper webhook endpoint:
+
+- Stripe Dashboard → Developers → Webhooks → Add endpoint
+- URL: https://opticv-app.onrender.com/api/stripe/webhook
+- Select the events you handle: checkout.session.completed, customer.subscription.updated, customer.subscription.deleted, invoice.paid, invoice.payment_failed
+- Stripe gives you a stable signing secret for that endpoint — set that as STRIPE_WEBHOOK_SECRET in Render's env vars for the staging service
+- Do this in test mode (toggle top-left in Dashboard) so you're using test API keys/cards, not live ones — assuming staging uses your sktest... key already
+
+2. Add all Stripe env variables on Render.
+
+3. Test payments on Render.
 
 ---
 
