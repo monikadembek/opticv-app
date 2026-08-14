@@ -8,6 +8,7 @@ import {
 import { Router, RouterModule } from '@angular/router';
 import { TopHeader } from './layout/top-header/top-header';
 import { Footer } from './layout/footer/footer';
+import { PastDueBanner } from './layout/past-due-banner/past-due-banner';
 import { Supabase } from './core/auth/services/supabase';
 import { ToastModule } from 'primeng/toast';
 import { PosthogService } from './core/services/posthog.service';
@@ -17,7 +18,14 @@ import { WelcomeGuideModal } from './shared/welcome-guide-modal/welcome-guide-mo
 import posthog from 'posthog-js';
 
 @Component({
-  imports: [RouterModule, TopHeader, Footer, ToastModule, WelcomeGuideModal],
+  imports: [
+    RouterModule,
+    TopHeader,
+    Footer,
+    ToastModule,
+    WelcomeGuideModal,
+    PastDueBanner,
+  ],
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.css',
