@@ -1479,9 +1479,21 @@ Since staging is a real publicly reachable URL (not localhost), you don't need t
 
 ## 110. Handle PAST_DUE status in backend, frontend and Stripe dashboard
 
-**status: todo**
+**status: done**
 
-**time: 13.08.2026**
+**time: 13.08.2026-14.08.2026**
+
+PAST_DUE means a renewal invoice payment failed, but Stripe hasn't given up yet.
+
+Stripe automates chasing the card holder. It does not automatically restrict what the app lets the user do — that's the application's responsibility.
+
+Gap: PAST_DUE is stored but not enforced
+status is written to the Subscription table and passed through into UserProfile (users.service.ts) for display only. There is no guard or check anywhere gating CV generation/premium features based on status !== 'PAST_DUE'. Today, a user whose card fails keeps full BASIC/PRO access indefinitely until Stripe eventually cancels the subscription outright (which could be weeks later) — no earlier feature-gating happens on the app side.
+
+To do:
+
+- Enforce feature gating based on subscription status, not just tier. Today a user whose Stripe subscription is PAST_DUE keeps full BASIC/PRO access indefinitely, because every quota/tier check reads subscription.tier and ignores subscription.status. Introduce an "effective tier" concept — tier is only honored when status is ACTIVE or TRIALING; otherwise the user is treated as FREE for all gated features Add effective tier when checking quota limits before running optimization and returning user usage limits.
+- display "payment failed, update your card" banner in the frontend when status === 'PAST_DUE', pointing the user at the billing portal session (createPortalSession, stripe.controller.ts), since Stripe's portal lets customers update their payment method directly. Banner is fixed to top, below menu and closable.
 
 ---
 

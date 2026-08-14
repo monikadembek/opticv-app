@@ -60,6 +60,7 @@ describe('OptimizationService', () => {
     jest.clearAllMocks();
     mockPrisma.subscription.findUnique.mockResolvedValue({
       tier: 'FREE',
+      status: 'ACTIVE',
       currentPeriodStart: PERIOD_START,
       currentPeriodEnd: PERIOD_END,
     });
@@ -166,6 +167,7 @@ describe('OptimizationService', () => {
     it('passes cancelAtPeriodEnd: true through to checkAndConsume when the subscription is canceling', async () => {
       mockPrisma.subscription.findUnique.mockResolvedValue({
         tier: 'BASIC',
+        status: 'ACTIVE',
         currentPeriodStart: PERIOD_START,
         currentPeriodEnd: PERIOD_END,
         cancelAtPeriodEnd: true,
@@ -183,6 +185,30 @@ describe('OptimizationService', () => {
         PERIOD_START,
         PERIOD_END,
         true,
+      );
+    });
+
+    it('limits a PAST_DUE PRO subscription to FREE tier quota', async () => {
+      mockPrisma.subscription.findUnique.mockResolvedValue({
+        tier: 'PRO',
+        status: 'PAST_DUE',
+        currentPeriodStart: PERIOD_START,
+        currentPeriodEnd: PERIOD_END,
+        cancelAtPeriodEnd: false,
+      });
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+      mockPrisma.optimizationResult.upsert.mockResolvedValue({});
+      mockQueue.add.mockResolvedValue({});
+
+      await service.triggerOptimization('app-1', 'user-1');
+
+      expect(mockQuotaService.checkAndConsume).toHaveBeenCalledWith(
+        'user-1',
+        'CV_OPTIMIZATION',
+        'FREE',
+        PERIOD_START,
+        PERIOD_END,
+        false,
       );
     });
 
@@ -379,6 +405,30 @@ describe('OptimizationService', () => {
       expect(mockQueue.add).toHaveBeenCalledTimes(1);
       const calledWith = mockQueue.add.mock.calls[0][1];
       expect(calledWith.promptType).toBe(PROMPT_TYPE);
+    });
+
+    it('limits a PAST_DUE PRO subscription to FREE tier quota', async () => {
+      mockPrisma.subscription.findUnique.mockResolvedValue({
+        tier: 'PRO',
+        status: 'PAST_DUE',
+        currentPeriodStart: PERIOD_START,
+        currentPeriodEnd: PERIOD_END,
+        cancelAtPeriodEnd: false,
+      });
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+      mockPrisma.optimizationResult.upsert.mockResolvedValue({});
+      mockQueue.add.mockResolvedValue({});
+
+      await service.triggerSingleJob('app-1', PROMPT_TYPE, RUN_ID, 'user-1');
+
+      expect(mockQuotaService.checkAndConsume).toHaveBeenCalledWith(
+        'user-1',
+        'CV_OPTIMIZATION',
+        'FREE',
+        PERIOD_START,
+        PERIOD_END,
+        false,
+      );
     });
   });
 

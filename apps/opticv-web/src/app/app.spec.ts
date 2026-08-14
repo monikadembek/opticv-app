@@ -5,6 +5,7 @@ import posthog from 'posthog-js';
 import { App } from './app';
 import { TopHeader } from './layout/top-header/top-header';
 import { Footer } from './layout/footer/footer';
+import { PastDueBanner } from './layout/past-due-banner/past-due-banner';
 import { Supabase } from './core/auth/services/supabase';
 import { ToastModule } from 'primeng/toast';
 import { CvStore } from './core/stores/cv.store';
@@ -20,6 +21,9 @@ class TopHeaderStub {
 
 @Component({ selector: 'app-footer', template: '', standalone: true })
 class FooterStub {}
+
+@Component({ selector: 'app-past-due-banner', template: '', standalone: true })
+class PastDueBannerStub {}
 
 @Component({ selector: 'p-toast', template: '', standalone: true })
 class ToastStub {}
@@ -80,12 +84,19 @@ describe('App', () => {
     })
       .overrideComponent(App, {
         remove: {
-          imports: [TopHeader, Footer, ToastModule, WelcomeGuideModal],
+          imports: [
+            TopHeader,
+            Footer,
+            PastDueBanner,
+            ToastModule,
+            WelcomeGuideModal,
+          ],
         },
         add: {
           imports: [
             TopHeaderStub,
             FooterStub,
+            PastDueBannerStub,
             ToastStub,
             WelcomeGuideModalStub,
           ],

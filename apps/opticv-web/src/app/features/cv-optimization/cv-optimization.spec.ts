@@ -134,7 +134,9 @@ describe('CvOptimization', () => {
   let userSettingsApiService: {
     userProfile: {
       value: ReturnType<
-        typeof signal<{ subscription: { tier: string } } | null>
+        typeof signal<{
+          subscription: { tier: string; status?: string };
+        } | null>
       >;
     };
   };
@@ -1076,21 +1078,28 @@ describe('CvOptimization', () => {
 
     it('allows all templates for a BASIC tier user', () => {
       userSettingsApiService.userProfile.value.set({
-        subscription: { tier: 'BASIC' },
+        subscription: { tier: 'BASIC', status: 'ACTIVE' },
       });
       expect(component.allowedTemplateIds().length).toBeGreaterThan(2);
       expect(component.allowedTemplateIds()).toContain('modern');
     });
 
+    it('downgrades to FREE tier templates for a PAST_DUE PRO user', () => {
+      userSettingsApiService.userProfile.value.set({
+        subscription: { tier: 'PRO', status: 'PAST_DUE' },
+      });
+      expect(component.allowedTemplateIds()).toEqual(['default', 'classic']);
+    });
+
     it('resets selectedTemplate away from a now-locked template', () => {
       userSettingsApiService.userProfile.value.set({
-        subscription: { tier: 'BASIC' },
+        subscription: { tier: 'BASIC', status: 'ACTIVE' },
       });
       component.selectedTemplate.set('modern');
       expect(component.selectedTemplate()).toBe('modern');
 
       userSettingsApiService.userProfile.value.set({
-        subscription: { tier: 'FREE' },
+        subscription: { tier: 'FREE', status: 'ACTIVE' },
       });
       fixture.detectChanges();
 

@@ -148,6 +148,13 @@ export type SubscriptionStatus =
   | 'PAST_DUE'
   | 'TRIALING';
 
+export function getEffectiveTier(
+  tier: SubscriptionTier,
+  status: SubscriptionStatus,
+): SubscriptionTier {
+  return status === 'ACTIVE' || status === 'TRIALING' ? tier : 'FREE';
+}
+
 export type NotificationType = 'PRODUCT_UPDATES' | 'WEEKLY_TIPS';
 
 export type NotificationPreferences = {
