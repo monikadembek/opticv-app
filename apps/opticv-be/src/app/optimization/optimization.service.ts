@@ -10,8 +10,12 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import type { OptimizationJobPayload } from './optimization.types.js';
 import { PromptType } from '../../generated/prisma/enums.js';
-import type { LimitedFeature, SubscriptionTier } from '@opticv/datatypes';
-import { OptimizationResultSummary } from '@opticv/datatypes';
+import type {
+  LimitedFeature,
+  SubscriptionStatus,
+  SubscriptionTier,
+} from '@opticv/datatypes';
+import { getEffectiveTier, OptimizationResultSummary } from '@opticv/datatypes';
 import { QuotaService } from '../quota/quota.service.js';
 
 const CV_SUBSET_PROMPT_TYPES: PromptType[] = [
@@ -49,13 +53,20 @@ export class OptimizationService {
       where: { userId },
       select: {
         tier: true,
+        status: true,
         currentPeriodStart: true,
         currentPeriodEnd: true,
         cancelAtPeriodEnd: true,
       },
     });
+    const effectiveTier = subscription
+      ? getEffectiveTier(
+          subscription.tier as SubscriptionTier,
+          subscription.status as SubscriptionStatus,
+        )
+      : 'FREE';
     return {
-      tier: (subscription?.tier ?? 'FREE') as SubscriptionTier,
+      tier: effectiveTier,
       periodStart: subscription?.currentPeriodStart ?? new Date(),
       periodEnd: subscription?.currentPeriodEnd ?? null,
       cancelAtPeriodEnd: subscription?.cancelAtPeriodEnd ?? false,

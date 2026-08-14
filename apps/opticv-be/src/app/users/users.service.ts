@@ -13,11 +13,12 @@ import { SubscriptionService } from '../subscription/subscription.service';
 import { UserModel } from '../../generated/prisma/models.js';
 import type {
   NotificationPreferences,
+  SubscriptionStatus,
   SubscriptionTier,
   UsageStatus,
   UserProfile,
 } from '@opticv/datatypes';
-import { TIER_LIMITS } from '@opticv/datatypes';
+import { getEffectiveTier, TIER_LIMITS } from '@opticv/datatypes';
 import { UpdateDisplayNameDto } from './dto/update-display-name.dto';
 import { UpdateNotificationPreferenceDto } from './dto/update-notification-preference.dto';
 
@@ -201,16 +202,21 @@ export class UsersService {
       throw new NotFoundException('User not found.');
     }
 
-    const tier = (user.subscription?.tier ?? 'FREE') as SubscriptionTier;
+    const effectiveTier = user.subscription
+      ? getEffectiveTier(
+          user.subscription.tier as SubscriptionTier,
+          user.subscription.status as SubscriptionStatus,
+        )
+      : 'FREE';
     const periodStart = user.subscription?.currentPeriodStart ?? new Date();
     const periodEnd = user.subscription?.currentPeriodEnd ?? null;
     const quotas = await this.quotaService.getQuotaStatus(
       user.id,
-      tier,
+      effectiveTier,
       periodStart,
       periodEnd,
     );
-    const maxStoredCvs = TIER_LIMITS[tier].maxStoredCvs;
+    const maxStoredCvs = TIER_LIMITS[effectiveTier].maxStoredCvs;
     const storedCvsUsed = await this.prisma.cvDocument.count({
       where: { userId: user.id, isActive: true },
     });

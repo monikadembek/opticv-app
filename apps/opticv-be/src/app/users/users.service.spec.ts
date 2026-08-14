@@ -457,5 +457,28 @@ describe('UsersService', () => {
         storedCvs: { used: 3, limit: 10 },
       });
     });
+
+    it('returns FREE tier limits when the subscription is PAST_DUE', async () => {
+      mockPrisma.user.findUnique.mockResolvedValueOnce({
+        id: 'user-id',
+        subscription: {
+          tier: 'PRO',
+          status: 'PAST_DUE',
+          currentPeriodStart: PAID_TIER_CYCLE.currentPeriodStart,
+          currentPeriodEnd: PAID_TIER_CYCLE.currentPeriodEnd,
+        },
+      });
+      mockPrisma.cvDocument.count.mockResolvedValueOnce(5);
+
+      const result = await service.getUsageStatus('sb-id');
+
+      expect(mockQuotaService.getQuotaStatus).toHaveBeenCalledWith(
+        'user-id',
+        'FREE',
+        PAID_TIER_CYCLE.currentPeriodStart,
+        PAID_TIER_CYCLE.currentPeriodEnd,
+      );
+      expect(result.storedCvs).toEqual({ used: 5, limit: 2 });
+    });
   });
 });
