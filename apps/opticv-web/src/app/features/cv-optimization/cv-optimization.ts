@@ -66,7 +66,7 @@ import {
   CvTemplateId,
   DEFAULT_ACCENT_COLOR,
 } from './cv-templates';
-import { SubscriptionTier, TIER_LIMITS } from '@opticv/datatypes';
+import { getEffectiveTier, TIER_LIMITS } from '@opticv/datatypes';
 import { UserSettingsApiService } from '../../core/services/user-settings-api.service';
 import { applySelectionsToCV } from './utils/apply-selections';
 import {
@@ -226,10 +226,12 @@ export class CvOptimization implements OnInit {
   readonly selectedTemplate = signal<CvTemplateId>('default');
   readonly accentColor = signal<string>(DEFAULT_ACCENT_COLOR);
   readonly allowedTemplateIds = computed<CvTemplateId[]>(() => {
-    const tier: SubscriptionTier =
-      this.userSettingsApiService.userProfile.value()?.subscription?.tier ??
-      'FREE';
-    const allowed = TIER_LIMITS[tier].allowedTemplates;
+    const subscription =
+      this.userSettingsApiService.userProfile.value()?.subscription;
+    const effectiveTier = subscription
+      ? getEffectiveTier(subscription.tier, subscription.status)
+      : 'FREE';
+    const allowed = TIER_LIMITS[effectiveTier].allowedTemplates;
     return allowed === 'ALL'
       ? CV_TEMPLATES.map((t) => t.id)
       : (allowed as CvTemplateId[]);
