@@ -1497,15 +1497,15 @@ To do:
 
 ---
 
-## 111. Connect landing page with app
+## 111. Improve content of emails sent during auth process
 
-**status: todo**
+**status: done**
 
-**time:**
+**time: 14.08.2026 - 17.08.2026**
 
-- connect landing page with the app, make the login or optimize CV navigate to the app
-- consider whether we should keep the home page in the app, should we move user after login directly to dashboard, and home menu item should move back to landing page?
-- check if it would be possible to show login status in the landing page
+- Change text content of auth emails in Supabase:
+  - signup confirmation email
+  - otp pass code email
 
 ---
 
@@ -1518,6 +1518,18 @@ To do:
 - currently there is too much elements in the export footer, it fits on big screen, but on smaller resolutions it gets cramped,
 - export settings and template settings should be displayed in a modal window, a popover or sth similar,
 - on export footer display only a button for export which opens the popover and maybe button for preview
+
+---
+
+## 113. Connect landing page with app
+
+**status: todo**
+
+**time:**
+
+- connect landing page with the app, make the login or optimize CV navigate to the app
+- consider whether we should keep the home page in the app, should we move user after login directly to dashboard, and home menu item should move back to landing page?
+- check if it would be possible to show login status in the landing page
 
 ---
 
