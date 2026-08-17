@@ -18,6 +18,7 @@ export class Supabase {
   #currentUser = signal<User | null>(null);
   #currentSession = signal<Session | null>(null);
   #pendingEmail = signal<string | null>(null);
+  #sessionReady = signal<boolean>(false);
 
   get currentUser() {
     return this.#currentUser.asReadonly();
@@ -25,6 +26,10 @@ export class Supabase {
 
   get currentSession() {
     return this.#currentSession.asReadonly();
+  }
+
+  get sessionReady() {
+    return this.#sessionReady.asReadonly();
   }
 
   get pendingEmail() {
@@ -39,6 +44,8 @@ export class Supabase {
         // { auth: { flowType: 'pkce' } },
       );
       this.initAuth();
+    } else {
+      this.#sessionReady.set(true);
     }
   }
 
@@ -89,6 +96,7 @@ export class Supabase {
         this.#currentSession.set(session);
         this.#currentUser.set(session?.user ? session.user : null);
         this.#pendingEmail.set(null);
+        this.#sessionReady.set(true);
         if (!environment.production) {
           console.log(event, session);
         }
