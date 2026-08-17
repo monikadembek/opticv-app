@@ -43,20 +43,18 @@ describe('ExportFooter', () => {
       const buttons = footer.queryAll(By.css('p-button'));
       // Each action renders twice (desktop label+icon / mobile icon-only)
       const labels = new Set(
-        buttons.map((b) => b.nativeElement.getAttribute('label') || 'icon'),
+        buttons.map((b) => b.nativeElement.getAttribute('label')),
       );
-      expect(buttons.length).toBe(4);
+      expect(buttons.length).toBe(2);
       expect(labels.has('Preview')).toBe(true);
-      expect(labels.has('Export')).toBe(true);
+      expect(labels.has('Export CV')).toBe(true);
     });
 
     it('does not render the template select, accent select, GDPR checkbox, or ATS info button directly in the footer', () => {
       const footer = fixture.debugElement.query(By.css('.export-footer'));
       expect(footer.query(By.css('p-select'))).toBeFalsy();
       expect(footer.query(By.css('.ats-info-banner'))).toBeFalsy();
-      expect(
-        footer.query(By.css('input[type="checkbox"]')),
-      ).toBeFalsy();
+      expect(footer.query(By.css('input[type="checkbox"]'))).toBeFalsy();
     });
   });
 
@@ -173,9 +171,7 @@ describe('ExportFooter', () => {
     });
 
     it('opens the dialog when the ATS info button is clicked', () => {
-      const infoBtn = fixture.debugElement.query(
-        By.css('.ats-info-banner'),
-      );
+      const infoBtn = fixture.debugElement.query(By.css('.ats-info-banner'));
       expect(infoBtn).toBeTruthy();
       infoBtn.nativeElement.click();
       expect(component.infoDialogVisible()).toBe(true);

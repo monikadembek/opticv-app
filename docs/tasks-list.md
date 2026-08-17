@@ -1512,7 +1512,7 @@ To do:
 
 ## 112. UI/UX - Export footer redesing
 
-**status: in progress**
+**status: done**
 
 **time: 17.08.2026**
 
@@ -1534,6 +1534,12 @@ To do:
 ---
 
 ## Review AI-tailored version side-by-side with original
+
+---
+
+## Review the ATS Template information displayed in the dialog
+
+- see if the information can be improved
 
 ---
 
