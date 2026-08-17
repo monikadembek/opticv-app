@@ -1521,7 +1521,17 @@ To do:
 
 ---
 
-## 113. Connect landing page with app
+## 113 Bug - When App starts /me and /usage endpoints result in 401 errors
+
+**status: done**
+
+**time: 17.08.2026**
+
+UserSettingsApiService's httpResources for /users/me and /users/me/usage fired eagerly on injection, racing ahead of Supabase's async session restoration — so authInterceptor sent them with no Authorization header, causing 401s. Fixed by adding a sessionReady signal to Supabase (set once INITIAL_SESSION fires, or immediately on the server where there's no browser session to wait for) and gating both resources' URLs on sessionReady() && currentUser(), so they only fire once a valid session exists.
+
+---
+
+## 114. Connect landing page with app
 
 **status: todo**
 
@@ -1540,6 +1550,17 @@ To do:
 ## Review the ATS Template information displayed in the dialog
 
 - see if the information can be improved
+
+ATS Template Information
+
+Applicant Tracking Systems scan your CV before a recruiter ever sees it. Every OptiCV template is built to pass them cleanly:
+
+Single-column layout — no tables or text boxes that break parsing.
+Standard section headings recruiters and bots expect.
+Accent color on headings only, so keyword matching stays intact.
+Default gives the widest ATS compatibility.
+
+Got it
 
 ---
 

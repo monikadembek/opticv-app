@@ -3,24 +3,28 @@ import { HttpClient, httpResource } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import type { NotificationType, UsageStatus, UserProfile } from '@opticv/datatypes';
 import { environment } from '../../../environments/environment';
+import { Supabase } from '../auth/services/supabase';
 
 @Injectable({ providedIn: 'root' })
 export class UserSettingsApiService {
   private readonly http = inject(HttpClient);
+  private readonly supabase = inject(Supabase);
 
   #userProfile = httpResource<UserProfile | null>(
-    () => ({
-      url: `${environment.apiUrl}/users/me`,
-    }),
+    () =>
+      this.supabase.sessionReady() && this.supabase.currentUser()
+        ? { url: `${environment.apiUrl}/users/me` }
+        : undefined,
     { defaultValue: null },
   );
 
   userProfile = this.#userProfile.asReadonly();
 
   #usageStatus = httpResource<UsageStatus | null>(
-    () => ({
-      url: `${environment.apiUrl}/users/me/usage`,
-    }),
+    () =>
+      this.supabase.sessionReady() && this.supabase.currentUser()
+        ? { url: `${environment.apiUrl}/users/me/usage` }
+        : undefined,
     { defaultValue: null },
   );
 
