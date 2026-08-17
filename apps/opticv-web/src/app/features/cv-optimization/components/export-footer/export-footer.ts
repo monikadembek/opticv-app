@@ -45,6 +45,7 @@ export class ExportFooter {
 
   readonly previewVisible = signal(false);
   readonly infoDialogVisible = signal(false);
+  readonly exportDialogVisible = signal(false);
   readonly accentColors = CV_ACCENT_COLORS;
 
   readonly templates = computed(() =>

@@ -1506,18 +1506,18 @@ To do:
 - Change text content of auth emails in Supabase:
   - signup confirmation email
   - otp pass code email
+  - change email adress email
 
 ---
 
 ## 112. UI/UX - Export footer redesing
 
-**status: todo**
+**status: done**
 
-**time: **
+**time: 17.08.2026**
 
 - currently there is too much elements in the export footer, it fits on big screen, but on smaller resolutions it gets cramped,
-- export settings and template settings should be displayed in a modal window, a popover or sth similar,
-- on export footer display only a button for export which opens the popover and maybe button for preview
+- On export footer display only a button for preview and button for export which opens dialog displayed in the right bottom side of the page. The dialog contains template settings, gdpr checkbox and export buttons grouped in 3 sections.
 
 ---
 
@@ -1534,6 +1534,12 @@ To do:
 ---
 
 ## Review AI-tailored version side-by-side with original
+
+---
+
+## Review the ATS Template information displayed in the dialog
+
+- see if the information can be improved
 
 ---
 
