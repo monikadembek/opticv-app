@@ -1531,7 +1531,19 @@ UserSettingsApiService's httpResources for /users/me and /users/me/usage fired e
 
 ---
 
-## 114. Connect landing page with app
+### 114. UX/UI - Update images containing app ui
+
+**status: done**
+**time: 18.08.2026**
+
+After changes in the ui some images require update:
+
+- udate section with 3-step process on homepage with new images
+- in tour guide modal update image containing export button
+
+---
+
+## 115. Connect landing page with app
 
 **status: todo**
 
@@ -1540,6 +1552,10 @@ UserSettingsApiService's httpResources for /users/me and /users/me/usage fired e
 - connect landing page with the app, make the login or optimize CV navigate to the app
 - consider whether we should keep the home page in the app, should we move user after login directly to dashboard, and home menu item should move back to landing page?
 - check if it would be possible to show login status in the landing page
+
+---
+
+## Consider running cover letter, interview prep, linkedin separately from cv optimization instead of running all jobs at once
 
 ---
 
@@ -1561,6 +1577,10 @@ Accent color on headings only, so keyword matching stays intact.
 Default gives the widest ATS compatibility.
 
 Got it
+
+---
+
+## Implement CV builder feature
 
 ---
 
@@ -1594,15 +1614,6 @@ Use more intelligent models for the most demanding, more important sections:
 **time:**
 
 - add scorecard or short summary with section's results, below the section header, when section card is in collapsed state, to instantly show user some preview of results.
-
----
-
-### UX/UI - Update section with 3-step process on homepage
-
-**status: todo**
-**time:**
-
-- udate section with 3-step process on homepage, update images, maybe change it to align more with help modal
 
 ---
 
