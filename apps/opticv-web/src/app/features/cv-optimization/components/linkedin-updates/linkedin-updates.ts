@@ -111,13 +111,22 @@ export class LinkedInUpdates {
   }
 
   protected copyToClipboard(text: string): void {
-    navigator.clipboard.writeText(text).catch(() => {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Copy failed',
-        detail: 'Could not copy text to clipboard.',
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Copied to clipboard',
+        });
+      })
+      .catch(() => {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Copy failed',
+          detail: 'Could not copy text to clipboard',
+        });
       });
-    });
   }
 
   protected copyAllSkills(): void {
