@@ -1543,6 +1543,61 @@ After changes in the ui some images require update:
 
 ---
 
+## Testing opinions
+
+1. W dark mode czasem niektóre rzeczy wyglądają dziwnie albo w analizie nie widać w ogóle tekstu.
+   -> Implement Dark mode, bc there are some issues if browser tries to enoforce dark mode itself
+
+2. Fajne, że jest skills to aquire or omit.
+3. Zabawny ten "Achievement-led" - taki bardzo do przodu, bo proponował mi zacząc od: Holder of three developer certifications, including...". No ale pewnie w jakichś korpo działa i są jeszcze dwie inne opcje do wyboru.
+4. Fajne to: Original -> Rewritten i "why this works" w bulletach.
+
+5. Wszystkie bullety są w jednym stylu, typu zwiększyłem coverage z 45% do 90%. Może jakoś to przemieszać z jakimś innym?
+   ???? inny styl odpowiedzi / styl bullet pointów?
+
+6. Te bullety faktycznie są jakieś takie za bardzo do przodu, bo np. z agile proponuje mi "Participated in Agile/Scrum ceremonies (daily stand-ups, sprint planning, retrospectives), reliably delivering [X] story points per sprint and contributing to continuous improvement initiatives." Te story pointy nic nie mówią prócz tego, że ktoś piszący taki punkt za bardzo chce. Story pointy zależą od mocno od zespołu i nie da się ich przetłumaczyć - czepiałbym się tego na rozmowie. 😃
+
+7. Przypadkowo zamknąłem kartę w trakcie procesowania CV i miałem błąd "Some optimization results are unavailable for this stored optimization.". Wszystko z additional było puste. Pewnie trafiłem przypadkiem na jakiegoś buga.
+   -> job z kolejnymi optymalizacjami są wysyłane po 3 na raz, jak któryś się zakończy to wysyłany jest kolejny do przeprocesowania, jak zamknąłeś appkę, to pewnie 3 ostatnie nie zdążyły się wysłać i wykonać
+
+8. No i jak jest puste, to dosłownie, bo nie ma nic prócz tytułu sekcji. Można dać jakiś placeholder, że tego akurat brakuje i co dalej.
+   -> jeśli jakiś job się nie wykonał to powinien być jakis placeholder + button Retry ponownie wykonujący danego joba w ramach istniejącego limitu wykonań
+
+9. "Interview Prep" z traps bardzo fajne, ale ma mało pytań technicznych - bardziej takie miękkie i ogólne o konflikty w zespole albo jak wybrać dobrą bazę danych. Może dać jakiś zgrabny opis, że prócz tego przygotuj się też technicznie.
+   -> albo dodać pytanie techniczne, albo jakiś opis, że interview prep przygotowuje do pytań miękkich, a techniczne pytania musisz sam przerobić
+
+10. "Stress-Test Questions" też fajne i "Why do your job titles still include 'Junior' after many years — are you concerned about seniority?" mnie rozbawiło. 😃
+11. Kolejne w tej sekcji nieźle trafione "I see AWS Certified Developer - Associate listed but no issuer/date — how have you applied cloud skills in projects?" - no kazali nam robić i faktycznie nie mam komercyjnych projektów w AWSie. (Teraz to w ogóle mi certyfikat wygasł, bo robię w Azure, ale to starsze CV. 😃 ), podobnie ""Your MongoDB certificates look strong — did you use MongoDB in production or mainly in learning?" - on nie jest "strong", bo to po kursie online (kilkutygodniowym z egzaminem na końcu), ale rekruter może tak spytać i faktycznie zrobiłem to kiedyś i wpisywałem żeby pokazać, że kojarze NoSQL, bo nie miałem w projektach.
+12. Rekomendacje linkedinowe wyglądają sensownie.
+
+13. Przycisk kopiowania w LinkedIn headline nie ma żadnego feedbacku. Pierdoła, ale przydałby się jakiś toast albo cokolwiek, że skopiowano.
+    -> add toast confirming that LinkedIn Info was Copied
+
+---
+
+## 115. Implement Retry functionality if some optimalization section has not been processed or has no results
+
+**status: todo**
+**time: 21.08.2026**
+
+- if some optimalization sections have no results, because there has been some error, or user might have close the app by mistake and not all jobs run, we should display Retry button and allow running this single job, don't consume quota limits for this,
+
+---
+
+## 116. Display Toast message when user clicks button Copy in the LinkedIn section displaying info that content has been copied
+
+**status: todo**
+**time: 21.08.2026**
+
+---
+
+## 117. Implement dark / light mode
+
+**status: todo**
+**time: 22.08.2026**
+
+---
+
 ## 115. Connect landing page with app
 
 **status: todo**
