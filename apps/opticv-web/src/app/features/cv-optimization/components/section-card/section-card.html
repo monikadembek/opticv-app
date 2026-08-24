@@ -57,6 +57,10 @@
     </span>
     } @if (status() === 'error') {
     <span class="status-error"> <i class="pi pi-times-circle"></i>Error </span>
+    } @if (status() === 'not-started') {
+    <span class="status-not-started">
+      <i class="pi pi-minus-circle"></i>Not started
+    </span>
     }
     <button
       type="button"

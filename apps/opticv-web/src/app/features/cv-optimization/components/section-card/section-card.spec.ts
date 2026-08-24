@@ -61,6 +61,26 @@ describe('SectionCard', () => {
     expect(fixture.nativeElement.querySelector('.status-error')).toBeTruthy();
   });
 
+  it('renders not-started status badge when status is not-started', () => {
+    fixture.componentRef.setInput('status', 'not-started');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Not started');
+    expect(
+      fixture.nativeElement.querySelector('.status-not-started'),
+    ).toBeTruthy();
+  });
+
+  it('projects content in the body when status is not-started', () => {
+    fixture.componentRef.setInput('status', 'not-started');
+    fixture.detectChanges();
+    const placeholder = fixture.nativeElement.querySelector(
+      'app-processing-placeholder',
+    );
+    expect(placeholder).toBeNull();
+    const body = fixture.nativeElement.querySelector('.section-card__body');
+    expect(body.hasAttribute('hidden')).toBe(false);
+  });
+
   it('shows processing placeholder when status is processing', () => {
     fixture.componentRef.setInput('status', 'processing');
     fixture.detectChanges();

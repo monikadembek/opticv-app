@@ -154,6 +154,11 @@
                 [data]="autopsyResult()!"
                 [projectedScore]="projectedAtsScore()"
               />
+              } @if (sectionStatus(PromptType.RESUME_AUTOPSY) === 'not-started')
+              {
+              <p class="text-sm text-(--text-muted) m-0">
+                This section hasn't been processed yet.
+              </p>
               } @if (retryablePromptTypes().has(PromptType.RESUME_AUTOPSY)) {
               <div class="retry-action">
                 <p-button
@@ -230,6 +235,10 @@
                 (jobTitleEditCancelled)="onJobTitleEditCancelled()"
                 (jobTitleEditTextChanged)="onJobTitleEditTextChanged($event)"
               />
+              } @if (sectionStatus(PromptType.KEYWORD_GAP) === 'not-started') {
+              <p class="text-sm text-(--text-muted) m-0">
+                This section hasn't been processed yet.
+              </p>
               } @if (retryablePromptTypes().has(PromptType.KEYWORD_GAP)) {
               <div class="retry-action">
                 <p-button
@@ -280,6 +289,11 @@
                 (angleReset)="onAngleReset()"
                 (summaryTextEdited)="onSummaryTextEdited($event)"
               />
+              } @if (sectionStatus(PromptType.SUMMARY_REWRITE) ===
+              'not-started') {
+              <p class="text-sm text-(--text-muted) m-0">
+                This section hasn't been processed yet.
+              </p>
               } @if (retryablePromptTypes().has(PromptType.SUMMARY_REWRITE)) {
               <div class="retry-action">
                 <p-button
@@ -337,6 +351,11 @@
                 (missingBulletEditSaved)="onMissingBulletEditSaved($event)"
                 (removedBulletToggled)="onRemovedBulletToggled($event)"
               />
+              } @if (sectionStatus(PromptType.BULLET_UPGRADE) === 'not-started')
+              {
+              <p class="text-sm text-(--text-muted) m-0">
+                This section hasn't been processed yet.
+              </p>
               } @if (retryablePromptTypes().has(PromptType.BULLET_UPGRADE)) {
               <div class="retry-action">
                 <p-button
@@ -383,6 +402,10 @@
                 (variantSelected)="onCoverLetterVariantSelected($event)"
                 (contentEdited)="onCoverLetterTextEdited($event)"
               />
+              } @if (sectionStatus(PromptType.COVER_LETTER) === 'not-started') {
+              <p class="text-sm text-(--text-muted) m-0">
+                This section hasn't been processed yet.
+              </p>
               } @if (retryablePromptTypes().has(PromptType.COVER_LETTER)) {
               <div class="retry-action">
                 <p-button
@@ -422,6 +445,11 @@
             >
               @if (interviewPrepResult()) {
               <app-interview-prep [result]="interviewPrepResult()!" />
+              } @if (sectionStatus(PromptType.INTERVIEW_PREP) === 'not-started')
+              {
+              <p class="text-sm text-(--text-muted) m-0">
+                This section hasn't been processed yet.
+              </p>
               } @if (retryablePromptTypes().has(PromptType.INTERVIEW_PREP)) {
               <div class="retry-action">
                 <p-button
@@ -460,6 +488,11 @@
             >
               @if (linkedInResult()) {
               <app-linkedin-updates [result]="linkedInResult()!" />
+              } @if (sectionStatus(PromptType.LINKEDIN_REWRITE) ===
+              'not-started') {
+              <p class="text-sm text-(--text-muted) m-0">
+                This section hasn't been processed yet.
+              </p>
               } @if (retryablePromptTypes().has(PromptType.LINKEDIN_REWRITE)) {
               <div class="retry-action">
                 <p-button
