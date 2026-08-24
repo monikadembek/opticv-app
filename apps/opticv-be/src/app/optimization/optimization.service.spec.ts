@@ -22,6 +22,7 @@ const mockPrisma = {
     upsert: jest.fn(),
     findUnique: jest.fn(),
     update: jest.fn(),
+    create: jest.fn(),
   },
   subscription: {
     findUnique: jest.fn(),
@@ -443,15 +444,37 @@ describe('OptimizationService', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('throws BadRequestException when the result row does not exist', async () => {
+    it('creates a PENDING row and enqueues it when the result row does not exist', async () => {
       mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
       mockPrisma.optimizationResult.findUnique.mockResolvedValue(null);
+      mockPrisma.optimizationResult.create.mockResolvedValue({});
+      mockQueue.add.mockResolvedValue({});
 
-      await expect(
-        service.retryFailedJob('app-1', PROMPT_TYPE, 'user-1'),
-      ).rejects.toThrow(BadRequestException);
+      const result = await service.retryFailedJob('app-1', PROMPT_TYPE, 'user-1');
 
-      expect(mockQueue.add).not.toHaveBeenCalled();
+      expect(result.runId).toBeDefined();
+      expect(mockPrisma.optimizationResult.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            applicationId: 'app-1',
+            promptType: PROMPT_TYPE,
+            status: 'PENDING',
+          }),
+        }),
+      );
+      expect(mockPrisma.optimizationResult.update).not.toHaveBeenCalled();
+      expect(mockQueue.add).toHaveBeenCalled();
+    });
+
+    it('does not call checkAndConsume when the result row does not exist', async () => {
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+      mockPrisma.optimizationResult.findUnique.mockResolvedValue(null);
+      mockPrisma.optimizationResult.create.mockResolvedValue({});
+      mockQueue.add.mockResolvedValue({});
+
+      await service.retryFailedJob('app-1', PROMPT_TYPE, 'user-1');
+
+      expect(mockQuotaService.checkAndConsume).not.toHaveBeenCalled();
     });
 
     it('throws BadRequestException when the result row is COMPLETED', async () => {
@@ -466,6 +489,38 @@ describe('OptimizationService', () => {
       ).rejects.toThrow(BadRequestException);
 
       expect(mockPrisma.optimizationResult.update).not.toHaveBeenCalled();
+      expect(mockQueue.add).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException when the result row is PENDING', async () => {
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+      mockPrisma.optimizationResult.findUnique.mockResolvedValue({
+        id: 'result-1',
+        status: 'PENDING',
+      });
+
+      await expect(
+        service.retryFailedJob('app-1', PROMPT_TYPE, 'user-1'),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(mockPrisma.optimizationResult.update).not.toHaveBeenCalled();
+      expect(mockPrisma.optimizationResult.create).not.toHaveBeenCalled();
+      expect(mockQueue.add).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException when the result row is PROCESSING', async () => {
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+      mockPrisma.optimizationResult.findUnique.mockResolvedValue({
+        id: 'result-1',
+        status: 'PROCESSING',
+      });
+
+      await expect(
+        service.retryFailedJob('app-1', PROMPT_TYPE, 'user-1'),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(mockPrisma.optimizationResult.update).not.toHaveBeenCalled();
+      expect(mockPrisma.optimizationResult.create).not.toHaveBeenCalled();
       expect(mockQueue.add).not.toHaveBeenCalled();
     });
 

@@ -422,6 +422,7 @@ export class CvOptimization implements OnInit {
       if (this.isProcessing().get(promptType)) continue;
       const status = this.results().get(promptType)?.status;
       if (
+        status === undefined ||
         status === 'failed' ||
         (status === 'completed' && computedResult === null)
       ) {
@@ -647,7 +648,7 @@ export class CvOptimization implements OnInit {
   sectionStatus(type: PromptType): SectionStatus {
     if (this.isProcessing().get(type)) return 'processing';
     const r = this.results().get(type);
-    if (!r) return undefined;
+    if (!r) return 'not-started';
     return r.status === 'completed'
       ? 'completed'
       : r.status === 'failed'

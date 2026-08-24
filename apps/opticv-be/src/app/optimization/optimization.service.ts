@@ -223,26 +223,42 @@ export class OptimizationService {
       },
     });
 
-    if (!existing || existing.status !== 'FAILED') {
+    if (existing && existing.status !== 'FAILED') {
       throw new BadRequestException(
-        'Only a failed result can be retried for free; use the normal trigger endpoint instead.',
+        'Only a failed or not-yet-started result can be retried for free; use the normal trigger endpoint instead.',
       );
     }
 
     const runId = randomUUID();
 
-    await this.prisma.optimizationResult.update({
-      where: { id: existing.id },
-      data: {
-        status: 'PENDING',
-        structuredOutput: Prisma.DbNull,
-        textOutput: null,
-        errorMessage: null,
-        promptVersionId: null,
-        inputTokens: null,
-        outputTokens: null,
-      },
-    });
+    if (existing) {
+      await this.prisma.optimizationResult.update({
+        where: { id: existing.id },
+        data: {
+          status: 'PENDING',
+          structuredOutput: Prisma.DbNull,
+          textOutput: null,
+          errorMessage: null,
+          promptVersionId: null,
+          inputTokens: null,
+          outputTokens: null,
+        },
+      });
+    } else {
+      await this.prisma.optimizationResult.create({
+        data: {
+          applicationId: jobApplicationId,
+          promptType,
+          status: 'PENDING',
+          structuredOutput: Prisma.DbNull,
+          textOutput: null,
+          errorMessage: null,
+          promptVersionId: null,
+          inputTokens: null,
+          outputTokens: null,
+        },
+      });
+    }
 
     await this.queue.add(
       'optimize',

@@ -934,6 +934,23 @@ describe('CvOptimization', () => {
       ).toBe(true);
     });
 
+    it('includes a prompt type that has no results entry at all (never triggered)', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      expect(
+        component.retryablePromptTypes().has(PromptType.SUMMARY_REWRITE),
+      ).toBe(true);
+    });
+
+    it('does not include a prompt type with no results entry while it is processing', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      component.isProcessing.set(
+        new Map([[PromptType.SUMMARY_REWRITE, true]]),
+      );
+      expect(
+        component.retryablePromptTypes().has(PromptType.SUMMARY_REWRITE),
+      ).toBe(false);
+    });
+
     it('does not include LINKEDIN_REWRITE when it completed with a valid result', () => {
       component.jobApplicationId.set(mockJobApplication.id);
       component.results.set(
@@ -961,6 +978,53 @@ describe('CvOptimization', () => {
       expect(
         component.retryablePromptTypes().has(PromptType.LINKEDIN_REWRITE),
       ).toBe(false);
+    });
+  });
+
+  describe('sectionStatus', () => {
+    it('returns not-started when there is no results entry and nothing is processing', () => {
+      expect(component.sectionStatus(PromptType.SUMMARY_REWRITE)).toBe(
+        'not-started',
+      );
+    });
+
+    it('returns processing when the prompt type is currently processing', () => {
+      component.isProcessing.set(
+        new Map([[PromptType.SUMMARY_REWRITE, true]]),
+      );
+      expect(component.sectionStatus(PromptType.SUMMARY_REWRITE)).toBe(
+        'processing',
+      );
+    });
+
+    it('returns error when the results entry has status failed', () => {
+      component.results.set(
+        new Map([
+          [
+            PromptType.KEYWORD_GAP,
+            {
+              promptType: PromptType.KEYWORD_GAP,
+              status: 'failed',
+              error: 'timeout',
+            },
+          ],
+        ]),
+      );
+      expect(component.sectionStatus(PromptType.KEYWORD_GAP)).toBe('error');
+    });
+
+    it('returns completed when the results entry has status completed', () => {
+      component.results.set(
+        new Map([
+          [
+            PromptType.KEYWORD_GAP,
+            { promptType: PromptType.KEYWORD_GAP, status: 'completed' },
+          ],
+        ]),
+      );
+      expect(component.sectionStatus(PromptType.KEYWORD_GAP)).toBe(
+        'completed',
+      );
     });
   });
 
