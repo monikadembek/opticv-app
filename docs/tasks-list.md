@@ -1577,10 +1577,12 @@ After changes in the ui some images require update:
 
 ## 115. Implement Retry functionality if some optimalization section has not been processed or has no results
 
-**status: todo**
-**time: 21.08.2026**
+**status: done**
+**time: 21.08.2026-24.08.2026**
 
 - if some optimalization sections have no results, because there has been some error, or user might have close the app by mistake and not all jobs run, we should display Retry button and allow running this single job, don't consume quota limits for this,
+- introduce 'not started' status for optimization prompts that have no results and display it in the section card header
+- display info in the section card 'This section hasn't been processed yet.'
 
 ---
 
