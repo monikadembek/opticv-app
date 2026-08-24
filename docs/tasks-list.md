@@ -1586,10 +1586,12 @@ After changes in the ui some images require update:
 
 ---
 
-## 116. Display Toast message when user clicks button Copy in the LinkedIn section displaying info that content has been copied
+## 116. Display Toast message when user clicks button Copy in the LinkedIn section
 
-**status: todo**
-**time: 21.08.2026**
+**status: done**
+**time: 25.08.2026**
+
+- display message in toast 'Copied to clipboard' when user clicks Copy button in LinkedIn section and operation was successful
 
 ---
 

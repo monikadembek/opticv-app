@@ -450,6 +450,22 @@ describe('LinkedInUpdates', () => {
         expect.objectContaining({ severity: 'warn' }),
       );
     });
+
+    it('calls messageService.add with success severity when clipboard write succeeds', async () => {
+      clipboardWriteText().mockResolvedValue(undefined);
+      const addSpy = vi.spyOn(messageService, 'add');
+
+      comp().copyToClipboard('some text');
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(addSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Copied to clipboard',
+        }),
+      );
+    });
   });
 
   describe('export buttons', () => {
