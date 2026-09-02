@@ -78,7 +78,8 @@ export type LimitedFeature =
   | 'CV_OPTIMIZATION'
   | 'COVER_LETTER'
   | 'INTERVIEW_PREP'
-  | 'LINKEDIN';
+  | 'LINKEDIN'
+  | 'CV_BUILDER';
 
 export type TierLimits = {
   features: Record<LimitedFeature, number>;
@@ -93,6 +94,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
       COVER_LETTER: 1,
       INTERVIEW_PREP: 1,
       LINKEDIN: 0,
+      CV_BUILDER: 1,
     },
     maxStoredCvs: 2,
     allowedTemplates: ['default', 'classic'],
@@ -103,6 +105,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
       COVER_LETTER: 10,
       INTERVIEW_PREP: 10,
       LINKEDIN: 10,
+      CV_BUILDER: 5,
     },
     maxStoredCvs: 10,
     allowedTemplates: 'ALL',
@@ -113,6 +116,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
       COVER_LETTER: 30,
       INTERVIEW_PREP: 30,
       LINKEDIN: 30,
+      CV_BUILDER: 10,
     },
     maxStoredCvs: 20,
     allowedTemplates: 'ALL',
@@ -179,15 +183,16 @@ export type UserProfile = {
 export type CvDocument = {
   id: string;
   userId: string;
-  fileName: string;
-  fileSize: number;
-  mimeType: string;
-  storageKey: string;
+  fileName: string | null;
+  fileSize: number | null;
+  mimeType: string | null;
+  storageKey: string | null;
   parsedText: string | null;
   parseStatus: ParseStatus;
   structuredData: CvStructuredData | null;
   extractionStatus: ExtractionStatus;
   isActive: boolean;
+  manuallyEdited: boolean;
   createdAt: Date | string;
   updatedAt: Date | string;
 };
@@ -209,9 +214,12 @@ export type CvDocumentListItem = Pick<
   | 'fileName'
   | 'fileSize'
   | 'mimeType'
+  | 'storageKey'
   | 'createdAt'
   | 'parsedText'
   | 'parseStatus'
+  | 'extractionStatus'
+  | 'manuallyEdited'
 >;
 
 export type JobApplication = {
@@ -240,11 +248,11 @@ export type JobApplicationListItem = Pick<
   | 'createdAt'
   | 'updatedAt'
 > & {
-  cvDocument: { id: string; fileName: string };
+  cvDocument: { id: string; fileName: string | null };
 };
 
 export type JobApplicationWithCv = JobApplication & {
-  cvDocument: { id: string; fileName: string };
+  cvDocument: { id: string; fileName: string | null };
 };
 
 export type JobApplicationListResponse = {

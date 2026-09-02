@@ -1,6 +1,7 @@
 import {
   BadGatewayException,
   BadRequestException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
@@ -32,6 +33,10 @@ export class CvExtractionService {
       throw new NotFoundException('CV document not found.');
     }
 
+    if (doc.manuallyEdited) {
+      throw new ForbiddenException({ code: 'MANUAL_EDIT_PROTECTED' });
+    }
+
     if (doc.extractionStatus === 'COMPLETED' && doc.structuredData !== null) {
       this.logger.log(
         `Cache hit for CV ${cvId} — returning stored structured data`,
@@ -44,6 +49,12 @@ export class CvExtractionService {
     if (!isPdf && (!doc.parsedText || doc.parsedText.trim() === '')) {
       throw new BadRequestException(
         'CV text not available for extraction. Please re-upload the file.',
+      );
+    }
+
+    if (!doc.storageKey || !doc.fileName) {
+      throw new BadRequestException(
+        'CV file not available for extraction. Please re-upload the file.',
       );
     }
 

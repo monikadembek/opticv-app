@@ -124,8 +124,7 @@ export class UsersService {
             status: updatedUser.subscription.status,
             cancelAtPeriodEnd: updatedUser.subscription.cancelAtPeriodEnd,
             currentPeriodEnd:
-              updatedUser.subscription.currentPeriodEnd?.toISOString() ??
-              null,
+              updatedUser.subscription.currentPeriodEnd?.toISOString() ?? null,
           }
         : null,
       notifications,
@@ -243,6 +242,7 @@ export class UsersService {
     });
 
     for (const doc of cvDocuments) {
+      if (!doc.storageKey) continue;
       try {
         await this.r2.delete(doc.storageKey);
       } catch (error) {

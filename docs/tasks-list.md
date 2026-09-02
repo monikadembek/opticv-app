@@ -1595,14 +1595,24 @@ After changes in the ui some images require update:
 
 ---
 
-## 117. Implement dark / light mode
+## 117. Implement CV builder feature
 
-**status: todo**
-**time: 22.08.2026**
+**status: in progress**
+**time: 25.08.2026**
+
+- implement new feature - cv builder for users with no cv, allow them create one from scratch,
+- use existing data models used in cvStructuredData
 
 ---
 
-## 115. Connect landing page with app
+## Implement dark / light mode
+
+**status: todo**
+**time:**
+
+---
+
+## Connect landing page with app
 
 **status: todo**
 
@@ -1636,10 +1646,6 @@ Accent color on headings only, so keyword matching stays intact.
 Default gives the widest ATS compatibility.
 
 Got it
-
----
-
-## Implement CV builder feature
 
 ---
 

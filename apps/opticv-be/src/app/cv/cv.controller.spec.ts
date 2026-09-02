@@ -5,7 +5,12 @@ import { CvService } from './cv.service';
 import { CvExtractionService } from './services/cv-extraction.service';
 import { SupabaseGuard } from '../auth/supabase.guard';
 import { AiThrottlerGuard } from '../throttler/ai-throttler.guard';
-import type { CvDocumentListItem, UploadCvResponse } from '@opticv/datatypes';
+import type {
+  CvDocument,
+  CvDocumentListItem,
+  CvStructuredData,
+  UploadCvResponse,
+} from '@opticv/datatypes';
 import type { UserModel } from '../../generated/prisma/models.js';
 
 const allowAllGuard: CanActivate = { canActivate: () => true };
@@ -25,9 +30,50 @@ const mockListItem: CvDocumentListItem = {
   fileName: 'cv.pdf',
   fileSize: 1024,
   mimeType: 'application/pdf',
+  storageKey: 'uploads/user-id/uuid.pdf',
   createdAt: new Date('2024-01-01'),
   parsedText: null,
   parseStatus: 'PENDING',
+  extractionStatus: 'PENDING',
+  manuallyEdited: false,
+};
+
+const mockStructuredData: CvStructuredData = {
+  contact: {
+    name: 'Jane',
+    position: null,
+    email: null,
+    phone: null,
+    location: null,
+    linkedin: null,
+    website: null,
+  },
+  summary: null,
+  experience: [],
+  education: [],
+  skills: [],
+  certifications: [],
+  projects: [],
+  languages: [],
+  other: null,
+  gdprClause: null,
+};
+
+const mockCvDocument: CvDocument = {
+  id: 'doc-id',
+  userId: 'user-id',
+  fileName: null,
+  fileSize: null,
+  mimeType: null,
+  storageKey: null,
+  parsedText: null,
+  parseStatus: 'COMPLETED',
+  structuredData: mockStructuredData,
+  extractionStatus: 'COMPLETED',
+  isActive: true,
+  manuallyEdited: true,
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-01'),
 };
 
 const mockCvService = {
@@ -38,6 +84,8 @@ const mockCvService = {
     .mockResolvedValue({ url: 'https://signed.url/file.pdf' }),
   deleteCv: jest.fn().mockResolvedValue(undefined),
   getStructuredData: jest.fn().mockResolvedValue({ data: {} }),
+  createManualCv: jest.fn().mockResolvedValue(mockCvDocument),
+  updateStructuredData: jest.fn().mockResolvedValue(mockCvDocument),
 };
 
 const mockCvExtractionService = {
@@ -105,6 +153,58 @@ describe('CvController', () => {
       await expect(controller.uploadCv(file, mockUser)).rejects.toThrow(
         'service error',
       );
+    });
+  });
+
+  describe('createManualCv', () => {
+    it('delegates to CvService.createManualCv with body and userId', async () => {
+      const result = await controller.createManualCv(
+        mockStructuredData,
+        mockUser,
+      );
+
+      expect(mockCvService.createManualCv).toHaveBeenCalledWith(
+        mockStructuredData,
+        mockUser.id,
+      );
+      expect(result).toEqual(mockCvDocument);
+    });
+
+    it('propagates errors thrown by CvService', async () => {
+      mockCvService.createManualCv.mockRejectedValueOnce(
+        new Error('quota exceeded'),
+      );
+
+      await expect(
+        controller.createManualCv(mockStructuredData, mockUser),
+      ).rejects.toThrow('quota exceeded');
+    });
+  });
+
+  describe('updateStructuredData', () => {
+    it('delegates to CvService.updateStructuredData with id, body and userId', async () => {
+      const result = await controller.updateStructuredData(
+        'doc-id',
+        mockStructuredData,
+        mockUser,
+      );
+
+      expect(mockCvService.updateStructuredData).toHaveBeenCalledWith(
+        'doc-id',
+        mockStructuredData,
+        mockUser.id,
+      );
+      expect(result).toEqual(mockCvDocument);
+    });
+
+    it('propagates errors thrown by CvService', async () => {
+      mockCvService.updateStructuredData.mockRejectedValueOnce(
+        new Error('not found'),
+      );
+
+      await expect(
+        controller.updateStructuredData('doc-id', mockStructuredData, mockUser),
+      ).rejects.toThrow('not found');
     });
   });
 

@@ -1,6 +1,7 @@
 import {
   BadGatewayException,
   BadRequestException,
+  ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -41,6 +42,7 @@ const makeDoc = (overrides: Record<string, unknown> = {}) => ({
   parsedText: 'John Doe, Software Engineer...',
   extractionStatus: 'PENDING',
   structuredData: null,
+  manuallyEdited: false,
   ...overrides,
 });
 
@@ -94,6 +96,19 @@ describe('CvExtractionService', () => {
       await expect(
         service.extractStructuredData('cv-id', 'user-id'),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ForbiddenException with MANUAL_EDIT_PROTECTED when the CV was manually edited', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(
+        makeDoc({ manuallyEdited: true }),
+      );
+
+      await expect(
+        service.extractStructuredData('cv-id', 'user-id'),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockOpenAiService.extractCvData).not.toHaveBeenCalled();
+      expect(mockOpenAiService.extractCvDataFromFile).not.toHaveBeenCalled();
+      expect(mockR2Service.download).not.toHaveBeenCalled();
     });
 
     it('returns cached structured data when extractionStatus is COMPLETED', async () => {
