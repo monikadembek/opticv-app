@@ -99,7 +99,7 @@
       <div
         class="w-full flex items-center gap-3 mb-3 p-4 text-sm border border-(--primary-600) rounded-md bg-(--primary-50)"
       >
-        @if (getMimeLabel(uploadedFile()!.mimeType) === 'PDF') {
+        @if (getMimeLabel(uploadedFile()!.mimeType ?? '') === 'PDF') {
         <span class="pi pi-file-pdf text-3xl! text-primary"></span>
         } @else {
         <span class="pi pi-file-word text-3xl! text-primary"></span>

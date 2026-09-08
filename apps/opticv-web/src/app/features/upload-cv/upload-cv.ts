@@ -43,10 +43,8 @@ export class UploadCv {
   readonly error = signal<UploadFileError | null>(null);
 
   readonly filesize = computed<string>(() => {
-    if (this.uploadedFile()) {
-      return formatFileSize((this.uploadedFile() as UploadCvResponse).fileSize);
-    }
-    return '';
+    const fileSize = this.uploadedFile()?.fileSize;
+    return fileSize ? formatFileSize(fileSize) : '';
   });
 
   onFileSelected(file: File): void {
