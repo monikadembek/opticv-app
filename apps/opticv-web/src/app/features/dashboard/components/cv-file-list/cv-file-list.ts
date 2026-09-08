@@ -59,6 +59,10 @@ export class CvFileList {
     });
   }
 
+  editCv(file: CvDocumentListItem): void {
+    this.router.navigate(['/cv-builder', file.id]);
+  }
+
   downloadCv(file: CvDocumentListItem): void {
     this.downloadCvFile.emit(file);
   }

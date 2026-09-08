@@ -10,9 +10,12 @@ const mockFiles: CvDocumentListItem[] = [
     fileName: 'cv1.pdf',
     fileSize: 1024,
     mimeType: 'application/pdf',
+    storageKey: 'uploads/user-id/uuid1.pdf',
     createdAt: '2024-01-01T00:00:00.000Z',
     parsedText: null,
     parseStatus: 'COMPLETED',
+    extractionStatus: 'COMPLETED',
+    manuallyEdited: false,
   },
   {
     id: 'id-2',
@@ -20,9 +23,12 @@ const mockFiles: CvDocumentListItem[] = [
     fileSize: 2048,
     mimeType:
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    storageKey: 'uploads/user-id/uuid2.docx',
     createdAt: '2024-02-01T00:00:00.000Z',
     parsedText: null,
     parseStatus: 'PENDING',
+    extractionStatus: 'PENDING',
+    manuallyEdited: false,
   },
 ];
 
@@ -102,6 +108,57 @@ describe('CvFileList', () => {
       expect(navigateSpy).toHaveBeenCalledWith(['/cv-optimization'], {
         queryParams: { cvId: mockFiles[0].id },
       });
+    });
+  });
+
+  describe('editCv', () => {
+    it('navigates to cv-builder/:id', () => {
+      const router = TestBed.inject(Router);
+      const navigateSpy = vi.spyOn(router, 'navigate');
+
+      component.editCv(mockFiles[0]);
+
+      expect(navigateSpy).toHaveBeenCalledWith([
+        '/cv-builder',
+        mockFiles[0].id,
+      ]);
+    });
+  });
+
+  describe('Edit button state', () => {
+    it('is enabled when extractionStatus is COMPLETED', () => {
+      const buttons = fixture.debugElement.queryAll(
+        By.css('p-button[icon="pi pi-pencil"]'),
+      );
+      expect(buttons[0].componentInstance.disabled).toBeFalsy();
+    });
+
+    it('is disabled when extractionStatus is not COMPLETED', () => {
+      const buttons = fixture.debugElement.queryAll(
+        By.css('p-button[icon="pi pi-pencil"]'),
+      );
+      expect(buttons[1].componentInstance.disabled).toBeTruthy();
+    });
+  });
+
+  describe('Download button visibility', () => {
+    it('is shown when storageKey is present', () => {
+      const downloadButtons = fixture.debugElement.queryAll(
+        By.css('p-button[icon="pi pi-download"]'),
+      );
+      expect(downloadButtons.length).toBe(2);
+    });
+
+    it('is hidden when storageKey is null (builder-created CV)', () => {
+      fixture.componentRef.setInput('cvFiles', [
+        { ...mockFiles[0], storageKey: null },
+      ]);
+      fixture.detectChanges();
+
+      const downloadButtons = fixture.debugElement.queryAll(
+        By.css('p-button[icon="pi pi-download"]'),
+      );
+      expect(downloadButtons.length).toBe(0);
     });
   });
 
