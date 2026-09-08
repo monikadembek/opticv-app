@@ -8,7 +8,9 @@ import {
   PLATFORM_ID,
   signal,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { TabsModule } from 'primeng/tabs';
+import { ButtonModule } from 'primeng/button';
 import { CvFileList } from './components/cv-file-list/cv-file-list';
 import { OptimizationList } from './components/optimization-list/optimization-list';
 import { CvStore } from '../../core/stores/cv.store';
@@ -25,7 +27,9 @@ import { CvApiService } from '../../core/services/cv-api.service';
 @Component({
   selector: 'app-dashboard',
   imports: [
+    RouterLink,
     TabsModule,
+    ButtonModule,
     CvFileList,
     OptimizationList,
     ConfirmDialogModule,

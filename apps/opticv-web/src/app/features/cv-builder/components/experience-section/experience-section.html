@@ -1,0 +1,123 @@
+<div class="experience-list">
+  @for (item of items(); track $index; let i = $index) {
+  <div class="experience-item">
+    <div class="experience-item-header">
+      <span class="experience-item-title">Experience {{ i + 1 }}</span>
+      <button
+        type="button"
+        class="icon-btn"
+        [attr.aria-label]="'Remove experience entry ' + (i + 1)"
+        title="Remove experience entry"
+        (click)="removeItem(i)"
+      >
+        <i class="pi pi-trash" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <div class="field-grid">
+      <div class="field">
+        <label [for]="'exp-title-' + i">Job title</label>
+        <input
+          pInputText
+          [id]="'exp-title-' + i"
+          type="text"
+          [ngModel]="item.title"
+          (ngModelChange)="updateField(i, 'title', $event)"
+        />
+      </div>
+      <div class="field">
+        <label [for]="'exp-company-' + i">Company</label>
+        <input
+          pInputText
+          [id]="'exp-company-' + i"
+          type="text"
+          [ngModel]="item.company"
+          (ngModelChange)="updateField(i, 'company', $event)"
+        />
+      </div>
+      <div class="field">
+        <label [for]="'exp-location-' + i">Location</label>
+        <input
+          pInputText
+          [id]="'exp-location-' + i"
+          type="text"
+          [ngModel]="item.location"
+          (ngModelChange)="updateField(i, 'location', $event)"
+        />
+      </div>
+      <div class="field">
+        <label [for]="'exp-start-' + i">Start date</label>
+        <input
+          pInputText
+          [id]="'exp-start-' + i"
+          type="text"
+          placeholder="e.g. 2021-03"
+          [ngModel]="item.startDate"
+          (ngModelChange)="updateField(i, 'startDate', $event)"
+        />
+      </div>
+      <div class="field">
+        <label [for]="'exp-end-' + i">End date</label>
+        <input
+          pInputText
+          [id]="'exp-end-' + i"
+          type="text"
+          placeholder="e.g. 2024-01"
+          [disabled]="item.current"
+          [ngModel]="item.endDate"
+          (ngModelChange)="updateField(i, 'endDate', $event)"
+        />
+      </div>
+      <div class="field field-checkbox">
+        <p-checkbox
+          [inputId]="'exp-current-' + i"
+          [binary]="true"
+          [ngModel]="item.current"
+          (ngModelChange)="updateField(i, 'current', $event)"
+        />
+        <label [for]="'exp-current-' + i">Current position</label>
+      </div>
+    </div>
+
+    <div class="bullets">
+      <span class="bullets-label">Bullet points</span>
+      @for (bullet of item.bullets ?? []; track $index; let bi = $index) {
+      <div class="bullet-row">
+        <input
+          pInputText
+          type="text"
+          class="bullet-input"
+          [attr.aria-label]="'Bullet point ' + (bi + 1)"
+          [ngModel]="bullet"
+          (ngModelChange)="updateBullet(i, bi, $event)"
+        />
+        <button
+          type="button"
+          class="icon-btn"
+          [attr.aria-label]="'Remove bullet point ' + (bi + 1)"
+          title="Remove bullet point"
+          (click)="removeBullet(i, bi)"
+        >
+          <i class="pi pi-times" aria-hidden="true"></i>
+        </button>
+      </div>
+      }
+      <p-button
+        label="Add bullet point"
+        icon="pi pi-plus"
+        size="small"
+        [text]="true"
+        (onClick)="addBullet(i)"
+      />
+    </div>
+  </div>
+  }
+
+  <p-button
+    label="Add experience"
+    icon="pi pi-plus"
+    size="small"
+    outlined="true"
+    (onClick)="addItem()"
+  />
+</div>

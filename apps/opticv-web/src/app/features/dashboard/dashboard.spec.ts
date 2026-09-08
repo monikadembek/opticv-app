@@ -2,7 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { of, throwError } from 'rxjs';
-import type { CvDocumentListItem, JobApplicationListItem } from '@opticv/datatypes';
+import type {
+  CvDocumentListItem,
+  JobApplicationListItem,
+} from '@opticv/datatypes';
 import { Dashboard } from './dashboard';
 import { CvApiService } from '../../core/services/cv-api.service';
 import { JobApplicationApiService } from '../../core/services/job-application-api.service';
@@ -15,9 +18,12 @@ const mockCvFiles: CvDocumentListItem[] = [
     fileName: 'cv1.pdf',
     fileSize: 1024,
     mimeType: 'application/pdf',
+    storageKey: 'uploads/user-id/uuid.pdf',
     createdAt: '2024-01-01T00:00:00.000Z',
     parsedText: null,
     parseStatus: 'COMPLETED',
+    extractionStatus: 'COMPLETED',
+    manuallyEdited: false,
   },
 ];
 
@@ -79,7 +85,10 @@ describe('Dashboard', () => {
       imports: [Dashboard],
       providers: [
         { provide: CvApiService, useValue: cvApiService },
-        { provide: JobApplicationApiService, useValue: jobApplicationApiService },
+        {
+          provide: JobApplicationApiService,
+          useValue: jobApplicationApiService,
+        },
         { provide: MessageService, useValue: messageService },
         {
           provide: Supabase,
@@ -102,6 +111,13 @@ describe('Dashboard', () => {
   it('should render the page heading', () => {
     const heading: HTMLElement = fixture.nativeElement.querySelector('h1');
     expect(heading.textContent?.trim()).toBe('Dashboard');
+  });
+
+  it('should render a Create CV button linking to /cv-builder', () => {
+    const link: HTMLElement | null = fixture.nativeElement.querySelector(
+      '[routerLink="/cv-builder"]',
+    );
+    expect(link).toBeTruthy();
   });
 
   it('should render the My CVs tab', () => {

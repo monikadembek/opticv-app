@@ -115,6 +115,7 @@ export class Settings implements OnInit {
     COVER_LETTER: 'Cover letter generations',
     INTERVIEW_PREP: 'Interview prep generations',
     LINKEDIN: 'LinkedIn content generations',
+    CV_BUILDER: 'CV builder creations',
   };
 
   readonly subscriptionRenewal = computed<{

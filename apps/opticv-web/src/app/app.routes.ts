@@ -48,6 +48,18 @@ export const appRoutes: Route[] = [
     canActivate: [authGuard],
   },
   {
+    path: 'cv-builder/:id',
+    loadComponent: () =>
+      import('./features/cv-builder/cv-builder').then((m) => m.CvBuilder),
+    canActivate: [authGuard],
+  },
+  {
+    path: 'cv-builder',
+    loadComponent: () =>
+      import('./features/cv-builder/cv-builder').then((m) => m.CvBuilder),
+    canActivate: [authGuard],
+  },
+  {
     path: 'settings',
     loadComponent: () =>
       import('./features/settings/settings').then((c) => c.Settings),

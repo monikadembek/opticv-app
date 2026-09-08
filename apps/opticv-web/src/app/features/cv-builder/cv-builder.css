@@ -1,0 +1,163 @@
+.load-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 64px 16px;
+  text-align: center;
+}
+
+.load-error-message {
+  color: var(--critical);
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2, 8px);
+  padding: 64px 16px;
+  color: var(--text-muted);
+}
+
+.builder-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 16px);
+  padding: var(--space-6, 24px);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.builder-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3, 12px);
+}
+
+.builder-heading {
+  font-family: var(--font-heading);
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
+  color: var(--text-strong);
+  margin: 0;
+}
+
+.builder-content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6, 24px);
+}
+
+@media (min-width: 1024px) {
+  .builder-content {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 480px);
+    align-items: start;
+  }
+
+  .builder-preview {
+    position: sticky;
+    top: var(--space-4, 16px);
+  }
+}
+
+.builder-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 16px);
+  min-width: 0;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3, 12px);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 4px);
+}
+
+.field label {
+  font-size: var(--text-sm);
+  color: var(--text-body);
+}
+
+.field textarea {
+  width: 100%;
+}
+
+.list-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 16px);
+}
+
+.list-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 12px);
+  padding: var(--space-4, 16px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 8px);
+}
+
+.list-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.list-item-title {
+  font-weight: var(--weight-semibold);
+  color: var(--text-strong);
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: var(--space-1, 4px);
+}
+
+.icon-btn:hover {
+  color: var(--critical);
+}
+
+.gdpr-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3, 12px);
+  padding: var(--space-3, 12px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+}
+
+.gdpr-card-checkbox {
+  margin-top: 3px;
+}
+
+.gdpr-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 4px);
+}
+
+.gdpr-card-title {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text-strong);
+}
+
+.gdpr-card-description {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}

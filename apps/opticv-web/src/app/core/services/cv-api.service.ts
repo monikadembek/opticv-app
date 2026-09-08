@@ -1,7 +1,11 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import type { CvDocumentListItem } from '@opticv/datatypes';
+import type {
+  CvDocument,
+  CvDocumentListItem,
+  CvStructuredData,
+} from '@opticv/datatypes';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -20,5 +24,25 @@ export class CvApiService {
 
   deleteCv(id: string): Observable<void> {
     return this.http.delete<void>(`${environment.apiUrl}/cv/${id}`);
+  }
+
+  getStructuredData(id: string): Observable<{ data: CvStructuredData }> {
+    return this.http.get<{ data: CvStructuredData }>(
+      `${environment.apiUrl}/cv/${id}/structured-data`,
+    );
+  }
+
+  createManualCv(data: CvStructuredData): Observable<CvDocument> {
+    return this.http.post<CvDocument>(`${environment.apiUrl}/cv/manual`, data);
+  }
+
+  updateStructuredData(
+    id: string,
+    data: CvStructuredData,
+  ): Observable<CvDocument> {
+    return this.http.patch<CvDocument>(
+      `${environment.apiUrl}/cv/${id}/structured-data`,
+      data,
+    );
   }
 }

@@ -1,0 +1,391 @@
+@if (loadError()) {
+<div class="load-error">
+  <span class="load-error-message">{{ loadError() }}</span>
+  <p-button
+    label="Back to Dashboard"
+    icon="pi pi-arrow-left"
+    routerLink="/dashboard"
+    ariaLabel="Back to Dashboard"
+  />
+</div>
+} @else if (loading()) {
+<div class="loading-state">
+  <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+  <span>Loading CV&hellip;</span>
+</div>
+} @else {
+<div class="builder-layout">
+  <div class="builder-header">
+    <h1 class="builder-heading">{{ cvId() ? 'Edit CV' : 'Create CV' }}</h1>
+    <p-button
+      label="Save"
+      icon="pi pi-check"
+      [loading]="saving()"
+      [disabled]="saving()"
+      ariaLabel="Save CV"
+      (onClick)="save()"
+    />
+  </div>
+
+  <div class="builder-content">
+    <div class="builder-form">
+      <app-section-card sectionId="contact" icon="pi-user" title="Contact">
+        <div class="field-grid">
+          <div class="field">
+            <label for="contact-name">Full name</label>
+            <input
+              pInputText
+              id="contact-name"
+              type="text"
+              [ngModel]="contact().name"
+              (ngModelChange)="updateContactField('name', $event)"
+            />
+          </div>
+          <div class="field">
+            <label for="contact-position">Position</label>
+            <input
+              pInputText
+              id="contact-position"
+              type="text"
+              [ngModel]="contact().position"
+              (ngModelChange)="updateContactField('position', $event)"
+            />
+          </div>
+          <div class="field">
+            <label for="contact-email">Email</label>
+            <input
+              pInputText
+              id="contact-email"
+              type="email"
+              [ngModel]="contact().email"
+              (ngModelChange)="updateContactField('email', $event)"
+            />
+          </div>
+          <div class="field">
+            <label for="contact-phone">Phone</label>
+            <input
+              pInputText
+              id="contact-phone"
+              type="text"
+              [ngModel]="contact().phone"
+              (ngModelChange)="updateContactField('phone', $event)"
+            />
+          </div>
+          <div class="field">
+            <label for="contact-location">Location</label>
+            <input
+              pInputText
+              id="contact-location"
+              type="text"
+              [ngModel]="contact().location"
+              (ngModelChange)="updateContactField('location', $event)"
+            />
+          </div>
+          <div class="field">
+            <label for="contact-linkedin">LinkedIn</label>
+            <input
+              pInputText
+              id="contact-linkedin"
+              type="text"
+              [ngModel]="contact().linkedin"
+              (ngModelChange)="updateContactField('linkedin', $event)"
+            />
+          </div>
+          <div class="field">
+            <label for="contact-website">Website</label>
+            <input
+              pInputText
+              id="contact-website"
+              type="text"
+              [ngModel]="contact().website"
+              (ngModelChange)="updateContactField('website', $event)"
+            />
+          </div>
+        </div>
+      </app-section-card>
+
+      <app-section-card
+        sectionId="summary"
+        icon="pi-align-left"
+        title="Summary"
+      >
+        <div class="field">
+          <label for="summary-text">Professional summary</label>
+          <textarea
+            pTextarea
+            id="summary-text"
+            rows="4"
+            [ngModel]="summary()"
+            (ngModelChange)="summary.set($event)"
+          ></textarea>
+        </div>
+      </app-section-card>
+
+      <app-section-card
+        sectionId="experience"
+        icon="pi-briefcase"
+        title="Experience"
+      >
+        <app-experience-section
+          [items]="experience()"
+          (itemsChange)="experience.set($event)"
+        />
+      </app-section-card>
+
+      <app-section-card
+        sectionId="education"
+        icon="pi-graduation-cap"
+        title="Education"
+      >
+        <app-education-section
+          [items]="education()"
+          (itemsChange)="education.set($event)"
+        />
+      </app-section-card>
+
+      <app-section-card sectionId="skills" icon="pi-star" title="Skills">
+        <div class="field">
+          <label for="skills-text">Skills (comma-separated)</label>
+          <input
+            pInputText
+            id="skills-text"
+            type="text"
+            [ngModel]="skillsText()"
+            (ngModelChange)="skillsText.set($event)"
+          />
+        </div>
+      </app-section-card>
+
+      <app-section-card
+        sectionId="certifications"
+        icon="pi-verified"
+        title="Certifications"
+      >
+        <div class="list-section">
+          @for (cert of certifications(); track $index; let i = $index) {
+          <div class="list-item">
+            <div class="list-item-header">
+              <span class="list-item-title">Certification {{ i + 1 }}</span>
+              <button
+                type="button"
+                class="icon-btn"
+                [attr.aria-label]="'Remove certification ' + (i + 1)"
+                title="Remove certification"
+                (click)="removeCertification(i)"
+              >
+                <i class="pi pi-trash" aria-hidden="true"></i>
+              </button>
+            </div>
+            <div class="field-grid">
+              <div class="field">
+                <label [for]="'cert-name-' + i">Name</label>
+                <input
+                  pInputText
+                  [id]="'cert-name-' + i"
+                  type="text"
+                  [ngModel]="cert.name"
+                  (ngModelChange)="updateCertificationField(i, 'name', $event)"
+                />
+              </div>
+              <div class="field">
+                <label [for]="'cert-issuer-' + i">Issuer</label>
+                <input
+                  pInputText
+                  [id]="'cert-issuer-' + i"
+                  type="text"
+                  [ngModel]="cert.issuer"
+                  (ngModelChange)="updateCertificationField(i, 'issuer', $event)"
+                />
+              </div>
+              <div class="field">
+                <label [for]="'cert-date-' + i">Date</label>
+                <input
+                  pInputText
+                  [id]="'cert-date-' + i"
+                  type="text"
+                  [ngModel]="cert.date"
+                  (ngModelChange)="updateCertificationField(i, 'date', $event)"
+                />
+              </div>
+            </div>
+          </div>
+          }
+          <p-button
+            label="Add certification"
+            icon="pi pi-plus"
+            size="small"
+            outlined="true"
+            (onClick)="addCertification()"
+          />
+        </div>
+      </app-section-card>
+
+      <app-section-card sectionId="projects" icon="pi-folder" title="Projects">
+        <div class="list-section">
+          @for (project of projects(); track $index; let i = $index) {
+          <div class="list-item">
+            <div class="list-item-header">
+              <span class="list-item-title">Project {{ i + 1 }}</span>
+              <button
+                type="button"
+                class="icon-btn"
+                [attr.aria-label]="'Remove project ' + (i + 1)"
+                title="Remove project"
+                (click)="removeProject(i)"
+              >
+                <i class="pi pi-trash" aria-hidden="true"></i>
+              </button>
+            </div>
+            <div class="field-grid">
+              <div class="field">
+                <label [for]="'project-name-' + i">Name</label>
+                <input
+                  pInputText
+                  [id]="'project-name-' + i"
+                  type="text"
+                  [ngModel]="project.name"
+                  (ngModelChange)="updateProjectField(i, 'name', $event)"
+                />
+              </div>
+              <div class="field">
+                <label [for]="'project-url-' + i">URL</label>
+                <input
+                  pInputText
+                  [id]="'project-url-' + i"
+                  type="text"
+                  [ngModel]="project.url"
+                  (ngModelChange)="updateProjectField(i, 'url', $event)"
+                />
+              </div>
+              <div class="field">
+                <label [for]="'project-tech-' + i"
+                  >Technologies (comma-separated)</label
+                >
+                <input
+                  pInputText
+                  [id]="'project-tech-' + i"
+                  type="text"
+                  [ngModel]="(project.technologies ?? []).join(', ')"
+                  (ngModelChange)="updateProjectTechnologies(i, $event)"
+                />
+              </div>
+            </div>
+            <div class="field">
+              <label [for]="'project-description-' + i">Description</label>
+              <textarea
+                pTextarea
+                [id]="'project-description-' + i"
+                rows="2"
+                [ngModel]="project.description"
+                (ngModelChange)="updateProjectField(i, 'description', $event)"
+              ></textarea>
+            </div>
+          </div>
+          }
+          <p-button
+            label="Add project"
+            icon="pi pi-plus"
+            size="small"
+            outlined="true"
+            (onClick)="addProject()"
+          />
+        </div>
+      </app-section-card>
+
+      <app-section-card sectionId="languages" icon="pi-globe" title="Languages">
+        <div class="list-section">
+          @for (lang of languages(); track $index; let i = $index) {
+          <div class="list-item">
+            <div class="list-item-header">
+              <span class="list-item-title">Language {{ i + 1 }}</span>
+              <button
+                type="button"
+                class="icon-btn"
+                [attr.aria-label]="'Remove language ' + (i + 1)"
+                title="Remove language"
+                (click)="removeLanguage(i)"
+              >
+                <i class="pi pi-trash" aria-hidden="true"></i>
+              </button>
+            </div>
+            <div class="field-grid">
+              <div class="field">
+                <label [for]="'lang-name-' + i">Language</label>
+                <input
+                  pInputText
+                  [id]="'lang-name-' + i"
+                  type="text"
+                  [ngModel]="lang.language"
+                  (ngModelChange)="updateLanguageField(i, 'language', $event)"
+                />
+              </div>
+              <div class="field">
+                <label [for]="'lang-proficiency-' + i">Proficiency</label>
+                <input
+                  pInputText
+                  [id]="'lang-proficiency-' + i"
+                  type="text"
+                  [ngModel]="lang.proficiency"
+                  (ngModelChange)="updateLanguageField(i, 'proficiency', $event)"
+                />
+              </div>
+            </div>
+          </div>
+          }
+          <p-button
+            label="Add language"
+            icon="pi pi-plus"
+            size="small"
+            outlined="true"
+            (onClick)="addLanguage()"
+          />
+        </div>
+      </app-section-card>
+
+      <app-section-card
+        sectionId="other"
+        icon="pi-file-edit"
+        title="Additional Info"
+      >
+        <div class="field">
+          <label for="other-text">Other information</label>
+          <textarea
+            pTextarea
+            id="other-text"
+            rows="3"
+            [ngModel]="other()"
+            (ngModelChange)="other.set($event)"
+          ></textarea>
+        </div>
+      </app-section-card>
+
+      <app-section-card sectionId="gdpr" icon="pi-shield" title="Compliance">
+        <label class="gdpr-card">
+          <input
+            type="checkbox"
+            [checked]="includeGdprClause()"
+            (change)="includeGdprClause.set($any($event.target).checked)"
+            class="gdpr-card-checkbox accent-primary shrink-0"
+            aria-label="Include GDPR clause"
+          />
+          <span class="gdpr-card-text">
+            <span class="gdpr-card-title">GDPR Clause</span>
+            <span class="gdpr-card-description"
+              >Include if you're applying to companies based in the EU, EEA, UK,
+              or Switzerland</span
+            >
+          </span>
+        </label>
+      </app-section-card>
+    </div>
+
+    <div class="builder-preview">
+      <app-cv-a4-preview
+        [cv]="mergedCv()"
+        [templateId]="selectedTemplate()"
+        [accentColor]="accentColor()"
+      />
+    </div>
+  </div>
+</div>
+}
