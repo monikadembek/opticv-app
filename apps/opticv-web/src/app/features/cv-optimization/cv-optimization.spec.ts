@@ -28,9 +28,12 @@ const mockCv: CvDocumentListItem = {
   fileName: 'my-cv.pdf',
   fileSize: 2048,
   mimeType: 'application/pdf',
+  storageKey: 'uploads/user-id/uuid.pdf',
   createdAt: new Date('2024-01-01').toISOString(),
   parsedText: null,
   parseStatus: 'COMPLETED',
+  extractionStatus: 'COMPLETED',
+  manuallyEdited: false,
 };
 
 const mockJobApplication: JobApplication = {
@@ -943,9 +946,7 @@ describe('CvOptimization', () => {
 
     it('does not include a prompt type with no results entry while it is processing', () => {
       component.jobApplicationId.set(mockJobApplication.id);
-      component.isProcessing.set(
-        new Map([[PromptType.SUMMARY_REWRITE, true]]),
-      );
+      component.isProcessing.set(new Map([[PromptType.SUMMARY_REWRITE, true]]));
       expect(
         component.retryablePromptTypes().has(PromptType.SUMMARY_REWRITE),
       ).toBe(false);
@@ -989,9 +990,7 @@ describe('CvOptimization', () => {
     });
 
     it('returns processing when the prompt type is currently processing', () => {
-      component.isProcessing.set(
-        new Map([[PromptType.SUMMARY_REWRITE, true]]),
-      );
+      component.isProcessing.set(new Map([[PromptType.SUMMARY_REWRITE, true]]));
       expect(component.sectionStatus(PromptType.SUMMARY_REWRITE)).toBe(
         'processing',
       );
@@ -1022,9 +1021,7 @@ describe('CvOptimization', () => {
           ],
         ]),
       );
-      expect(component.sectionStatus(PromptType.KEYWORD_GAP)).toBe(
-        'completed',
-      );
+      expect(component.sectionStatus(PromptType.KEYWORD_GAP)).toBe('completed');
     });
   });
 

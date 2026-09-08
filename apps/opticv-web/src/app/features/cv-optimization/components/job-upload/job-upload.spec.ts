@@ -16,9 +16,12 @@ const mockCv: CvDocumentListItem = {
   fileName: 'my-cv.pdf',
   fileSize: 2048,
   mimeType: 'application/pdf',
+  storageKey: 'uploads/user-id/uuid.pdf',
   createdAt: new Date('2024-01-01').toISOString(),
   parsedText: null,
   parseStatus: 'COMPLETED',
+  extractionStatus: 'COMPLETED',
+  manuallyEdited: false,
 };
 
 const mockJobApplicationResponse: JobApplicationResponse = {
