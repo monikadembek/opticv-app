@@ -5,6 +5,10 @@
   "scripts": {
     "start-be:dev": "cross-env NODE_ENV=development nx serve opticv-be",
     "start-web": "nx serve opticv-web",
+    "prisma:migrate:staging": "cross-env NODE_ENV=staging node scripts/run-in.mjs apps/opticv-be npm exec prisma migrate deploy",
+    "prisma:migrate:production": "cross-env NODE_ENV=production node scripts/run-in.mjs apps/opticv-be npm exec prisma migrate deploy",
+    "prisma:studio:staging": "cross-env NODE_ENV=staging node scripts/run-in.mjs apps/opticv-be npm exec prisma studio",
+    "prisma:studio:production": "cross-env NODE_ENV=production node scripts/run-in.mjs apps/opticv-be npm exec prisma studio",
     "build-datatypes": "nx build datatypes && npm run sentry:sourcemaps",
     "sentry:sourcemaps": "sentry-cli sourcemaps inject --org opticv --project javascript-angular ./dist && sentry-cli sourcemaps upload --org opticv --project javascript-angular ./dist"
   },

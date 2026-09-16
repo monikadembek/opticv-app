@@ -1607,10 +1607,10 @@ After changes in the ui some images require update:
 
 ## 118. Prepare production environment
 
-**status: todo**
-**time: **
+**status: in progress**
+**time: 14.09.2026**
 
-- prepare all services, infrastructure for the production env
+- prepare all services, environments config and infrastructure for the production env
 
 ---
 
