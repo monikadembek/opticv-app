@@ -1,0 +1,98 @@
+@if (error()) {
+<div class="flex flex-col items-center gap-4 py-16 text-center">
+  <span class="text-red-500">{{ error() }}</span>
+  <p-button
+    label="Retry"
+    icon="pi pi-refresh"
+    (onClick)="loadOptimizations()"
+  />
+</div>
+} @else if (items().length === 0) {
+<div class="flex flex-col items-center gap-4 py-16 text-center">
+  @if(cvStore.hasCv()) {
+  <span class="text-surface-500 text-lg">
+    You haven't run any CV optimizations yet.
+  </span>
+  <p-button
+    label="Run your first optimization"
+    icon="pi pi-bolt"
+    routerLink="/cv-optimization"
+  />
+  } @else {
+  <span class="text-surface-500 text-lg">
+    To run CV optimization you must first upload a file with your CV.
+  </span>
+  <p-button
+    label="Upload your first CV"
+    icon="pi pi-upload"
+    routerLink="/upload-cv"
+  />
+  }
+</div>
+} @else {
+<div class="mb-3 flex justify-end">
+  <p-iconfield iconPosition="left">
+    <p-inputicon>
+      <svg data-p-icon="search" />
+    </p-inputicon>
+    <input
+      pInputText
+      pSize="small"
+      type="text"
+      (input)="dt.filterGlobal($event.target.value, 'contains')"
+      placeholder="Search"
+    />
+  </p-iconfield>
+</div>
+<p-table
+  #dt
+  [value]="items()"
+  [loading]="isLoading()"
+  [pt]="{ loadingIcon: { class: 'w-auto! h-auto!' } }"
+  [globalFilterFields]="['jobTitle', 'companyName', 'fileName']"
+  [tableStyle]="{ 'border': '1px solid var(--border-subtle)' }"
+  class="optim-table mt-4"
+>
+  <ng-template #header>
+    <tr class="uppercase text-sm text-(--text-muted) bg-(--primary-50)">
+      <th>Position</th>
+      <th>Company</th>
+      <th>CV file</th>
+      <th>Created</th>
+      <th>Actions</th>
+    </tr>
+  </ng-template>
+  <ng-template #body let-item>
+    <tr>
+      <td class="font-semibold">{{ item.jobTitle }}</td>
+      <td>{{ item.companyName }}</td>
+      <td>
+        <i class="pi pi-file text-(--text-subtle)"></i>
+        {{ item.cvDocument.fileName }}
+      </td>
+      <td>{{ item.createdAt | date: 'MMM d, yyyy'}}</td>
+      <td>
+        <div class="flex items-center gap-2 shrink-0">
+          <p-button
+            label="Open"
+            icon="pi pi-external-link"
+            size="small"
+            (onClick)="onOpen(item)"
+            ariaLabel="Open optimization for {{ item.jobTitle ?? 'this position' }}"
+          />
+          <p-button
+            icon="pi pi-trash"
+            size="small"
+            severity="danger"
+            [text]="true"
+            styleClass="action-icon-btn"
+            title="Delete"
+            (onClick)="onDelete(item)"
+            ariaLabel="Delete optimization for {{ item.jobTitle ?? 'this position' }}"
+          />
+        </div>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+}

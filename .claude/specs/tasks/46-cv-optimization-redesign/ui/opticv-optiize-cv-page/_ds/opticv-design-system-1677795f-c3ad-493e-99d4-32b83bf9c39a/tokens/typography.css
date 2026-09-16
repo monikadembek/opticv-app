@@ -1,0 +1,43 @@
+/* OptiCV typography tokens
+   Montserrat = headings/display. Lato = body/UI. PrimeIcons = app icon font. */
+
+:root {
+  /* ---- Families ---- */
+  --font-heading: "Montserrat", Verdana, Geneva, Tahoma, sans-serif;
+  --font-body: "Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-family: var(--font-body); /* PrimeNG p-component default */
+
+  /* ---- Weights ---- */
+  --weight-light: 300;
+  --weight-regular: 400;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-black: 900;
+
+  /* ---- Type scale (rem) ---- */
+  --text-xs: 0.75rem;   /* 12 — meta, badges */
+  --text-sm: 0.875rem;  /* 14 — UI text, body-sm */
+  --text-base: 1rem;    /* 16 — body */
+  --text-lg: 1.125rem;  /* 18 — lead body */
+  --text-xl: 1.25rem;   /* 20 — subhead */
+  --text-2xl: 1.5rem;   /* 24 — h4 / panel titles */
+  --text-3xl: 1.875rem; /* 30 — h3 / page title */
+  --text-4xl: 2.25rem;  /* 36 — h2 mobile */
+  --text-5xl: 3rem;     /* 48 — h2 desktop */
+  --text-6xl: 3.75rem;  /* 60 — h1 desktop */
+
+  /* Display helpers from opticv-web */
+  --heading-1-size: 3.5rem; /* 56 */
+  --heading-2-size: 2.5rem; /* 40 */
+
+  /* ---- Line heights ---- */
+  --leading-tight: 1.1;   /* headings */
+  --leading-snug: 1.3;
+  --leading-normal: 1.5;  /* body */
+  --leading-relaxed: 1.6; /* card copy */
+
+  /* ---- Tracking ---- */
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.05em; /* buttons, logo, uppercase eyebrows */
+}

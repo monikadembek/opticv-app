@@ -1,0 +1,406 @@
+<div class="space-y-6">
+  <!-- Section 2: Overall Notes -->
+  @if (result().overallNotes) {
+  <div>
+    <h3 class="text-md font-semibold text-surface-800 mb-3 mt-2">
+      Overall Notes
+    </h3>
+    <p class="text-sm text-surface-700">{{ result().overallNotes }}</p>
+  </div>
+  }
+
+  <!-- Section 1: Positions & Bullets -->
+  @if (result().positions.length === 0) {
+  <p class="m-0 text-sm text-surface-400">No bullet data available</p>
+  } @else { @for (position of result().positions; track pi; let pi = $index) {
+  <div class="mb-6">
+    <div class="flex justify-between items-center mb-3">
+      <h4 class="font-semibold text-surface-800">
+        <i
+          class="pi pi-briefcase mr-2 rounded-full bg-(--primary-700) text-white p-2"
+        ></i>
+        {{ position.title }} at {{ position.company }}
+      </h4>
+      @if (position.dates) {
+      <span class="text-sm text-(--text-muted) font-medium"
+        >{{ position.dates }}</span
+      >
+      }
+    </div>
+
+    <ul class="space-y-4 list-none p-0 m-0">
+      @for (bullet of position.bullets; track bullet.originalText; let bi =
+      $index) {
+      <li
+        class="rounded-lg border border-(--border-subtle) p-3"
+        [class.border-green-400]="bullet.action === 'rewrite' && bullet.rewrittenText && isSelected(position.company, position.title, bullet.originalText)"
+        [class.bg-green-50]="bullet.action === 'rewrite' && bullet.rewrittenText && isSelected(position.company, position.title, bullet.originalText)"
+        [class.border-red-400]="bullet.action === 'recommend_cut' && isRemovedBullet(position.company, position.title, bullet.originalText)"
+      >
+        @switch (bullet.action) { @case ('rewrite') { @if (bullet.rewrittenText)
+        {
+        <div class="space-y-3">
+          <!-- Header row -->
+          <div class="flex items-center gap-3">
+            <input
+              type="checkbox"
+              [checked]="isSelected(position.company, position.title, bullet.originalText)"
+              (change)="toggleBullet(position.company, position.title, bullet.originalText)"
+              class="accent-primary shrink-0"
+              [attr.aria-label]="'Select AI rewrite for bullet at ' + position.title + ' - ' + position.company"
+            />
+            <span class="font-semibold text-sm"
+              >{{position.title}} at {{position.company}} - bullet point
+              rewrite</span
+            >
+            @if (isEdited(position.company, position.title,
+            bullet.originalText)) {
+            <span
+              class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 font-medium"
+              >Edited</span
+            >
+            } @if (!isEditing(position.company, position.title,
+            bullet.originalText)) {
+            <p-button
+              type="button"
+              variant="outlined"
+              severity="success"
+              size="small"
+              class="ml-auto py-0!"
+              (click)="editStarted.emit(bulletKey(position.company, position.title, bullet.originalText))"
+              aria-label="Edit rewritten bullet"
+            >
+              <i class="pi pi-pencil text-xs!"></i> Edit
+            </p-button>
+            }
+          </div>
+
+          <!-- BEFORE / AFTER -->
+          <div class="flex flex-col lg:flex-row lg:items-stretch gap-3">
+            <!-- BEFORE -->
+            <div class="flex-1 min-w-0 space-y-1.5">
+              <div
+                class="flex items-center gap-1.5 text-xs font-medium text-surface-400 uppercase tracking-wide"
+              >
+                <i class="pi pi-file text-[10px]"></i> Original
+              </div>
+              <div
+                class="h-[90%] rounded-md border border-(--border-subtle) bg-white p-2.5 text-sm text-surface-700"
+              >
+                {{ bullet.originalText }}
+              </div>
+            </div>
+
+            <!-- Arrow divider -->
+            <div class="flex justify-center lg:items-center self-stretch">
+              <span class="inline-block lg:hidden">
+                <i
+                  class="pi pi-arrow-down text-(--text-muted)"
+                  aria-hidden="true"
+                ></i>
+              </span>
+              <span class="hidden lg:inline-block">
+                <i
+                  class="pi pi-arrow-right text-(--text-muted)"
+                  aria-hidden="true"
+                ></i>
+              </span>
+            </div>
+
+            <!-- AFTER -->
+            <div class="flex-1 min-w-0 space-y-1.5">
+              <div
+                class="flex items-center gap-1.5 text-xs font-medium text-green-700 uppercase tracking-wide"
+              >
+                <i class="pi pi-check-circle text-[10px]"></i> Rewritten
+              </div>
+              @if (isEditing(position.company, position.title,
+              bullet.originalText)) {
+              <div class="space-y-2">
+                <textarea
+                  pTextarea
+                  [autoResize]="true"
+                  [value]="editedBulletText()"
+                  (input)="editTextChanged.emit($any($event.target).value)"
+                  class="w-full text-sm"
+                  rows="3"
+                  aria-label="Edit rewritten bullet text"
+                ></textarea>
+                <div class="flex gap-2">
+                  <p-button
+                    label="Save"
+                    size="small"
+                    (onClick)="editSaved.emit({ key: bulletKey(position.company, position.title, bullet.originalText), text: editedBulletText() })"
+                  />
+                  <p-button
+                    label="Cancel"
+                    size="small"
+                    severity="secondary"
+                    [text]="true"
+                    (onClick)="editCancelled.emit()"
+                  />
+                </div>
+              </div>
+              } @else {
+              <div
+                class="h-[90%] rounded-md border-l-4 border-green-500 bg-white p-4 text-sm font-bold text-surface-900"
+              >
+                {{ getDisplayText(position.company, position.title,
+                bullet.originalText, bullet.rewrittenText) }}
+              </div>
+              }
+            </div>
+          </div>
+          @if (bullet.needsUserInput && bullet.placeholdersToFill.length > 0) {
+          <div class="text-xs text-amber-700 flex items-center mt-6">
+            <i class="pi pi-exclamation-circle mr-2"></i>
+            <span class="font-medium">Placeholders to fill:</span>
+            <span class="ml-1">
+              @for (ph of bullet.placeholdersToFill; track ph) {
+              <!-- <span
+                class="inline-flex items-center rounded bg-amber-100 px-1.5 py-0.5 mr-1"
+                >{{ ph }}</span
+              > -->
+              <span class="inline-flex items-center font-semibold mr-1"
+                >{{ ph }}</span
+              >
+              }
+            </span>
+          </div>
+          }
+
+          <!-- Why this works -->
+          @if (bullet.weakness || bullet.rewriteRationale) {
+          <button
+            type="button"
+            class="flex items-center gap-1.5 text-sm font-medium text-green-700"
+            [attr.aria-expanded]="isWhyExpanded(position.company, position.title, bullet.originalText)"
+            [attr.aria-controls]="'why-' + bulletKey(position.company, position.title, bullet.originalText)"
+            (click)="toggleWhy(position.company, position.title, bullet.originalText)"
+          >
+            <i
+              class="pi"
+              [class.pi-chevron-down]="!isWhyExpanded(position.company, position.title, bullet.originalText)"
+              [class.pi-chevron-up]="isWhyExpanded(position.company, position.title, bullet.originalText)"
+            ></i>
+            Why this works
+          </button>
+          @if (isWhyExpanded(position.company, position.title,
+          bullet.originalText)) {
+          <div
+            [id]="'why-' + bulletKey(position.company, position.title, bullet.originalText)"
+            class="space-y-1"
+          >
+            @if (bullet.weakness) {
+            <p class="text-xs text-surface-500 mb-2 ml-6">
+              <span class="font-semibold">Weakness:</span> {{ bullet.weakness }}
+            </p>
+            } @if (bullet.rewriteRationale) {
+            <p class="text-xs text-surface-500 mb-4 ml-6">
+              <span class="font-semibold">Reason for rewrite:</span> {{
+              bullet.rewriteRationale }}
+            </p>
+            }
+          </div>
+          } } @if (bullet.keywordsIncorporated.length > 0) {
+          <div class="flex items-center flex-wrap gap-1">
+            <span class="font-semibold text-xs">Keywords:</span>
+            @for (kw of bullet.keywordsIncorporated; track kw) {
+            <span
+              class="inline-flex items-center rounded-sm bg-(--neutral-100) px-2 py-0.5 text-xs text-surface-600"
+              >{{ kw }}</span
+            >
+            }
+          </div>
+          }
+        </div>
+        } @else {
+        <!-- rewrite action but no rewrittenText — display original read-only -->
+        <div class="flex items-start gap-2">
+          <span
+            class="shrink-0 text-xs font-medium text-surface-400 uppercase tracking-wide mt-0.5"
+            >Original</span
+          >
+          <span class="text-sm text-surface-700"
+            >{{ bullet.originalText }}</span
+          >
+        </div>
+        <p class="m-0 text-xs italic text-surface-400 mt-1">
+          {{ bullet.weakness }}
+        </p>
+        } } @case ('recommend_cut') {
+        <div>
+          <label class="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              [checked]="isRemovedBullet(position.company, position.title, bullet.originalText)"
+              (change)="removedBulletToggled.emit({ company: position.company, title: position.title, originalText: bullet.originalText })"
+              class="accent-primary mt-0.5 shrink-0"
+              [attr.aria-label]="'Remove bullet at ' + position.title + ' — ' + position.company + ': ' + bullet.originalText"
+            />
+            <div class="space-y-1 flex-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span
+                  class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700 font-medium shrink-0"
+                  >Suggested: remove</span
+                >
+                @if (isRemovedBullet(position.company, position.title,
+                bullet.originalText)) {
+                <span
+                  class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-700 font-medium"
+                  >Will be removed</span
+                >
+                }
+              </div>
+              <p class="text-sm text-surface-700 m-0">
+                {{ bullet.originalText }}
+              </p>
+              @if (bullet.cutReason) {
+              <p class="m-0 text-xs text-surface-500">{{ bullet.cutReason }}</p>
+              }
+            </div>
+          </label>
+        </div>
+        } @case ('keep_as_is') {
+        <div class="flex items-start gap-2">
+          <span
+            class="inline-flex items-center rounded-full bg-surface-100 px-2 py-0.5 text-xs text-surface-400 shrink-0"
+            >Kept</span
+          >
+          <span class="text-sm text-surface-400"
+            >{{ bullet.originalText }}</span
+          >
+        </div>
+        } }
+      </li>
+      }
+    </ul>
+  </div>
+  } }
+
+  <!-- Section 3: Missing Bullet Suggestions -->
+  @if (result().missingBulletSuggestions.length > 0) {
+  <div>
+    <h3 class="text-lg font-semibold text-surface-800 mb-3 mt-2">
+      Missing Bullet Suggestions
+    </h3>
+    <div class="space-y-4">
+      @for (suggestion of result().missingBulletSuggestions; track si; let si =
+      $index) {
+      <div
+        class="rounded-lg border border-(--border-subtle) p-4"
+        [class.border-green-400]="isMissingSelected(suggestion.forPosition, suggestion.suggestedBullet)"
+        [class.bg-green-50]="isMissingSelected(suggestion.forPosition, suggestion.suggestedBullet)"
+      >
+        <label class="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            [checked]="isMissingSelected(suggestion.forPosition, suggestion.suggestedBullet)"
+            (change)="missingBulletToggled.emit({ forPosition: suggestion.forPosition, suggestedBullet: suggestion.suggestedBullet })"
+            class="accent-primary mt-1 shrink-0"
+            [attr.aria-label]="'Add suggested bullet for ' + suggestion.forPosition"
+          />
+          <div class="space-y-2 flex-1">
+            <div class="flex items-center gap-2">
+              <p class="mb-2 text-sm font-semibold text-surface-700">
+                {{ suggestion.forPosition }}
+              </p>
+              @if (!isMissingEditing(suggestion.forPosition,
+              suggestion.suggestedBullet)) {
+              <p-button
+                type="button"
+                variant="outlined"
+                severity="success"
+                size="small"
+                class="ml-auto py-0!"
+                (click)="missingBulletEditStarted.emit(missingBulletKey(suggestion.forPosition, suggestion.suggestedBullet))"
+                aria-label="Edit suggested bullet"
+              >
+                <i class="pi pi-pencil text-xs"></i> Edit
+              </p-button>
+              }
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-(--text-subtle) uppercase font-semibold"
+                >Suggested bullet</span
+              >
+              @if (isMissingEdited(suggestion.forPosition,
+              suggestion.suggestedBullet)) {
+              <span
+                class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 font-medium"
+                >Edited</span
+              >
+              }
+            </div>
+            @if (isMissingEditing(suggestion.forPosition,
+            suggestion.suggestedBullet)) {
+            <div class="space-y-2">
+              <textarea
+                pTextarea
+                [autoResize]="true"
+                [value]="editedBulletText()"
+                (input)="editTextChanged.emit($any($event.target).value)"
+                class="w-full text-sm"
+                rows="3"
+                aria-label="Edit suggested bullet text"
+              ></textarea>
+              <div class="flex gap-2">
+                <p-button
+                  label="Save"
+                  size="small"
+                  (onClick)="missingBulletEditSaved.emit({ key: missingBulletKey(suggestion.forPosition, suggestion.suggestedBullet), text: editedBulletText() })"
+                />
+                <p-button
+                  label="Cancel"
+                  size="small"
+                  severity="secondary"
+                  [text]="true"
+                  (onClick)="editCancelled.emit()"
+                />
+              </div>
+            </div>
+            } @else {
+            <p
+              class="rounded-md border-l-4 border-green-500 bg-white p-4 text-sm font-bold text-surface-900"
+            >
+              {{ getMissingDisplayText(suggestion.forPosition,
+              suggestion.suggestedBullet) }}
+            </p>
+            } @if (suggestion.rationale) {
+            <p class="mb-3 text-xs italic text-surface-500">
+              {{ suggestion.rationale }}
+            </p>
+            }
+            <div
+              class="rounded-md bg-blue-50 border border-blue-200 p-2 text-sm text-blue-700 flex gap-2 items-start"
+            >
+              <i class="pi pi-question-circle mt-0.5"></i>
+              {{ suggestion.questionToAskUser }}
+            </div>
+          </div>
+        </label>
+      </div>
+      }
+    </div>
+  </div>
+  }
+
+  <!-- Section 4: Verb Diversity Check -->
+  <div
+    class="flex items-center gap-2 pt-4 border-t border-(--border-subtle) text-sm"
+  >
+    @if (result().verbDiversityCheck.diverseEnough) {
+    <i class="pi pi-check-circle text-green-600"></i>
+    <span class="text-surface-700">Good verb variety</span>
+    } @else {
+    <i class="pi pi-exclamation-triangle text-amber-500"></i>
+    <span class="text-surface-700"
+      >Consider diversifying your action verbs</span
+    >
+    }
+    <span class="text-surface-400">
+      - {{ result().verbDiversityCheck.uniqueVerbsUsed }} unique verbs across {{
+      result().verbDiversityCheck.totalBullets }} bullets
+    </span>
+  </div>
+</div>

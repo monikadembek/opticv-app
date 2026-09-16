@@ -13,8 +13,8 @@ describe('AppService', () => {
   });
 
   describe('getData', () => {
-    it('should return "Hello API"', () => {
-      expect(service.getData()).toEqual({ message: 'Hello API' });
+    it('should return "Hello OptiCV API"', () => {
+      expect(service.getData()).toEqual({ message: 'Hello OptiCV API' });
     });
   });
 });

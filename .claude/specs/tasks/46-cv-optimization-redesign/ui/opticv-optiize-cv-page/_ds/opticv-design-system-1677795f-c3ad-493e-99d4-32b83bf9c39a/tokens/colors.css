@@ -1,0 +1,87 @@
+/* OptiCV color tokens
+   Source of truth: opticv-landing-page tailwind.config.mjs + opticv-web colors.css
+   Brand: Emerald primary, Lime accent, Slate neutrals, light-yellow highlight. */
+
+:root {
+  /* ---- Primary — Emerald ---- */
+  --primary-50: #ecfdf5;
+  --primary-100: #d1fae5;
+  --primary-200: #a7f3d0;
+  --primary-300: #6ee7b7;
+  --primary-400: #34d399;
+  --primary-500: #10b981; /* green-light / hover-bright */
+  --primary-600: #059669; /* BRAND emerald — primary actions */
+  --primary-700: #047857; /* hover / wordmark "Opti" */
+  --primary-800: #065f46;
+  --primary-900: #064e3b;
+  --primary-950: #022c22;
+
+  /* ---- Accent — Lime ---- */
+  --accent-50: #fefff0;
+  --accent-100: #fdffd0;
+  --accent-200: #f9ff8a;
+  --accent-300: #f2ff4d;
+  --accent-400: #e8fa1a;
+  --accent-500: #d7e506; /* BRAND lime — highlights, Pro badge border, CTA accents */
+  --accent-600: #b8c404;
+  --accent-700: #8f9903;
+  --accent-800: #6b7302;
+  --accent-900: #4a5002;
+  --accent-950: #282c01;
+
+  /* ---- Neutral — Slate (PrimeNG "surface" scale) ---- */
+  --neutral-50: #f8fafc;
+  --neutral-100: #f1f5f9;
+  --neutral-200: #e2e8f0;
+  --neutral-300: #cbd5e1;
+  --neutral-400: #94a3b8;
+  --neutral-500: #64748b;
+  --neutral-600: #475569;
+  --neutral-700: #334155; /* default body text */
+  --neutral-800: #1e293b;
+  --neutral-900: #0f172a;
+  --neutral-950: #020617;
+
+  --white: #ffffff;
+  --black: #404040; /* brand "black" is a soft charcoal, never pure #000 */
+
+  /* ---- Surface highlight ---- */
+  --light-yellow: #fdffde; /* features band, soft callout backgrounds */
+
+  /* ---- Semantic — status & severity ---- */
+  --success: #059669;
+  --success-bg: #ecfdf5;
+  --critical: #b91c1c; /* red-700 text */
+  --critical-bg: #fee2e2; /* red-100 */
+  --high: #c2410c; /* orange-700 */
+  --high-bg: #ffedd5; /* orange-100 */
+  --medium: #b45309; /* amber-700 */
+  --medium-bg: #fef3c7; /* amber-100 */
+  --low: #475569; /* slate-600 */
+  --low-bg: #f1f5f9; /* slate-100 */
+  --info: #1d4ed8; /* blue-700 — "Required" tags */
+  --info-bg: #dbeafe; /* blue-100 */
+  --warning: #f59e0b; /* amber-400 — processing, warnings */
+  --warning-bg: #fffbeb; /* amber-50 */
+
+  /* ---- Semantic aliases ---- */
+  --color-primary: var(--primary-600);
+  --color-accent: var(--accent-500);
+
+  --text-strong: var(--neutral-900); /* surface-900 headings */
+  --text-body: var(--neutral-700); /* default body */
+  --text-muted: var(--neutral-500); /* secondary text */
+  --text-subtle: var(--neutral-400); /* captions, meta */
+  --text-on-primary: var(--white);
+  --text-link: var(--primary-600);
+
+  --surface-page: var(--white);
+  --surface-card: var(--white);
+  --surface-sunken: var(--neutral-50); /* inset rows, hover */
+  --surface-band: var(--light-yellow); /* feature/section bands */
+  --surface-cta: var(--primary-600); /* full-bleed CTA bands */
+
+  --border-subtle: var(--neutral-200);
+  --border-strong: var(--neutral-300);
+  --border-focus: var(--primary-600);
+}

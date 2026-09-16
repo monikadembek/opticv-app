@@ -1,0 +1,60 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+} from '@angular/core';
+import { FormsModule, NgForm } from '@angular/forms';
+import { MessageModule } from 'primeng/message';
+import { ToastModule } from 'primeng/toast';
+import { ButtonModule } from 'primeng/button';
+import { FloatLabelModule } from 'primeng/floatlabel';
+import { InputTextModule } from 'primeng/inputtext';
+import { Supabase } from '../../services/supabase';
+import { Router } from '@angular/router';
+import posthog from 'posthog-js';
+
+@Component({
+  selector: 'app-login',
+  imports: [
+    MessageModule,
+    ToastModule,
+    ButtonModule,
+    InputTextModule,
+    FloatLabelModule,
+    FormsModule,
+  ],
+  templateUrl: './login.html',
+  styleUrl: './login.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class Login {
+  private readonly supabase = inject(Supabase);
+  private readonly router = inject(Router);
+
+  email = '';
+  readonly errorMessage = signal('');
+  readonly isSubmitting = signal(false);
+
+  async onSubmit(loginForm: NgForm) {
+    this.errorMessage.set('');
+    const { email } = loginForm.form.value;
+
+    if (loginForm.valid && email.length > 0) {
+      this.isSubmitting.set(true);
+      const { error } = await this.supabase.signInWithOtp(email);
+      if (!error) {
+        posthog.capture('supabase_signinwithotp_executed', {
+          page: 'login',
+        });
+        this.supabase.setPendingEmail(email);
+        this.router.navigate(['/verify']);
+      }
+      if (error) {
+        console.log(error);
+        this.errorMessage.set('Error during sign in process');
+        this.isSubmitting.set(false);
+      }
+    }
+  }
+}

@@ -1,0 +1,53 @@
+.job-banner-info {
+  margin-bottom: var(--space-3);
+}
+
+.job-banner-title {
+  margin: 0 0 2px;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  font-family: var(--font-heading);
+  color: var(--text-strong);
+}
+
+.job-banner-company {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.job-banner-cv-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: var(--space-3);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--primary-600);
+}
+
+.job-banner-cv-btn:hover {
+  text-decoration: underline;
+}
+
+.job-banner-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.job-banner-description {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+  color: var(--text-body);
+  white-space: pre-wrap;
+}

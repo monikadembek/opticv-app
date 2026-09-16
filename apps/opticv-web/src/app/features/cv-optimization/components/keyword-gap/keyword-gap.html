@@ -1,0 +1,834 @@
+<div class="py-2">
+  <!-- Match Score -->
+  <div class="mb-6 flex items-center gap-4">
+    <svg
+      viewBox="0 0 100 100"
+      class="w-32 h-32"
+      role="img"
+      [attr.aria-label]="'Keyword match score: ' + result().matchScore + '%'"
+    >
+      <circle
+        cx="50"
+        cy="50"
+        r="40"
+        fill="none"
+        stroke="#e5e7eb"
+        stroke-width="10"
+      />
+      <circle
+        cx="50"
+        cy="50"
+        r="40"
+        fill="none"
+        [attr.stroke]="strokeColor()"
+        stroke-width="10"
+        stroke-linecap="round"
+        [attr.stroke-dasharray]="ringCircumference"
+        [attr.stroke-dashoffset]="strokeDashoffset()"
+        transform="rotate(-90 50 50)"
+      />
+      <text
+        x="50"
+        y="50"
+        text-anchor="middle"
+        dominant-baseline="central"
+        font-size="20"
+        font-weight="700"
+        [attr.fill]="strokeColor()"
+      >
+        {{ result().matchScore }}%
+      </text>
+    </svg>
+
+    <div class="flex flex-col items-start gap-2">
+      <span
+        class="text-sm font-semibold uppercase text-(--text-muted) font-(family-name:--font-heading)"
+        >Keyword Match Score</span
+      >
+      <div class="flex items-center gap-6 text-sm text-surface-600">
+        <span>
+          Required:
+          <span class="font-semibold font-(family-name:--font-heading)"
+            >{{ result().matchScoreBreakdown.requiredMatched }} / {{
+            result().matchScoreBreakdown.requiredTotal }}</span
+          >
+        </span>
+        <span>
+          Preferred:
+          <span class="font-semibold font-(family-name:--font-heading)"
+            >{{ result().matchScoreBreakdown.preferredMatched }} / {{
+            result().matchScoreBreakdown.preferredTotal }}</span
+          >
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Job Title Match -->
+  @if (result().jobTitleMatch; as titleMatch) {
+  <div class="mb-4">
+    <h3 class="text-xl font-semibold text-surface-800 mb-2">Job Title Match</h3>
+    <p class="text-sm text-(--text-muted)">
+      Select suggested title to match the one in job posting.
+    </p>
+  </div>
+  <div
+    class="mb-8 rounded-lg border px-4 pt-4 pb-5 transition-colors"
+    [class]="selectedJobTitle() ? 'border-emerald-600 bg-emerald-100/40' : 'border-(--border-subtle)'"
+  >
+    @if (titleMatch.matchLevel !== 'exact' && titleMatch.suggestedTitle) {
+    <div class="flex items-center gap-2 flex-wrap mb-2">
+      <input
+        type="checkbox"
+        id="job-title-use-suggested"
+        [checked]="selectedJobTitle()"
+        (change)="jobTitleToggled.emit()"
+        class="accent-primary"
+        aria-label="Use suggested title"
+      />
+      <label
+        for="job-title-use-suggested"
+        class="text-md text-surface-800 cursor-pointer"
+      >
+        <span class="font-semibold"
+          >{{ titleMatch.suggestedTitle }}</span
+        ></label
+      >
+      @if (!isEditingJobTitle()) {
+      <p-button
+        type="button"
+        variant="outlined"
+        severity="success"
+        size="small"
+        class="py-0! ml-auto"
+        (click)="jobTitleEditStarted.emit()"
+        aria-label="Edit suggested title"
+      >
+        <i class="pi pi-pencil text-xs!"></i> Edit
+      </p-button>
+      }
+    </div>
+    @if (isEditingJobTitle()) {
+    <div class="space-y-2 mt-2 ml-5">
+      <p
+        class="uppercase mb-1 text-sm font-semibold font-(family-name:--font-heading) text-(--text-muted)"
+      >
+        Edit the title that will be applied
+      </p>
+      <input
+        pInputText
+        type="text"
+        [value]="editedJobTitleText()"
+        (input)="jobTitleEditTextChanged.emit($any($event.target).value)"
+        class="w-full text-sm"
+        aria-label="Edit job title text"
+      />
+      <div class="flex gap-2">
+        <p-button
+          label="Save"
+          size="small"
+          (onClick)="jobTitleEditSaved.emit(editedJobTitleText())"
+        />
+        <p-button
+          label="Cancel"
+          size="small"
+          severity="secondary"
+          [text]="true"
+          (onClick)="jobTitleEditCancelled.emit()"
+        />
+      </div>
+    </div>
+    } } @if (!isEditingJobTitle()) {
+    <div class="ml-5">
+      <p class="text-sm text-surface-800 mb-2">
+        Original title:<br />
+        <span class="font-semibold mr-4"
+          >{{ titleMatch.candidateTitle ?? '—' }}</span
+        >
+        <span
+          class="text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full ml-auto"
+          [class]="jobTitleBadgeClass()"
+          title="Title match level"
+          >{{ titleMatch.matchLevel }}</span
+        >
+      </p>
+
+      <p class="text-sm text-surface-800">
+        Title in job posting: <br />
+        <span class="font-semibold">{{ titleMatch.targetTitle }}</span>
+      </p>
+    </div>
+    <p
+      class="mt-2 ml-5 text-xs italic text-surface-400 border-l border-surface-200 bg-(--neutral-100) p-2 rounded-sm"
+    >
+      {{ titleMatch.reasoning }}
+    </p>
+    }
+  </div>
+  }
+
+  <!-- Missing Keywords -->
+  @if (result().missingKeywords.length > 0) {
+  <div class="mb-8">
+    <h3 class="text-xl font-semibold text-surface-800 mb-2">
+      Missing Keywords
+      <span
+        class="ml-2 text-xs font-semibold bg-(--neutral-100) text-surface-600 rounded-sm px-2 py-1"
+        >{{ result().missingKeywords.length }}</span
+      >
+    </h3>
+    <p class="text-sm text-(--text-muted) mb-5">
+      Select keywords to incorporate into your CV - these move your score the
+      most.
+    </p>
+    <div class="space-y-4">
+      @if (missingLikelyHas().length > 0) {
+      <div class="mb-6">
+        <h4
+          class="font-semibold uppercase tracking-wide text-(--text-muted) mb-2"
+        >
+          Likely have - add to your CV
+        </h4>
+        <ul class="space-y-3 list-none p-0 m-0">
+          @for (item of missingLikelyHas(); track item.keyword) {
+          <li
+            class="flex flex-col gap-1 rounded-lg border px-4 pt-4 pb-5 transition-colors"
+            [class]="isSelected(item.keyword) ? 'border-emerald-600 bg-emerald-100/40' : 'border-(--border-subtle)'"
+          >
+            <div class="flex items-center gap-2 flex-wrap">
+              <input
+                type="checkbox"
+                [id]="'kw-' + item.keyword"
+                [checked]="isSelected(item.keyword)"
+                (change)="toggleKeyword(item.keyword)"
+                class="accent-primary"
+                [attr.aria-label]="'Select keyword ' + item.keyword"
+              />
+              <label
+                [for]="'kw-' + item.keyword"
+                class="font-semibold text-md text-surface-800 cursor-pointer"
+                >{{ getKeywordDisplayText(item.keyword) }}</label
+              >
+
+              <span
+                class="text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full"
+                [class]="item.importance === 'critical' ? 'bg-red-100 text-red-700' :
+                                item.importance === 'high'     ? 'bg-orange-100 text-orange-700' :
+                                item.importance === 'medium'   ? 'bg-amber-100 text-amber-700' :
+                                                                  'bg-slate-100 text-slate-600'"
+                title="Importance"
+                tooltipPosition="top"
+                >{{ item.importance }}</span
+              >
+              @if (item.isRequired) {
+              <span
+                class="text-xs bg-blue-100 text-blue-700 rounded px-1.5 py-0.5"
+                >Required</span
+              >
+              } @if (isEditedKeyword(item.keyword)) {
+              <span
+                class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 font-medium"
+                >Edited</span
+              >
+              }
+              <span
+                class="text-xs bg-(--neutral-100) text-surface-600 rounded px-1.5 ml-auto py-0.5 capitalize"
+                title="Suggested placement"
+                >{{ item.suggestedPlacement.replace('_', ' ') }}</span
+              >
+              @if (!isEditingKeyword(item.keyword)) {
+              <p-button
+                type="button"
+                variant="outlined"
+                severity="success"
+                size="small"
+                class="py-0!"
+                (click)="keywordEditStarted.emit(item.keyword)"
+                aria-label="Edit keyword"
+              >
+                <i class="pi pi-pencil text-xs!"></i> Edit
+              </p-button>
+              }
+            </div>
+            @if (isEditingKeyword(item.keyword)) {
+            <div class="space-y-2 mt-2 ml-5">
+              <p
+                class="uppercase mb-1 text-sm font-semibold font-(family-name:--font-heading) text-(--text-muted)"
+              >
+                Edit the text that will be added
+              </p>
+              <input
+                pInputText
+                type="text"
+                [value]="editedKeywordText()"
+                (input)="keywordEditTextChanged.emit($any($event.target).value)"
+                class="w-full text-sm"
+                aria-label="Edit keyword text"
+              />
+              <div class="flex gap-2">
+                <p-button
+                  label="Save"
+                  size="small"
+                  (onClick)="keywordEditSaved.emit({ key: item.keyword, text: editedKeywordText() })"
+                />
+                <p-button
+                  label="Cancel"
+                  size="small"
+                  severity="secondary"
+                  [text]="true"
+                  (onClick)="keywordEditCancelled.emit()"
+                />
+              </div>
+            </div>
+            } @if (!isEditingKeyword(item.keyword)) {
+            <p class="mt-1 ml-5 text-sm text-surface-500">
+              {{ item.recommendation }}
+            </p>
+            @if (item.evidenceFromResume) {
+            <p
+              class="mt-2 ml-5 text-xs italic text-surface-400 border-l border-surface-200 bg-(--neutral-100) p-2 rounded-sm"
+            >
+              {{ item.evidenceFromResume }}
+            </p>
+            } @if (isSelected(item.keyword) && item.suggestedPlacement ===
+            'experience_bullet') {
+            <div
+              class="mt-4 ml-5 p-4 flex flex-col items-start gap-2 bg-white rounded-md border border-(--color-green-light)"
+            >
+              <label
+                [for]="'kw-pos-' + item.keyword"
+                class="text-sm text-(--primary-700) uppercase shrink-0 font-semibold flex items-center gap-2"
+                ><i class="pi pi-list"></i>
+                Add as a bullet - choose where:
+              </label>
+              <select
+                [id]="'kw-pos-' + item.keyword"
+                class="text-sm border border-(--border-subtle) rounded px-2 py-1 flex-1 bg-white w-full"
+                (change)="onPositionChange(item.keyword, $any($event.target).value)"
+              >
+                <option
+                  value=""
+                  [selected]="getKeywordPosition(item.keyword) === null"
+                >
+                  — pick a position —
+                </option>
+                @for (pos of experiencePositions(); track $index; let i =
+                $index) {
+                <option
+                  [value]="i"
+                  [selected]="getKeywordPosition(item.keyword) === i"
+                >
+                  {{ pos }}
+                </option>
+                }
+              </select>
+            </div>
+            @if (isSelected(item.keyword) && getKeywordPosition(item.keyword)
+            === null) {
+            <p class="text-xs text-amber-600 mt-1 ml-5">
+              Pick a position to include this in your CV.
+            </p>
+            } } }
+          </li>
+          }
+        </ul>
+      </div>
+      } @if (missingGenuinelyLacks().length > 0) {
+      <div>
+        <h4
+          class="font-semibold uppercase tracking-wide text-(--text-muted) mb-2"
+        >
+          Skills to acquire or omit
+        </h4>
+        <ul class="space-y-3 list-none p-0 m-0">
+          @for (item of missingGenuinelyLacks(); track item.keyword) {
+          <li
+            class="flex flex-col gap-1 rounded-lg border px-4 pt-4 pb-5 transition-colors"
+            [class]="isSelected(item.keyword) ? 'border-emerald-600 bg-emerald-100/40' : 'border-(--border-subtle)'"
+          >
+            <div class="flex items-center gap-2 flex-wrap">
+              <input
+                type="checkbox"
+                [id]="'kw-lacks-' + item.keyword"
+                [checked]="isSelected(item.keyword)"
+                (change)="toggleKeyword(item.keyword)"
+                class="accent-primary"
+                [attr.aria-label]="'Select keyword ' + item.keyword"
+              />
+              <label
+                [for]="'kw-lacks-' + item.keyword"
+                class="font-semibold text-sm text-surface-800 cursor-pointer"
+                >{{ getKeywordDisplayText(item.keyword) }}</label
+              >
+              <span
+                class="text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full"
+                [class]="item.importance === 'critical' ? 'bg-red-100 text-red-700' :
+                                item.importance === 'high'     ? 'bg-orange-100 text-orange-700' :
+                                item.importance === 'medium'   ? 'bg-amber-100 text-amber-700' :
+                                                                  'bg-slate-100 text-slate-600'"
+                >{{ item.importance }}</span
+              >
+              @if (item.isRequired) {
+              <span
+                class="text-xs bg-blue-100 text-blue-700 rounded px-1.5 py-0.5"
+                >Required</span
+              >
+              } @if (isEditedKeyword(item.keyword)) {
+              <span
+                class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 font-medium"
+                >Edited</span
+              >
+              }
+              <span
+                class="text-xs bg-(--neutral-100) text-surface-600 capitalize rounded px-1.5 py-0.5 ml-auto"
+                >{{ item.suggestedPlacement.replace('_', ' ') }}</span
+              >
+              @if (!isEditingKeyword(item.keyword)) {
+              <p-button
+                type="button"
+                variant="outlined"
+                severity="success"
+                size="small"
+                class="py-0!"
+                (click)="keywordEditStarted.emit(item.keyword)"
+                aria-label="Edit keyword"
+              >
+                <i class="pi pi-pencil text-xs!"></i> Edit
+              </p-button>
+              }
+            </div>
+            @if (isEditingKeyword(item.keyword)) {
+            <div class="space-y-2 mt-2 ml-5">
+              <p
+                class="uppercase mb-1 text-sm font-semibold font-(family-name:--font-heading) text-(--text-muted)"
+              >
+                Edit the text that will be added
+              </p>
+              <input
+                pInputText
+                type="text"
+                [value]="editedKeywordText()"
+                (input)="keywordEditTextChanged.emit($any($event.target).value)"
+                class="w-full text-sm"
+                aria-label="Edit keyword text"
+              />
+              <div class="flex gap-2">
+                <p-button
+                  label="Save"
+                  size="small"
+                  (onClick)="keywordEditSaved.emit({ key: item.keyword, text: editedKeywordText() })"
+                />
+                <p-button
+                  label="Cancel"
+                  size="small"
+                  severity="secondary"
+                  [text]="true"
+                  (onClick)="keywordEditCancelled.emit()"
+                />
+              </div>
+            </div>
+            } @if (!isEditingKeyword(item.keyword)) {
+            <p class="mt-1 text-sm text-surface-500 ml-5">
+              {{ item.recommendation }}
+            </p>
+            @if (item.evidenceFromResume) {
+            <p
+              class="mt-2 ml-5 text-xs italic text-surface-400 border-l border-surface-200 bg-(--neutral-100) p-2 rounded-sm"
+            >
+              {{ item.evidenceFromResume }}
+            </p>
+            } @if (isSelected(item.keyword) && item.suggestedPlacement ===
+            'experience_bullet') {
+            <div
+              class="mt-4 ml-5 p-4 flex flex-col items-start gap-2 bg-white rounded-md border border-(--color-green-light)"
+            >
+              <label
+                [for]="'kw-lacks-pos-' + item.keyword"
+                class="text-sm text-(--primary-700) uppercase shrink-0 font-semibold flex items-center gap-2"
+                ><i class="pi pi-list"></i> Add as a bullet - choose
+                where:</label
+              >
+              <select
+                [id]="'kw-lacks-pos-' + item.keyword"
+                class="text-sm border border-(--border-subtle) rounded px-2 py-1 flex-1 bg-white w-full"
+                (change)="onPositionChange(item.keyword, $any($event.target).value)"
+              >
+                <option
+                  value=""
+                  [selected]="getKeywordPosition(item.keyword) === null"
+                >
+                  — pick a position —
+                </option>
+                @for (pos of experiencePositions(); track $index; let i =
+                $index) {
+                <option
+                  [value]="i"
+                  [selected]="getKeywordPosition(item.keyword) === i"
+                >
+                  {{ pos }}
+                </option>
+                }
+              </select>
+            </div>
+            @if (isSelected(item.keyword) && getKeywordPosition(item.keyword)
+            === null) {
+            <p class="text-xs text-amber-600 mt-1 ml-5">
+              Pick a position to include this in your CV.
+            </p>
+            } } }
+          </li>
+          }
+        </ul>
+      </div>
+      }
+    </div>
+
+    @if (selectedKeywords().length > 0) {
+    <p
+      class="mt-4 px-4 py-3 text-sm text-(--primary-600) flex items-center gap-1.5 bg-green-100 rounded-xl"
+    >
+      <i class="pi pi-check-circle"></i>
+      <span class="font-semibold"
+        >{{ selectedKeywords().length }} {{ selectedKeywords().length > 1 ?
+        'keywords' : 'keyword'}} selected</span
+      >
+      - will be added to your exported CV.
+    </p>
+    }
+  </div>
+  }
+
+  <!-- Matched Keywords -->
+  @if (result().matchedKeywords.length > 0) {
+  <hr class="pb-6 text-(--border-subtle)" />
+
+  <div class="mb-8">
+    <h3 class="text-xl font-semibold text-surface-800 mb-1">
+      Matched keywords
+      <span
+        class="ml-2 text-xs font-semibold bg-(--neutral-100) text-surface-600 rounded-full px-2 py-1"
+        >{{ result().matchedKeywords.length }}</span
+      >
+      <span class="ml-2 text-sm font-normal text-(--text-muted)"
+        >already in your CV</span
+      >
+    </h3>
+
+    @if (exactMatchedKeywords().length > 0) {
+    <div class="mt-4">
+      <h4
+        class="text-xs font-semibold uppercase tracking-wide text-surface-400"
+      >
+        Exact match
+        <span class="normal-case font-normal text-surface-400"
+          >· {{ exactMatchedKeywords().length }} · verbatim in your resume</span
+        >
+      </h4>
+      <div class="mt-3 flex flex-wrap gap-2">
+        @for (item of exactMatchedKeywords(); track item.keyword) {
+        <span
+          class="inline-flex items-center gap-1.5 text-sm text-emerald-700 bg-emerald-100 rounded-full px-3 py-1 border border-(--color-green-light)/30"
+        >
+          <i class="pi pi-check text-xs!"></i>
+          <span class="font-semibold">{{ item.keyword }}</span>
+          <span class="text-emerald-600">x{{ item.occurrencesInResume }}</span>
+          @if (item.isRequired) {
+          <span
+            class="text-xs bg-blue-100 text-blue-700 rounded px-1.5 py-0.5 ml-1"
+            >Required</span
+          >
+          }
+        </span>
+        }
+      </div>
+    </div>
+    } @if (semanticMatchedKeywords().length > 0) {
+    <div class="mt-5">
+      <h4
+        class="text-xs font-semibold uppercase tracking-wide text-surface-400"
+      >
+        Semantic match
+        <span class="normal-case font-normal text-surface-400"
+          >· {{ semanticMatchedKeywords().length }} · matched by meaning,
+          different wording</span
+        >
+      </h4>
+      <div class="mt-3 flex flex-wrap gap-2">
+        @for (item of semanticMatchedKeywords(); track item.keyword) {
+        <span
+          class="inline-flex items-center gap-1.5 text-sm text-surface-600 bg-(--neutral-100) rounded-full px-3 py-1 border border-(--border-subtle)"
+        >
+          <i class="pi pi-sync text-xs!"></i>
+          <span class="font-semibold">{{ item.keyword }}</span>
+          <span class="text-surface-500">x{{ item.occurrencesInResume }}</span>
+          @if (item.isRequired) {
+          <span
+            class="text-xs bg-blue-100 text-blue-700 rounded px-1.5 py-0.5 ml-1"
+            >Required</span
+          >
+          }
+        </span>
+        }
+      </div>
+    </div>
+    }
+  </div>
+  }
+
+  <!-- Acronym Issues -->
+  @if (result().acronymIssues.length > 0) {
+  <hr class="pb-8 text-(--border-subtle)" />
+
+  <div class="mb-8">
+    <h3 class="text-xl font-semibold text-surface-800 mb-1">
+      Acronym issues
+      <span
+        class="ml-2 text-xs font-semibold bg-(--neutral-100) text-surface-600 rounded-full px-2 py-1"
+        >{{ result().acronymIssues.length }}</span
+      >
+    </h3>
+    <p class="mb-4 text-sm font-normal text-(--text-muted)">
+      Terms written differently than in the job description that may not be
+      picked up by ATS keyword matching
+    </p>
+
+    <ul id="acronym-issues-panel" class="space-y-2 list-none p-0 m-0">
+      @for (item of result().acronymIssues; track item.term) {
+      <li
+        class="flex flex-col gap-1 rounded-lg border px-4 pt-4 pb-5 transition-colors"
+        [class]="isAcronymSelected(item.term) ? 'border-emerald-600 bg-emerald-100/40' : 'border-(--border-subtle)'"
+      >
+        @if (item.actionType) {
+        <div class="flex items-center gap-2 flex-wrap">
+          <input
+            type="checkbox"
+            [id]="'acr-' + item.term"
+            [checked]="isAcronymSelected(item.term)"
+            (change)="toggleAcronymIssue(item.term)"
+            class="accent-primary"
+            [attr.aria-label]="'Select acronym issue ' + item.term"
+          />
+          <label
+            [for]="'acr-' + item.term"
+            class="font-semibold text-sm text-surface-800 cursor-pointer"
+            >{{ item.term }}</label
+          >
+          @if (isEditedAcronym(item.term)) {
+          <span
+            class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 font-medium"
+            >Edited</span
+          >
+          }
+          <span
+            class="text-xs bg-(--neutral-100) text-surface-600 capitalize rounded px-1.5 py-0.5 ml-auto"
+            title="Suggested placement"
+            >{{ item.suggestedPlacement?.replace('_', ' ') }}</span
+          >
+          @if (!isEditingAcronym(item.term)) {
+          <p-button
+            type="button"
+            variant="outlined"
+            severity="success"
+            size="small"
+            class="py-0!"
+            (click)="acronymEditStarted.emit(item.term)"
+            aria-label="Edit acronym fix"
+          >
+            <i class="pi pi-pencil text-xs!"></i> Edit
+          </p-button>
+          }
+        </div>
+        @if (isEditingAcronym(item.term)) {
+        <div class="space-y-2 mt-2 ml-5">
+          <p
+            class="uppercase mb-1 text-sm font-semibold font-(family-name:--font-heading) text-(--text-muted)"
+          >
+            Edit the text that will be added
+          </p>
+          <input
+            pInputText
+            type="text"
+            [value]="editedAcronymText()"
+            (input)="acronymEditTextChanged.emit($any($event.target).value)"
+            class="w-full text-sm"
+            aria-label="Edit acronym fix text"
+          />
+          <div class="flex gap-2">
+            <p-button
+              label="Save"
+              size="small"
+              (onClick)="acronymEditSaved.emit({ key: item.term, text: editedAcronymText() })"
+            />
+            <p-button
+              label="Cancel"
+              size="small"
+              severity="secondary"
+              [text]="true"
+              (onClick)="acronymEditCancelled.emit()"
+            />
+          </div>
+        </div>
+        } @if (!isEditingAcronym(item.term)) {
+        <p class="m-0 ml-5 text-sm text-green-600">
+          <span class="font-semibold mr-1 uppercase">Replace with:</span> {{
+          getAcronymDisplayFixedText(item.term) }}
+        </p>
+        <p class="mt-1 ml-5 text-sm text-surface-500">
+          <span class="font-semibold mr-1 uppercase">Issue: </span>{{ item.issue
+          }}
+        </p>
+        @if (isAcronymSelected(item.term) && item.suggestedPlacement ===
+        'experience_bullet') {
+        <div
+          class="mt-4 ml-5 p-4 flex flex-col items-start gap-2 bg-white rounded-md border border-(--color-green-light)"
+        >
+          <label
+            [for]="'acr-pos-' + item.term"
+            class="text-sm text-(--primary-700) uppercase shrink-0 font-semibold flex items-center gap-2"
+            ><i class="pi pi-list"></i>
+            Replace within a bullet - choose where:
+          </label>
+          <select
+            [id]="'acr-pos-' + item.term"
+            class="text-sm border border-(--border-subtle) rounded px-2 py-1 flex-1 bg-white w-full"
+            (change)="onAcronymPositionChange(item.term, $any($event.target).value)"
+          >
+            <option
+              value=""
+              [selected]="getAcronymPosition(item.term) === null"
+            >
+              — pick a position —
+            </option>
+            @for (pos of experiencePositions(); track $index; let i = $index) {
+            <option
+              [value]="i"
+              [selected]="getAcronymPosition(item.term) === i"
+            >
+              {{ pos }}
+            </option>
+            }
+          </select>
+        </div>
+        @if (isAcronymSelected(item.term) && getAcronymPosition(item.term) ===
+        null) {
+        <p class="text-xs text-amber-600 mt-1 ml-5">
+          Pick a position to include this in your CV.
+        </p>
+        } } } } @else {
+        <span class="font-semibold text-sm text-surface-800"
+          >{{ item.term }}</span
+        >
+        <p class="mb-1 text-sm text-surface-500">{{ item.issue }}</p>
+        @if (item.fix) {
+        <p class="m-0 text-sm text-green-600">
+          <span class="font-semibold mr-1 uppercase">Fix:</span> {{ item.fix }}
+        </p>
+        } }
+      </li>
+      }
+    </ul>
+  </div>
+  } @if (result().underweightedKeywords.length > 0 ||
+  result().fabricationWarnings.length > 0) {
+  <hr class="pb-8 text-(--border-subtle)" />
+  }
+
+  <!-- Underweighted Keywords -->
+  @if (result().underweightedKeywords.length > 0) {
+  <div class="mb-4 rounded-lg border border-(--border-subtle)">
+    <button
+      type="button"
+      class="w-full flex items-center gap-2 px-4 py-3 text-left"
+      (click)="toggleUnderweighted()"
+      [attr.aria-expanded]="isUnderweightedExpanded()"
+      aria-controls="underweighted-keywords-panel"
+    >
+      <i class="pi pi-chart-line text-surface-500"></i>
+      <p class="text-sm text-surface-800">
+        <span class="font-semibold">Underweighted keywords</span>
+        - present in resume but mentioned too few times for strong ATS ranking
+      </p>
+      <span
+        class="text-xs font-semibold bg-(--neutral-100) text-surface-600 rounded-full px-2 py-0.5"
+        >{{ result().underweightedKeywords.length }}</span
+      >
+      <i
+        class="pi pi-chevron-down ml-auto text-surface-400 transition-transform"
+        [class.rotate-180]="isUnderweightedExpanded()"
+      ></i>
+    </button>
+    @if (isUnderweightedExpanded()) {
+    <ul
+      id="underweighted-keywords-panel"
+      class="space-y-2 list-none p-0 m-0 px-4 pb-4"
+    >
+      @for (item of result().underweightedKeywords; track item.keyword) {
+      <li class="rounded-lg border border-(--border-subtle) px-4 py-3">
+        <div class="flex items-center gap-3">
+          <span class="font-semibold text-sm text-surface-800"
+            >{{ item.keyword }}</span
+          >
+          <span
+            class="text-sm text-surface-500 flex items-center gap-1"
+            title="Current occurencies vs suggested occurencies"
+          >
+            {{ item.currentOccurrences }}
+            <i class="pi pi-arrow-right text-xs! text-surface-400"></i>
+            {{ item.recommendedOccurrences }}
+          </span>
+        </div>
+        @if (item.suggestedAdditions.length > 0) {
+        <ul class="mt-2 pl-4 space-y-1 list-disc list-inside">
+          @for (suggestion of item.suggestedAdditions; track suggestion) {
+          <li class="text-xs text-surface-500">{{ suggestion }}</li>
+          }
+        </ul>
+        }
+      </li>
+      }
+    </ul>
+    }
+  </div>
+  }
+
+  <!-- Fabrication Warnings -->
+  @if (result().fabricationWarnings.length > 0) {
+  <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50">
+    <button
+      type="button"
+      class="w-full flex items-center gap-2 px-4 py-3 text-left"
+      (click)="toggleFabricationWarnings()"
+      [attr.aria-expanded]="isFabricationWarningsExpanded()"
+      aria-controls="fabrication-warnings-panel"
+    >
+      <i class="pi pi-exclamation-triangle text-amber-500"></i>
+      <p class="text-sm text-surface-800">
+        <span class="font-semibold">Fabrication warnings</span> - keywords from
+        job description that the candidate clearly does not have
+      </p>
+      <span
+        class="text-xs font-semibold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5"
+        >{{ result().fabricationWarnings.length }}</span
+      >
+      <i
+        class="pi pi-chevron-down ml-auto text-amber-500 transition-transform"
+        [class.rotate-180]="isFabricationWarningsExpanded()"
+      ></i>
+    </button>
+    @if (isFabricationWarningsExpanded()) {
+    <div id="fabrication-warnings-panel" class="px-4 pb-4">
+      <ul class="space-y-3 list-none p-0 m-0">
+        @for (item of result().fabricationWarnings; track item.keyword) {
+        <li class="space-y-0.5">
+          <span class="font-semibold text-sm text-surface-800"
+            >{{ item.keyword }}</span
+          >
+          <p class="m-0 text-sm text-surface-500">{{ item.reason }}</p>
+        </li>
+        }
+      </ul>
+    </div>
+    }
+  </div>
+  }
+</div>

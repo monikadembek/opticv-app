@@ -1,0 +1,19 @@
+@if (loading()) {
+  <div
+    class="animate-pulse rounded-lg bg-surface-100 h-64"
+    role="status"
+    aria-label="Loading results"
+  ></div>
+} @else if (error()) {
+  <div class="flex items-start gap-3 rounded-lg bg-red-50 border border-red-200 p-4">
+    <i class="pi pi-exclamation-circle text-red-500 mt-0.5 shrink-0"></i>
+    <p class="m-0 text-red-700 text-sm">{{ error() }}</p>
+  </div>
+} @else if (!hasData()) {
+  <div class="flex items-center gap-3 py-8 text-surface-400">
+    <i class="pi pi-info-circle"></i>
+    <p class="m-0 text-sm">Run optimization to see results</p>
+  </div>
+} @else {
+  <ng-content />
+}

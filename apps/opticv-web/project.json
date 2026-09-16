@@ -28,11 +28,17 @@
       },
       "configurations": {
         "production": {
+          "fileReplacements": [
+            {
+              "replace": "apps/opticv-web/src/environments/environment.ts",
+              "with": "apps/opticv-web/src/environments/environment.prod.ts"
+            }
+          ],
           "budgets": [
             {
               "type": "initial",
               "maximumWarning": "500kb",
-              "maximumError": "1mb"
+              "maximumError": "2mb"
             },
             {
               "type": "anyComponentStyle",
@@ -40,7 +46,25 @@
               "maximumError": "8kb"
             }
           ],
-          "outputHashing": "all"
+          "outputHashing": "all",
+          "sourceMap": {
+            "scripts": true,
+            "hidden": true
+          }
+        },
+        "staging": {
+          "fileReplacements": [
+            {
+              "replace": "apps/opticv-web/src/environments/environment.ts",
+              "with": "apps/opticv-web/src/environments/environment.staging.ts"
+            }
+          ],
+          "optimization": true,
+          "outputHashing": "all",
+          "sourceMap": {
+            "scripts": true,
+            "hidden": true
+          }
         },
         "development": {
           "optimization": false,
@@ -53,12 +77,19 @@
     "serve": {
       "continuous": true,
       "executor": "@angular/build:dev-server",
+      "options": {
+        "proxyConfig": "apps/opticv-web/proxy.conf.json"
+      },
       "configurations": {
         "production": {
           "buildTarget": "opticv-web:build:production"
         },
         "development": {
           "buildTarget": "opticv-web:build:development"
+        },
+        "no-ssr": {
+          "buildTarget": "opticv-web:build:development",
+          "ssr": false
         }
       },
       "defaultConfiguration": "development"

@@ -1,0 +1,61 @@
+<header class="header">
+  <div class="header-container">
+    <p-menubar [model]="items" class="top-menubar">
+      <ng-template #start>
+        <a routerLink="/" class="header__logo">
+          <img
+            src="/images/opticv-logo-icon.svg"
+            alt="OptiCV logo"
+            width="40"
+            height="48"
+          />
+          <span>OptiCV</span>
+        </a>
+      </ng-template>
+      <ng-template #item let-item let-root="root">
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          class="p-menubar-item-link header__menu-link"
+        >
+          {{ item.label }}
+        </a>
+      </ng-template>
+      <ng-template #end>
+        <div class="flex items-center gap-4">
+          @if(!isLoggedIn()) {
+          <p-button
+            label="Sign In"
+            size="small"
+            (onClick)="navigateToLoginPage()"
+          ></p-button>
+          } @else {
+          <p-button
+            icon="pi pi-question-circle"
+            [text]="true"
+            [rounded]="true"
+            severity="secondary"
+            ariaLabel="Open help guide"
+            title="Help guide"
+            (onClick)="openHelp()"
+          ></p-button>
+          <p-avatar
+            [label]="userLabel()"
+            class="mr-2 cursor-pointer"
+            [style]="{ 'background-color': '#10b981', color: '#ffffff' }"
+            shape="circle"
+            title="Account settings"
+            routerLink="/settings"
+          />
+          <p-button
+            title="Sign Out"
+            size="small"
+            icon="pi pi-power-off"
+            (onClick)="emitSignOut()"
+          ></p-button>
+          }
+        </div>
+      </ng-template>
+    </p-menubar>
+  </div>
+</header>

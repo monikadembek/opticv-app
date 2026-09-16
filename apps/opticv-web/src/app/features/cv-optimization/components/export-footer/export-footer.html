@@ -1,0 +1,198 @@
+<div class="export-footer" [class.collapsed]="!sidebarExpanded()">
+  <div class="export-actions">
+    <p-button
+      label="Preview"
+      icon="pi pi-eye"
+      severity="secondary"
+      [outlined]="true"
+      size="small"
+      class="preview-button"
+      (onClick)="previewVisible.set(true)"
+    />
+    <p-button
+      label="Export CV"
+      icon="pi pi-cog"
+      size="small"
+      class="export-button"
+      (onClick)="exportDialogVisible.set(true)"
+      ariaLabel="Export CV"
+    />
+  </div>
+</div>
+
+<p-dialog
+  header="CV Preview"
+  [visible]="previewVisible()"
+  (visibleChange)="$event ? null : previewVisible.set(false)"
+  [modal]="true"
+  [style]="{ width: '900px', maxWidth: '95vw' }"
+  [contentStyle]="{ padding: '0', overflow: 'auto', height: '90vh' }"
+  [draggable]="false"
+>
+  <app-cv-a4-preview
+    [cv]="mergedCv()"
+    [templateId]="selectedTemplate()"
+    [accentColor]="accentColor()"
+  />
+</p-dialog>
+
+<p-dialog
+  header="Export CV"
+  [visible]="exportDialogVisible()"
+  (visibleChange)="$event ? null : exportDialogVisible.set(false)"
+  position="bottomright"
+  [style]="{ width: '420px', maxWidth: '95vw' }"
+  [draggable]="false"
+  styleClass="export-dialog"
+>
+  <div class="export-dialog-content">
+    <section class="export-dialog-section">
+      <h3 class="export-dialog-section-title">Template</h3>
+      <div class="template-fields">
+        <div class="template-field">
+          <label class="template-field-label" for="export-template-select"
+            >Layout</label
+          >
+          <p-select
+            inputId="export-template-select"
+            class="template-select"
+            size="small"
+            [options]="templates()"
+            optionLabel="name"
+            optionValue="id"
+            optionDisabled="disabled"
+            [ngModel]="selectedTemplate()"
+            (ngModelChange)="selectedTemplate.set($event)"
+          ></p-select>
+        </div>
+
+        <div class="template-field">
+          <label class="template-field-label" for="export-accent-select"
+            >Accent color</label
+          >
+          <p-select
+            inputId="export-accent-select"
+            class="accent-select"
+            size="small"
+            [options]="accentColors"
+            optionLabel="name"
+            optionValue="hex"
+            [ngModel]="accentColor()"
+            (ngModelChange)="accentColor.set($event)"
+            ariaLabel="Accent color"
+            [disabled]="accentColorDisabled()"
+          >
+            <ng-template #selectedItem let-selected>
+              @if (selected) {
+              <span class="accent-option selected-option">
+                <span
+                  class="accent-swatch"
+                  [style.background]="selected.hex"
+                ></span>
+                {{ selected.name }}
+              </span>
+              }
+            </ng-template>
+            <ng-template #item let-color>
+              <span class="accent-option">
+                <span
+                  class="accent-swatch"
+                  [style.background]="color.hex"
+                ></span>
+                {{ color.name }}
+              </span>
+            </ng-template>
+          </p-select>
+        </div>
+      </div>
+
+      <!-- ATS template info banner -->
+      <button
+        type="button"
+        class="ats-info-banner"
+        (click)="infoDialogVisible.set(true)"
+      >
+        <i class="pi pi-info-circle ats-info-banner-icon"></i>
+        <span class="ats-info-banner-text">
+          <span class="ats-info-banner-title">New to ATS templates?</span>
+          See how each layout stays recruiter-safe - click to learn more.
+        </span>
+        <i class="pi pi-chevron-right ats-info-banner-chevron"></i>
+      </button>
+    </section>
+
+    <section class="export-dialog-section">
+      <h3 class="export-dialog-section-title">Compliance</h3>
+      <label class="gdpr-card">
+        <input
+          type="checkbox"
+          [checked]="includeGdprClause()"
+          (change)="includeGdprClause.set($any($event.target).checked)"
+          class="gdpr-card-checkbox accent-primary shrink-0"
+          aria-label="Include GDPR clause"
+        />
+        <span class="gdpr-card-text">
+          <span class="gdpr-card-title">GDPR Clause</span>
+          <span class="gdpr-card-description"
+            >Include if you're applying to companies based in the EU, EEA, UK,
+            or Switzerland</span
+          >
+        </span>
+      </label>
+    </section>
+
+    <section class="export-dialog-section">
+      <h3 class="export-dialog-section-title">Export CV</h3>
+      <div class="export-dialog-actions">
+        <p-button
+          label="Export PDF"
+          icon="pi pi-file-pdf"
+          styleClass="export-action-button"
+          size="small"
+          [loading]="isExportingPdf()"
+          [disabled]="isExportingPdf()"
+          (onClick)="exportPdf.emit()"
+          ariaLabel="Export optimized CV to PDF"
+        />
+        <p-button
+          label="Export DOCX"
+          icon="pi pi-file-word"
+          styleClass="export-action-button"
+          size="small"
+          [loading]="isExportingDocx()"
+          [disabled]="isExportingDocx()"
+          (onClick)="exportDocx.emit()"
+          ariaLabel="Export optimized CV to DOCX"
+        />
+      </div>
+    </section>
+  </div>
+</p-dialog>
+
+<p-dialog
+  header="ATS Template Information"
+  [visible]="infoDialogVisible()"
+  (visibleChange)="$event ? null : infoDialogVisible.set(false)"
+  [modal]="true"
+  [style]="{ width: '600px', maxWidth: '95vw' }"
+  [draggable]="false"
+>
+  <p class="font-semibold mb-5">All templates are ATS safe.</p>
+  <p class="font-semibold">All templates follow ATS best practices:</p>
+  <ul class="list-disc ml-8 mb-5">
+    <li>Single-column layout - no sidebars or tables</li>
+    <li>
+      Standard section headings (Professional Summary, Work Experience,
+      Education, Skills, Languages)
+    </li>
+    <li>Clean heading hierarchy</li>
+    <li>No images, icons, or graphics, just pure text</li>
+    <li>Standard fonts</li>
+  </ul>
+  <p>
+    Use the <span class="font-semibold">Accent Color select</span> (in the
+    export section) to try different accent colors: emerald, blue, purple, red,
+    or teal, which updates the Default, Modern, Corporate, and Impact templates
+    dynamically.
+  </p>
+</p-dialog>

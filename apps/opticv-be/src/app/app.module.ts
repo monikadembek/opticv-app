@@ -1,22 +1,96 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { BullModule } from '@nestjs/bullmq';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { configuration } from '../../config/configuration';
 import { validationSchema } from '../../config/validation';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { CvModule } from './cv/cv.module';
+import { JobApplicationModule } from './job-application/job-application.module';
+import { OptimizationModule } from './optimization/optimization.module';
+import { StripeModule } from './stripe/stripe.module';
+import { SubscriptionModule } from './subscription/subscription.module';
+import { ApiThrottlerGuard } from './throttler/api-throttler.guard';
+import { SentryModule } from '@sentry/nestjs/setup';
+import { APP_FILTER } from '@nestjs/core';
+import { SentryGlobalFilter } from '@sentry/nestjs/setup';
 
 @Module({
   imports: [
+    SentryModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `${process.cwd()}/apps/opticv-be/config/env/${process.env.NODE_ENV}.env`,
       load: [configuration],
       validationSchema,
     }),
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        connection: {
+          host: config.get<string>('redis.host'),
+          port: config.get<number>('redis.port'),
+          password: config.get<string>('redis.password'),
+          tls: config.get<boolean>('redis.tls') ? {} : undefined,
+        },
+      }),
+    }),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        storage: new ThrottlerStorageRedisService({
+          host: config.get<string>('redis.host'),
+          port: config.get<number>('redis.port'),
+          password: config.get<string>('redis.password'),
+          tls: config.get<boolean>('redis.tls') ? {} : undefined,
+        }),
+        throttlers: [
+          {
+            name: 'api-ip',
+            ttl: config.get<number>('throttler.apiIpTtl') ?? 900,
+            limit: config.get<number>('throttler.apiIpLimit') ?? 300,
+          },
+          {
+            name: 'api-user',
+            ttl: config.get<number>('throttler.apiUserTtl') ?? 900,
+            limit: config.get<number>('throttler.apiUserLimit') ?? 100,
+          },
+          {
+            name: 'ai-ip',
+            ttl: config.get<number>('throttler.aiIpTtl') ?? 3600,
+            limit: config.get<number>('throttler.aiIpLimit') ?? 50,
+          },
+          {
+            name: 'ai-user',
+            ttl: config.get<number>('throttler.aiUserTtl') ?? 3600,
+            limit: config.get<number>('throttler.aiUserLimit') ?? 10,
+          },
+        ],
+      }),
+    }),
     PrismaModule,
+    UsersModule,
+    AuthModule,
+    CvModule,
+    JobApplicationModule,
+    OptimizationModule,
+    StripeModule,
+    SubscriptionModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: APP_GUARD, useClass: ApiThrottlerGuard },
+    {
+      provide: APP_FILTER,
+      useClass: SentryGlobalFilter,
+    },
+  ],
 })
 export class AppModule {}

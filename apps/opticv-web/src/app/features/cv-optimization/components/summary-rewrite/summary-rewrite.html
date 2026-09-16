@@ -1,0 +1,167 @@
+<div class="space-y-6 py-2">
+  <!-- Original Summary -->
+  <div>
+    <h3 class="text-base font-semibold text-surface-800 mb-2">
+      Your Original Summary
+    </h3>
+    @if (isNoSummary()) {
+    <p class="m-0 text-sm italic text-surface-400">
+      Your CV had no summary - here are three options, select one.
+    </p>
+    } @else {
+    <p class="m-0 text-sm text-surface-700 leading-relaxed">
+      {{ result().originalSummary }}
+    </p>
+    }
+  </div>
+
+  <!-- Recommendation Reason -->
+  @if (result().recommendationReason; as reason) {
+  <div
+    class="rounded-md bg-(--neutral-100)/60 border border-(--border-subtle) p-4"
+  >
+    <p
+      class="m-0 text-xs font-semibold uppercase tracking-wide text-(--text-muted) mb-1"
+    >
+      Why the recommended variant?
+    </p>
+    <p class="m-0 text-sm text-surface-700">{{ reason }}</p>
+  </div>
+  }
+
+  <!-- Variant Cards -->
+  <div class="space-y-4">
+    <h3 class="text-base font-semibold text-surface-800">Rewritten Variants</h3>
+    @for (variant of result().variants; track variant.angle) {
+    <div
+      class="rounded-xl border p-5 space-y-3 cursor-pointer transition-colors"
+      [class]="selectedAngle() === variant.angle
+          ? 'border-green-500 border-2'
+          : 'border-(--border-subtle) hover:border-surface-500'"
+      role="button"
+      [attr.aria-pressed]="selectedAngle() === variant.angle"
+      [attr.aria-label]="'Select ' + angleLabels[variant.angle] + ' variant'"
+      (click)="selectVariant(variant.angle)"
+      (keydown.enter)="selectVariant(variant.angle)"
+      (keydown.space)="selectVariant(variant.angle)"
+      tabindex="0"
+    >
+      <!-- Card Header -->
+      <div
+        class="flex items-center gap-2 flex-wrap pb-1 border-b-(--border-subtle) border-b border-b-solid"
+      >
+        <input
+          type="radio"
+          [name]="'summary-variant'"
+          [value]="variant.angle"
+          [checked]="selectedAngle() === variant.angle"
+          [attr.aria-label]="'Select ' + angleLabels[variant.angle]"
+          class="accent-primary"
+          (click)="$event.stopPropagation()"
+          (change)="selectVariant(variant.angle)"
+        />
+        <span
+          class="text-sm font-medium capitalize tracking-wide bg-(--neutral-100) text-(--text-muted) rounded-sm px-2 py-0.5"
+        >
+          {{ angleLabels[variant.angle] }}
+        </span>
+        @if (variant.angle === result().recommendedVariant) {
+        <span
+          class="text-sm font-medium bg-(--primary-50) text-green-700 rounded-sm px-2 py-0.5"
+        >
+          Recommended
+        </span>
+        }
+        <span class="text-xs text-(--text-muted) ml-auto"
+          >{{ variant.wordCount }} words</span
+        >
+      </div>
+
+      <!-- Summary Text -->
+      <p class="m-0 mb-3 text-sm text-surface-800 leading-relaxed">
+        {{ variant.text }}
+      </p>
+
+      <!-- Strategic Note -->
+      <p class="m-0 mb-5 text-sm italic text-surface-500">
+        {{ variant.strategicNote }}
+      </p>
+
+      <!-- Keywords Used -->
+      @if (variant.keywordsUsed.length > 0) {
+      <div>
+        <p
+          class="m-0 text-sm font-semibold uppercase tracking-wide text-(--text-muted) mb-1.5"
+        >
+          Keywords used
+        </p>
+        <div class="flex flex-wrap gap-2">
+          @for (kw of variant.keywordsUsed; track kw) {
+          <span
+            class="text-xs bg-(--primary-50) text-(--primary-700) rounded-sm px-2 py-0.5"
+            >{{ kw }}</span
+          >
+          }
+        </div>
+      </div>
+      }
+    </div>
+    }
+  </div>
+
+  <!-- Selected variant editor -->
+  @if (selectedAngle()) {
+  <div class="space-y-2">
+    <div
+      class="flex items-center justify-between gap-2 text-sm text-green-700 font-semibold"
+    >
+      <div class="flex items-center gap-2">
+        <i class="pi pi-check-circle"></i>
+        <span
+          >{{ angleLabels[selectedAngle()!] }} variant selected - edit below if
+          needed.</span
+        >
+      </div>
+      <p-button
+        label="Reset"
+        severity="secondary"
+        size="small"
+        icon="pi pi-times"
+        ariaLabel="Reset summary selection"
+        (onClick)="resetVariant()"
+      />
+    </div>
+    <textarea
+      pTextarea
+      rows="5"
+      class="w-full text-sm min-h-[130px]"
+      [ngModel]="editableText()"
+      (ngModelChange)="onTextChange($event)"
+      [autoResize]="true"
+      aria-label="Edit selected summary"
+    ></textarea>
+    @if (isModified()) {
+    <p class="m-0 text-xs text-surface-400 italic">
+      Modified from original variant.
+    </p>
+    }
+  </div>
+  }
+
+  <!-- All Keywords Incorporated -->
+  @if (result().keywordsIncorporated.length > 0) {
+  <div>
+    <h3 class="text-base font-semibold text-surface-800 mb-2">
+      All Keywords Incorporated
+    </h3>
+    <div class="flex flex-wrap gap-1.5">
+      @for (kw of result().keywordsIncorporated; track kw) {
+      <span
+        class="text-sm bg-(--primary-50) text-(--primary-700) rounded-sm px-2 py-0.5"
+        >{{ kw }}</span
+      >
+      }
+    </div>
+  </div>
+  }
+</div>

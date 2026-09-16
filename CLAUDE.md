@@ -10,6 +10,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
+OptiCV App – application which will help users to optimize their CV with AI
+
 This is an **Nx monorepo** with three main projects:
 
 - `opticv-web` — Angular 21 frontend (standalone components, SSR, PrimeNG UI, Supabase auth)
@@ -82,15 +84,33 @@ npm exec nx run-many -t typecheck
 
 ### Prisma
 
-Prisma commands must run from the workspace root (the `cwd` matters for env file resolution):
+Prisma commands must run with `cwd` set to `apps/opticv-be` (not the workspace root) — `prisma.config.ts`
+lives there and resolves the schema path and env file relative to its own directory:
 
 ```bash
-npm exec prisma generate --schema=apps/opticv-be/prisma/schema.prisma
-npm exec prisma migrate dev --schema=apps/opticv-be/prisma/schema.prisma
-npm exec prisma studio --schema=apps/opticv-be/prisma/schema.prisma
+cd apps/opticv-be
+npm exec prisma generate
+npm exec prisma migrate dev
+npm exec prisma studio
 ```
 
 The generated Prisma client is output to `apps/opticv-be/src/generated/prisma/`.
+
+**`DATABASE_URL` / `DIRECT_URL` are `NODE_ENV`-driven**, like every other backend config value —
+they live in `apps/opticv-be/config/env/{development,staging,production}.env` alongside the rest,
+not in a separate flat `.env` file. `prisma.config.ts` loads `config/env/${NODE_ENV}.env` itself
+(defaulting to `development`) since the Prisma CLI runs outside Nest and can't rely on
+`ConfigModule`. To target staging or production from the workspace root, use:
+
+```bash
+npm run prisma:migrate:staging      # NODE_ENV=staging, cwd apps/opticv-be, migrate deploy
+npm run prisma:migrate:production   # NODE_ENV=production, cwd apps/opticv-be, migrate deploy
+npm run prisma:studio:staging
+npm run prisma:studio:production
+```
+
+(`migrate deploy`, not `migrate dev` — `dev` prompts interactively and can create new migrations;
+`deploy` only applies existing ones, which is what's needed against staging/production.)
 
 ---
 
@@ -113,7 +133,7 @@ packages/
 - **NestJS 11** with Express, built via **Webpack** (not `tsc` directly)
 - **Database:** PostgreSQL on Supabase, accessed through **Prisma 7** using the `@prisma/adapter-pg` driver adapter (connection-string based, not the default binary protocol)
 - `PrismaService` extends `PrismaClient` directly and is exported from `PrismaModule` — inject it into feature modules as needed
-- **Config:** `ConfigModule` loads `apps/opticv-be/config/env/{NODE_ENV}.env` at startup; schema validated by Joi (`config/validation.ts`). The `DATABASE_URL` for Prisma is read from `apps/opticv-be/.env` (not the same env file)
+- **Config:** `ConfigModule` loads `apps/opticv-be/config/env/{NODE_ENV}.env` at startup; schema validated by Joi (`config/validation.ts`). `DATABASE_URL`/`DIRECT_URL` are defined in the same file and picked up by `PrismaService` via `process.env`
 - Global API prefix: `/api`; CORS enabled
 - Build output: `apps/opticv-be/dist/`; deployment uses `prune` target to produce a minimal lockfile and copy workspace node_modules
 
@@ -133,10 +153,41 @@ packages/
 - Source: `packages/shared/datatypes/src/lib/datatypes.ts`
 - Must be built before apps that depend on it (`^build` dependency in Nx)
 
+### Authentication
+
+The app uses **passwordless OTP authentication** via Supabase — no passwords, no backend auth module.
+
+**Flow:**
+
+1. User submits email on `/login` → `SupabaseService.signInWithOtp()` sends a 6-digit code to that email
+2. User enters the code on `/verify` → `SupabaseService.verifyOtp()` validates it and establishes a Supabase session
+3. Session token is persisted in the Supabase client and attached to every outgoing HTTP request by `AuthInterceptor`
+4. `authGuard` blocks unauthenticated users from protected routes (redirects to `/login`)
+5. `guestGuard` blocks already-authenticated users from `/login` and `/verify` (redirects to `/`)
+
+**Frontend files (all under `apps/opticv-web/src/app/core/auth/`):**
+
+| Path                               | Purpose                                                                                                                        |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `services/supabase.ts`             | `SupabaseService` — wraps Supabase client; exposes `user` and `session` signals, `signInWithOtp()`, `verifyOtp()`, `signOut()` |
+| `guards/auth-guard.ts`             | `CanActivateFn` — redirects to `/login` when no session                                                                        |
+| `guards/guest-guard.ts`            | `CanActivateFn` — redirects authenticated users away from login/verify pages                                                   |
+| `pages/login/login.ts`             | Email input page; initiates OTP flow                                                                                           |
+| `pages/verify/verify.ts`           | OTP input page (PrimeNG `InputOtp`, 6 digits); completes sign-in                                                               |
+| `interceptors/auth-interceptor.ts` | Attaches `Authorization: Bearer <token>` to all HTTP requests                                                                  |
+
+**Configuration:**
+
+- Supabase URL and anon key are set in `apps/opticv-web/src/environments/environment.ts`
+- `AuthInterceptor` is registered globally in `app.config.ts`
+- Routes for login and verify use `guestGuard`; protected routes use `authGuard` (see `app.routes.ts`)
+
+**Backend:** No auth module exists yet — session validation against Supabase JWTs is not yet implemented on the NestJS side.
+
 ### Environment & Secrets
 
-- Backend env files: `apps/opticv-be/config/env/development.env` and `production.env` (loaded by NestJS ConfigModule)
-- `apps/opticv-be/.env` — contains `DATABASE_URL`; read directly by Prisma CLI and `PrismaService` at runtime
+- Backend env files: `apps/opticv-be/config/env/{development,staging,production}.env` (loaded by NestJS `ConfigModule`, keyed by `NODE_ENV`)
+- `DATABASE_URL` / `DIRECT_URL` live in those same files (not a separate `.env`) — `PrismaService` reads them via `process.env` (set by `ConfigModule` at Nest bootstrap), and `prisma.config.ts` loads the matching file itself for CLI usage outside Nest. See [Prisma](#prisma) above.
 - The Angular frontend has no runtime env files; environment config uses Angular's `environment.ts` pattern if needed
 
 ### CI (GitHub Actions)

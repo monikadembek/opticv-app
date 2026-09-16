@@ -1,2 +1,12 @@
-<h1 class="text-3xl font-bold underline">Hello world!</h1>
-<router-outlet></router-outlet>
+<app-top-header
+  [isLoggedIn]="isUserLoggedIn()"
+  [userLabel]="userLabel()"
+  (signOut)="executeSignOut()"
+></app-top-header>
+<app-past-due-banner></app-past-due-banner>
+<main class="main">
+  <router-outlet></router-outlet>
+</main>
+<app-footer></app-footer>
+<p-toast position="bottom-right" />
+<app-welcome-guide-modal></app-welcome-guide-modal>

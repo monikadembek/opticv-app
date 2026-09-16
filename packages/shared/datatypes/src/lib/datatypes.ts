@@ -1,3 +1,67 @@
+export type ParseStatus = 'PENDING' | 'COMPLETED' | 'FAILED';
+
+export type ExtractionStatus = 'PENDING' | 'COMPLETED' | 'FAILED';
+
+export type CvContactInfo = {
+  name: string | null;
+  position: string | null;
+  email: string | null;
+  phone: string | null;
+  location: string | null;
+  linkedin: string | null;
+  website: string | null;
+};
+
+export type CvExperienceItem = {
+  title: string | null;
+  company: string | null;
+  location: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  current: boolean;
+  bullets: string[];
+};
+
+export type CvEducationItem = {
+  degree: string | null;
+  institution: string | null;
+  location: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  field: string | null;
+};
+
+export type CvCertification = {
+  name: string;
+  issuer: string | null;
+  date: string | null;
+};
+
+export type CvProject = {
+  name: string;
+  description: string | null;
+  technologies: string[];
+  url: string | null;
+};
+
+export type CvLanguage = {
+  language: string;
+  proficiency: string | null;
+};
+
+export type CvStructuredData = {
+  contact: CvContactInfo;
+  summary: string | null;
+  experience: CvExperienceItem[];
+  education: CvEducationItem[];
+  skills: string[];
+  certifications: CvCertification[];
+  projects: CvProject[];
+  languages: CvLanguage[];
+  other: string | null;
+  gdprClause: string | null;
+};
+
 export type User = {
   id: string;
   supabaseId: string;
@@ -6,4 +70,546 @@ export type User = {
   avatarUrl?: string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
+};
+
+export type SubscriptionTier = 'FREE' | 'BASIC' | 'PRO';
+
+export type LimitedFeature =
+  | 'CV_OPTIMIZATION'
+  | 'COVER_LETTER'
+  | 'INTERVIEW_PREP'
+  | 'LINKEDIN';
+
+export type TierLimits = {
+  features: Record<LimitedFeature, number>;
+  maxStoredCvs: number;
+  allowedTemplates: 'ALL' | string[];
+};
+
+export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
+  FREE: {
+    features: {
+      CV_OPTIMIZATION: 1,
+      COVER_LETTER: 1,
+      INTERVIEW_PREP: 1,
+      LINKEDIN: 0,
+    },
+    maxStoredCvs: 2,
+    allowedTemplates: ['default', 'classic'],
+  },
+  BASIC: {
+    features: {
+      CV_OPTIMIZATION: 10,
+      COVER_LETTER: 10,
+      INTERVIEW_PREP: 10,
+      LINKEDIN: 10,
+    },
+    maxStoredCvs: 10,
+    allowedTemplates: 'ALL',
+  },
+  PRO: {
+    features: {
+      CV_OPTIMIZATION: 30,
+      COVER_LETTER: 30,
+      INTERVIEW_PREP: 30,
+      LINKEDIN: 30,
+    },
+    maxStoredCvs: 20,
+    allowedTemplates: 'ALL',
+  },
+};
+
+export type QuotaStatus = {
+  feature: LimitedFeature;
+  used: number;
+  limit: number;
+  remaining: number;
+  resetsAt: string | null;
+};
+
+export type UsageStatus = {
+  quotas: QuotaStatus[];
+  storedCvs: { used: number; limit: number };
+};
+
+export type QuotaErrorPayload =
+  | {
+      code: 'QUOTA_EXCEEDED' | 'FEATURE_NOT_AVAILABLE';
+      feature: LimitedFeature;
+      limit: number;
+      resetsAt: string | null;
+      cancelAtPeriodEnd: boolean;
+    }
+  | { code: 'CV_LIMIT_EXCEEDED'; limit: number };
+
+export type SubscriptionStatus =
+  | 'ACTIVE'
+  | 'CANCELED'
+  | 'PAST_DUE'
+  | 'TRIALING';
+
+export function getEffectiveTier(
+  tier: SubscriptionTier,
+  status: SubscriptionStatus,
+): SubscriptionTier {
+  return status === 'ACTIVE' || status === 'TRIALING' ? tier : 'FREE';
+}
+
+export type NotificationType = 'PRODUCT_UPDATES' | 'WEEKLY_TIPS';
+
+export type NotificationPreferences = {
+  productUpdatesEnabled: boolean;
+  weeklyTipsEnabled: boolean;
+};
+
+export type UserProfile = {
+  id: string;
+  email: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  subscription: {
+    tier: SubscriptionTier;
+    status: SubscriptionStatus;
+    cancelAtPeriodEnd: boolean;
+    currentPeriodEnd: string | null;
+  } | null;
+  notifications: NotificationPreferences;
+};
+
+export type CvDocument = {
+  id: string;
+  userId: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  storageKey: string;
+  parsedText: string | null;
+  parseStatus: ParseStatus;
+  structuredData: CvStructuredData | null;
+  extractionStatus: ExtractionStatus;
+  isActive: boolean;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+};
+
+export type UploadCvResponse = Pick<
+  CvDocument,
+  | 'id'
+  | 'fileName'
+  | 'fileSize'
+  | 'mimeType'
+  | 'storageKey'
+  | 'createdAt'
+  | 'parseStatus'
+>;
+
+export type CvDocumentListItem = Pick<
+  CvDocument,
+  | 'id'
+  | 'fileName'
+  | 'fileSize'
+  | 'mimeType'
+  | 'createdAt'
+  | 'parsedText'
+  | 'parseStatus'
+>;
+
+export type JobApplication = {
+  id: string;
+  userId: string;
+  cvDocumentId: string;
+  jobTitle: string | null;
+  companyName: string | null;
+  jobDescription: string;
+  atsScore: number | null;
+  notes: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+};
+
+export type JobApplicationResponse = JobApplication;
+
+export type JobApplicationListItem = Pick<
+  JobApplication,
+  | 'id'
+  | 'userId'
+  | 'cvDocumentId'
+  | 'jobTitle'
+  | 'companyName'
+  | 'atsScore'
+  | 'createdAt'
+  | 'updatedAt'
+> & {
+  cvDocument: { id: string; fileName: string };
+};
+
+export type JobApplicationWithCv = JobApplication & {
+  cvDocument: { id: string; fileName: string };
+};
+
+export type JobApplicationListResponse = {
+  data: JobApplicationListItem[];
+  total: number;
+};
+
+export enum PromptType {
+  RESUME_AUTOPSY = 'RESUME_AUTOPSY',
+  KEYWORD_GAP = 'KEYWORD_GAP',
+  SUMMARY_REWRITE = 'SUMMARY_REWRITE',
+  BULLET_UPGRADE = 'BULLET_UPGRADE',
+  COVER_LETTER = 'COVER_LETTER',
+  INTERVIEW_PREP = 'INTERVIEW_PREP',
+  LINKEDIN_REWRITE = 'LINKEDIN_REWRITE',
+}
+
+export type ResumeAutopsyIssue = {
+  id: string;
+  category:
+    | 'parsing'
+    | 'keywords'
+    | 'structure'
+    | 'content'
+    | 'formatting'
+    | 'length'
+    | 'contact';
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  title: string;
+  quotedText: string;
+  location: string;
+  whyItMatters: string;
+  fix: string;
+  estimatedImpact: number;
+};
+
+export type ResumeAutopsyStrength = {
+  title: string;
+  detail: string;
+};
+
+export type ResumeAutopsyResult = {
+  overallScore: number;
+  predictedScoreAfterFixes: number;
+  topPriority: string;
+  issues: ResumeAutopsyIssue[];
+  strengths: ResumeAutopsyStrength[];
+  summary: string;
+};
+
+export type KeywordGapMatchScoreBreakdown = {
+  requiredMatched: number;
+  requiredTotal: number;
+  preferredMatched: number;
+  preferredTotal: number;
+};
+
+export type KeywordGapMatchedKeyword = {
+  keyword: string;
+  matchType: 'exact' | 'semantic' | 'partial';
+  occurrencesInResume: number;
+  isRequired: boolean;
+};
+
+export type KeywordGapMissingKeyword = {
+  keyword: string;
+  category: string;
+  importance: 'critical' | 'high' | 'medium' | 'low';
+  isRequired: boolean;
+  candidateLikelyHas: boolean;
+  evidenceFromResume: string;
+  recommendation: string;
+  suggestedPlacement:
+    | 'summary'
+    | 'skills'
+    | 'experience_bullet'
+    | 'title'
+    | 'multiple';
+};
+
+export type KeywordGapUnderweightedKeyword = {
+  keyword: string;
+  currentOccurrences: number;
+  recommendedOccurrences: number;
+  suggestedAdditions: string[];
+};
+
+export type KeywordGapFabricationWarning = {
+  keyword: string;
+  reason: string;
+};
+
+export type KeywordGapAcronymIssue = {
+  term: string;
+  issue: string;
+  fix: string;
+  actionType?: 'replace';
+  suggestedPlacement?:
+    | 'summary'
+    | 'skills'
+    | 'experience_bullet'
+    | 'title'
+    | 'multiple';
+};
+
+export type KeywordGapJobTitleMatch = {
+  candidateTitle: string | null;
+  targetTitle: string;
+  matchLevel: 'exact' | 'close' | 'mismatch';
+  suggestedTitle: string | null;
+  reasoning: string;
+};
+
+export type KeywordGapResult = {
+  matchScore: number;
+  matchScoreBreakdown: KeywordGapMatchScoreBreakdown;
+  matchedKeywords: KeywordGapMatchedKeyword[];
+  missingKeywords: KeywordGapMissingKeyword[];
+  underweightedKeywords: KeywordGapUnderweightedKeyword[];
+  fabricationWarnings: KeywordGapFabricationWarning[];
+  acronymIssues: KeywordGapAcronymIssue[];
+  jobTitleMatch?: KeywordGapJobTitleMatch;
+};
+
+export type SummaryRewriteVariantAngle =
+  | 'achievement_led'
+  | 'identity_led'
+  | 'mission_led';
+
+export type SummaryRewriteVariant = {
+  angle: SummaryRewriteVariantAngle;
+  text: string;
+  wordCount: number;
+  strategicNote: string;
+  keywordsUsed: string[];
+};
+
+export type SummaryRewriteResult = {
+  originalSummary: string;
+  variants: SummaryRewriteVariant[];
+  recommendedVariant: SummaryRewriteVariantAngle;
+  recommendationReason?: string;
+  keywordsIncorporated: string[];
+};
+
+export type BulletAction = 'rewrite' | 'recommend_cut' | 'keep_as_is';
+
+export type BulletItem = {
+  originalText: string;
+  action: BulletAction;
+  weakness: string;
+  rewrittenText?: string;
+  rewriteRationale?: string;
+  needsUserInput: boolean;
+  placeholdersToFill: string[];
+  actionVerb: string;
+  keywordsIncorporated: string[];
+  cutReason?: string;
+};
+
+export type BulletUpgradePosition = {
+  company: string;
+  title: string;
+  dates?: string;
+  bullets: BulletItem[];
+};
+
+export type BulletMissingSuggestion = {
+  forPosition: string;
+  suggestedBullet: string;
+  rationale: string;
+  questionToAskUser: string;
+};
+
+export type BulletVerbDiversityCheck = {
+  uniqueVerbsUsed: number;
+  totalBullets: number;
+  diverseEnough: boolean;
+};
+
+export type BulletUpgradeResult = {
+  positions: BulletUpgradePosition[];
+  missingBulletSuggestions: BulletMissingSuggestion[];
+  overallNotes: string;
+  verbDiversityCheck: BulletVerbDiversityCheck;
+};
+
+export type CoverLetterHookType = 'achievement' | 'insight' | 'story';
+
+export type CoverLetterVariant = {
+  hookType: CoverLetterHookType;
+  fullLetter: string;
+  wordCount: number;
+  strategicAngle: string;
+  openingHook: string;
+  closingCTA: string;
+  keywordsIncorporated: string[];
+  bestFor?: string;
+};
+
+export type CoverLetterResult = {
+  salutation: string;
+  signoff: string;
+  variants: CoverLetterVariant[];
+  recommendedVariant: CoverLetterHookType;
+  recommendationReason: string;
+  warnings: string[];
+};
+
+export type InterviewPrepFollowUp = {
+  followUpQuestion: string;
+  guidance: string;
+};
+
+export type InterviewPrepQuestion = {
+  question: string;
+  category:
+    | 'behavioral'
+    | 'technical'
+    | 'situational'
+    | 'fit'
+    | 'candidate_specific'
+    | 'leadership'
+    | 'culture';
+  likelihood?: 'very_high' | 'high' | 'medium';
+  whatTheyreAssessing: string;
+  suggestedAnswer: string;
+  answerWordCount: number;
+  answerStructure: 'STAR' | 'narrative' | 'framework' | 'direct';
+  needsUserInput: boolean;
+  placeholdersToFill: string[];
+  followUps: InterviewPrepFollowUp[];
+  trapsToAvoid: string[];
+};
+
+export type InterviewPrepQuestionToAsk = {
+  question: string;
+  rationale: string;
+};
+
+export type InterviewPrepStressTest = {
+  question: string;
+  whyItllComeUp: string;
+  recommendedAnswer: string;
+};
+
+export type InterviewPrepResult = {
+  questions: InterviewPrepQuestion[];
+  questionsToAskInterviewer: InterviewPrepQuestionToAsk[];
+  stressTestQuestions: InterviewPrepStressTest[];
+  preparationTips: string[];
+};
+
+export type LinkedInHeadlineAngle =
+  | 'title_specialty_value'
+  | 'outcome_focused'
+  | 'story_focused';
+
+export type LinkedInHeadlineVariant = {
+  angle: LinkedInHeadlineAngle;
+  text: string;
+  characterCount: number;
+  keywordsTargeted: string[];
+  rationale?: string;
+};
+
+export type LinkedInAboutRewrite = {
+  fullText: string;
+  characterCount: number;
+  preview: string;
+  structure: {
+    hook: string;
+    story: string;
+    achievements: string[];
+    cta: string;
+  };
+  keywordsIncorporated?: string[];
+};
+
+export type LinkedInRecommendationSection =
+  | 'skills'
+  | 'featured'
+  | 'experience'
+  | 'education'
+  | 'certifications'
+  | 'url'
+  | 'photo'
+  | 'banner'
+  | 'recommendations'
+  | 'activity';
+
+export type LinkedInProfileRecommendation = {
+  section: LinkedInRecommendationSection;
+  recommendation: string;
+  priority: 'high' | 'medium' | 'low';
+};
+
+export type RecommendedSkill = {
+  name: string;
+  isNew: boolean;
+};
+
+export type LinkedInRewriteResult = {
+  headlineVariants: LinkedInHeadlineVariant[];
+  recommendedHeadline?: LinkedInHeadlineAngle;
+  aboutRewrite: LinkedInAboutRewrite;
+  additionalRecommendations: LinkedInProfileRecommendation[];
+  recommendedSkills?: RecommendedSkill[];
+  targetSearchQueries: string[];
+};
+
+export type OptimizationResultSummary = {
+  id: string;
+  promptType: PromptType;
+  status: string;
+  userEditedOutput: string | null;
+  structuredOutput: unknown | null;
+};
+
+export type BulletSelectionKey = {
+  company: string;
+  title: string;
+  originalText: string;
+};
+
+export type UserSelections = {
+  selectedSummaryAngle: SummaryRewriteVariantAngle | null;
+  customSummaryText: string | null;
+  selectedBullets: BulletSelectionKey[];
+  selectedKeywords: string[];
+  selectedAcronymIssues: string[];
+  selectedJobTitle: boolean;
+};
+
+export type BulletEditKey = {
+  company: string;
+  title: string;
+  originalText: string;
+};
+
+export type BulletUserState = {
+  edits: Array<BulletEditKey & { editedText: string }>;
+  selectedBullets: BulletSelectionKey[];
+  selectedMissingBullets: Array<{
+    forPosition: string;
+    suggestedBullet: string;
+    editedText?: string;
+  }>;
+  removedBullets: BulletSelectionKey[];
+  keywordEdits?: Array<{ originalKeyword: string; editedText: string }>;
+  keywordBulletPositions?: Array<{ keyword: string; experienceIndex: number }>;
+  selectedKeywords?: string[];
+  acronymEdits?: Array<{ originalTerm: string; editedText: string }>;
+  acronymBulletPositions?: Array<{ term: string; experienceIndex: number }>;
+  selectedAcronymIssues?: string[];
+  selectedJobTitle?: boolean;
+  jobTitleEdit?: string;
+};
+
+export type SummaryUserState = {
+  selectedSummaryAngle: SummaryRewriteVariantAngle | null;
+  customSummaryText: string | null;
+};
+
+export type CoverLetterUserState = {
+  selectedVariant: CoverLetterHookType | null;
+  editedContent: string | null;
 };
