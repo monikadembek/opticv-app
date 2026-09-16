@@ -1,6 +1,8 @@
 export const configuration = () => ({
   nodeEnv: process.env.NODE_ENV,
   port: parseInt(process.env.PORT || '3000', 10),
+  databaseUrl: process.env.DATABASE_URL,
+  directUrl: process.env.DIRECT_URL,
   supabase: {
     url: process.env.SUPABASE_URL,
     publishableKey: process.env.SUPABASE_PUBLISHABLE_KEY,

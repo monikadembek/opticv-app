@@ -26,7 +26,7 @@ Add more marketing pages (`/features`, `/pricing`, `/blog`) directly inside `opt
 
 ### Option B: Separate Static Site (Recommended for blog)
 
-Use a dedicated static site generator for the landing page + blog, served from a separate subdomain (e.g. `opticv.com` → landing, `app.opticv.com` → Angular app).
+Use a dedicated static site generator for the landing page + blog, served from a separate subdomain (e.g. `opticv.net` → landing, `app.opticv.net` → Angular app).
 
 | Option | Fit | Why |
 |---|---|---|
@@ -46,20 +46,20 @@ Use a dedicated static site generator for the landing page + blog, served from a
 
 #### Subdomain split (cleanest)
 ```
-opticv.com          → Astro landing page + blog (static, CDN-hosted)
-app.opticv.com      → Angular app (NestJS backend on :3000)
+opticv.net          → Astro landing page + blog (static, CDN-hosted)
+app.opticv.net      → Angular app (NestJS backend on :3000)
 ```
 
 **Connection points:**
-- "Get Started" / CTA buttons on the landing page link to `app.opticv.com/login` or `app.opticv.com/cv-optimization`
+- "Get Started" / CTA buttons on the landing page link to `app.opticv.net/login` or `app.opticv.net/cv-optimization`
 - Shared design tokens — copy Tailwind config and color palette into the Astro project
 - No shared auth needed — the landing page is fully public
 
 #### Same domain with path prefix (more complex)
 ```
-opticv.com/         → Landing page
-opticv.com/blog/    → Blog
-opticv.com/app/     → Angular app
+opticv.net/         → Landing page
+opticv.net/blog/    → Blog
+opticv.net/app/     → Angular app
 ```
 Requires a reverse proxy (Nginx/Caddy) to route paths to different origins. More DevOps work, but keeps a single domain.
 
@@ -69,7 +69,7 @@ Requires a reverse proxy (Nginx/Caddy) to route paths to different origins. More
 |---|---|
 | Landing page | **Astro** on a separate repo/subdomain |
 | Blog | **Astro + Markdown/MDX** (or connect a headless CMS like Contentful/Sanity later) |
-| App | Keep Angular app as-is at `app.opticv.com` |
+| App | Keep Angular app as-is at `app.opticv.net` |
 | Connection | CTA links between the two; shared Tailwind color palette |
 
 If keeping everything in the Nx monorepo, Astro can be added as a new project inside `apps/` using the `@nxtensions/astro` Nx integration.
@@ -229,11 +229,11 @@ Managed cloud hosting sitting on top of AWS/GCP/DigitalOcean. Better suited for 
 
 ## 3. Domain & Subdomains
 
-Domain `opticv.com` is already purchased. **Subdomains are free** — no additional purchase needed.
+Domain `opticv.net` is already purchased. **Subdomains are free** — no additional purchase needed.
 
 ### How Subdomains Work
 
-When you own `opticv.com`, you control all subdomains under it. Configure them via DNS settings at your domain registrar.
+When you own `opticv.net`, you control all subdomains under it. Configure them via DNS settings at your domain registrar.
 
 When deployed to Railway, each service gets a URL like:
 - `opticv-web-production.up.railway.app`
@@ -241,8 +241,8 @@ When deployed to Railway, each service gets a URL like:
 
 Add CNAME records in your DNS panel:
 ```
-app.opticv.com   →  CNAME  →  opticv-web-production.up.railway.app
-api.opticv.com   →  CNAME  →  opticv-be-production.up.railway.app
+app.opticv.net   →  CNAME  →  opticv-web-production.up.railway.app
+api.opticv.net   →  CNAME  →  opticv-be-production.up.railway.app
 ```
 
 ### SSL/HTTPS
@@ -262,9 +262,9 @@ Switch to Cloudflare as nameserver (free) for:
 ## 4. Recommended Full Architecture
 
 ```
-opticv.com            → Netlify or Vercel     (Astro landing page — free)
-app.opticv.com        → Hostinger             (Angular SSR — paid)
-api.opticv.com        → Hostinger             (NestJS — paid)
+opticv.net            → Netlify or Vercel     (Astro landing page — free)
+app.opticv.net        → Hostinger             (Angular SSR — paid)
+api.opticv.net        → Hostinger             (NestJS — paid)
 ```
 
 - Supabase handles PostgreSQL ✅
@@ -321,7 +321,7 @@ staging-opticv-web.onrender.com   → Angular SSR frontend
 staging-opticv-be.onrender.com    → NestJS backend
 ```
 
-Custom subdomains can be added later (e.g. `staging.app.opticv.com`) via CNAME in DNS.
+Custom subdomains can be added later (e.g. `staging.app.opticv.net`) via CNAME in DNS.
 
 ### Cost
 

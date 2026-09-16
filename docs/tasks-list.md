@@ -1595,14 +1595,26 @@ After changes in the ui some images require update:
 
 ---
 
-## 117. Implement dark / light mode
+## 117. Implement CV builder feature
 
-**status: todo**
-**time: 22.08.2026**
+**status: in progress**
+**time: 25.08.2026**
+
+- implement new feature - cv builder for users with no cv, allow them create one from scratch,
+- use existing data models used in cvStructuredData
 
 ---
 
-## 115. Connect landing page with app
+## 118. Prepare production environment
+
+**status: in progress**
+**time: 14.09.2026**
+
+- prepare all services, environments config and infrastructure for the production env
+
+---
+
+## 119. Connect landing page with app
 
 **status: todo**
 
@@ -1611,6 +1623,13 @@ After changes in the ui some images require update:
 - connect landing page with the app, make the login or optimize CV navigate to the app
 - consider whether we should keep the home page in the app, should we move user after login directly to dashboard, and home menu item should move back to landing page?
 - check if it would be possible to show login status in the landing page
+
+---
+
+## 120. Implement dark / light mode
+
+**status: todo**
+**time: 22.08.2026**
 
 ---
 
@@ -1636,10 +1655,6 @@ Accent color on headings only, so keyword matching stays intact.
 Default gives the widest ATS compatibility.
 
 Got it
-
----
-
-## Implement CV builder feature
 
 ---
 
