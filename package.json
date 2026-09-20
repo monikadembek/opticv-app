@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "prepare": "husky",
     "postinstall": "node scripts/run-in.mjs apps/opticv-be npm exec prisma generate",
     "start-be:dev": "cross-env NODE_ENV=development nx serve opticv-be",
     "start-web": "nx serve opticv-web",
@@ -16,6 +17,9 @@
   "private": true,
   "prisma": {
     "seed": "npx tsx apps/opticv-be/prisma/seed.ts"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,css,scss,html,md}": "npx nx format:write --files"
   },
   "devDependencies": {
     "@angular-devkit/core": "~21.2.0",
@@ -56,11 +60,13 @@
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^10.0.0",
     "eslint-plugin-playwright": "^1.6.2",
+    "husky": "^9.1.7",
     "jest": "^30.0.2",
     "jest-environment-node": "^30.0.2",
     "jest-util": "^30.0.2",
     "jsdom": "^27.1.0",
     "jsonc-eslint-parser": "^2.1.0",
+    "lint-staged": "^16.4.0",
     "nx": "22.7.0",
     "prettier": "^3.8.1",
     "prisma": "^7.8.0",
