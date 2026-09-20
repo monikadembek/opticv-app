@@ -15,7 +15,7 @@ Docker host, so this plan does not use a Dockerfile.
 These can't be done from the codebase — do them before touching env files:
 
 1. **Create a production Supabase project.** The current `environment.prod.ts` and
-   `production.env` both point at the *staging* Supabase project (`kmkkoqsagagernsxuggr...`) or
+   `production.env` both point at the _staging_ Supabase project (`kmkkoqsagagernsxuggr...`) or
    are blank — neither is a real prod project yet. Create one, copy its URL/anon key/service
    role key.
 2. **Switch Stripe to live mode** and create live-mode equivalents of the Basic/Pro prices used
@@ -82,7 +82,8 @@ export const environment = {
   supabaseUrl: '<prod supabase url>',
   supabaseKey: '<prod supabase publishable key>',
   apiUrl: 'https://api.opticv.net/api',
-  posthogKey: '<consider a separate prod PostHog project to keep staging events out of prod analytics>',
+  posthogKey:
+    '<consider a separate prod PostHog project to keep staging events out of prod analytics>',
   posthogHost: 'https://eu.i.posthog.com',
 };
 ```
