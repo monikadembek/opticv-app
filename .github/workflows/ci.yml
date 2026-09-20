@@ -13,6 +13,16 @@ permissions:
 jobs:
   main:
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,6 +49,40 @@ jobs:
           cache: 'npm'
 
       - run: npm ci
+
+      # opticv-be:serve (a dependency of opticv-be-e2e:e2e) reads
+      # apps/opticv-be/config/env/development.env via ConfigModule, which
+      # is gitignored and never present in CI. These are dummy, non-secret
+      # values — just enough to satisfy Joi validation and let the app
+      # boot; the e2e suite only calls the health-check endpoint, so
+      # DATABASE_URL/DIRECT_URL etc. never need to resolve to anything real.
+      - name: Write dummy backend env for e2e
+        run: |
+          mkdir -p apps/opticv-be/config/env
+          cat > apps/opticv-be/config/env/development.env <<'EOF'
+          NODE_ENV=development
+          PORT=3000
+          DATABASE_URL=postgresql://user:pass@localhost:5432/db
+          DIRECT_URL=postgresql://user:pass@localhost:5432/db
+          SUPABASE_URL=https://example.supabase.co
+          SUPABASE_PUBLISHABLE_KEY=dummy
+          SUPABASE_WEBHOOK_SECRET=dummy
+          SUPABASE_SERVICE_ROLE_KEY=dummy
+          R2_ACCOUNT_ID=dummy
+          R2_ACCESS_KEY_ID=dummy
+          R2_SECRET_ACCESS_KEY=dummy
+          R2_BUCKET_NAME=dummy
+          R2_PUBLIC_URL=https://example.com
+          OPENAI_API_KEY=dummy
+          REDIS_HOST=localhost
+          REDIS_PORT=6379
+          REDIS_TLS=false
+          FRONTEND_URL=http://localhost:4200
+          STRIPE_SECRET_KEY=dummy
+          STRIPE_WEBHOOK_SECRET=dummy
+          STRIPE_PRICE_BASIC=dummy
+          STRIPE_PRICE_PRO=dummy
+          EOF
 
       - run: npx nx format:check
       - run: npx nx run-many -t lint test build typecheck e2e
