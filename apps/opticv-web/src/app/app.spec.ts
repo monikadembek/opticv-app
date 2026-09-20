@@ -25,6 +25,7 @@ class FooterStub {}
 @Component({ selector: 'app-past-due-banner', template: '', standalone: true })
 class PastDueBannerStub {}
 
+// eslint-disable-next-line @angular-eslint/component-selector -- stubs the real PrimeNG p-toast selector
 @Component({ selector: 'p-toast', template: '', standalone: true })
 class ToastStub {}
 

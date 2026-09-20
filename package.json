@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "postinstall": "node scripts/run-in.mjs apps/opticv-be npm exec prisma generate",
     "start-be:dev": "cross-env NODE_ENV=development nx serve opticv-be",
     "start-web": "nx serve opticv-web",
     "prisma:migrate:staging": "cross-env NODE_ENV=staging node scripts/run-in.mjs apps/opticv-be npm exec prisma migrate deploy",

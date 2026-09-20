@@ -25,6 +25,7 @@ const mockOptimizationService = {
 };
 
 const mockEventBus = {
+  // eslint-disable-next-line @typescript-eslint/no-empty-function -- unsubscribe no-op stub
   subscribe: jest.fn().mockReturnValue(() => {}),
 };
 
