@@ -172,7 +172,11 @@ describe('OptimizationController', () => {
       );
 
       await expect(
-        controller.saveUserOutput('result-1', { userEditedOutput: 'text' }, mockUser),
+        controller.saveUserOutput(
+          'result-1',
+          { userEditedOutput: 'text' },
+          mockUser,
+        ),
       ).rejects.toThrow('forbidden');
     });
   });
