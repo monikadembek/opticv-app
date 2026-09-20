@@ -825,9 +825,9 @@ describe('CvOptimization', () => {
       expect(component.retryablePromptTypes().size).toBe(0);
     });
 
-    it('returns an empty set when no results exist and nothing has failed', () => {
+    it('includes every prompt type when no results exist yet (all never triggered)', () => {
       component.jobApplicationId.set(mockJobApplication.id);
-      expect(component.retryablePromptTypes().size).toBe(0);
+      expect(component.retryablePromptTypes().size).toBe(7);
     });
 
     it('includes a prompt type whose SSE event had status failed', () => {
@@ -943,9 +943,7 @@ describe('CvOptimization', () => {
 
     it('does not include a prompt type with no results entry while it is processing', () => {
       component.jobApplicationId.set(mockJobApplication.id);
-      component.isProcessing.set(
-        new Map([[PromptType.SUMMARY_REWRITE, true]]),
-      );
+      component.isProcessing.set(new Map([[PromptType.SUMMARY_REWRITE, true]]));
       expect(
         component.retryablePromptTypes().has(PromptType.SUMMARY_REWRITE),
       ).toBe(false);
@@ -989,9 +987,7 @@ describe('CvOptimization', () => {
     });
 
     it('returns processing when the prompt type is currently processing', () => {
-      component.isProcessing.set(
-        new Map([[PromptType.SUMMARY_REWRITE, true]]),
-      );
+      component.isProcessing.set(new Map([[PromptType.SUMMARY_REWRITE, true]]));
       expect(component.sectionStatus(PromptType.SUMMARY_REWRITE)).toBe(
         'processing',
       );
@@ -1022,9 +1018,7 @@ describe('CvOptimization', () => {
           ],
         ]),
       );
-      expect(component.sectionStatus(PromptType.KEYWORD_GAP)).toBe(
-        'completed',
-      );
+      expect(component.sectionStatus(PromptType.KEYWORD_GAP)).toBe('completed');
     });
   });
 

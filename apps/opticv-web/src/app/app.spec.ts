@@ -106,57 +106,68 @@ describe('App', () => {
       .compileComponents();
   });
 
-  it('should create the app', () => {
+  // The router has no routes configured (provideRouter([]) above), so an
+  // unstubbed navigate('login') call rejects with NG04002 after the test
+  // has already finished, surfacing as an unhandled rejection in the run.
+  // Injecting the Router instantiates the test module, so this must run
+  // after any TestBed.overrideProvider calls a test still needs to make.
+  function createApp() {
     const fixture = TestBed.createComponent(App);
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    return fixture;
+  }
+
+  it('should create the app', () => {
+    const fixture = createApp();
     expect(fixture.componentInstance).toBeTruthy();
   });
 
   it('should initialize userLabel signal to "U" when no user is logged in', () => {
-    const fixture = TestBed.createComponent(App);
+    const fixture = createApp();
     expect(fixture.componentInstance.userLabel()).toBe('U');
   });
 
   it('should initialize isUserLoggedIn signal to false when no session exists', () => {
-    const fixture = TestBed.createComponent(App);
+    const fixture = createApp();
     expect(fixture.componentInstance.isUserLoggedIn()).toBe(false);
   });
 
   it('should set isUserLoggedIn to true when a session exists', async () => {
     supabaseMock = createSupabaseMock(mockSession, mockSession.user);
     await TestBed.overrideProvider(Supabase, { useValue: supabaseMock });
-    const fixture = TestBed.createComponent(App);
+    const fixture = createApp();
     expect(fixture.componentInstance.isUserLoggedIn()).toBe(true);
   });
 
   it('should derive userLabel from the current user email initial', async () => {
     supabaseMock = createSupabaseMock(mockSession, mockSession.user);
     await TestBed.overrideProvider(Supabase, { useValue: supabaseMock });
-    const fixture = TestBed.createComponent(App);
+    const fixture = createApp();
     expect(fixture.componentInstance.userLabel()).toBe('T');
   });
 
   it('should render app-top-header', async () => {
-    const fixture = TestBed.createComponent(App);
+    const fixture = createApp();
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('app-top-header')).toBeTruthy();
   });
 
   it('should render main element', async () => {
-    const fixture = TestBed.createComponent(App);
+    const fixture = createApp();
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('main.main')).toBeTruthy();
   });
 
   it('should render app-footer', async () => {
-    const fixture = TestBed.createComponent(App);
+    const fixture = createApp();
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('app-footer')).toBeTruthy();
   });
 
   it('executeSignOut should call supabase signOut and navigate to login', async () => {
-    const fixture = TestBed.createComponent(App);
+    const fixture = createApp();
     const router = TestBed.inject(Router);
-    const navigateSpy = vi.spyOn(router, 'navigate');
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
     await fixture.componentInstance.executeSignOut();
 
@@ -165,7 +176,7 @@ describe('App', () => {
   });
 
   it('executeSignOut should reset the cv store', async () => {
-    const fixture = TestBed.createComponent(App);
+    const fixture = createApp();
 
     await fixture.componentInstance.executeSignOut();
 
@@ -174,12 +185,12 @@ describe('App', () => {
 
   describe('cv store loading', () => {
     it('does not call loadUserCVs when the user starts out logged out', () => {
-      TestBed.createComponent(App).detectChanges();
+      createApp().detectChanges();
       expect(cvStoreMock.loadUserCVs).not.toHaveBeenCalled();
     });
 
     it('calls loadUserCVs once when the user transitions to logged in', () => {
-      const fixture = TestBed.createComponent(App);
+      const fixture = createApp();
       fixture.detectChanges();
 
       supabaseMock.setSession(mockSession, mockSession.user);
@@ -189,7 +200,7 @@ describe('App', () => {
     });
 
     it('does not call loadUserCVs again on a subsequent re-emission while still logged in', () => {
-      const fixture = TestBed.createComponent(App);
+      const fixture = createApp();
       fixture.detectChanges();
 
       supabaseMock.setSession(mockSession, mockSession.user);
@@ -203,7 +214,7 @@ describe('App', () => {
     it('calls loadUserCVs immediately when the user is already logged in on creation', () => {
       supabaseMock = createSupabaseMock(mockSession, mockSession.user);
       TestBed.overrideProvider(Supabase, { useValue: supabaseMock });
-      const fixture = TestBed.createComponent(App);
+      const fixture = createApp();
       fixture.detectChanges();
 
       expect(cvStoreMock.loadUserCVs).toHaveBeenCalledTimes(1);
@@ -214,7 +225,7 @@ describe('App', () => {
     it('opens the welcome modal and captures the event when the email has not been seen', () => {
       userGuideStoreMock.hasSeenWelcome.mockReturnValue(false);
       const captureSpy = vi.spyOn(posthog, 'capture');
-      const fixture = TestBed.createComponent(App);
+      const fixture = createApp();
       fixture.detectChanges();
 
       supabaseMock.setSession(mockSession, mockSession.user);
@@ -229,7 +240,7 @@ describe('App', () => {
 
     it('does not open the welcome modal when the email has already been seen', () => {
       userGuideStoreMock.hasSeenWelcome.mockReturnValue(true);
-      const fixture = TestBed.createComponent(App);
+      const fixture = createApp();
       fixture.detectChanges();
 
       supabaseMock.setSession(mockSession, mockSession.user);
@@ -240,7 +251,7 @@ describe('App', () => {
 
     it('does not open the welcome modal when no email is available', () => {
       const sessionWithoutEmail = { user: {} } as any;
-      const fixture = TestBed.createComponent(App);
+      const fixture = createApp();
       fixture.detectChanges();
 
       supabaseMock.setSession(sessionWithoutEmail, {} as any);
