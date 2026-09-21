@@ -110,21 +110,23 @@ Both `opticv-be` and `opticv-web` have an Nx `prune` target (`prune-lockfile` +
   to work against.
 
 Hostinger's "Build command" field is a **required dropdown**, not free text, so plain `npm install`
-can't be typed in directly — it must be a script name. It's also **not scoped to the selected
-branch or root directory**: confirmed by testing (switching the app's branch between `main`,
-`deploy-be`, and back) that the dropdown always lists `scripts` from the repo's default branch
-(`main`) root `package.json`, regardless of which branch/directory the app is actually configured
-to deploy. So a `scripts.build` entry added to `apps/opticv-be/package.json` or
-`apps/opticv-web/package.json` (which is what actually ends up at the root of the `deploy-be` /
-`deploy-web` branches) never appears in the dropdown — only root `package.json` scripts do.
+can't be typed in directly — it must be a script name. The dropdown's _displayed options_ appeared
+to be sourced from the repo's default branch (`main`) root `package.json` even when a different
+branch/directory was selected for the app (observed when toggling the branch selector back and
+forth in the UI) — but **at actual deploy time, the chosen command runs against the selected
+branch's own `package.json`**, confirmed by a real deploy log: `npm install` correctly installed the
+pruned `deploy-be` lockfile's packages, then `npm run <script>` failed with `Missing script` when
+that script only existed in root `package.json`, not in `apps/opticv-be/package.json` (i.e.
+`deploy-be`'s actual root). So the dropdown's listed options may be unreliable/stale, but execution
+is real and branch-scoped — the script must exist in the `package.json` that ships at the root of
+`deploy-be` / `deploy-web`, i.e. `apps/opticv-be/package.json` and `apps/opticv-web/package.json`.
 
-Root `package.json` therefore has a `"hostinger-no-build": "echo no build step required, app is
-pre-built"` script. Select it as the build command for **both** the `opticv-be` and `opticv-web`
-Hostinger apps. Hostinger only borrows the _script name_ `hostinger-no-build` from `main`'s
-`package.json` to populate the dropdown — at deploy time it actually runs that command against the
-selected branch/directory (`deploy-be` / `deploy-web`, root `/`), where the `echo` is still a
-harmless no-op, unlike an Nx/monorepo-specific command (e.g. `nx build ...`) would be, since
-`deploy-be`/`deploy-web` contain no Nx workspace at all.
+Both files carry a `"hostinger-no-build": "echo no build step required, app is pre-built"` script
+for this reason. `prune-lockfile` copies the source `package.json` into the pruned output as-is, so
+this script is present in `deploy-be`/`deploy-web` once CI republishes them. If Hostinger's dropdown
+doesn't list it as a selectable option (its list may still reflect `main`), try re-opening the
+build-settings dialog after the branch has synced, or contact Hostinger support — the command that
+actually executes against the deployed branch is what matters, and this script satisfies that.
 
 `.github/workflows/ci.yml`'s `deploy` job (runs on push to `main`, after the `main` job passes):
 
