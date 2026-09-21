@@ -25,6 +25,7 @@ const mockOptimizationService = {
 };
 
 const mockEventBus = {
+  // eslint-disable-next-line @typescript-eslint/no-empty-function -- unsubscribe no-op stub
   subscribe: jest.fn().mockReturnValue(() => {}),
 };
 
@@ -171,7 +172,11 @@ describe('OptimizationController', () => {
       );
 
       await expect(
-        controller.saveUserOutput('result-1', { userEditedOutput: 'text' }, mockUser),
+        controller.saveUserOutput(
+          'result-1',
+          { userEditedOutput: 'text' },
+          mockUser,
+        ),
       ).rejects.toThrow('forbidden');
     });
   });

@@ -3,7 +3,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { JobApplicationController } from './job-application.controller';
 import { JobApplicationService } from './job-application.service';
 import { SupabaseGuard } from '../auth/supabase.guard';
-import type { JobApplicationListResponse, JobApplicationResponse } from '@opticv/datatypes';
+import type {
+  JobApplicationListResponse,
+  JobApplicationResponse,
+} from '@opticv/datatypes';
 import type { UserModel } from '../../generated/prisma/models.js';
 
 const allowAllGuard: CanActivate = { canActivate: () => true };
@@ -32,6 +35,7 @@ const mockListResponse: JobApplicationListResponse = {
       atsScore: mockApp.atsScore,
       createdAt: mockApp.createdAt,
       updatedAt: mockApp.updatedAt,
+      cvDocument: { id: mockApp.cvDocumentId, fileName: 'resume.pdf' },
     },
   ],
   total: 1,
@@ -83,21 +87,33 @@ describe('JobApplicationController', () => {
     });
 
     it('propagates errors thrown by service', async () => {
-      mockService.create.mockRejectedValueOnce(new NotFoundException('CV document not found.'));
-      await expect(controller.create(dto as never, mockUser)).rejects.toThrow(NotFoundException);
+      mockService.create.mockRejectedValueOnce(
+        new NotFoundException('CV document not found.'),
+      );
+      await expect(controller.create(dto as never, mockUser)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('findAll', () => {
     it('delegates to service.findAll with userId and query', async () => {
-      const result = await controller.findAll({ limit: 10, offset: 0 }, mockUser);
-      expect(mockService.findAll).toHaveBeenCalledWith(mockUser.id, { limit: 10, offset: 0 });
+      const result = await controller.findAll(
+        { limit: 10, offset: 0 },
+        mockUser,
+      );
+      expect(mockService.findAll).toHaveBeenCalledWith(mockUser.id, {
+        limit: 10,
+        offset: 0,
+      });
       expect(result).toEqual(mockListResponse);
     });
 
     it('propagates errors thrown by service', async () => {
       mockService.findAll.mockRejectedValueOnce(new Error('db error'));
-      await expect(controller.findAll({}, mockUser)).rejects.toThrow('db error');
+      await expect(controller.findAll({}, mockUser)).rejects.toThrow(
+        'db error',
+      );
     });
   });
 
@@ -109,22 +125,40 @@ describe('JobApplicationController', () => {
     });
 
     it('propagates errors thrown by service', async () => {
-      mockService.findOne.mockRejectedValueOnce(new NotFoundException('Job application not found.'));
-      await expect(controller.findOne('missing-id', mockUser)).rejects.toThrow(NotFoundException);
+      mockService.findOne.mockRejectedValueOnce(
+        new NotFoundException('Job application not found.'),
+      );
+      await expect(controller.findOne('missing-id', mockUser)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('updateAtsScore', () => {
     it('delegates to service.updateAtsScore with id, dto and userId', async () => {
-      const result = await controller.updateAtsScore('app-id', { atsScore: 75 } as never, mockUser);
-      expect(mockService.updateAtsScore).toHaveBeenCalledWith('app-id', { atsScore: 75 }, mockUser.id);
+      const result = await controller.updateAtsScore(
+        'app-id',
+        { atsScore: 75 } as never,
+        mockUser,
+      );
+      expect(mockService.updateAtsScore).toHaveBeenCalledWith(
+        'app-id',
+        { atsScore: 75 },
+        mockUser.id,
+      );
       expect(result).toEqual(mockApp);
     });
 
     it('propagates errors thrown by service', async () => {
-      mockService.updateAtsScore.mockRejectedValueOnce(new NotFoundException('Job application not found.'));
+      mockService.updateAtsScore.mockRejectedValueOnce(
+        new NotFoundException('Job application not found.'),
+      );
       await expect(
-        controller.updateAtsScore('missing-id', { atsScore: 75 } as never, mockUser),
+        controller.updateAtsScore(
+          'missing-id',
+          { atsScore: 75 } as never,
+          mockUser,
+        ),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -133,12 +167,18 @@ describe('JobApplicationController', () => {
     it('delegates to service.update with id, dto and userId', async () => {
       const dto = { jobTitle: 'Senior Engineer' };
       const result = await controller.update('app-id', dto as never, mockUser);
-      expect(mockService.update).toHaveBeenCalledWith('app-id', dto, mockUser.id);
+      expect(mockService.update).toHaveBeenCalledWith(
+        'app-id',
+        dto,
+        mockUser.id,
+      );
       expect(result).toEqual(mockApp);
     });
 
     it('propagates errors thrown by service', async () => {
-      mockService.update.mockRejectedValueOnce(new NotFoundException('Job application not found.'));
+      mockService.update.mockRejectedValueOnce(
+        new NotFoundException('Job application not found.'),
+      );
       await expect(
         controller.update('missing-id', {} as never, mockUser),
       ).rejects.toThrow(NotFoundException);
@@ -152,8 +192,12 @@ describe('JobApplicationController', () => {
     });
 
     it('propagates errors thrown by service', async () => {
-      mockService.remove.mockRejectedValueOnce(new NotFoundException('Job application not found.'));
-      await expect(controller.remove('missing-id', mockUser)).rejects.toThrow(NotFoundException);
+      mockService.remove.mockRejectedValueOnce(
+        new NotFoundException('Job application not found.'),
+      );
+      await expect(controller.remove('missing-id', mockUser)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });
