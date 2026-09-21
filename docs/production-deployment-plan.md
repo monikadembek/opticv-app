@@ -109,6 +109,23 @@ Both `opticv-be` and `opticv-web` have an Nx `prune` target (`prune-lockfile` +
   now exists (empty `dependencies`) purely so `prune` and Hostinger's `npm install` have something
   to work against.
 
+Hostinger's "Build command" field is a **required dropdown**, not free text, so plain `npm install`
+can't be typed in directly — it must be a script name. It's also **not scoped to the selected
+branch or root directory**: confirmed by testing (switching the app's branch between `main`,
+`deploy-be`, and back) that the dropdown always lists `scripts` from the repo's default branch
+(`main`) root `package.json`, regardless of which branch/directory the app is actually configured
+to deploy. So a `scripts.build` entry added to `apps/opticv-be/package.json` or
+`apps/opticv-web/package.json` (which is what actually ends up at the root of the `deploy-be` /
+`deploy-web` branches) never appears in the dropdown — only root `package.json` scripts do.
+
+Root `package.json` therefore has a `"hostinger-no-build": "echo no build step required, app is
+pre-built"` script. Select it as the build command for **both** the `opticv-be` and `opticv-web`
+Hostinger apps. Hostinger only borrows the _script name_ `hostinger-no-build` from `main`'s
+`package.json` to populate the dropdown — at deploy time it actually runs that command against the
+selected branch/directory (`deploy-be` / `deploy-web`, root `/`), where the `echo` is still a
+harmless no-op, unlike an Nx/monorepo-specific command (e.g. `nx build ...`) would be, since
+`deploy-be`/`deploy-web` contain no Nx workspace at all.
+
 `.github/workflows/ci.yml`'s `deploy` job (runs on push to `main`, after the `main` job passes):
 
 ```bash
@@ -127,9 +144,10 @@ the repo root:
 - `dist/apps/opticv-web/` → `deploy-web` branch (`server/`, `browser/`, pruned `package.json`)
 
 **In Hostinger**, create two Node.js apps against the same GitHub repo, each pointed at its own
-branch (`deploy-be` / `deploy-web`) with build directory `/` (the branch root is already the built
-app) and the dropdown build command set to plain `npm install` — there's nothing else to build.
-Startup files:
+branch (`deploy-be` / `deploy-web`) with output directory `/` (the branch root is already the built
+app), package manager `npm`, and build command `npm run hostinger-no-build` (selected from the
+dropdown — see the no-op script above). Hostinger always runs `npm install` itself before this
+command, so the no-op script is all that's needed. Startup files:
 
 - `opticv-be` app → `main.js`
 - `opticv-web` app → `server/server.mjs`
