@@ -23,8 +23,11 @@ jobs:
       # built, not for `main` — but `nx format:check`/`nx affected` diff
       # against `main` by default. Without this, those commands fail with
       # "unknown revision" on any run that isn't building main itself
-      # (e.g. a PR into `dev`).
-      - run: git fetch origin main:main
+      # (e.g. a PR into `dev`). Skipped when main itself is checked out
+      # (a push to main), since git refuses to fetch into the ref that's
+      # currently checked out.
+      - if: github.ref != 'refs/heads/main'
+        run: git fetch origin main:main
 
       # This enables task distribution via Nx Cloud
       # Run this command as early as possible, before dependencies are installed
