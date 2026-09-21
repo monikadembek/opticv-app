@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "hostinger-no-build": "echo no build step required, app is pre-built",
     "prepare": "husky",
     "postinstall": "node scripts/run-in.mjs apps/opticv-be npm exec prisma generate",
     "start-be:dev": "cross-env NODE_ENV=development nx serve opticv-be",

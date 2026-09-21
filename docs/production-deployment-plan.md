@@ -121,12 +121,13 @@ that script only existed in root `package.json`, not in `apps/opticv-be/package.
 is real and branch-scoped — the script must exist in the `package.json` that ships at the root of
 `deploy-be` / `deploy-web`, i.e. `apps/opticv-be/package.json` and `apps/opticv-web/package.json`.
 
-Both files carry a `"hostinger-no-build": "echo no build step required, app is pre-built"` script
-for this reason. `prune-lockfile` copies the source `package.json` into the pruned output as-is, so
-this script is present in `deploy-be`/`deploy-web` once CI republishes them. If Hostinger's dropdown
-doesn't list it as a selectable option (its list may still reflect `main`), try re-opening the
-build-settings dialog after the branch has synced, or contact Hostinger support — the command that
-actually executes against the deployed branch is what matters, and this script satisfies that.
+The same `"hostinger-no-build": "echo no build step required, app is pre-built"` script therefore
+needs to exist in **three** places: root `package.json` (so it's a selectable option in Hostinger's
+dropdown, which reads from `main`), and `apps/opticv-be/package.json` / `apps/opticv-web/package.json`
+(so the command actually succeeds when Hostinger executes it against the deployed branch —
+`prune-lockfile` copies the source `package.json` into the pruned output as-is, so the script is
+present in `deploy-be`/`deploy-web` once CI republishes them). Keep the script name and body
+identical in all three files if it's ever renamed or changed.
 
 `.github/workflows/ci.yml`'s `deploy` job (runs on push to `main`, after the `main` job passes):
 
