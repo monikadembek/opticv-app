@@ -65,14 +65,19 @@ jobs:
 
       - run: npm ci
 
+      # opticv-be's build target has no "production" configuration — its
+      # webpack build already defaults to --node-env=production, and only
+      # defines a "development" override. Passing --configuration=production
+      # here isn't a real Nx configuration and gets forwarded verbatim to
+      # webpack-cli, which then rejects it as an unknown option.
       - name: Build opticv-be for production
         run: |
-          npx nx build opticv-be -- --configuration=production
+          npx nx build opticv-be
           npx nx run opticv-be:prune
 
       - name: Build opticv-web for production
         run: |
-          npx nx build opticv-web -- --configuration=production
+          npx nx build opticv-web --configuration=production
           npx nx run opticv-web:prune
 
       # Hostinger's Git deploy watches a plain branch with the built app at
