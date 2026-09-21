@@ -15,7 +15,7 @@ Docker host, so this plan does not use a Dockerfile.
 These can't be done from the codebase — do them before touching env files:
 
 1. **Create a production Supabase project.** The current `environment.prod.ts` and
-   `production.env` both point at the *staging* Supabase project (`kmkkoqsagagernsxuggr...`) or
+   `production.env` both point at the _staging_ Supabase project (`kmkkoqsagagernsxuggr...`) or
    are blank — neither is a real prod project yet. Create one, copy its URL/anon key/service
    role key.
 2. **Switch Stripe to live mode** and create live-mode equivalents of the Basic/Pro prices used
@@ -82,26 +82,57 @@ export const environment = {
   supabaseUrl: '<prod supabase url>',
   supabaseKey: '<prod supabase publishable key>',
   apiUrl: 'https://api.opticv.net/api',
-  posthogKey: '<consider a separate prod PostHog project to keep staging events out of prod analytics>',
+  posthogKey:
+    '<consider a separate prod PostHog project to keep staging events out of prod analytics>',
   posthogHost: 'https://eu.i.posthog.com',
 };
 ```
 
-## 3. Backend build for Hostinger (plain Node, no Docker)
+## 3. Deploying from an Nx monorepo to Hostinger
 
-`opticv-be` already has an Nx `prune` target (`prune-lockfile` + `copy-workspace-modules`) built
-for exactly this: producing a self-contained deployable folder since `generatePackageJson: false`
-means the webpack build alone doesn't ship dependencies.
+Hostinger's Node.js Git integration expects one app per repo/branch — a plain `npm install` (from
+a fixed dropdown, no custom build command) against a folder that already looks like a standalone
+Node app. An Nx monorepo with two apps doesn't fit that directly, so CI does the Nx build and ships
+each app's already-built output to its own orphan branch; Hostinger never needs to know Nx exists.
+
+Both `opticv-be` and `opticv-web` have an Nx `prune` target (`prune-lockfile` +
+`copy-workspace-modules`) that turns their build output into a self-contained folder with its own
+`package.json`:
+
+- `opticv-be`'s webpack build doesn't bundle `node_modules` (`generatePackageJson: false`), so
+  `prune` adds a pruned `package.json`/`package-lock.json` + `workspace_modules/` alongside
+  `main.js`.
+- `opticv-web`'s Angular application builder fully bundles all runtime deps (Express included —
+  verified by inspecting `server.mjs`: no bare-specifier imports, only Node builtins) into
+  `server.mjs`, so it needs no `node_modules` at all to run. It didn't have a `package.json`
+  before, though, which the prune executor requires just to write its output — `apps/opticv-web/package.json`
+  now exists (empty `dependencies`) purely so `prune` and Hostinger's `npm install` have something
+  to work against.
+
+`.github/workflows/ci.yml`'s `deploy` job (runs on push to `main`, after the `main` job passes):
 
 ```bash
-npm exec nx build opticv-be -- --configuration=production
-npm exec nx run opticv-be:prune
+npx nx build opticv-be -- --configuration=production
+npx nx run opticv-be:prune          # -> apps/opticv-be/dist/
+
+npx nx build opticv-web -- --configuration=production
+npx nx run opticv-web:prune         # -> dist/apps/opticv-web/
 ```
 
-This produces `apps/opticv-be/dist/` containing `main.js`, a pruned `package.json` +
-`package-lock.json`, and `workspace_modules/`. Upload the contents of that `dist/` folder to
-Hostinger, run `npm install` there (or let Hostinger's deploy step do it), and set the app's
-**startup file** to `main.js`.
+It then force-pushes each dist folder's contents, as the sole commit, to its own orphan branch at
+the repo root:
+
+- `apps/opticv-be/dist/` → `deploy-be` branch (`main.js`, pruned `package.json`/lockfile,
+  `workspace_modules/`)
+- `dist/apps/opticv-web/` → `deploy-web` branch (`server/`, `browser/`, pruned `package.json`)
+
+**In Hostinger**, create two Node.js apps against the same GitHub repo, each pointed at its own
+branch (`deploy-be` / `deploy-web`) with build directory `/` (the branch root is already the built
+app) and the dropdown build command set to plain `npm install` — there's nothing else to build.
+Startup files:
+
+- `opticv-be` app → `main.js`
+- `opticv-web` app → `server/server.mjs`
 
 Set these in Hostinger's environment-variables UI for the `opticv-be` app (Hostinger doesn't read
 `apps/opticv-be/config/env/production.env` — that file is only for local `ConfigModule` loading,
@@ -128,20 +159,15 @@ npm run prisma:migrate:production
 `GET /api` already exists (`apps/opticv-be/src/app/app.controller.ts`) and returns 200 — use it as
 Hostinger's health-check / uptime-monitor URL if the product supports one.
 
-## 4. Frontend build for Hostinger
+## 4. Frontend env vars for Hostinger
 
-```bash
-npm exec nx build opticv-web -- --configuration=production
-```
-
-Produces `apps/opticv-web/dist/apps/opticv-web/` with a `server/` folder (SSR entry,
-`server.mjs`) and `browser/` (static assets). Set the Hostinger Node app's startup file to
-`server/server.mjs`, and set `PORT` per Hostinger's assigned port for that app (Angular's SSR
-server reads `process.env.PORT` already, via `@angular/ssr`).
-
-No env vars needed here — `opticv-web` has no Angular runtime env files; `apiUrl`/`supabaseUrl`
-etc. are baked in at build time via `environment.prod.ts` (fileReplacements), so they must be
-correct **before** running this build.
+`opticv-web` has no Angular runtime env files; `apiUrl`/`supabaseUrl` etc. are baked in at build
+time via `environment.prod.ts` (fileReplacements in step 3's CI build), so they must be correct
+**before** that build runs. `PORT` is read from Hostinger's assigned port automatically
+(`process.env.PORT`, via `@angular/ssr`) — no other env vars are required for `opticv-web`.
+Setting `ALLOWED_HOSTS` (comma-separated) is worth doing once the real domain is live — it's read
+by `apps/opticv-web/src/server.ts` and suppresses `AngularNodeAppEngine`'s SSRF host-header warning
+for requests arriving through Hostinger's reverse proxy.
 
 ## 5. Open gaps not covered by this deploy (tracked separately)
 
@@ -150,8 +176,9 @@ correct **before** running this build.
   currently no request-level audit trail in prod. Also tracked in `docs/tasks-list.md`
   ("Implement logging to db/file").
 - **PII encryption at rest for resumes** — open item in `docs/tasks-list.md`, not implemented.
-- **No CD step in CI** — `.github/workflows/ci.yml` runs format/lint/test/build/e2e but does not
-  deploy. Hostinger deploys are likely manual/Git-push-to-deploy initially; automating that (e.g.
-  a `deploy` job triggered on `main` after CI passes, using Hostinger's Git deployment or an SSH
-  step) is a follow-up, not required for a first prod release.
+- **Migrations aren't run by CD** — the `deploy` job pushes built code to Hostinger but does not run
+  `npm run prisma:migrate:production`. Run it manually before/after a deploy that includes schema
+  changes until this is wired into the pipeline (it needs the prod `DATABASE_URL`/`DIRECT_URL` as a
+  CI secret to run unattended, which introduces its own access-control question — worth deciding
+  deliberately rather than bolting on).
 - **Remove the `main.ts` startup comment** ("This is not a production server yet!") once live.
