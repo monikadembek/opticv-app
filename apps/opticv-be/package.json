@@ -2,6 +2,9 @@
   "name": "@opticv/opticv-be",
   "version": "0.0.1",
   "private": true,
+  "scripts": {
+    "hostinger-no-build": "echo no build step required, app is pre-built"
+  },
   "nx": {
     "targets": {
       "build": {
