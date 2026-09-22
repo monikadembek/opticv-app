@@ -101,7 +101,16 @@ Both `opticv-be` and `opticv-web` have an Nx `prune` target (`prune-lockfile` +
 
 - `opticv-be`'s webpack build doesn't bundle `node_modules` (`generatePackageJson: false`), so
   `prune` adds a pruned `package.json`/`package-lock.json` + `workspace_modules/` alongside
-  `main.js`.
+  `main.js`. **This means every runtime npm dependency `opticv-be`'s source actually imports must
+  be declared in `apps/opticv-be/package.json`'s own `dependencies`** — `prune-lockfile` only prunes
+  down to what that file lists, not what the root monorepo `package.json` has. Before this was
+  fixed, `apps/opticv-be/package.json` only declared 7 packages (leftover from the initial Nx
+  NestJS scaffold) while the app's source actually imports ~28 — caught in production by a runtime
+  crash (`Error: Cannot find module '@sentry/nestjs'`) after deploying to Hostinger, since webpack
+  externalizes real npm packages (`require`s them at runtime) rather than bundling them, unlike
+  workspace TS libraries such as `@opticv/datatypes` which webpack compiles directly into `main.js`
+  and therefore do **not** need to be added here. If a new runtime dependency is added to
+  `opticv-be`'s source, it must be added to `apps/opticv-be/package.json` too, not just the root.
 - `opticv-web`'s Angular application builder fully bundles all runtime deps (Express included —
   verified by inspecting `server.mjs`: no bare-specifier imports, only Node builtins) into
   `server.mjs`, so it needs no `node_modules` at all to run. It didn't have a `package.json`
@@ -129,6 +138,13 @@ dropdown, which reads from `main`), and `apps/opticv-be/package.json` / `apps/op
 present in `deploy-be`/`deploy-web` once CI republishes them). Keep the script name and body
 identical in all three files if it's ever renamed or changed.
 
+**Follow-up to try once the deploy is otherwise stable:** with Framework preset set to "Other" (see
+below), the Build command dropdown offered a real **"None"** option, separate from any
+`package.json` script. That may be a cleaner fit than the `hostinger-no-build` no-op and would let
+the script be removed from all three `package.json` files — but switch to it only after confirming
+the rest of the deploy (dependencies, env vars) works, to avoid changing multiple variables in the
+same troubleshooting pass. Not yet verified end-to-end.
+
 `.github/workflows/ci.yml`'s `deploy` job (runs on push to `main`, after the `main` job passes):
 
 ```bash
@@ -146,11 +162,23 @@ the repo root:
   `workspace_modules/`)
 - `dist/apps/opticv-web/` → `deploy-web` branch (`server/`, `browser/`, pruned `package.json`)
 
-**In Hostinger**, create two Node.js apps against the same GitHub repo, each pointed at its own
-branch (`deploy-be` / `deploy-web`) with output directory `/` (the branch root is already the built
-app), package manager `npm`, and build command `npm run hostinger-no-build` (selected from the
-dropdown — see the no-op script above). Hostinger always runs `npm install` itself before this
-command, so the no-op script is all that's needed. Startup files:
+**In Hostinger**, create two Node.js apps against the same GitHub repo (or upload a zip of the
+branch contents manually — same underlying build/deploy pipeline either way, same settings apply),
+each pointed at its own branch (`deploy-be` / `deploy-web`) with:
+
+- **Framework preset: "Other"/"Custom" (not the auto-detected "NestJS")** — selecting the NestJS
+  preset made Hostinger's platform impose its own NestJS build expectations (it flagged the deploy
+  as failed via an AI "build analysis" banner suggesting `nx build`/`nest build`, even though the
+  configured build command had already exited 0) that don't match a pre-built, already-bundled
+  `main.js`. Switching to a generic/custom preset resolved this.
+- Output directory `.` (not `dist` — the branch root is already the built app; Hostinger's
+  auto-suggested `dist` caused an `ERROR: No output directory found after build`)
+- package manager `npm`
+- build command `npm run hostinger-no-build` (selected from the dropdown — see the no-op script
+  above). Hostinger always runs `npm install` itself before this command, so the no-op script is
+  all that's needed.
+
+Startup files:
 
 - `opticv-be` app → `main.js`
 - `opticv-web` app → `server/server.mjs`
