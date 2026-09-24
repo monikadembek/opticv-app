@@ -16,7 +16,17 @@ const allowedHosts = process.env['ALLOWED_HOSTS']
   ? process.env['ALLOWED_HOSTS'].split(',').map((h) => h.trim())
   : [];
 
-const angularApp = new AngularNodeAppEngine({ allowedHosts });
+// Hostinger terminates TLS at its reverse proxy, so the app only sees the
+// original scheme/host/port via X-Forwarded-*. Angular ignores those headers
+// unless told which to trust.
+const trustProxyHeaders = process.env['TRUST_PROXY_HEADERS']
+  ? process.env['TRUST_PROXY_HEADERS'].split(',').map((h) => h.trim())
+  : false;
+
+const angularApp = new AngularNodeAppEngine({
+  allowedHosts,
+  trustProxyHeaders,
+});
 
 /**
  * Example Express Rest API endpoints can be defined here.
