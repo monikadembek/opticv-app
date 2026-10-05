@@ -10,6 +10,7 @@ import { PromptType } from '@opticv/datatypes';
 import {
   CvOptimizationApiService,
   CreateJobApplicationPayload,
+  OptimizationStreamTimeoutError,
   SseJobCompleteEvent,
 } from './cv-optimization-api.service';
 import { environment } from '../../../../environments/environment';
@@ -17,7 +18,8 @@ import { Supabase } from '../../../core/auth/services/supabase';
 
 const JOB_APPS_URL = `${environment.apiUrl}/job-applications`;
 const CV_EXTRACT_URL = (id: string) => `${environment.apiUrl}/cv/${id}/extract`;
-const CV_STRUCTURED_DATA_URL = (id: string) => `${environment.apiUrl}/cv/${id}/structured-data`;
+const CV_STRUCTURED_DATA_URL = (id: string) =>
+  `${environment.apiUrl}/cv/${id}/structured-data`;
 const RUN_FULL_URL = (jobAppId: string) =>
   `${environment.apiUrl}/optimizations/job-applications/${jobAppId}/run`;
 const RUN_SINGLE_URL = (jobAppId: string, promptType: string) =>
@@ -149,11 +151,14 @@ describe('CvOptimizationApiService', () => {
     it('propagates HTTP errors', () => {
       let errorReceived = false;
 
-      service.extractCvData(cvId).subscribe({ error: () => (errorReceived = true) });
+      service
+        .extractCvData(cvId)
+        .subscribe({ error: () => (errorReceived = true) });
 
-      httpMock
-        .expectOne(CV_EXTRACT_URL(cvId))
-        .flush('Internal Server Error', { status: 500, statusText: 'Server Error' });
+      httpMock.expectOne(CV_EXTRACT_URL(cvId)).flush('Internal Server Error', {
+        status: 500,
+        statusText: 'Server Error',
+      });
 
       expect(errorReceived).toBe(true);
     });
@@ -189,7 +194,9 @@ describe('CvOptimizationApiService', () => {
     it('propagates HTTP errors', () => {
       let errorReceived = false;
 
-      service.getStructuredData(cvId).subscribe({ error: () => (errorReceived = true) });
+      service
+        .getStructuredData(cvId)
+        .subscribe({ error: () => (errorReceived = true) });
 
       httpMock
         .expectOne(CV_STRUCTURED_DATA_URL(cvId))
@@ -214,7 +221,9 @@ describe('CvOptimizationApiService', () => {
     it('emits the runId on success', () => {
       let result: { runId: string } | undefined;
 
-      service.runFullOptimizationProcess(jobAppId).subscribe((r) => (result = r));
+      service
+        .runFullOptimizationProcess(jobAppId)
+        .subscribe((r) => (result = r));
 
       httpMock.expectOne(RUN_FULL_URL(jobAppId)).flush({ runId: 'run-id-1' });
 
@@ -340,28 +349,78 @@ describe('CvOptimizationApiService', () => {
       );
     });
 
-    it('emits the parsed event data on job-complete and completes', () => {
-      const mockEvent: SseJobCompleteEvent = {
+    const listenerFor = (name: string) => {
+      const call = mockEventSource.addEventListener.mock.calls.find(
+        ([eventName]) => eventName === name,
+      );
+      if (!call) throw new Error(`No listener registered for ${name}`);
+      return call[1] as (e: MessageEvent) => void;
+    };
+
+    const runComplete = (timedOut: boolean) =>
+      ({
+        data: JSON.stringify({
+          runId,
+          completedAt: '2026-01-01T00:00:00.000Z',
+          timedOut,
+        }),
+      }) as MessageEvent;
+
+    it('emits every job-complete event without completing', () => {
+      const first: SseJobCompleteEvent = {
         promptType: PromptType.RESUME_AUTOPSY,
         status: 'completed',
         result: { score: 85 },
       };
+      const second: SseJobCompleteEvent = {
+        promptType: PromptType.KEYWORD_GAP,
+        status: 'failed',
+        error: 'boom',
+      };
 
-      let emitted: SseJobCompleteEvent | undefined;
+      const emitted: SseJobCompleteEvent[] = [];
       let completed = false;
 
       service.streamOptimizationEvents(jobAppId, runId).subscribe({
-        next: (e) => (emitted = e),
+        next: (e) => emitted.push(e),
         complete: () => (completed = true),
       });
 
-      const [eventName, handler] = mockEventSource.addEventListener.mock.calls[0];
-      expect(eventName).toBe('job-complete');
+      const onJobComplete = listenerFor('job-complete');
+      onJobComplete({ data: JSON.stringify(first) } as MessageEvent);
+      onJobComplete({ data: JSON.stringify(second) } as MessageEvent);
 
-      handler({ data: JSON.stringify(mockEvent) } as MessageEvent);
+      expect(emitted).toEqual([first, second]);
+      expect(completed).toBe(false);
+      expect(mockEventSource.close).not.toHaveBeenCalled();
+    });
 
-      expect(emitted).toEqual(mockEvent);
+    it('completes and closes EventSource on run-complete', () => {
+      let completed = false;
+
+      service
+        .streamOptimizationEvents(jobAppId, runId)
+        .subscribe({ complete: () => (completed = true) });
+
+      listenerFor('run-complete')(runComplete(false));
+
       expect(completed).toBe(true);
+      expect(mockEventSource.close).toHaveBeenCalled();
+    });
+
+    it('errors with OptimizationStreamTimeoutError on a timed-out run-complete', () => {
+      let error: unknown;
+      let completed = false;
+
+      service.streamOptimizationEvents(jobAppId, runId).subscribe({
+        error: (e) => (error = e),
+        complete: () => (completed = true),
+      });
+
+      listenerFor('run-complete')(runComplete(true));
+
+      expect(error).toBeInstanceOf(OptimizationStreamTimeoutError);
+      expect(completed).toBe(false);
       expect(mockEventSource.close).toHaveBeenCalled();
     });
 
@@ -373,7 +432,8 @@ describe('CvOptimizationApiService', () => {
         .subscribe({ error: () => (errorReceived = true) });
 
       // The service sets es.onerror — read it back from the constructed instance
-      const esInstance = EventSourceSpy.mock.instances[0] as typeof mockEventSource;
+      const esInstance = EventSourceSpy.mock
+        .instances[0] as typeof mockEventSource;
       esInstance.onerror!(new Event('error'));
 
       expect(errorReceived).toBe(true);

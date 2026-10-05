@@ -26,6 +26,23 @@ export interface SseJobCompleteEvent {
   error?: string;
 }
 
+export interface SseRunCompleteEvent {
+  runId: string;
+  completedAt: string;
+  timedOut: boolean;
+}
+
+/**
+ * Raised when the server closes a run's stream on its idle timeout: at least
+ * one job never reported, so its result row may be stranded in PROCESSING.
+ */
+export class OptimizationStreamTimeoutError extends Error {
+  constructor() {
+    super('Optimization stream timed out before every job reported.');
+    this.name = 'OptimizationStreamTimeoutError';
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class CvOptimizationApiService {
   private readonly http = inject(HttpClient);
@@ -114,11 +131,20 @@ export class CvOptimizationApiService {
       const url = `${environment.apiUrl}/optimizations/job-applications/${jobApplicationId}/stream?runId=${runId}&token=${token}`;
       const es = new EventSource(url);
 
+      // A run may queue several jobs, so the stream stays open across
+      // job-complete events until the server signals run-complete.
       es.addEventListener('job-complete', (e: MessageEvent) => {
         const parsed = JSON.parse(e.data) as SseJobCompleteEvent;
         observer.next(parsed);
-        observer.complete();
-        es.close();
+      });
+
+      es.addEventListener('run-complete', (e: MessageEvent) => {
+        const parsed = JSON.parse(e.data) as SseRunCompleteEvent;
+        if (parsed.timedOut) {
+          observer.error(new OptimizationStreamTimeoutError());
+        } else {
+          observer.complete();
+        }
       });
 
       es.onerror = (err) => {

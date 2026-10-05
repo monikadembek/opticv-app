@@ -12,13 +12,16 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
+  catchError,
   debounceTime,
-  filter,
+  EMPTY,
   forkJoin,
-  from,
-  mergeMap,
+  ignoreElements,
+  merge,
+  Observable,
   Subject,
   switchMap,
+  tap,
 } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -34,6 +37,7 @@ import {
   CvStructuredData,
   InterviewPrepResult,
   JobApplication,
+  LimitedFeature,
   JobApplicationWithCv,
   KeywordGapResult,
   LinkedInRewriteResult,
@@ -46,6 +50,7 @@ import {
 } from '@opticv/datatypes';
 import {
   CvOptimizationApiService,
+  OptimizationStreamTimeoutError,
   SseJobCompleteEvent,
 } from './services/cv-optimization-api.service';
 import { CvExportService } from './services/cv-export.service';
@@ -164,6 +169,54 @@ const ActivePrompts = [
   PromptType.LINKEDIN_REWRITE,
 ];
 
+// Mirrors the backend's CV_SUBSET_PROMPT_TYPES: one bulk run, billed as a
+// single CV_OPTIMIZATION credit.
+const CvSubsetPrompts: readonly PromptType[] = [
+  PromptType.RESUME_AUTOPSY,
+  PromptType.KEYWORD_GAP,
+  PromptType.SUMMARY_REWRITE,
+  PromptType.BULLET_UPGRADE,
+];
+
+// Each billed against its own feature via the single-job endpoint.
+const PerFeaturePrompts: readonly PromptType[] = [
+  PromptType.COVER_LETTER,
+  PromptType.INTERVIEW_PREP,
+  PromptType.LINKEDIN_REWRITE,
+];
+
+const FEATURE_LABELS: Record<LimitedFeature, string> = {
+  CV_OPTIMIZATION: 'CV optimization',
+  COVER_LETTER: 'Cover letter',
+  INTERVIEW_PREP: 'Interview prep',
+  LINKEDIN: 'LinkedIn',
+};
+
+const GENERIC_FAILURE_MESSAGE =
+  'Something went wrong while generating this section. Please try again.';
+const CONNECTION_FAILURE_MESSAGE =
+  'The connection was lost while generating this section. Please try again.';
+const TIMEOUT_MESSAGE =
+  'This section is taking longer than expected. Reload the page later to check for results.';
+
+function triggerErrorMessage(err: unknown): string {
+  const body = (err as { error?: unknown } | null)?.error;
+  if (typeof body !== 'object' || body === null) return GENERIC_FAILURE_MESSAGE;
+  const { code, feature } = body as { code?: unknown; feature?: unknown };
+  const label =
+    typeof feature === 'string' && feature in FEATURE_LABELS
+      ? FEATURE_LABELS[feature as LimitedFeature]
+      : 'This feature';
+
+  if (code === 'QUOTA_EXCEEDED') {
+    return `${label}: you have used all generations for this billing period. Upgrade your plan for a higher limit.`;
+  }
+  if (code === 'FEATURE_NOT_AVAILABLE') {
+    return `${label} is not available on your current plan. Upgrade to unlock it.`;
+  }
+  return GENERIC_FAILURE_MESSAGE;
+}
+
 @Component({
   selector: 'app-cv-optimization-page',
   imports: [
@@ -209,6 +262,10 @@ export class CvOptimization implements OnInit {
   readonly PromptType = PromptType;
   readonly results = signal<Map<PromptType, SseJobCompleteEvent>>(new Map());
   readonly isProcessing = signal<Map<PromptType, boolean>>(new Map());
+  readonly runErrors = signal<Map<PromptType, string>>(new Map());
+  // Prompts whose stream hit the server idle timeout. Their DB row may be
+  // stranded in PROCESSING, which the free retry endpoint rejects.
+  readonly stalledPrompts = signal<ReadonlySet<PromptType>>(new Set());
   readonly jobApplicationId = signal<string | null>(null);
   readonly preselectedCvId = signal<string | null>(null);
   readonly cvStructuredData = signal<CvStructuredData | null>(null);
@@ -420,6 +477,7 @@ export class CvOptimization implements OnInit {
 
     for (const [promptType, computedResult] of promptResultPairs) {
       if (this.isProcessing().get(promptType)) continue;
+      if (this.stalledPrompts().has(promptType)) continue;
       const status = this.results().get(promptType)?.status;
       if (
         status === undefined ||
@@ -804,6 +862,8 @@ export class CvOptimization implements OnInit {
   runOptimization({ jobApplication, extractedData }: JobSubmittedData): void {
     this.results.set(new Map());
     this.isProcessing.set(new Map());
+    this.runErrors.set(new Map());
+    this.stalledPrompts.set(new Set());
     this.collapsedSections.set(new Set());
     this.initializedTabDefaults.set(new Set());
     this.activeResultsTab.set('cv-analysis');
@@ -844,78 +904,152 @@ export class CvOptimization implements OnInit {
 
     posthog.capture('optimization_started');
 
-    from(Object.values(PromptType))
-      .pipe(
-        filter((prompt) => ActivePrompts.includes(prompt)),
-        mergeMap(
-          (promptType) =>
-            this.cvOptimizationApiService
-              .runSingleOptimizationProcess(jobApplication.id, promptType)
-              .pipe(
-                switchMap(({ runId }) => {
-                  this.isProcessing.update((map) =>
-                    new Map(map).set(promptType, true),
-                  );
-                  return this.cvOptimizationApiService.streamOptimizationEvents(
-                    jobApplication.id,
-                    runId,
-                  );
-                }),
-              ),
-          3,
+    const jobApplicationId = jobApplication.id;
+
+    // Each trigger is isolated (see trackRun), so a rejection on one feature
+    // cannot cancel the others.
+    merge(
+      this.trackRun(
+        jobApplicationId,
+        CvSubsetPrompts,
+        this.cvOptimizationApiService.runFullOptimizationProcess(
+          jobApplicationId,
         ),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: (event: SseJobCompleteEvent) => {
-          console.log('SSE - job complete event:', event);
-          posthog.capture('optimization_job_complete_event', {
-            event: event,
-          });
-          this.isProcessing.update((map) =>
-            new Map(map).set(event.promptType, false),
-          );
-          this.results.update((map) =>
-            new Map(map).set(event.promptType, event),
-          );
-        },
-        error: (err) => console.error('Optimization stream error', err),
-      });
+      ),
+      ...PerFeaturePrompts.map((promptType) =>
+        this.trackRun(
+          jobApplicationId,
+          [promptType],
+          this.cvOptimizationApiService.runSingleOptimizationProcess(
+            jobApplicationId,
+            promptType,
+          ),
+        ),
+      ),
+    )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe();
   }
 
   retryOptimization(promptType: PromptType): void {
     const jobApplicationId = this.jobApplicationId();
     if (jobApplicationId === null) return;
 
-    this.isProcessing.update((map) => new Map(map).set(promptType, true));
+    this.setProcessing([promptType], true);
 
-    this.cvOptimizationApiService
-      .retryFailedJob(jobApplicationId, promptType)
-      .pipe(
-        switchMap(({ runId }) =>
-          this.cvOptimizationApiService.streamOptimizationEvents(
-            jobApplicationId,
-            runId,
-          ),
-        ),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: (event: SseJobCompleteEvent) => {
-          this.isProcessing.update((map) =>
-            new Map(map).set(promptType, false),
+    this.trackRun(
+      jobApplicationId,
+      [promptType],
+      this.cvOptimizationApiService.retryFailedJob(
+        jobApplicationId,
+        promptType,
+      ),
+    )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe();
+  }
+
+  /**
+   * Triggers a run and follows its stream until every prompt in it resolves.
+   * Never errors: each failure is recorded on the affected cards instead, so
+   * one trigger cannot tear down others merged alongside it.
+   */
+  private trackRun(
+    jobApplicationId: string,
+    prompts: readonly PromptType[],
+    trigger$: Observable<{ runId: string }>,
+  ): Observable<never> {
+    this.clearRunErrors(prompts);
+
+    return trigger$.pipe(
+      catchError((err: unknown) => {
+        this.failPrompts(prompts, triggerErrorMessage(err));
+        return EMPTY;
+      }),
+      switchMap(({ runId }) => {
+        this.setProcessing(prompts, true);
+        return this.cvOptimizationApiService
+          .streamOptimizationEvents(jobApplicationId, runId)
+          .pipe(
+            tap({
+              next: (event) => this.handleJobEvent(event),
+              // A normal close means every job reported; anything still
+              // processing here never got its event and must not spin forever.
+              complete: () =>
+                this.failPrompts(
+                  prompts.filter((p) => this.isProcessing().get(p)),
+                  GENERIC_FAILURE_MESSAGE,
+                ),
+            }),
+            catchError((err: unknown) => {
+              this.handleStreamError(prompts, err);
+              return EMPTY;
+            }),
           );
-          this.results.update((map) =>
-            new Map(map).set(event.promptType, event),
-          );
-        },
-        error: (err) => {
-          console.error('Retry stream error', err);
-          this.isProcessing.update((map) =>
-            new Map(map).set(promptType, false),
-          );
-        },
-      });
+      }),
+      ignoreElements(),
+    );
+  }
+
+  private handleJobEvent(event: SseJobCompleteEvent): void {
+    console.log('SSE - job complete event:', event);
+    posthog.capture('optimization_job_complete_event', {
+      event: event,
+    });
+    this.setProcessing([event.promptType], false);
+    if (event.status === 'failed') {
+      this.recordRunErrors(
+        [event.promptType],
+        event.error || GENERIC_FAILURE_MESSAGE,
+      );
+    }
+    this.results.update((map) => new Map(map).set(event.promptType, event));
+  }
+
+  private handleStreamError(
+    prompts: readonly PromptType[],
+    err: unknown,
+  ): void {
+    const unresolved = prompts.filter((p) => this.isProcessing().get(p));
+    if (err instanceof OptimizationStreamTimeoutError) {
+      this.stalledPrompts.update((set) => new Set([...set, ...unresolved]));
+      this.failPrompts(unresolved, TIMEOUT_MESSAGE);
+    } else {
+      console.error('Optimization stream error', err);
+      this.failPrompts(unresolved, CONNECTION_FAILURE_MESSAGE);
+    }
+  }
+
+  private failPrompts(prompts: readonly PromptType[], message: string): void {
+    this.setProcessing(prompts, false);
+    this.recordRunErrors(prompts, message);
+  }
+
+  private setProcessing(prompts: readonly PromptType[], value: boolean): void {
+    this.isProcessing.update((map) => {
+      const next = new Map(map);
+      for (const p of prompts) next.set(p, value);
+      return next;
+    });
+  }
+
+  private recordRunErrors(
+    prompts: readonly PromptType[],
+    message: string,
+  ): void {
+    this.runErrors.update((map) => {
+      const next = new Map(map);
+      for (const p of prompts) next.set(p, message);
+      return next;
+    });
+  }
+
+  private clearRunErrors(prompts: readonly PromptType[]): void {
+    this.runErrors.update((map) => {
+      const next = new Map(map);
+      for (const p of prompts) next.delete(p);
+      return next;
+    });
   }
 
   onAngleSelected(angle: SummaryRewriteVariantAngle): void {

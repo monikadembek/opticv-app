@@ -16,6 +16,7 @@ import type { JobSubmittedData } from './components/job-upload/job-upload';
 import { CvOptimization } from './cv-optimization';
 import {
   CvOptimizationApiService,
+  OptimizationStreamTimeoutError,
   SseJobCompleteEvent,
 } from './services/cv-optimization-api.service';
 import { JobApplicationApiService } from '../../core/services/job-application-api.service';
@@ -125,6 +126,7 @@ describe('CvOptimization', () => {
     extractCvData: ReturnType<typeof vi.fn>;
     getStructuredData: ReturnType<typeof vi.fn>;
     getOptimizationResults: ReturnType<typeof vi.fn>;
+    runFullOptimizationProcess: ReturnType<typeof vi.fn>;
     runSingleOptimizationProcess: ReturnType<typeof vi.fn>;
     retryFailedJob: ReturnType<typeof vi.fn>;
     streamOptimizationEvents: ReturnType<typeof vi.fn>;
@@ -176,6 +178,9 @@ describe('CvOptimization', () => {
       extractCvData: vi.fn(),
       getStructuredData,
       getOptimizationResults,
+      runFullOptimizationProcess: vi
+        .fn()
+        .mockReturnValue(of({ runId: 'run-id-cv' })),
       runSingleOptimizationProcess: vi
         .fn()
         .mockReturnValue(of({ runId: 'run-id-1' })),
@@ -640,51 +645,74 @@ describe('CvOptimization', () => {
       expect(component.results().size).toBe(0);
     });
 
-    it('calls runSingleOptimizationProcess for each active PromptType', () => {
+    it('issues exactly one bulk call plus one single-job call per per-feature prompt', () => {
+      apiService.streamOptimizationEvents.mockReturnValue(NEVER);
+
       component.runOptimization(mockJobSubmittedData);
 
-      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledTimes(7);
-      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
+      expect(apiService.runFullOptimizationProcess).toHaveBeenCalledTimes(1);
+      expect(apiService.runFullOptimizationProcess).toHaveBeenCalledWith(
         mockJobApplication.id,
-        PromptType.RESUME_AUTOPSY,
       );
-      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
-        mockJobApplication.id,
-        PromptType.KEYWORD_GAP,
-      );
-      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
-        mockJobApplication.id,
-        PromptType.BULLET_UPGRADE,
-      );
-      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
-        mockJobApplication.id,
-        PromptType.SUMMARY_REWRITE,
-      );
-      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
-        mockJobApplication.id,
+      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledTimes(3);
+      for (const promptType of [
         PromptType.COVER_LETTER,
-      );
-      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
-        mockJobApplication.id,
         PromptType.INTERVIEW_PREP,
-      );
-      expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
-        mockJobApplication.id,
         PromptType.LINKEDIN_REWRITE,
+      ]) {
+        expect(apiService.runSingleOptimizationProcess).toHaveBeenCalledWith(
+          mockJobApplication.id,
+          promptType,
+        );
+      }
+      for (const promptType of [
+        PromptType.RESUME_AUTOPSY,
+        PromptType.KEYWORD_GAP,
+        PromptType.SUMMARY_REWRITE,
+        PromptType.BULLET_UPGRADE,
+      ]) {
+        expect(
+          apiService.runSingleOptimizationProcess,
+        ).not.toHaveBeenCalledWith(mockJobApplication.id, promptType);
+      }
+    });
+
+    it('opens one stream for the bulk runId and one per single-job runId', () => {
+      apiService.streamOptimizationEvents.mockReturnValue(NEVER);
+      apiService.runFullOptimizationProcess.mockReturnValue(
+        of({ runId: 'run-cv' }),
+      );
+      apiService.runSingleOptimizationProcess.mockImplementation(
+        (_id: string, promptType: PromptType) =>
+          of({ runId: `run-${promptType}` }),
+      );
+
+      component.runOptimization(mockJobSubmittedData);
+
+      expect(apiService.streamOptimizationEvents).toHaveBeenCalledTimes(4);
+      expect(apiService.streamOptimizationEvents).toHaveBeenCalledWith(
+        mockJobApplication.id,
+        'run-cv',
+      );
+      expect(apiService.streamOptimizationEvents).toHaveBeenCalledWith(
+        mockJobApplication.id,
+        `run-${PromptType.COVER_LETTER}`,
       );
     });
 
-    it('calls streamOptimizationEvents with the jobApplicationId and runId from runSingle', () => {
-      apiService.runSingleOptimizationProcess.mockReturnValue(
-        of({ runId: 'run-abc' }),
-      );
+    it('marks all four CV-subset prompts as processing once the bulk trigger succeeds', () => {
+      apiService.streamOptimizationEvents.mockReturnValue(NEVER);
 
       component.runOptimization(mockJobSubmittedData);
 
-      expect(apiService.streamOptimizationEvents).toHaveBeenCalledWith(
-        mockJobApplication.id,
-        'run-abc',
-      );
+      for (const promptType of [
+        PromptType.RESUME_AUTOPSY,
+        PromptType.KEYWORD_GAP,
+        PromptType.SUMMARY_REWRITE,
+        PromptType.BULLET_UPGRADE,
+      ]) {
+        expect(component.isProcessing().get(promptType)).toBe(true);
+      }
     });
 
     it('sets isProcessing to true for the active prompt type as soon as its stream opens', () => {
@@ -817,6 +845,334 @@ describe('CvOptimization', () => {
       component.runOptimization(mockJobSubmittedData);
 
       expect(component.results().size).toBe(0);
+    });
+  });
+
+  describe('runOptimization — error handling', () => {
+    const CV_SUBSET = [
+      PromptType.RESUME_AUTOPSY,
+      PromptType.KEYWORD_GAP,
+      PromptType.SUMMARY_REWRITE,
+      PromptType.BULLET_UPGRADE,
+    ];
+
+    const httpError = (body: unknown) => ({ status: 403, error: body });
+
+    it('a rejected single-job trigger does not prevent the others from running', () => {
+      const cvStream = new Subject<SseJobCompleteEvent>();
+      apiService.streamOptimizationEvents.mockImplementation(
+        (_id: string, runId: string) =>
+          runId === 'run-cv' ? cvStream.asObservable() : NEVER,
+      );
+      apiService.runFullOptimizationProcess.mockReturnValue(
+        of({ runId: 'run-cv' }),
+      );
+      apiService.runSingleOptimizationProcess.mockImplementation(
+        (_id: string, promptType: PromptType) =>
+          promptType === PromptType.COVER_LETTER
+            ? throwError(() =>
+                httpError({ code: 'QUOTA_EXCEEDED', feature: 'COVER_LETTER' }),
+              )
+            : of({ runId: `run-${promptType}` }),
+      );
+
+      component.runOptimization(mockJobSubmittedData);
+
+      expect(component.isProcessing().get(PromptType.COVER_LETTER)).toBe(false);
+      expect(component.runErrors().get(PromptType.COVER_LETTER)).toMatch(
+        /Cover letter/,
+      );
+      expect(component.isProcessing().get(PromptType.INTERVIEW_PREP)).toBe(
+        true,
+      );
+      expect(component.isProcessing().get(PromptType.LINKEDIN_REWRITE)).toBe(
+        true,
+      );
+
+      // The bulk stream keeps delivering after the sibling rejection.
+      cvStream.next({
+        promptType: PromptType.RESUME_AUTOPSY,
+        status: 'completed',
+        result: { score: 1 },
+      });
+      expect(component.results().has(PromptType.RESUME_AUTOPSY)).toBe(true);
+      expect(component.runErrors().has(PromptType.RESUME_AUTOPSY)).toBe(false);
+    });
+
+    it('a rejected bulk trigger clears processing and records a quota message for all four CV prompts', () => {
+      apiService.streamOptimizationEvents.mockReturnValue(NEVER);
+      apiService.runFullOptimizationProcess.mockReturnValue(
+        throwError(() =>
+          httpError({ code: 'QUOTA_EXCEEDED', feature: 'CV_OPTIMIZATION' }),
+        ),
+      );
+
+      component.runOptimization(mockJobSubmittedData);
+
+      for (const promptType of CV_SUBSET) {
+        expect(component.isProcessing().get(promptType)).toBe(false);
+        expect(component.runErrors().get(promptType)).toMatch(
+          /CV optimization: you have used all generations/,
+        );
+      }
+      expect(component.isProcessing().get(PromptType.COVER_LETTER)).toBe(true);
+    });
+
+    it('records a not-available message for FEATURE_NOT_AVAILABLE', () => {
+      apiService.streamOptimizationEvents.mockReturnValue(NEVER);
+      apiService.runSingleOptimizationProcess.mockImplementation(
+        (_id: string, promptType: PromptType) =>
+          promptType === PromptType.LINKEDIN_REWRITE
+            ? throwError(() =>
+                httpError({
+                  code: 'FEATURE_NOT_AVAILABLE',
+                  feature: 'LINKEDIN',
+                }),
+              )
+            : of({ runId: `run-${promptType}` }),
+      );
+
+      component.runOptimization(mockJobSubmittedData);
+
+      expect(component.isProcessing().get(PromptType.LINKEDIN_REWRITE)).toBe(
+        false,
+      );
+      expect(component.runErrors().get(PromptType.LINKEDIN_REWRITE)).toBe(
+        'LinkedIn is not available on your current plan. Upgrade to unlock it.',
+      );
+    });
+
+    it('records a generic message for any other trigger error, including a missing body', () => {
+      apiService.streamOptimizationEvents.mockReturnValue(NEVER);
+      apiService.runSingleOptimizationProcess.mockImplementation(
+        (_id: string, promptType: PromptType) =>
+          promptType === PromptType.INTERVIEW_PREP
+            ? throwError(() => ({ status: 500 }))
+            : of({ runId: `run-${promptType}` }),
+      );
+
+      component.runOptimization(mockJobSubmittedData);
+
+      expect(component.isProcessing().get(PromptType.INTERVIEW_PREP)).toBe(
+        false,
+      );
+      expect(component.runErrors().get(PromptType.INTERVIEW_PREP)).toMatch(
+        /Something went wrong/,
+      );
+    });
+
+    it('distinct error codes produce distinct messages', () => {
+      apiService.streamOptimizationEvents.mockReturnValue(NEVER);
+      apiService.runFullOptimizationProcess.mockReturnValue(
+        throwError(() =>
+          httpError({ code: 'QUOTA_EXCEEDED', feature: 'CV_OPTIMIZATION' }),
+        ),
+      );
+      apiService.runSingleOptimizationProcess.mockImplementation(
+        (_id: string, promptType: PromptType) =>
+          throwError(() =>
+            promptType === PromptType.LINKEDIN_REWRITE
+              ? httpError({
+                  code: 'FEATURE_NOT_AVAILABLE',
+                  feature: 'LINKEDIN',
+                })
+              : { status: 500 },
+          ),
+      );
+
+      component.runOptimization(mockJobSubmittedData);
+
+      const messages = new Set([
+        component.runErrors().get(PromptType.RESUME_AUTOPSY),
+        component.runErrors().get(PromptType.LINKEDIN_REWRITE),
+        component.runErrors().get(PromptType.COVER_LETTER),
+      ]);
+      expect(messages.size).toBe(3);
+      expect(component.pageState()).toBe('completed');
+    });
+
+    it('a failed stream event clears processing and records its error', () => {
+      const cvStream = new Subject<SseJobCompleteEvent>();
+      apiService.streamOptimizationEvents.mockReturnValue(
+        cvStream.asObservable(),
+      );
+
+      component.runOptimization(mockJobSubmittedData);
+      cvStream.next({
+        promptType: PromptType.KEYWORD_GAP,
+        status: 'failed',
+        error: 'AI service timeout',
+      });
+
+      expect(component.isProcessing().get(PromptType.KEYWORD_GAP)).toBe(false);
+      expect(component.runErrors().get(PromptType.KEYWORD_GAP)).toBe(
+        'AI service timeout',
+      );
+      expect(component.retryablePromptTypes().has(PromptType.KEYWORD_GAP)).toBe(
+        true,
+      );
+    });
+
+    it('falls back to a generic message when a failed event carries no error', () => {
+      const cvStream = new Subject<SseJobCompleteEvent>();
+      apiService.streamOptimizationEvents.mockReturnValue(
+        cvStream.asObservable(),
+      );
+
+      component.runOptimization(mockJobSubmittedData);
+      cvStream.next({ promptType: PromptType.KEYWORD_GAP, status: 'failed' });
+
+      expect(component.runErrors().get(PromptType.KEYWORD_GAP)).toMatch(
+        /Something went wrong/,
+      );
+    });
+
+    it('a stream error clears processing only for that run and records a connection message', () => {
+      const cvStream = new Subject<SseJobCompleteEvent>();
+      apiService.streamOptimizationEvents.mockImplementation(
+        (_id: string, runId: string) =>
+          runId === 'run-id-cv' ? cvStream.asObservable() : NEVER,
+      );
+
+      component.runOptimization(mockJobSubmittedData);
+      cvStream.next({
+        promptType: PromptType.RESUME_AUTOPSY,
+        status: 'completed',
+        result: {},
+      });
+      cvStream.error(new Error('network failure'));
+
+      for (const promptType of CV_SUBSET) {
+        expect(component.isProcessing().get(promptType)).toBe(false);
+      }
+      expect(component.runErrors().has(PromptType.RESUME_AUTOPSY)).toBe(false);
+      expect(component.runErrors().get(PromptType.KEYWORD_GAP)).toMatch(
+        /connection was lost/,
+      );
+      expect(component.isProcessing().get(PromptType.COVER_LETTER)).toBe(true);
+    });
+
+    it('a timed-out stream clears processing and suppresses retry for the unresolved prompts', () => {
+      const cvStream = new Subject<SseJobCompleteEvent>();
+      apiService.streamOptimizationEvents.mockImplementation(
+        (_id: string, runId: string) =>
+          runId === 'run-id-cv' ? cvStream.asObservable() : NEVER,
+      );
+
+      component.runOptimization(mockJobSubmittedData);
+      cvStream.next({
+        promptType: PromptType.RESUME_AUTOPSY,
+        status: 'failed',
+        error: 'boom',
+      });
+      cvStream.error(new OptimizationStreamTimeoutError());
+
+      for (const promptType of CV_SUBSET) {
+        expect(component.isProcessing().get(promptType)).toBe(false);
+      }
+      expect(component.runErrors().get(PromptType.KEYWORD_GAP)).toMatch(
+        /taking longer than expected/,
+      );
+      expect(component.retryablePromptTypes().has(PromptType.KEYWORD_GAP)).toBe(
+        false,
+      );
+      // The prompt that failed normally has a FAILED row and stays retryable.
+      expect(
+        component.retryablePromptTypes().has(PromptType.RESUME_AUTOPSY),
+      ).toBe(true);
+    });
+
+    it('a stream that completes without reporting a prompt does not leave it processing', () => {
+      apiService.streamOptimizationEvents.mockReturnValue(of());
+
+      component.runOptimization(mockJobSubmittedData);
+
+      for (const promptType of CV_SUBSET) {
+        expect(component.isProcessing().get(promptType)).toBe(false);
+      }
+      expect(component.pageState()).toBe('completed');
+    });
+
+    it('leaves the processing page state once every run reaches a terminal outcome', () => {
+      const streams = new Map<string, Subject<SseJobCompleteEvent>>();
+      apiService.streamOptimizationEvents.mockImplementation(
+        (_id: string, runId: string) => {
+          const subject = new Subject<SseJobCompleteEvent>();
+          streams.set(runId, subject);
+          return subject.asObservable();
+        },
+      );
+      apiService.runSingleOptimizationProcess.mockImplementation(
+        (_id: string, promptType: PromptType) =>
+          of({ runId: `run-${promptType}` }),
+      );
+
+      const stream = (runId: string) => {
+        const subject = streams.get(runId);
+        if (!subject) throw new Error(`No stream opened for ${runId}`);
+        return subject;
+      };
+
+      component.runOptimization(mockJobSubmittedData);
+      expect(component.pageState()).toBe('processing');
+
+      const cv = stream('run-id-cv');
+      for (const promptType of CV_SUBSET) {
+        cv.next({ promptType, status: 'completed', result: {} });
+      }
+      cv.complete();
+      stream(`run-${PromptType.COVER_LETTER}`).next({
+        promptType: PromptType.COVER_LETTER,
+        status: 'failed',
+        error: 'x',
+      });
+      stream(`run-${PromptType.INTERVIEW_PREP}`).error(new Error('drop'));
+      expect(component.pageState()).toBe('processing');
+
+      stream(`run-${PromptType.LINKEDIN_REWRITE}`).error(
+        new OptimizationStreamTimeoutError(),
+      );
+
+      expect(component.pageState()).toBe('completed');
+    });
+
+    it('resets runErrors and stalled prompts on a new run', () => {
+      apiService.streamOptimizationEvents.mockReturnValue(NEVER);
+      component.runErrors.set(new Map([[PromptType.COVER_LETTER, 'old']]));
+      component.stalledPrompts.set(new Set([PromptType.COVER_LETTER]));
+
+      component.runOptimization(mockJobSubmittedData);
+
+      expect(component.runErrors().size).toBe(0);
+      expect(component.stalledPrompts().size).toBe(0);
+    });
+
+    it('renders the error message as an alert on the card', () => {
+      apiService.streamOptimizationEvents.mockReturnValue(NEVER);
+      apiService.runSingleOptimizationProcess.mockImplementation(
+        (_id: string, promptType: PromptType) =>
+          promptType === PromptType.LINKEDIN_REWRITE
+            ? throwError(() =>
+                httpError({
+                  code: 'FEATURE_NOT_AVAILABLE',
+                  feature: 'LINKEDIN',
+                }),
+              )
+            : of({ runId: `run-${promptType}` }),
+      );
+
+      component.runOptimization(mockJobSubmittedData);
+      component.onResultsTabChanged('additional-materials');
+      fixture.detectChanges();
+
+      const alerts = Array.from(
+        fixture.nativeElement.querySelectorAll('.run-error[role="alert"]'),
+      ) as HTMLElement[];
+      expect(
+        alerts.some((a) =>
+          a.textContent?.includes('LinkedIn is not available'),
+        ),
+      ).toBe(true);
     });
   });
 
@@ -1236,6 +1592,30 @@ describe('CvOptimization', () => {
       sseSubject.error(new Error('network failure'));
 
       expect(component.isProcessing().get(PromptType.KEYWORD_GAP)).toBe(false);
+    });
+
+    it('clears processing and records the message when the retry request is rejected', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      apiService.retryFailedJob.mockReturnValue(
+        throwError(() => ({ status: 400, error: { message: 'not FAILED' } })),
+      );
+
+      component.retryOptimization(PromptType.KEYWORD_GAP);
+
+      expect(component.isProcessing().get(PromptType.KEYWORD_GAP)).toBe(false);
+      expect(component.runErrors().get(PromptType.KEYWORD_GAP)).toMatch(
+        /Something went wrong/,
+      );
+    });
+
+    it('clears a previous error for the retried prompt when the retry starts', () => {
+      component.jobApplicationId.set(mockJobApplication.id);
+      apiService.streamOptimizationEvents.mockReturnValue(NEVER);
+      component.runErrors.set(new Map([[PromptType.KEYWORD_GAP, 'old error']]));
+
+      component.retryOptimization(PromptType.KEYWORD_GAP);
+
+      expect(component.runErrors().has(PromptType.KEYWORD_GAP)).toBe(false);
     });
   });
 
