@@ -37,7 +37,9 @@ import { PromptType } from '../../generated/prisma/enums.js';
 import { OptimizationService } from './optimization.service.js';
 import { OptimizationEventBus } from './optimization-event-bus.js';
 
-const TOTAL_JOBS = Object.values(PromptType).length;
+// Longer than a slow OpenAI structured-output call, short enough that a dead
+// worker releases the connection promptly.
+export const STREAM_IDLE_TIMEOUT_MS = 180_000;
 
 class TriggerSingleJobDto {
   @ApiProperty({ example: 'run-uuid-123', required: false })
@@ -214,29 +216,47 @@ export class OptimizationController {
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
 
-    let resolved = 0;
+    let idleTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const finish = (timedOut: boolean) => {
+      clearTimeout(idleTimer);
+      unsubscribe();
+      this.eventBus.releaseRun(runId);
+      if (res.writableEnded) return;
+      const completePayload = {
+        runId,
+        completedAt: new Date().toISOString(),
+        timedOut,
+      };
+      res.write(
+        `event: run-complete\ndata: ${JSON.stringify(completePayload)}\n\n`,
+      );
+      res.end();
+    };
+
+    const resetIdleTimer = () => {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => finish(true), STREAM_IDLE_TIMEOUT_MS);
+    };
 
     const unsubscribe = this.eventBus.subscribe(runId, (event) => {
       if (res.writableEnded) return;
 
       res.write(`event: job-complete\ndata: ${JSON.stringify(event)}\n\n`);
-      resolved++;
 
-      if (resolved === TOTAL_JOBS) {
-        const completePayload = {
-          runId,
-          completedAt: new Date().toISOString(),
-        };
-        res.write(
-          `event: run-complete\ndata: ${JSON.stringify(completePayload)}\n\n`,
-        );
-        unsubscribe();
-        res.end();
+      if (this.eventBus.isRunComplete(runId)) {
+        finish(false);
+      } else {
+        resetIdleTimer();
       }
     });
 
+    resetIdleTimer();
+
     req.on('close', () => {
+      clearTimeout(idleTimer);
       unsubscribe();
+      this.eventBus.releaseRun(runId);
     });
   }
 }

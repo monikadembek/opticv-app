@@ -17,6 +17,7 @@ import type {
 } from '@opticv/datatypes';
 import { getEffectiveTier, OptimizationResultSummary } from '@opticv/datatypes';
 import { QuotaService } from '../quota/quota.service.js';
+import { OptimizationEventBus } from './optimization-event-bus.js';
 
 const CV_SUBSET_PROMPT_TYPES: PromptType[] = [
   PromptType.RESUME_AUTOPSY,
@@ -41,6 +42,7 @@ export class OptimizationService {
     private readonly prisma: PrismaService,
     private readonly quotaService: QuotaService,
     @InjectQueue('optimization') private readonly queue: Queue,
+    private readonly eventBus: OptimizationEventBus,
   ) {}
 
   private async resolveTierAndPeriod(userId: string): Promise<{
@@ -130,6 +132,8 @@ export class OptimizationService {
       ),
     );
 
+    this.eventBus.registerRun(runId, CV_SUBSET_PROMPT_TYPES.length);
+
     await Promise.all(
       CV_SUBSET_PROMPT_TYPES.map((promptType) =>
         this.queue.add(
@@ -149,6 +153,8 @@ export class OptimizationService {
     runId: string | undefined,
     userId: string,
   ): Promise<{ runId: string }> {
+    // A caller-supplied runId may belong to a run that is already registered.
+    const isNewRun = runId === undefined;
     runId = runId ?? randomUUID();
     const { cvText, parsedSections, jobDescription, jobTitle } =
       await this.loadAndValidateApplication(jobApplicationId, userId);
@@ -187,6 +193,10 @@ export class OptimizationService {
         outputTokens: null,
       },
     });
+
+    if (isNewRun) {
+      this.eventBus.registerRun(runId, 1);
+    }
 
     await this.queue.add(
       'optimize',
@@ -259,6 +269,8 @@ export class OptimizationService {
         },
       });
     }
+
+    this.eventBus.registerRun(runId, 1);
 
     await this.queue.add(
       'optimize',

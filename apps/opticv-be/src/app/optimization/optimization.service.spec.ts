@@ -33,7 +33,9 @@ const mockQueue = {
   add: jest.fn(),
 };
 
-const mockEventBus = {};
+const mockEventBus = {
+  registerRun: jest.fn(),
+};
 
 const mockQuotaService = {
   checkAndConsume: jest.fn(),
@@ -84,9 +86,9 @@ describe('OptimizationService', () => {
     it('throws ForbiddenException when job application is not found', async () => {
       mockPrisma.jobApplication.findUnique.mockResolvedValue(null);
 
-      await expect(service.triggerOptimization('app-1', 'user-1')).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(
+        service.triggerOptimization('app-1', 'user-1'),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('throws ForbiddenException when userId does not match', async () => {
@@ -95,9 +97,9 @@ describe('OptimizationService', () => {
         userId: 'other-user',
       });
 
-      await expect(service.triggerOptimization('app-1', 'user-1')).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(
+        service.triggerOptimization('app-1', 'user-1'),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('throws BadRequestException when cvDocument is null', async () => {
@@ -106,7 +108,9 @@ describe('OptimizationService', () => {
         cvDocument: null,
       });
 
-      await expect(service.triggerOptimization('app-1', 'user-1')).rejects.toThrow(
+      await expect(
+        service.triggerOptimization('app-1', 'user-1'),
+      ).rejects.toThrow(
         new BadRequestException('CV document is not yet parsed.'),
       );
     });
@@ -114,10 +118,15 @@ describe('OptimizationService', () => {
     it('throws BadRequestException when CV parseStatus is not COMPLETED', async () => {
       mockPrisma.jobApplication.findUnique.mockResolvedValue({
         ...baseJobApplication,
-        cvDocument: { ...baseJobApplication.cvDocument, parseStatus: 'PENDING' },
+        cvDocument: {
+          ...baseJobApplication.cvDocument,
+          parseStatus: 'PENDING',
+        },
       });
 
-      await expect(service.triggerOptimization('app-1', 'user-1')).rejects.toThrow(
+      await expect(
+        service.triggerOptimization('app-1', 'user-1'),
+      ).rejects.toThrow(
         new BadRequestException('CV document is not yet parsed.'),
       );
     });
@@ -128,27 +137,33 @@ describe('OptimizationService', () => {
         jobDescription: '   ',
       });
 
-      await expect(service.triggerOptimization('app-1', 'user-1')).rejects.toThrow(
+      await expect(
+        service.triggerOptimization('app-1', 'user-1'),
+      ).rejects.toThrow(
         new BadRequestException('Job description is required.'),
       );
     });
 
     it('propagates quota rejection without creating records or enqueuing jobs', async () => {
-      mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
       mockQuotaService.checkAndConsume.mockRejectedValue(
         new ForbiddenException({ code: 'QUOTA_EXCEEDED' }),
       );
 
-      await expect(service.triggerOptimization('app-1', 'user-1')).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(
+        service.triggerOptimization('app-1', 'user-1'),
+      ).rejects.toThrow(ForbiddenException);
 
       expect(mockPrisma.optimizationResult.upsert).not.toHaveBeenCalled();
       expect(mockQueue.add).not.toHaveBeenCalled();
     });
 
     it('checks and consumes one CV_OPTIMIZATION quota unit', async () => {
-      mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
       mockPrisma.optimizationResult.upsert.mockResolvedValue({});
       mockQueue.add.mockResolvedValue({});
 
@@ -173,7 +188,9 @@ describe('OptimizationService', () => {
         currentPeriodEnd: PERIOD_END,
         cancelAtPeriodEnd: true,
       });
-      mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
       mockPrisma.optimizationResult.upsert.mockResolvedValue({});
       mockQueue.add.mockResolvedValue({});
 
@@ -197,7 +214,9 @@ describe('OptimizationService', () => {
         currentPeriodEnd: PERIOD_END,
         cancelAtPeriodEnd: false,
       });
-      mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
       mockPrisma.optimizationResult.upsert.mockResolvedValue({});
       mockQueue.add.mockResolvedValue({});
 
@@ -214,7 +233,9 @@ describe('OptimizationService', () => {
     });
 
     it('creates 4 PENDING records for the CV subset, enqueues 4 jobs, and returns a runId', async () => {
-      mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
       mockPrisma.optimizationResult.upsert.mockResolvedValue({});
       mockQueue.add.mockResolvedValue({});
 
@@ -226,7 +247,9 @@ describe('OptimizationService', () => {
       expect(mockPrisma.optimizationResult.upsert).toHaveBeenCalledTimes(
         CV_SUBSET_PROMPT_TYPES.length,
       );
-      expect(mockQueue.add).toHaveBeenCalledTimes(CV_SUBSET_PROMPT_TYPES.length);
+      expect(mockQueue.add).toHaveBeenCalledTimes(
+        CV_SUBSET_PROMPT_TYPES.length,
+      );
 
       for (const promptType of CV_SUBSET_PROMPT_TYPES) {
         expect(mockPrisma.optimizationResult.upsert).toHaveBeenCalledWith(
@@ -263,9 +286,82 @@ describe('OptimizationService', () => {
     });
   });
 
+  describe('triggerOptimization run registration', () => {
+    it('registers the run with the CV-subset length before enqueuing and consumes CV_OPTIMIZATION once', async () => {
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
+      mockPrisma.optimizationResult.upsert.mockResolvedValue({});
+      mockQueue.add.mockResolvedValue({});
+
+      const { runId } = await service.triggerOptimization('app-1', 'user-1');
+
+      expect(mockEventBus.registerRun).toHaveBeenCalledTimes(1);
+      expect(mockEventBus.registerRun).toHaveBeenCalledWith(
+        runId,
+        CV_SUBSET_PROMPT_TYPES.length,
+      );
+      expect(mockEventBus.registerRun.mock.invocationCallOrder[0]).toBeLessThan(
+        mockQueue.add.mock.invocationCallOrder[0],
+      );
+      expect(mockQuotaService.checkAndConsume).toHaveBeenCalledTimes(1);
+      expect(mockQuotaService.checkAndConsume.mock.calls[0][1]).toBe(
+        'CV_OPTIMIZATION',
+      );
+    });
+
+    it('does not register a run when quota is rejected', async () => {
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
+      mockQuotaService.checkAndConsume.mockRejectedValue(
+        new ForbiddenException({ code: 'QUOTA_EXCEEDED' }),
+      );
+
+      await expect(
+        service.triggerOptimization('app-1', 'user-1'),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(mockEventBus.registerRun).not.toHaveBeenCalled();
+    });
+  });
+
   describe('triggerSingleJob', () => {
     const PROMPT_TYPE = PromptType.RESUME_AUTOPSY;
     const RUN_ID = 'existing-run-id';
+
+    it('registers a run of 1 when no runId is supplied', async () => {
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
+      mockPrisma.optimizationResult.upsert.mockResolvedValue({});
+      mockQueue.add.mockResolvedValue({});
+
+      const { runId } = await service.triggerSingleJob(
+        'app-1',
+        PromptType.COVER_LETTER,
+        undefined,
+        'user-1',
+      );
+
+      expect(mockEventBus.registerRun).toHaveBeenCalledTimes(1);
+      expect(mockEventBus.registerRun).toHaveBeenCalledWith(runId, 1);
+      expect(mockEventBus.registerRun.mock.invocationCallOrder[0]).toBeLessThan(
+        mockQueue.add.mock.invocationCallOrder[0],
+      );
+    });
+
+    it('does not re-register when a runId is supplied', async () => {
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
+      mockPrisma.optimizationResult.upsert.mockResolvedValue({});
+      mockQueue.add.mockResolvedValue({});
+
+      await service.triggerSingleJob('app-1', PROMPT_TYPE, RUN_ID, 'user-1');
+
+      expect(mockEventBus.registerRun).not.toHaveBeenCalled();
+    });
 
     it('throws ForbiddenException when job application is not found', async () => {
       mockPrisma.jobApplication.findUnique.mockResolvedValue(null);
@@ -294,18 +390,25 @@ describe('OptimizationService', () => {
 
       await expect(
         service.triggerSingleJob('app-1', PROMPT_TYPE, RUN_ID, 'user-1'),
-      ).rejects.toThrow(new BadRequestException('CV document is not yet parsed.'));
+      ).rejects.toThrow(
+        new BadRequestException('CV document is not yet parsed.'),
+      );
     });
 
     it('throws BadRequestException when CV parseStatus is not COMPLETED', async () => {
       mockPrisma.jobApplication.findUnique.mockResolvedValue({
         ...baseJobApplication,
-        cvDocument: { ...baseJobApplication.cvDocument, parseStatus: 'PENDING' },
+        cvDocument: {
+          ...baseJobApplication.cvDocument,
+          parseStatus: 'PENDING',
+        },
       });
 
       await expect(
         service.triggerSingleJob('app-1', PROMPT_TYPE, RUN_ID, 'user-1'),
-      ).rejects.toThrow(new BadRequestException('CV document is not yet parsed.'));
+      ).rejects.toThrow(
+        new BadRequestException('CV document is not yet parsed.'),
+      );
     });
 
     it('throws BadRequestException when jobDescription is empty', async () => {
@@ -316,11 +419,15 @@ describe('OptimizationService', () => {
 
       await expect(
         service.triggerSingleJob('app-1', PROMPT_TYPE, RUN_ID, 'user-1'),
-      ).rejects.toThrow(new BadRequestException('Job description is required.'));
+      ).rejects.toThrow(
+        new BadRequestException('Job description is required.'),
+      );
     });
 
     it('propagates quota rejection without upserting or enqueuing', async () => {
-      mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
       mockQuotaService.checkAndConsume.mockRejectedValue(
         new ForbiddenException({ code: 'QUOTA_EXCEEDED' }),
       );
@@ -344,7 +451,9 @@ describe('OptimizationService', () => {
     ])(
       'maps %s to the %s feature before consuming quota',
       async (promptType, feature) => {
-        mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+        mockPrisma.jobApplication.findUnique.mockResolvedValue(
+          baseJobApplication,
+        );
         mockPrisma.optimizationResult.upsert.mockResolvedValue({});
         mockQueue.add.mockResolvedValue({});
 
@@ -362,11 +471,18 @@ describe('OptimizationService', () => {
     );
 
     it('upserts one PENDING record, enqueues one job with the provided runId, and returns it', async () => {
-      mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
       mockPrisma.optimizationResult.upsert.mockResolvedValue({});
       mockQueue.add.mockResolvedValue({});
 
-      const result = await service.triggerSingleJob('app-1', PROMPT_TYPE, RUN_ID, 'user-1');
+      const result = await service.triggerSingleJob(
+        'app-1',
+        PROMPT_TYPE,
+        RUN_ID,
+        'user-1',
+      );
 
       expect(result).toEqual({ runId: RUN_ID });
 
@@ -374,9 +490,15 @@ describe('OptimizationService', () => {
       expect(mockPrisma.optimizationResult.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
-            applicationId_promptType: { applicationId: 'app-1', promptType: PROMPT_TYPE },
+            applicationId_promptType: {
+              applicationId: 'app-1',
+              promptType: PROMPT_TYPE,
+            },
           },
-          create: expect.objectContaining({ status: 'PENDING', promptType: PROMPT_TYPE }),
+          create: expect.objectContaining({
+            status: 'PENDING',
+            promptType: PROMPT_TYPE,
+          }),
           update: expect.objectContaining({ status: 'PENDING' }),
         }),
       );
@@ -397,7 +519,9 @@ describe('OptimizationService', () => {
     });
 
     it('does not enqueue jobs for other promptTypes', async () => {
-      mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
       mockPrisma.optimizationResult.upsert.mockResolvedValue({});
       mockQueue.add.mockResolvedValue({});
 
@@ -416,7 +540,9 @@ describe('OptimizationService', () => {
         currentPeriodEnd: PERIOD_END,
         cancelAtPeriodEnd: false,
       });
-      mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
       mockPrisma.optimizationResult.upsert.mockResolvedValue({});
       mockQueue.add.mockResolvedValue({});
 
@@ -445,14 +571,21 @@ describe('OptimizationService', () => {
     });
 
     it('creates a PENDING row and enqueues it when the result row does not exist', async () => {
-      mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
       mockPrisma.optimizationResult.findUnique.mockResolvedValue(null);
       mockPrisma.optimizationResult.create.mockResolvedValue({});
       mockQueue.add.mockResolvedValue({});
 
-      const result = await service.retryFailedJob('app-1', PROMPT_TYPE, 'user-1');
+      const result = await service.retryFailedJob(
+        'app-1',
+        PROMPT_TYPE,
+        'user-1',
+      );
 
       expect(result.runId).toBeDefined();
+      expect(mockEventBus.registerRun).toHaveBeenCalledWith(result.runId, 1);
       expect(mockPrisma.optimizationResult.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
@@ -467,7 +600,9 @@ describe('OptimizationService', () => {
     });
 
     it('does not call checkAndConsume when the result row does not exist', async () => {
-      mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
       mockPrisma.optimizationResult.findUnique.mockResolvedValue(null);
       mockPrisma.optimizationResult.create.mockResolvedValue({});
       mockQueue.add.mockResolvedValue({});
@@ -478,7 +613,9 @@ describe('OptimizationService', () => {
     });
 
     it('throws BadRequestException when the result row is COMPLETED', async () => {
-      mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
       mockPrisma.optimizationResult.findUnique.mockResolvedValue({
         id: 'result-1',
         status: 'COMPLETED',
@@ -493,7 +630,9 @@ describe('OptimizationService', () => {
     });
 
     it('throws BadRequestException when the result row is PENDING', async () => {
-      mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
       mockPrisma.optimizationResult.findUnique.mockResolvedValue({
         id: 'result-1',
         status: 'PENDING',
@@ -509,7 +648,9 @@ describe('OptimizationService', () => {
     });
 
     it('throws BadRequestException when the result row is PROCESSING', async () => {
-      mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
       mockPrisma.optimizationResult.findUnique.mockResolvedValue({
         id: 'result-1',
         status: 'PROCESSING',
@@ -525,7 +666,9 @@ describe('OptimizationService', () => {
     });
 
     it('does not call checkAndConsume', async () => {
-      mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
       mockPrisma.optimizationResult.findUnique.mockResolvedValue({
         id: 'result-1',
         status: 'FAILED',
@@ -539,7 +682,9 @@ describe('OptimizationService', () => {
     });
 
     it('resets the FAILED row to PENDING and re-enqueues it', async () => {
-      mockPrisma.jobApplication.findUnique.mockResolvedValue(baseJobApplication);
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
       mockPrisma.optimizationResult.findUnique.mockResolvedValue({
         id: 'result-1',
         status: 'FAILED',
@@ -547,9 +692,14 @@ describe('OptimizationService', () => {
       mockPrisma.optimizationResult.update.mockResolvedValue({});
       mockQueue.add.mockResolvedValue({});
 
-      const result = await service.retryFailedJob('app-1', PROMPT_TYPE, 'user-1');
+      const result = await service.retryFailedJob(
+        'app-1',
+        PROMPT_TYPE,
+        'user-1',
+      );
 
       expect(result.runId).toBeDefined();
+      expect(mockEventBus.registerRun).toHaveBeenCalledWith(result.runId, 1);
       expect(mockPrisma.optimizationResult.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: 'result-1' },
@@ -573,9 +723,9 @@ describe('OptimizationService', () => {
     it('throws ForbiddenException when record is not found', async () => {
       mockPrisma.optimizationResult.findUnique.mockResolvedValue(null);
 
-      await expect(service.saveUserOutput('result-1', 'edited', 'user-1')).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(
+        service.saveUserOutput('result-1', 'edited', 'user-1'),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('throws ForbiddenException when userId does not match', async () => {
@@ -584,9 +734,9 @@ describe('OptimizationService', () => {
         application: { userId: 'other-user' },
       });
 
-      await expect(service.saveUserOutput('result-1', 'edited', 'user-1')).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(
+        service.saveUserOutput('result-1', 'edited', 'user-1'),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('saves the output and returns userEditedOutput', async () => {
@@ -594,9 +744,15 @@ describe('OptimizationService', () => {
         id: 'result-1',
         application: { userId: 'user-1' },
       });
-      mockPrisma.optimizationResult.update.mockResolvedValue({ userEditedOutput: 'edited' });
+      mockPrisma.optimizationResult.update.mockResolvedValue({
+        userEditedOutput: 'edited',
+      });
 
-      const result = await service.saveUserOutput('result-1', 'edited', 'user-1');
+      const result = await service.saveUserOutput(
+        'result-1',
+        'edited',
+        'user-1',
+      );
 
       expect(result).toEqual({ userEditedOutput: 'edited' });
       expect(mockPrisma.optimizationResult.update).toHaveBeenCalledWith({
@@ -611,7 +767,9 @@ describe('OptimizationService', () => {
         id: 'result-1',
         application: { userId: 'user-1' },
       });
-      mockPrisma.optimizationResult.update.mockResolvedValue({ userEditedOutput: '' });
+      mockPrisma.optimizationResult.update.mockResolvedValue({
+        userEditedOutput: '',
+      });
 
       const result = await service.saveUserOutput('result-1', '', 'user-1');
 
