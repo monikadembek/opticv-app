@@ -1,6 +1,6 @@
 # Implementation Done — Task 119: CV optimization billing bug + stuck spinner
 
-Scope of this report: commits `3478f46`, `17117e1`, `c4cfafa`, `1ca121e` and the uncommitted working-tree changes made after `05-code-review.md` (processor final-attempt handling; stale run-error clearing).
+Scope of this report: commits `3478f46`, `17117e1`, `c4cfafa`, `1ca121e`, `6d35107` and the uncommitted working-tree changes made after manual testing (plan-limit Retry suppression on a reopened optimization; see [Manual Testing Follow-up](#manual-testing-follow-up)).
 
 Spec review verdict (`03-spec-review.md`): **PASS WITH ISSUES**.
 
@@ -10,6 +10,7 @@ Spec review verdict (`03-spec-review.md`): **PASS WITH ISSUES**.
 - `OptimizationEventBus` keeps an in-process registry of runs: the expected job count and the distinct prompt types seen so far. The SSE stream closes when the registry reports the run complete. A 180 s idle timeout also closes it, sending `run-complete` with `timedOut: true`.
 - The frontend client keeps each stream open until `run-complete`, and branches on `status: 'completed' | 'failed'`. On every failure path it clears `isProcessing` and records a per-card message (`runErrors`), which is rendered with `role="alert"`.
 - Quota (`QUOTA_EXCEEDED`) and plan (`FEATURE_NOT_AVAILABLE`) rejections show messages naming the feature, and those cards do not offer Retry. Cards whose stream timed out do not offer Retry either.
+- On a reopened optimization, a card with no stored result does not offer Retry when the user's plan has no credit left for that feature. It shows the plan or quota message instead.
 - `retryFailedJob` consumes quota for a missing result row unless a sibling CV-subset row exists for the application.
 - The processor writes `FAILED` and emits `failed` only on a job's final BullMQ attempt.
 
@@ -31,7 +32,7 @@ Spec review verdict (`03-spec-review.md`): **PASS WITH ISSUES**.
 | 12 | `req.on('close')` cleanup remains | Implemented | Also clears the timer and releases the run. |
 | 13 | Rejected trigger clears spinner and shows reason | Implemented | |
 | 14 | 403 `QUOTA_EXCEEDED` shows a quota message naming the feature | Implemented | `FEATURE_NOT_AVAILABLE` handled with its own message. |
-| 15 | Failed card exposes the existing retry action | Implemented | Not offered for quota/plan-rejected or timed-out cards. |
+| 15 | Failed card exposes the existing retry action | Implemented | Not offered for quota/plan-rejected or timed-out cards, nor on a reopened optimization for never-run cards the plan has no credit for. |
 | E1 | Partial quota exhaustion affects only the rejected card | Implemented | |
 | E2 | All quota exhausted: no spinner, page leaves `processing` | Implemented | |
 | E3 | Job fails after trigger: error shown, free retry offered | Implemented | |
@@ -90,6 +91,7 @@ None.
 | `CvOptimization` component — bulk + per-feature trigger split | Exist |
 | `CvOptimization` component — `runErrors` signal and per-card message | Exist |
 | `CvOptimization` component — `stalledPrompts` retry suppression | Exist |
+| `CvOptimization` component — `storedPromptTypes` / `storedPlanBlockedMessages` / `cardErrors` (reopened-optimization plan limits) | Exist (added after manual testing) |
 
 ## Stores
 
@@ -106,6 +108,7 @@ None.
 5. Trigger/stream handling is centralized in a private `trackRun()` helper with `handleJobEvent`, `handleStreamError`, `failPrompts`, `setProcessing`, `recordRunErrors`, `clearRunErrors`.
 6. `optimization.processor.ts` and `optimization.processor.spec.ts` were modified; the plan listed the processor as unchanged.
 7. `optimization.controller.ts` Swagger metadata for the retry endpoint was updated (summary, description, 403 response).
+8. The template renders per-card messages from `cardErrors()` instead of `runErrors()` (all seven sections), so plan-limit notices for a reopened optimization use the same `role="alert"` line as run errors.
 
 ## Additional Implementation
 
@@ -116,3 +119,45 @@ None.
 - `retryFailedJob` charges quota (`checkAndConsume`) for a missing result row, unless the prompt is in the CV subset and a sibling CV-subset row exists (`isCvSubsetPaid()`). Previously a missing row was always retried for free.
 - `OptimizationProcessor` writes `FAILED` and emits `status: 'failed'` only on the final BullMQ attempt (`job.attemptsMade + 1 >= job.opts.attempts`). Earlier attempts log a warning, leave the row `PROCESSING` and rethrow.
 - `handleJobEvent()` clears a prompt's run error on a `completed` event.
+- Reopened optimization: Retry is hidden for a never-run card when the plan has no credit left for its feature, and the card shows the plan or quota message. Details below.
+
+## Manual Testing Follow-up
+
+### Finding
+
+Manual test on 2026-10-06, as a FREE user. LinkedIn was correctly rejected during the run (no `LINKEDIN_REWRITE` row was created). After the user went back to the dashboard and reopened the optimization, the LinkedIn card offered **Retry**. Clicking it generated the LinkedIn rewrite even though `LINKEDIN` has a limit of 0 on FREE.
+
+### Root cause
+
+1. **Backend (stale build, not a code defect).** The running `nx serve opticv-be` process (started 2026-10-05) had not rebuilt after `1ca121e`/`6d35107`. Its `dist/main.js` still contained the old `retryFailedJob`, which had no `isCvSubsetPaid()` and no `checkAndConsume`. The DB matched this: there was no `LINKEDIN` row in `usage_quotas`. The current source rejects this retry with 403 `FEATURE_NOT_AVAILABLE`, and the backend suite passes (299 tests). **Restart the backend after pulling these changes.** Before retesting, check that `dist/main.js` contains `isCvSubsetPaid`.
+2. **Frontend (real defect).** `planBlockedPrompts` was filled only when a trigger was rejected during a live run. `loadStoredOptimization()` never filled it, and `retryablePromptTypes` treats a missing result as retryable. On a reopened optimization, every never-run card therefore offered Retry, whatever the user's plan.
+
+### Fix (`cv-optimization.ts`, `cv-optimization.html`)
+
+- `PROMPT_FEATURE` maps each `PromptType` to its `LimitedFeature`, mirroring the backend's `PROMPT_TYPE_TO_FEATURE`. `triggerErrorMessage()` now delegates to a shared `planLimitMessage(code, feature)`.
+- `storedPromptTypes` signal holds the prompt types that have a result row, set in `loadStoredOptimization()`. It is `null` during a live run, where `planBlockedPrompts` applies, and `runOptimization()` resets it to `null`. When a trigger is accepted in `trackRun()`, its prompts are added to the set, because the credit is now spent.
+- `loadStoredOptimization()` calls `UserSettingsApiService.reloadUsageStatus()`, so the quota counts are current.
+- `storedPlanBlockedMessages` computed signal mirrors the backend's retry billing rule. A prompt with no row needs a new credit, except a CV-subset prompt once any CV-subset row exists. It blocks such a prompt when:
+  - the feature's `limit === 0`: message `FEATURE_NOT_AVAILABLE`;
+  - `remaining === 0`: message `QUOTA_EXCEEDED`;
+  - usage has not loaded yet: blocked with no message, so a paid retry is never offered.
+- `retryablePromptTypes` skips prompts in `storedPlanBlockedMessages`. A `FAILED` row is still offered a free retry.
+- `cardErrors` computed signal merges `runErrors` with the stored plan-limit messages. The template uses it for the "not processed yet" check and the `role="alert"` message in all seven sections.
+
+### Tests
+
+10 new tests in `cv-optimization.spec.ts` (`reopened optimization — plan limits on retry`):
+- refreshes the usage status when loading;
+- hides Retry, with the matching message, for a feature the plan excludes and for a used-up quota;
+- keeps Retry for a never-run feature that still has credits, for a `FAILED` row, and for a missing CV-subset prompt with an existing sibling row;
+- hides Retry while usage is loading;
+- marks a prompt as paid once its retry is accepted;
+- clears the stored state when a new run starts.
+
+The component mock gained `usageStatus` and `reloadUsageStatus`, with a `makeQuotas()` helper.
+
+Results: `cv-optimization.spec.ts` 234/234 passing; `nx typecheck opticv-web` passing; `nx lint opticv-web` 0 errors; Prettier applied to the three changed files. In a full `nx test opticv-web` run, 3 tests failed in files this change does not touch (`welcome-guide-modal.spec.ts`, `section-card.spec.ts`) and the worker exited unexpectedly. Whether those failures predate this change was not verified.
+
+### Open item
+
+During the live run in the same manual test, a Retry button was also reported on the LinkedIn card. `c4cfafa` should suppress it, and the code does not explain it. Re-check after restarting the backend.

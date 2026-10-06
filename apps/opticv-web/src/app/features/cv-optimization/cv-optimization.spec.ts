@@ -8,7 +8,9 @@ import type {
   CvStructuredData,
   JobApplication,
   JobApplicationWithCv,
+  LimitedFeature,
   OptimizationResultSummary,
+  QuotaStatus,
 } from '@opticv/datatypes';
 import type { CvTemplateId } from './cv-templates';
 import { PromptType } from '@opticv/datatypes';
@@ -98,6 +100,29 @@ function makeCvListResource() {
   };
 }
 
+function makeQuotas(
+  overrides: Partial<
+    Record<LimitedFeature, { limit: number; used: number }>
+  > = {},
+): QuotaStatus[] {
+  const features: LimitedFeature[] = [
+    'CV_OPTIMIZATION',
+    'COVER_LETTER',
+    'INTERVIEW_PREP',
+    'LINKEDIN',
+  ];
+  return features.map((feature) => {
+    const { limit, used } = overrides[feature] ?? { limit: 10, used: 0 };
+    return {
+      feature,
+      limit,
+      used,
+      remaining: Math.max(0, limit - used),
+      resetsAt: null,
+    };
+  });
+}
+
 describe('CvOptimization', () => {
   // CvA4Preview (rendered inside the page's preview dialog) and PrimeNG's
   // TabList (rendered once results exist) both use ResizeObserver, which is
@@ -141,6 +166,10 @@ describe('CvOptimization', () => {
         } | null>
       >;
     };
+    usageStatus: {
+      value: ReturnType<typeof signal<{ quotas: QuotaStatus[] } | null>>;
+    };
+    reloadUsageStatus: ReturnType<typeof vi.fn>;
   };
   let jobApplicationApiService: {
     getJobApplication: ReturnType<typeof vi.fn>;
@@ -201,6 +230,8 @@ describe('CvOptimization', () => {
     };
     userSettingsApiService = {
       userProfile: { value: signal(null) },
+      usageStatus: { value: signal({ quotas: makeQuotas() }) },
+      reloadUsageStatus: vi.fn(),
     };
 
     await TestBed.configureTestingModule({
@@ -1826,6 +1857,137 @@ describe('CvOptimization', () => {
       expect(component.loadError()).toBe(
         'Failed to load optimization. Please try again.',
       );
+    });
+  });
+
+  describe('reopened optimization — plan limits on retry', () => {
+    function row(
+      promptType: PromptType,
+      status: OptimizationResultSummary['status'],
+    ): OptimizationResultSummary {
+      return {
+        id: `res-${promptType}`,
+        promptType,
+        status,
+        userEditedOutput: null,
+        structuredOutput: null,
+      };
+    }
+
+    async function openStored(rows: OptimizationResultSummary[]) {
+      await createComponent({
+        jobApplicationId: 'job-app-id-1',
+        getOptimizationResults: vi.fn().mockReturnValue(of(rows)),
+      });
+    }
+
+    it('refreshes the usage status when loading', async () => {
+      await openStored([]);
+
+      expect(userSettingsApiService.reloadUsageStatus).toHaveBeenCalled();
+    });
+
+    it('hides Retry and shows the plan message for a never-run feature the plan excludes', async () => {
+      await openStored([row(PromptType.COVER_LETTER, 'COMPLETED')]);
+      userSettingsApiService.usageStatus.value.set({
+        quotas: makeQuotas({ LINKEDIN: { limit: 0, used: 0 } }),
+      });
+
+      expect(
+        component.retryablePromptTypes().has(PromptType.LINKEDIN_REWRITE),
+      ).toBe(false);
+      expect(component.cardErrors().get(PromptType.LINKEDIN_REWRITE)).toBe(
+        'LinkedIn is not available on your current plan. Upgrade to unlock it.',
+      );
+    });
+
+    it('hides Retry and shows the quota message for a never-run feature with no credits left', async () => {
+      await openStored([]);
+      userSettingsApiService.usageStatus.value.set({
+        quotas: makeQuotas({ COVER_LETTER: { limit: 3, used: 3 } }),
+      });
+
+      expect(
+        component.retryablePromptTypes().has(PromptType.COVER_LETTER),
+      ).toBe(false);
+      expect(component.cardErrors().get(PromptType.COVER_LETTER)).toContain(
+        'you have used all generations',
+      );
+    });
+
+    it('keeps Retry for a never-run feature that still has credits', async () => {
+      await openStored([]);
+
+      expect(
+        component.retryablePromptTypes().has(PromptType.LINKEDIN_REWRITE),
+      ).toBe(true);
+      expect(component.cardErrors().has(PromptType.LINKEDIN_REWRITE)).toBe(
+        false,
+      );
+    });
+
+    it('keeps the free Retry for a FAILED row even when the plan has no credit', async () => {
+      await openStored([row(PromptType.LINKEDIN_REWRITE, 'FAILED')]);
+      userSettingsApiService.usageStatus.value.set({
+        quotas: makeQuotas({ LINKEDIN: { limit: 0, used: 0 } }),
+      });
+
+      expect(
+        component.retryablePromptTypes().has(PromptType.LINKEDIN_REWRITE),
+      ).toBe(true);
+    });
+
+    it('keeps the free Retry for a missing CV-subset prompt once a sibling row exists', async () => {
+      await openStored([row(PromptType.RESUME_AUTOPSY, 'COMPLETED')]);
+      userSettingsApiService.usageStatus.value.set({
+        quotas: makeQuotas({ CV_OPTIMIZATION: { limit: 1, used: 1 } }),
+      });
+
+      expect(component.retryablePromptTypes().has(PromptType.KEYWORD_GAP)).toBe(
+        true,
+      );
+    });
+
+    it('hides Retry for CV-subset prompts when no CV credit was ever charged and none is left', async () => {
+      await openStored([]);
+      userSettingsApiService.usageStatus.value.set({
+        quotas: makeQuotas({ CV_OPTIMIZATION: { limit: 1, used: 1 } }),
+      });
+
+      expect(component.retryablePromptTypes().has(PromptType.KEYWORD_GAP)).toBe(
+        false,
+      );
+    });
+
+    it('hides Retry without a message until the usage status has loaded', async () => {
+      await openStored([]);
+      userSettingsApiService.usageStatus.value.set(null);
+
+      expect(
+        component.retryablePromptTypes().has(PromptType.LINKEDIN_REWRITE),
+      ).toBe(false);
+      expect(component.cardErrors().has(PromptType.LINKEDIN_REWRITE)).toBe(
+        false,
+      );
+    });
+
+    it('treats a prompt as paid once its retry is accepted', async () => {
+      await openStored([]);
+
+      component.retryOptimization(PromptType.LINKEDIN_REWRITE);
+
+      expect(
+        component.storedPromptTypes()?.has(PromptType.LINKEDIN_REWRITE),
+      ).toBe(true);
+    });
+
+    it('stops applying stored plan limits when a new run starts', async () => {
+      await openStored([]);
+
+      component.runOptimization(mockJobSubmittedData);
+
+      expect(component.storedPromptTypes()).toBeNull();
+      expect(component.storedPlanBlockedMessages().size).toBe(0);
     });
   });
 
