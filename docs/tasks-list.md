@@ -1607,14 +1607,103 @@ After changes in the ui some images require update:
 
 ## 118. Prepare production environment
 
-**status: in progress**
-**time: 14.09.2026**
+**status: done**
+**time: 14.09.2026 - 24.09.2026**
 
 - prepare all services, environments config and infrastructure for the production env
+- deploy to hostinger
 
 ---
 
-## 119. Connect landing page with app
+## 119: Billing Bug: one logical run costs four credits instead of one. A FREE user can never complete a single optimization.
+
+## Bug - UI: a failed or never-arriving job leaves the card spinning with no error shown.
+
+**status - in progress**
+
+**time - 25.09.2026**
+
+The problem
+
+cv-optimization.ts:846 loops over every active prompt type and calls the single-job endpoint once per prompt — four separate HTTP calls. The bulk /run endpoint exists but the UI never uses it.
+
+Every one of those four calls independently runs the quota check (optimization.service.ts:159), and all four map to the same feature, CV_OPTIMIZATION. Your FREE tier allows 1. So:
+
+- Call 1 (RESUME_AUTOPSY) → takes the 1 credit → 202 Accepted, job queued
+- Call 2 (KEYWORD_GAP) → no credit left → 403 QUOTA_EXCEEDED
+- Call 3 (SUMMARY_REWRITE) → cancelled, because in RxJS a single error tears down the whole stream
+
+That's exactly the pattern you saw. The quota isn't broken — one run is being billed four times.
+
+The stuck spinner is a second, separate bug. runOptimization only sets isProcessing = false when a completion event arrives (:878). The error handler at :884 just logs. So RESUME_AUTOPSY — whose request actually succeeded — spins forever if its result never arrives, and the three that failed never get their spinners cleared either.
+
+So there are two real bugs:
+
+1. Billing: one logical run costs four credits instead of one. A FREE user can never complete a single optimization.
+2. UI: a failed or never-arriving job leaves the card spinning with no error shown.
+
+How to fix it
+
+For the billing bug, the clean fix is to make the frontend call the bulk endpoint /run, which already charges once and queues all four jobs (optimization.service.ts:85-132). That's what it was built for. You'd rework runOptimization to make one call, then open one SSE stream on the returned runId for all four results.
+
+The alternative — charge only on the first prompt type server-side — would keep the frontend as-is but bolts special-case logic onto the quota service. I'd go with the bulk endpoint.
+
+For the UI bug, the error handler needs to clear isProcessing for the affected prompt type and surface the message, so quota errors show as "you're out of credits" instead of an eternal spinner.
+
+After implementation:
+What changed
+
+- Billing: a run now makes one call to the bulk /run endpoint for the four CV sections, so it uses one CV_OPTIMIZATION credit instead of four. Cover letter, interview prep and LinkedIn each get their own call. Each call has its own error handling, so one rejection no longer cancels the rest.
+- Stream closing (server): the event bus now records how many jobs each run queued and which prompt types have reported, counting each prompt type once so a BullMQ retry can't close the stream early. The stream closes when every job has reported, or after 180 s with no events. The run-complete message includes a timedOut flag.
+- Stream closing (client): the connection stays open until run-complete instead of closing after the first resul
+- No stuck spinners: a rejected request, a failed job, a dropped connection or a timeout now stops the spinner and shows a message on the card with role="alert". There are separate messages for out of credits, not on your plan (LinkedIn on FREE) and generic failures. Retry is hidden for cards that timed out, since their database row is stuck in PROCESSING and the retry endpoint would reject it.
+
+Where I went beyond or away from the plan
+
+- A timed-out run-complete reaches the component as an OptimizationStreamTimeoutError, because a completed stream can't carry data.
+- The event bus deletes a run's record once it completes, so runs nobody streams don't pile up in memory.
+- If a stream closes normally while a card is still spinning, that card is marked failed. This covers the "no card left spinning" requirement for every ending.
+- Retry now uses the same handling as a normal run, so a failed retry also shows its error.
+- The "hasn't been processed yet" text is hidden when an error message is showing.
+
+Things you should know
+
+1. You can get around quota with Retry. This was already there, but it's more visible now. When a trigger is rej no result, so the Retry button appears. The retry endpoint is free and accepts results that don't exist yet, so a FREE user who hits the limit can click Retry and get the section anyway. I didn't change this because it's outside the plan, but it should probably be a follow-up task.
+2. Failed cards show the raw backend error text (e.g. "Prompt not found for type: …"), as the spec asked. You may want friendlier wording.
+3. Results that arrive before the client opens the stream are still lost, as before. Now those cards show the timeout message after 3 minutes instead of spinning forever.
+4. nx format:check flags about 314 files locally, including mine, but only because of Windows CRLF line endings in the working copy. Checking with line endings ignored, all changed files pass, and git converts them to LF on commit. docs/tasks-list.md (your own edit) also fails the check; I left it alone.
+5. One unrelated frontend test (export-footer.spec.ts) timed out once and passed on re-run.
+
+---
+
+## 120. Upstash Redis issues
+
+**Upstash Redis - running out of free credits after a few days**
+
+Your diagnosis is right that Redis was being hit continuously, but the browser tab wasn't the cause. Closing it would have changed nothing.
+
+What actually drained Upstash: the BullMQ worker. @Processor('optimization') runs a worker inside your Nest process that polls Redis forever, whether or not any jobs exist and whether or not any browser is connected. It keeps a blocking BRPOPLPUSH open, renews it every ~30s, and runs a stalled-job checker on a timer. That's a steady trickle of commands, 24/7, from the moment the server boots.
+
+Upstash's free tier bills per command, and a few days of idle polling from even one worker will exhaust 500K. Two things made it worse here:
+
+- ThrottlerStorageRedisService (app.module.ts:9) also uses Redis, on every API request.
+- optimization.module.ts:14 sets no removeOnComplete/removeOnFail, so finished jobs accumulate in Redis forever rather than being evicted.
+
+The stuck RESUME_AUTOPSY job may have added to it. With attempts: 2 and the process restarting mid-job, BullMQ would have retried, and if it stalled again it re-enters the stalled-check cycle — but the baseline idle polling is the bulk of it.
+
+What to do: the spend is structural, not a leak you can close. Options, roughly in order of impact:
+
+1. Set removeOnComplete/removeOnFail on the queue so Redis doesn't accumulate job records indefinitely.
+2. Raise BullMQ's stalled-check interval and drain delay from their defaults — fewer polls per minute.
+3. Reconsider Upstash's per-command pricing for a workload that polls by design. A small always-on Redis with flat pricing suits BullMQ much better; per-command billing punishes idle workers.
+
+None of this is urgent for correctness — it's cost. The two bugs from my last message (quadruple-billing the quota, and the never-clearing spinner) are what actually block you from completing a run.
+
+Want me to start on those two, and fold in the queue cleanup settings while I'm in that module?
+
+---
+
+## Connect landing page with app
 
 **status: todo**
 
@@ -1626,7 +1715,7 @@ After changes in the ui some images require update:
 
 ---
 
-## 120. Implement dark / light mode
+## Implement dark / light mode
 
 **status: todo**
 **time: 22.08.2026**
