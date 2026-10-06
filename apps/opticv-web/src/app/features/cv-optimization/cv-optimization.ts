@@ -185,6 +185,17 @@ const PerFeaturePrompts: readonly PromptType[] = [
   PromptType.LINKEDIN_REWRITE,
 ];
 
+// Mirrors the backend's PROMPT_TYPE_TO_FEATURE.
+const PROMPT_FEATURE: Record<PromptType, LimitedFeature> = {
+  [PromptType.RESUME_AUTOPSY]: 'CV_OPTIMIZATION',
+  [PromptType.KEYWORD_GAP]: 'CV_OPTIMIZATION',
+  [PromptType.SUMMARY_REWRITE]: 'CV_OPTIMIZATION',
+  [PromptType.BULLET_UPGRADE]: 'CV_OPTIMIZATION',
+  [PromptType.COVER_LETTER]: 'COVER_LETTER',
+  [PromptType.INTERVIEW_PREP]: 'INTERVIEW_PREP',
+  [PromptType.LINKEDIN_REWRITE]: 'LINKEDIN',
+};
+
 const FEATURE_LABELS: Record<LimitedFeature, string> = {
   CV_OPTIMIZATION: 'CV optimization',
   COVER_LETTER: 'Cover letter',
@@ -211,6 +222,10 @@ function triggerErrorMessage(err: unknown): string {
   const body = (err as { error?: unknown } | null)?.error;
   if (typeof body !== 'object' || body === null) return GENERIC_FAILURE_MESSAGE;
   const { code, feature } = body as { code?: unknown; feature?: unknown };
+  return planLimitMessage(code, feature);
+}
+
+function planLimitMessage(code: unknown, feature: unknown): string {
   const label =
     typeof feature === 'string' && feature in FEATURE_LABELS
       ? FEATURE_LABELS[feature as LimitedFeature]
@@ -276,6 +291,48 @@ export class CvOptimization implements OnInit {
   readonly stalledPrompts = signal<ReadonlySet<PromptType>>(new Set());
   // Prompts whose trigger was rejected for quota or plan reasons.
   readonly planBlockedPrompts = signal<ReadonlySet<PromptType>>(new Set());
+  // Prompts with a result row on the backend, tracked only for a reopened
+  // optimization (null during a live run, where planBlockedPrompts applies).
+  readonly storedPromptTypes = signal<ReadonlySet<PromptType> | null>(null);
+  // Reopened optimization: a prompt without a row was never paid for, so its
+  // retry consumes a fresh credit, except CV-subset prompts once a sibling row
+  // shows the shared credit was charged. Maps each prompt the plan has no
+  // credit left for to the message shown on its card.
+  readonly storedPlanBlockedMessages = computed<Map<PromptType, string>>(() => {
+    const blocked = new Map<PromptType, string>();
+    const stored = this.storedPromptTypes();
+    if (stored === null) return blocked;
+
+    const cvSubsetPaid = CvSubsetPrompts.some((p) => stored.has(p));
+    const quotas = this.userSettingsApiService.usageStatus.value()?.quotas;
+    for (const promptType of ActivePrompts) {
+      if (stored.has(promptType)) continue;
+      if (cvSubsetPaid && CvSubsetPrompts.includes(promptType)) continue;
+
+      const feature = PROMPT_FEATURE[promptType];
+      const quota = quotas?.find((q) => q.feature === feature);
+      // Until usage loads, assume no credit rather than offer a paid retry.
+      if (!quota) {
+        blocked.set(promptType, '');
+      } else if (quota.limit === 0) {
+        blocked.set(
+          promptType,
+          planLimitMessage('FEATURE_NOT_AVAILABLE', feature),
+        );
+      } else if (quota.remaining === 0) {
+        blocked.set(promptType, planLimitMessage('QUOTA_EXCEEDED', feature));
+      }
+    }
+    return blocked;
+  });
+  // Run errors plus plan-limit notices for a reopened optimization.
+  readonly cardErrors = computed<Map<PromptType, string>>(() => {
+    const errors = new Map(this.runErrors());
+    for (const [promptType, message] of this.storedPlanBlockedMessages()) {
+      if (message && !errors.has(promptType)) errors.set(promptType, message);
+    }
+    return errors;
+  });
   readonly jobApplicationId = signal<string | null>(null);
   readonly preselectedCvId = signal<string | null>(null);
   readonly cvStructuredData = signal<CvStructuredData | null>(null);
@@ -489,6 +546,7 @@ export class CvOptimization implements OnInit {
       if (this.isProcessing().get(promptType)) continue;
       if (this.stalledPrompts().has(promptType)) continue;
       if (this.planBlockedPrompts().has(promptType)) continue;
+      if (this.storedPlanBlockedMessages().has(promptType)) continue;
       const status = this.results().get(promptType)?.status;
       if (
         status === undefined ||
@@ -849,6 +907,9 @@ export class CvOptimization implements OnInit {
             }
           }
           this.results.set(resultMap);
+          this.storedPromptTypes.set(new Set(results.map((r) => r.promptType)));
+          // Credits may have been spent since the usage was last fetched.
+          this.userSettingsApiService.reloadUsageStatus();
 
           return this.cvOptimizationApiService.getStructuredData(
             jobApplication.cvDocumentId,
@@ -876,6 +937,7 @@ export class CvOptimization implements OnInit {
     this.runErrors.set(new Map());
     this.stalledPrompts.set(new Set());
     this.planBlockedPrompts.set(new Set());
+    this.storedPromptTypes.set(null);
     this.collapsedSections.set(new Set());
     this.initializedTabDefaults.set(new Set());
     this.activeResultsTab.set('cv-analysis');
@@ -985,6 +1047,10 @@ export class CvOptimization implements OnInit {
       }),
       switchMap(({ runId }) => {
         this.setProcessing(prompts, true);
+        // An accepted trigger creates the rows, so the credit is now spent.
+        this.storedPromptTypes.update((set) =>
+          set === null ? null : new Set([...set, ...prompts]),
+        );
         return this.cvOptimizationApiService
           .streamOptimizationEvents(jobApplicationId, runId)
           .pipe(

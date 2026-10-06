@@ -155,11 +155,11 @@
                 [projectedScore]="projectedAtsScore()"
               />
               } @if (sectionStatus(PromptType.RESUME_AUTOPSY) === 'not-started'
-              && !runErrors().has(PromptType.RESUME_AUTOPSY)) {
+              && !cardErrors().has(PromptType.RESUME_AUTOPSY)) {
               <p class="text-sm text-(--text-muted) m-0">
                 This section hasn't been processed yet.
               </p>
-              } @if (runErrors().get(PromptType.RESUME_AUTOPSY); as runError) {
+              } @if (cardErrors().get(PromptType.RESUME_AUTOPSY); as runError) {
               <p class="run-error" role="alert">{{ runError }}</p>
               } @if (retryablePromptTypes().has(PromptType.RESUME_AUTOPSY)) {
               <div class="retry-action">
@@ -238,11 +238,11 @@
                 (jobTitleEditTextChanged)="onJobTitleEditTextChanged($event)"
               />
               } @if (sectionStatus(PromptType.KEYWORD_GAP) === 'not-started' &&
-              !runErrors().has(PromptType.KEYWORD_GAP)) {
+              !cardErrors().has(PromptType.KEYWORD_GAP)) {
               <p class="text-sm text-(--text-muted) m-0">
                 This section hasn't been processed yet.
               </p>
-              } @if (runErrors().get(PromptType.KEYWORD_GAP); as runError) {
+              } @if (cardErrors().get(PromptType.KEYWORD_GAP); as runError) {
               <p class="run-error" role="alert">{{ runError }}</p>
               } @if (retryablePromptTypes().has(PromptType.KEYWORD_GAP)) {
               <div class="retry-action">
@@ -295,11 +295,12 @@
                 (summaryTextEdited)="onSummaryTextEdited($event)"
               />
               } @if (sectionStatus(PromptType.SUMMARY_REWRITE) === 'not-started'
-              && !runErrors().has(PromptType.SUMMARY_REWRITE)) {
+              && !cardErrors().has(PromptType.SUMMARY_REWRITE)) {
               <p class="text-sm text-(--text-muted) m-0">
                 This section hasn't been processed yet.
               </p>
-              } @if (runErrors().get(PromptType.SUMMARY_REWRITE); as runError) {
+              } @if (cardErrors().get(PromptType.SUMMARY_REWRITE); as runError)
+              {
               <p class="run-error" role="alert">{{ runError }}</p>
               } @if (retryablePromptTypes().has(PromptType.SUMMARY_REWRITE)) {
               <div class="retry-action">
@@ -359,11 +360,11 @@
                 (removedBulletToggled)="onRemovedBulletToggled($event)"
               />
               } @if (sectionStatus(PromptType.BULLET_UPGRADE) === 'not-started'
-              && !runErrors().has(PromptType.BULLET_UPGRADE)) {
+              && !cardErrors().has(PromptType.BULLET_UPGRADE)) {
               <p class="text-sm text-(--text-muted) m-0">
                 This section hasn't been processed yet.
               </p>
-              } @if (runErrors().get(PromptType.BULLET_UPGRADE); as runError) {
+              } @if (cardErrors().get(PromptType.BULLET_UPGRADE); as runError) {
               <p class="run-error" role="alert">{{ runError }}</p>
               } @if (retryablePromptTypes().has(PromptType.BULLET_UPGRADE)) {
               <div class="retry-action">
@@ -412,11 +413,11 @@
                 (contentEdited)="onCoverLetterTextEdited($event)"
               />
               } @if (sectionStatus(PromptType.COVER_LETTER) === 'not-started' &&
-              !runErrors().has(PromptType.COVER_LETTER)) {
+              !cardErrors().has(PromptType.COVER_LETTER)) {
               <p class="text-sm text-(--text-muted) m-0">
                 This section hasn't been processed yet.
               </p>
-              } @if (runErrors().get(PromptType.COVER_LETTER); as runError) {
+              } @if (cardErrors().get(PromptType.COVER_LETTER); as runError) {
               <p class="run-error" role="alert">{{ runError }}</p>
               } @if (retryablePromptTypes().has(PromptType.COVER_LETTER)) {
               <div class="retry-action">
@@ -458,11 +459,11 @@
               @if (interviewPrepResult()) {
               <app-interview-prep [result]="interviewPrepResult()!" />
               } @if (sectionStatus(PromptType.INTERVIEW_PREP) === 'not-started'
-              && !runErrors().has(PromptType.INTERVIEW_PREP)) {
+              && !cardErrors().has(PromptType.INTERVIEW_PREP)) {
               <p class="text-sm text-(--text-muted) m-0">
                 This section hasn't been processed yet.
               </p>
-              } @if (runErrors().get(PromptType.INTERVIEW_PREP); as runError) {
+              } @if (cardErrors().get(PromptType.INTERVIEW_PREP); as runError) {
               <p class="run-error" role="alert">{{ runError }}</p>
               } @if (retryablePromptTypes().has(PromptType.INTERVIEW_PREP)) {
               <div class="retry-action">
@@ -503,11 +504,11 @@
               @if (linkedInResult()) {
               <app-linkedin-updates [result]="linkedInResult()!" />
               } @if (sectionStatus(PromptType.LINKEDIN_REWRITE) ===
-              'not-started' && !runErrors().has(PromptType.LINKEDIN_REWRITE)) {
+              'not-started' && !cardErrors().has(PromptType.LINKEDIN_REWRITE)) {
               <p class="text-sm text-(--text-muted) m-0">
                 This section hasn't been processed yet.
               </p>
-              } @if (runErrors().get(PromptType.LINKEDIN_REWRITE); as runError)
+              } @if (cardErrors().get(PromptType.LINKEDIN_REWRITE); as runError)
               {
               <p class="run-error" role="alert">{{ runError }}</p>
               } @if (retryablePromptTypes().has(PromptType.LINKEDIN_REWRITE)) {
