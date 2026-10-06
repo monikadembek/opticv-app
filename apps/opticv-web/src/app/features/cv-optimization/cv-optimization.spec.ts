@@ -959,6 +959,35 @@ describe('CvOptimization', () => {
       expect(component.runErrors().get(PromptType.INTERVIEW_PREP)).toMatch(
         /Something went wrong/,
       );
+      expect(
+        component.retryablePromptTypes().has(PromptType.INTERVIEW_PREP),
+      ).toBe(true);
+    });
+
+    it('does not offer the free retry for quota or plan rejections', () => {
+      apiService.streamOptimizationEvents.mockReturnValue(NEVER);
+      apiService.runFullOptimizationProcess.mockReturnValue(
+        throwError(() =>
+          httpError({ code: 'QUOTA_EXCEEDED', feature: 'CV_OPTIMIZATION' }),
+        ),
+      );
+      apiService.runSingleOptimizationProcess.mockImplementation(
+        (_id: string, promptType: PromptType) =>
+          promptType === PromptType.LINKEDIN_REWRITE
+            ? throwError(() =>
+                httpError({
+                  code: 'FEATURE_NOT_AVAILABLE',
+                  feature: 'LINKEDIN',
+                }),
+              )
+            : of({ runId: `run-${promptType}` }),
+      );
+
+      component.runOptimization(mockJobSubmittedData);
+
+      for (const promptType of [...CV_SUBSET, PromptType.LINKEDIN_REWRITE]) {
+        expect(component.retryablePromptTypes().has(promptType)).toBe(false);
+      }
     });
 
     it('distinct error codes produce distinct messages', () => {
@@ -1140,11 +1169,13 @@ describe('CvOptimization', () => {
       apiService.streamOptimizationEvents.mockReturnValue(NEVER);
       component.runErrors.set(new Map([[PromptType.COVER_LETTER, 'old']]));
       component.stalledPrompts.set(new Set([PromptType.COVER_LETTER]));
+      component.planBlockedPrompts.set(new Set([PromptType.LINKEDIN_REWRITE]));
 
       component.runOptimization(mockJobSubmittedData);
 
       expect(component.runErrors().size).toBe(0);
       expect(component.stalledPrompts().size).toBe(0);
+      expect(component.planBlockedPrompts().size).toBe(0);
     });
 
     it('renders the error message as an alert on the card', () => {

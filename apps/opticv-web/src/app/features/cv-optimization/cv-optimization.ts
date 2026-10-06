@@ -199,6 +199,14 @@ const CONNECTION_FAILURE_MESSAGE =
 const TIMEOUT_MESSAGE =
   'This section is taking longer than expected. Reload the page later to check for results.';
 
+// Quota and plan rejections are not retryable: the free retry endpoint skips
+// the quota check, so offering it would bypass the limit.
+function isPlanLimitError(err: unknown): boolean {
+  const code = (err as { error?: { code?: unknown } | null } | null)?.error
+    ?.code;
+  return code === 'QUOTA_EXCEEDED' || code === 'FEATURE_NOT_AVAILABLE';
+}
+
 function triggerErrorMessage(err: unknown): string {
   const body = (err as { error?: unknown } | null)?.error;
   if (typeof body !== 'object' || body === null) return GENERIC_FAILURE_MESSAGE;
@@ -266,6 +274,8 @@ export class CvOptimization implements OnInit {
   // Prompts whose stream hit the server idle timeout. Their DB row may be
   // stranded in PROCESSING, which the free retry endpoint rejects.
   readonly stalledPrompts = signal<ReadonlySet<PromptType>>(new Set());
+  // Prompts whose trigger was rejected for quota or plan reasons.
+  readonly planBlockedPrompts = signal<ReadonlySet<PromptType>>(new Set());
   readonly jobApplicationId = signal<string | null>(null);
   readonly preselectedCvId = signal<string | null>(null);
   readonly cvStructuredData = signal<CvStructuredData | null>(null);
@@ -478,6 +488,7 @@ export class CvOptimization implements OnInit {
     for (const [promptType, computedResult] of promptResultPairs) {
       if (this.isProcessing().get(promptType)) continue;
       if (this.stalledPrompts().has(promptType)) continue;
+      if (this.planBlockedPrompts().has(promptType)) continue;
       const status = this.results().get(promptType)?.status;
       if (
         status === undefined ||
@@ -864,6 +875,7 @@ export class CvOptimization implements OnInit {
     this.isProcessing.set(new Map());
     this.runErrors.set(new Map());
     this.stalledPrompts.set(new Set());
+    this.planBlockedPrompts.set(new Set());
     this.collapsedSections.set(new Set());
     this.initializedTabDefaults.set(new Set());
     this.activeResultsTab.set('cv-analysis');
@@ -963,6 +975,11 @@ export class CvOptimization implements OnInit {
 
     return trigger$.pipe(
       catchError((err: unknown) => {
+        if (isPlanLimitError(err)) {
+          this.planBlockedPrompts.update(
+            (set) => new Set([...set, ...prompts]),
+          );
+        }
         this.failPrompts(prompts, triggerErrorMessage(err));
         return EMPTY;
       }),
