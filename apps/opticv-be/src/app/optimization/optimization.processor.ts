@@ -72,7 +72,9 @@ export class OptimizationProcessor extends WorkerHost {
       } | null;
 
       if (!outputSchema) {
-        throw new Error(`Prompt version for ${promptType} has no outputSchema — cannot generate structured output`);
+        throw new Error(
+          `Prompt version for ${promptType} has no outputSchema — cannot generate structured output`,
+        );
       }
 
       const model = promptVersion.modelPreference ?? FALLBACK_MODEL;
@@ -131,6 +133,18 @@ export class OptimizationProcessor extends WorkerHost {
       });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
+
+      // BullMQ will run this job again: keep the row PROCESSING and stay
+      // silent, so the run is not reported as failed (and the free retry
+      // endpoint cannot queue a duplicate) while a retry is still pending.
+      const isFinalAttempt = job.attemptsMade + 1 >= (job.opts.attempts ?? 1);
+      if (!isFinalAttempt) {
+        this.logger.warn(
+          `Job attempt ${job.attemptsMade + 1} failed for ${promptType}, retrying: ${message}`,
+        );
+        throw err;
+      }
+
       this.logger.error(`Job failed for ${promptType}: ${message}`);
 
       await this.prisma.optimizationResult.update({

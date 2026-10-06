@@ -1019,6 +1019,9 @@ export class CvOptimization implements OnInit {
         [event.promptType],
         event.error || GENERIC_FAILURE_MESSAGE,
       );
+    } else {
+      // A success supersedes any failure reported earlier for this prompt.
+      this.clearRunErrors([event.promptType]);
     }
     this.results.update((map) => new Map(map).set(event.promptType, event));
   }

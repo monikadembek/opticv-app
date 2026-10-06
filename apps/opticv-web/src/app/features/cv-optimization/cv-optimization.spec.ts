@@ -1042,6 +1042,30 @@ describe('CvOptimization', () => {
       );
     });
 
+    it('a completed event clears an earlier failure for the same prompt', () => {
+      const cvStream = new Subject<SseJobCompleteEvent>();
+      apiService.streamOptimizationEvents.mockReturnValue(
+        cvStream.asObservable(),
+      );
+
+      component.runOptimization(mockJobSubmittedData);
+      cvStream.next({
+        promptType: PromptType.KEYWORD_GAP,
+        status: 'failed',
+        error: 'AI service timeout',
+      });
+      cvStream.next({
+        promptType: PromptType.KEYWORD_GAP,
+        status: 'completed',
+        result: {},
+      });
+
+      expect(component.runErrors().has(PromptType.KEYWORD_GAP)).toBe(false);
+      expect(component.results().get(PromptType.KEYWORD_GAP)?.status).toBe(
+        'completed',
+      );
+    });
+
     it('falls back to a generic message when a failed event carries no error', () => {
       const cvStream = new Subject<SseJobCompleteEvent>();
       apiService.streamOptimizationEvents.mockReturnValue(
