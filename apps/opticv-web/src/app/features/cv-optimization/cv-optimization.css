@@ -77,6 +77,12 @@
   margin-bottom: 24px;
 }
 
+.run-error {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--critical);
+}
+
 .retry-action {
   margin-top: 16px;
   display: flex;
