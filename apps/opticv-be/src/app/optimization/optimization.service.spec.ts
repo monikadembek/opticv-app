@@ -21,6 +21,7 @@ const mockPrisma = {
   optimizationResult: {
     upsert: jest.fn(),
     findUnique: jest.fn(),
+    findFirst: jest.fn(),
     update: jest.fn(),
     create: jest.fn(),
   },
@@ -575,6 +576,7 @@ describe('OptimizationService', () => {
         baseJobApplication,
       );
       mockPrisma.optimizationResult.findUnique.mockResolvedValue(null);
+      mockPrisma.optimizationResult.findFirst.mockResolvedValue(null);
       mockPrisma.optimizationResult.create.mockResolvedValue({});
       mockQueue.add.mockResolvedValue({});
 
@@ -599,7 +601,52 @@ describe('OptimizationService', () => {
       expect(mockQueue.add).toHaveBeenCalled();
     });
 
-    it('does not call checkAndConsume when the result row does not exist', async () => {
+    it('does not call checkAndConsume for a missing CV-subset row whose sibling exists', async () => {
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
+      mockPrisma.optimizationResult.findUnique.mockResolvedValue(null);
+      mockPrisma.optimizationResult.findFirst.mockResolvedValue({
+        id: 'sibling-1',
+      });
+      mockPrisma.optimizationResult.create.mockResolvedValue({});
+      mockQueue.add.mockResolvedValue({});
+
+      await service.retryFailedJob('app-1', PROMPT_TYPE, 'user-1');
+
+      expect(mockPrisma.optimizationResult.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            applicationId: 'app-1',
+            promptType: { in: CV_SUBSET_PROMPT_TYPES },
+          },
+        }),
+      );
+      expect(mockQuotaService.checkAndConsume).not.toHaveBeenCalled();
+    });
+
+    it('consumes CV_OPTIMIZATION for a missing CV-subset row with no sibling', async () => {
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
+      mockPrisma.optimizationResult.findUnique.mockResolvedValue(null);
+      mockPrisma.optimizationResult.findFirst.mockResolvedValue(null);
+      mockPrisma.optimizationResult.create.mockResolvedValue({});
+      mockQueue.add.mockResolvedValue({});
+
+      await service.retryFailedJob('app-1', PROMPT_TYPE, 'user-1');
+
+      expect(mockQuotaService.checkAndConsume).toHaveBeenCalledWith(
+        'user-1',
+        'CV_OPTIMIZATION',
+        'FREE',
+        PERIOD_START,
+        PERIOD_END,
+        false,
+      );
+    });
+
+    it('consumes the feature quota for a missing non-CV row without checking siblings', async () => {
       mockPrisma.jobApplication.findUnique.mockResolvedValue(
         baseJobApplication,
       );
@@ -607,9 +654,38 @@ describe('OptimizationService', () => {
       mockPrisma.optimizationResult.create.mockResolvedValue({});
       mockQueue.add.mockResolvedValue({});
 
-      await service.retryFailedJob('app-1', PROMPT_TYPE, 'user-1');
+      await service.retryFailedJob('app-1', PromptType.COVER_LETTER, 'user-1');
 
-      expect(mockQuotaService.checkAndConsume).not.toHaveBeenCalled();
+      expect(mockPrisma.optimizationResult.findFirst).not.toHaveBeenCalled();
+      expect(mockQuotaService.checkAndConsume).toHaveBeenCalledWith(
+        'user-1',
+        'COVER_LETTER',
+        'FREE',
+        PERIOD_START,
+        PERIOD_END,
+        false,
+      );
+    });
+
+    it('rejects a missing row without creating or enqueuing when the feature is not on the plan', async () => {
+      mockPrisma.jobApplication.findUnique.mockResolvedValue(
+        baseJobApplication,
+      );
+      mockPrisma.optimizationResult.findUnique.mockResolvedValue(null);
+      mockQuotaService.checkAndConsume.mockRejectedValue(
+        new ForbiddenException({
+          code: 'FEATURE_NOT_AVAILABLE',
+          feature: 'LINKEDIN',
+        }),
+      );
+
+      await expect(
+        service.retryFailedJob('app-1', PromptType.LINKEDIN_REWRITE, 'user-1'),
+      ).rejects.toThrow(ForbiddenException);
+
+      expect(mockPrisma.optimizationResult.create).not.toHaveBeenCalled();
+      expect(mockEventBus.registerRun).not.toHaveBeenCalled();
+      expect(mockQueue.add).not.toHaveBeenCalled();
     });
 
     it('throws BadRequestException when the result row is COMPLETED', async () => {

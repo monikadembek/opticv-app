@@ -239,6 +239,25 @@ export class OptimizationService {
       );
     }
 
+    // Result rows are only created after quota is consumed, so a missing row
+    // was never paid for — unless a sibling CV-subset row shows the single
+    // CV_OPTIMIZATION credit for this application was already charged.
+    if (
+      !existing &&
+      !(await this.isCvSubsetPaid(jobApplicationId, promptType))
+    ) {
+      const { tier, periodStart, periodEnd, cancelAtPeriodEnd } =
+        await this.resolveTierAndPeriod(userId);
+      await this.quotaService.checkAndConsume(
+        userId,
+        PROMPT_TYPE_TO_FEATURE[promptType],
+        tier,
+        periodStart,
+        periodEnd,
+        cancelAtPeriodEnd,
+      );
+    }
+
     const runId = randomUUID();
 
     if (existing) {
@@ -288,6 +307,21 @@ export class OptimizationService {
     );
 
     return { runId };
+  }
+
+  private async isCvSubsetPaid(
+    jobApplicationId: string,
+    promptType: PromptType,
+  ): Promise<boolean> {
+    if (!CV_SUBSET_PROMPT_TYPES.includes(promptType)) return false;
+    const sibling = await this.prisma.optimizationResult.findFirst({
+      where: {
+        applicationId: jobApplicationId,
+        promptType: { in: CV_SUBSET_PROMPT_TYPES },
+      },
+      select: { id: true },
+    });
+    return sibling !== null;
   }
 
   async saveUserOutput(

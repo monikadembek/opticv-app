@@ -116,7 +116,9 @@ export class OptimizationController {
   @HttpCode(202)
   @UseGuards(AiThrottlerGuard)
   @ApiOperation({
-    summary: 'Retry a terminally-failed optimization job for free',
+    summary: 'Retry a failed or never-run optimization job',
+    description:
+      'Free when the result was already paid for (a FAILED row, or a missing CV-subset row whose sibling exists). A never-run job is charged against its feature quota like a normal trigger.',
   })
   @ApiResponse({
     status: 202,
@@ -126,6 +128,11 @@ export class OptimizationController {
   @ApiResponse({
     status: 400,
     description: 'Invalid promptType or the result is not currently FAILED',
+  })
+  @ApiResponse({
+    status: 403,
+    description:
+      'Never-run job rejected: QUOTA_EXCEEDED or FEATURE_NOT_AVAILABLE',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Job application not found' })
