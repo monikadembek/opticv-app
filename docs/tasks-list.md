@@ -1619,9 +1619,9 @@ After changes in the ui some images require update:
 
 ## Bug - UI: a failed or never-arriving job leaves the card spinning with no error shown.
 
-**status - in progress**
+**status - done**
 
-**time - 25.09.2026**
+**time - 25.09.2026 - 06.10.2026**
 
 The problem
 
@@ -1676,7 +1676,50 @@ Things you should know
 
 ---
 
-## 120. Upstash Redis issues
+## 120. Include LinkedIn optimization in the FREE plan
+
+**status - done**
+**time - 07.10.2027**
+
+Include the LinkedIn optimization in the Free plan - allow 1 run
+
+---
+
+## All jobs running at the same time - limit the number of jobs running at the same time
+
+The frontend now starts everything at once. But it's not quite "all 7 run at once": the backend still limits how many actually execute.
+
+Before (5f7729c): the page triggered each of the 7 prompts separately through mergeMap(..., 3). Each slot stayed taken until that prompt's SSE stream finished, so one user had at most 3 optimizations in flight. A new one started only when one finished.
+
+Now (commit 17117e1, cv-optimization.ts:917): runOptimization uses merge(...) with no concurrency limit, so it sends 4 requests at once:
+
+- 1 bulk run, which queues 4 jobs (Resume Autopsy, Keyword Gap, Summary Rewrite, Bullet Upgrade), billed as one CV optimization credit
+- 3 single runs: Cover Letter, Interview Prep, LinkedIn
+
+That puts all 7 jobs into the BullMQ queue immediately.
+
+What still limits them: the backend worker is set to BULLMQ_CONCURRENCY=5 (optimization.processor.ts:14-16, the same value in every env file). At most 5 jobs run against OpenAI at a time and the rest wait in Redis. That limit is shared by all users on a worker, not per user. So one user now takes up to 5 slots instead of 3, and can delay other users' jobs at busy times.
+
+Side effects:
+
+- The browser keeps 4 SSE connections open at once instead of up to 3. That's fine under HTTP/2. Under HTTP/1.1 it uses 4 of the 6 connections allowed per origin, and retries add more.
+- You can't simply put back merge(..., 3) and get the old behaviour. The bulk run is a single request that queues 4 jobs, so limiting requests no longer limits jobs.
+
+Options if you want the old throttling back:
+
+1. Per-user limit on the backend (recommended): BullMQ groups or a per-user rate limit. This works however the frontend triggers jobs.
+2. Lower BULLMQ_CONCURRENCY: simple, but it's a global limit and slows everyone down.
+3. Frontend ordering: run the bulk CV run first and start the 3 per-feature runs afterwards. That's a rough approximation and it's easy to get around through the API.
+
+Do you want me to go ahead with one of these?
+
+✻ Cogitated for 50s · done 3:21 PM
+
+※ recap: You're right: since the billing-bug fix, all 7 optimization jobs are queued at once, and the backend runs up to 5 of them at a time instead of the old 3. Next, choose a fix; I recommend a per-user limit on the backend.
+
+---
+
+## Upstash Redis issues
 
 **Upstash Redis - running out of free credits after a few days**
 
