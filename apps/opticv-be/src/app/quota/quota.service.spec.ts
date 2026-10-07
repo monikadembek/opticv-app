@@ -3,6 +3,7 @@ import { ForbiddenException } from '@nestjs/common';
 import { QuotaService } from './quota.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
+import { TIER_LIMITS } from '@opticv/datatypes';
 
 const mockPrisma = {
   usageQuota: {
@@ -28,10 +29,14 @@ describe('QuotaService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    jest.restoreAllMocks();
     mockPrisma.$transaction.mockImplementation((fn) => fn(mockPrisma));
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [QuotaService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        QuotaService,
+        { provide: PrismaService, useValue: mockPrisma },
+      ],
     }).compile();
 
     service = module.get(QuotaService);
@@ -39,6 +44,9 @@ describe('QuotaService', () => {
 
   describe('checkAndConsume', () => {
     it('throws FEATURE_NOT_AVAILABLE when the tier limit is 0', async () => {
+      // No tier currently excludes a feature, so force a 0 limit.
+      jest.replaceProperty(TIER_LIMITS.FREE.features, 'LINKEDIN', 0);
+
       await expect(
         service.checkAndConsume(
           'user-1',
@@ -103,10 +111,13 @@ describe('QuotaService', () => {
     });
 
     it('rethrows other prisma errors instead of treating them as the unique constraint race', async () => {
-      const otherError = new Prisma.PrismaClientKnownRequestError('Some other error', {
-        code: 'P2025',
-        clientVersion: 'test',
-      });
+      const otherError = new Prisma.PrismaClientKnownRequestError(
+        'Some other error',
+        {
+          code: 'P2025',
+          clientVersion: 'test',
+        },
+      );
       mockPrisma.usageQuota.upsert.mockRejectedValue(otherError);
 
       await expect(
@@ -230,6 +241,8 @@ describe('QuotaService', () => {
     });
 
     it('propagates cancelAtPeriodEnd: true into the FEATURE_NOT_AVAILABLE payload', async () => {
+      jest.replaceProperty(TIER_LIMITS.FREE.features, 'LINKEDIN', 0);
+
       await expect(
         service.checkAndConsume(
           'user-1',
@@ -270,7 +283,7 @@ describe('QuotaService', () => {
 
       const linkedin = result.find((r) => r.feature === 'LINKEDIN');
       expect(linkedin).toEqual(
-        expect.objectContaining({ used: 0, limit: 0, remaining: 0 }),
+        expect.objectContaining({ used: 0, limit: 1, remaining: 1 }),
       );
 
       const coverLetter = result.find((r) => r.feature === 'COVER_LETTER');
