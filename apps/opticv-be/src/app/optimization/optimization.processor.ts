@@ -9,11 +9,14 @@ import { CostCalculatorService } from '../ai/services/cost-calculator.service.js
 import { UsageLogService } from '../ai/services/usage-log.service.js';
 import { OptimizationEventBus } from './optimization-event-bus.js';
 import type { OptimizationJobPayload } from './optimization.types.js';
+import {
+  OPTIMIZATION_QUEUE,
+  buildOptimizationWorkerOptions,
+} from './optimization-queue.config.js';
 
 const FALLBACK_MODEL = 'gpt-4o-mini';
-const CONCURRENCY = parseInt(process.env['BULLMQ_CONCURRENCY'] ?? '5', 10);
 
-@Processor('optimization', { concurrency: CONCURRENCY })
+@Processor(OPTIMIZATION_QUEUE, buildOptimizationWorkerOptions())
 export class OptimizationProcessor extends WorkerHost {
   private readonly logger = new Logger(OptimizationProcessor.name);
 

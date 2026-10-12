@@ -2,6 +2,7 @@
  * This is not a production server yet!
  * This is only a minimal backend to get started.
  */
+import './load-env';
 import './instrument';
 
 import { Logger, ValidationPipe } from '@nestjs/common';
