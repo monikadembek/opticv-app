@@ -20,6 +20,17 @@ export const validationSchema = Joi.object({
   REDIS_PASSWORD: Joi.string().optional(),
   REDIS_TLS: Joi.boolean().default(false),
   BULLMQ_CONCURRENCY: Joi.number().default(5),
+  BULLMQ_STALLED_INTERVAL: Joi.number().integer().positive().default(300000),
+  BULLMQ_DRAIN_DELAY: Joi.number().integer().positive().default(60),
+  BULLMQ_REMOVE_ON_COMPLETE_AGE: Joi.number()
+    .integer()
+    .positive()
+    .default(3600),
+  BULLMQ_REMOVE_ON_COMPLETE_COUNT: Joi.number()
+    .integer()
+    .positive()
+    .default(100),
+  BULLMQ_REMOVE_ON_FAIL_AGE: Joi.number().integer().positive().default(604800),
   FRONTEND_URL: Joi.string().uri().required(),
   STRIPE_SECRET_KEY: Joi.string().required(),
   STRIPE_WEBHOOK_SECRET: Joi.string().required(),
@@ -33,4 +44,5 @@ export const validationSchema = Joi.object({
   THROTTLER_AI_IP_LIMIT: Joi.number().default(50),
   THROTTLER_AI_USER_TTL: Joi.number().default(3600),
   THROTTLER_AI_USER_LIMIT: Joi.number().default(10),
+  THROTTLER_STORAGE: Joi.string().valid('memory', 'redis').default('memory'),
 });

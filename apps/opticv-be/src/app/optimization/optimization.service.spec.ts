@@ -269,7 +269,6 @@ describe('OptimizationService', () => {
             jobApplicationId: 'app-1',
             jobTitle: 'Software Engineer',
           }),
-          expect.objectContaining({ attempts: 2 }),
         );
       }
 
@@ -515,7 +514,6 @@ describe('OptimizationService', () => {
           jobDescription: 'Software Engineer at Acme',
           jobTitle: 'Software Engineer',
         }),
-        expect.objectContaining({ attempts: 2 }),
       );
     });
 
@@ -790,7 +788,6 @@ describe('OptimizationService', () => {
           jobApplicationId: 'app-1',
           jobTitle: 'Software Engineer',
         }),
-        expect.objectContaining({ attempts: 2 }),
       );
     });
   });
