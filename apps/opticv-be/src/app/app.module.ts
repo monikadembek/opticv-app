@@ -6,7 +6,6 @@ import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { configuration } from '../../config/configuration';
 import { validationSchema } from '../../config/validation';
 import { UsersModule } from './users/users.module';
@@ -17,6 +16,7 @@ import { OptimizationModule } from './optimization/optimization.module';
 import { StripeModule } from './stripe/stripe.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { ApiThrottlerGuard } from './throttler/api-throttler.guard';
+import { createThrottlerStorage } from './throttler/throttler-storage.factory';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { APP_FILTER } from '@nestjs/core';
 import { SentryGlobalFilter } from '@sentry/nestjs/setup';
@@ -44,12 +44,7 @@ import { SentryGlobalFilter } from '@sentry/nestjs/setup';
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        storage: new ThrottlerStorageRedisService({
-          host: config.get<string>('redis.host'),
-          port: config.get<number>('redis.port'),
-          password: config.get<string>('redis.password'),
-          tls: config.get<boolean>('redis.tls') ? {} : undefined,
-        }),
+        storage: createThrottlerStorage(config),
         throttlers: [
           {
             name: 'api-ip',

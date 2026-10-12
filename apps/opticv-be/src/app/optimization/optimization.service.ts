@@ -136,11 +136,10 @@ export class OptimizationService {
 
     await Promise.all(
       CV_SUBSET_PROMPT_TYPES.map((promptType) =>
-        this.queue.add(
-          'optimize',
-          { ...payloadBase, promptType } satisfies OptimizationJobPayload,
-          { attempts: 2, backoff: { type: 'exponential', delay: 2000 } },
-        ),
+        this.queue.add('optimize', {
+          ...payloadBase,
+          promptType,
+        } satisfies OptimizationJobPayload),
       ),
     );
 
@@ -198,20 +197,16 @@ export class OptimizationService {
       this.eventBus.registerRun(runId, 1);
     }
 
-    await this.queue.add(
-      'optimize',
-      {
-        runId,
-        jobApplicationId,
-        userId,
-        promptType,
-        cvText,
-        parsedSections,
-        jobDescription,
-        jobTitle,
-      } satisfies OptimizationJobPayload,
-      { attempts: 2, backoff: { type: 'exponential', delay: 2000 } },
-    );
+    await this.queue.add('optimize', {
+      runId,
+      jobApplicationId,
+      userId,
+      promptType,
+      cvText,
+      parsedSections,
+      jobDescription,
+      jobTitle,
+    } satisfies OptimizationJobPayload);
 
     return { runId };
   }
@@ -291,20 +286,16 @@ export class OptimizationService {
 
     this.eventBus.registerRun(runId, 1);
 
-    await this.queue.add(
-      'optimize',
-      {
-        runId,
-        jobApplicationId,
-        userId,
-        promptType,
-        cvText,
-        parsedSections,
-        jobDescription,
-        jobTitle,
-      } satisfies OptimizationJobPayload,
-      { attempts: 2, backoff: { type: 'exponential', delay: 2000 } },
-    );
+    await this.queue.add('optimize', {
+      runId,
+      jobApplicationId,
+      userId,
+      promptType,
+      cvText,
+      parsedSections,
+      jobDescription,
+      jobTitle,
+    } satisfies OptimizationJobPayload);
 
     return { runId };
   }

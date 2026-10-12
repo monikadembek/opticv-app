@@ -1719,30 +1719,40 @@ Do you want me to go ahead with one of these?
 
 ---
 
-## Upstash Redis issues
+## 121. Upstash Redis - reduce Redis command usage (BE)
 
-**Upstash Redis - running out of free credits after a few days**
+**status: in progress**
 
-Your diagnosis is right that Redis was being hit continuously, but the browser tab wasn't the cause. Closing it would have changed nothing.
+**time: 12.10.2026**
 
-What actually drained Upstash: the BullMQ worker. @Processor('optimization') runs a worker inside your Nest process that polls Redis forever, whether or not any jobs exist and whether or not any browser is connected. It keeps a blocking BRPOPLPUSH open, renews it every ~30s, and runs a stalled-job checker on a timer. That's a steady trickle of commands, 24/7, from the moment the server boots.
+**Problem**
 
-Upstash's free tier bills per command, and a few days of idle polling from even one worker will exhaust 500K. Two things made it worse here:
+Upstash Redis runs out of free-tier credits after a few days. Upstash bills per command (500K/month on the free tier), and the backend sends commands to Redis around the clock, even with no users and no jobs:
 
-- ThrottlerStorageRedisService (app.module.ts:9) also uses Redis, on every API request.
-- optimization.module.ts:14 sets no removeOnComplete/removeOnFail, so finished jobs accumulate in Redis forever rather than being evicted.
+- The BullMQ worker (`@Processor('optimization')`) runs inside the Nest process and polls Redis all the time: a blocking wait for new jobs, renewed every few seconds, plus a stalled-job check on a timer. This idle polling uses most of the credits.
+- `ThrottlerStorageRedisService` (`app.module.ts`) uses the same Redis instance on every API request.
+- Neither the `optimization` queue (`optimization.module.ts`) nor any `queue.add(...)` call in `optimization.service.ts` sets `removeOnComplete` / `removeOnFail`, so completed and failed jobs stay in Redis forever.
+- When the process restarts mid-job, the job is retried (`attempts: 2`) and can go through the stalled-job check again, which adds more commands.
 
-The stuck RESUME_AUTOPSY job may have added to it. With attempts: 2 and the process restarting mid-job, BullMQ would have retried, and if it stalled again it re-enters the stalled-check cycle — but the baseline idle polling is the bulk of it.
+Not fixed by task 119, which only changed billing and the UI spinner / Retry behaviour.
 
-What to do: the spend is structural, not a leak you can close. Options, roughly in order of impact:
+**To do**
 
-1. Set removeOnComplete/removeOnFail on the queue so Redis doesn't accumulate job records indefinitely.
-2. Raise BullMQ's stalled-check interval and drain delay from their defaults — fewer polls per minute.
-3. Reconsider Upstash's per-command pricing for a workload that polls by design. A small always-on Redis with flat pricing suits BullMQ much better; per-command billing punishes idle workers.
+- Add `defaultJobOptions` to `BullModule.registerQueue({ name: 'optimization' })`:
+  - move `attempts: 2` and `backoff: { type: 'exponential', delay: 2000 }` there and remove them from the three `queue.add(...)` calls in `optimization.service.ts`
+  - set `removeOnComplete` (e.g. keep for 1 hour / last 100 jobs)
+  - set `removeOnFail` (keep longer for debugging, e.g. 3–7 days)
+- Raise the worker's `stalledInterval` and `drainDelay` in the `@Processor('optimization', { ... })` options (`optimization.processor.ts`). Read them from env/config like `BULLMQ_CONCURRENCY`, add them to `config/validation.ts` and to all `config/env/*.env` files.
+- Decide where the throttler stores its counters: keep Redis, or switch to in-memory storage while only one backend instance runs (at least on dev/staging).
+- Update/add backend unit tests for the queue and worker options.
+- Check the Upstash dashboard command count for a day before and after the change.
+- Decide separately: move to a Redis plan with a flat monthly price (e.g. a small always-on instance) instead of Upstash's per-command pricing, because an idle BullMQ worker keeps polling no matter how it's tuned.
 
-None of this is urgent for correctness — it's cost. The two bugs from my last message (quadruple-billing the quota, and the never-clearing spinner) are what actually block you from completing a run.
+**Acceptance criteria**
 
-Want me to start on those two, and fold in the queue cleanup settings while I'm in that module?
+- Completed and failed jobs are removed from Redis after the configured age/count.
+- An idle backend (no traffic, no jobs) sends noticeably fewer commands per day than before.
+- Optimization runs, retries and SSE results still work as before.
 
 ---
 
