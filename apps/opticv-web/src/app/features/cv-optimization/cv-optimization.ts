@@ -201,6 +201,7 @@ const FEATURE_LABELS: Record<LimitedFeature, string> = {
   COVER_LETTER: 'Cover letter',
   INTERVIEW_PREP: 'Interview prep',
   LINKEDIN: 'LinkedIn',
+  CV_BUILDER: 'CV Builder',
 };
 
 const GENERIC_FAILURE_MESSAGE =
