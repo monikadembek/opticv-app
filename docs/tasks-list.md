@@ -1773,7 +1773,7 @@ Jobs created before this change don't carry the new settings, so they never get 
 
 ## 122. BUG - App is displayed in dark mode even though the dark mode is not yet implemented (FE)
 
-**status: in progress**
+**status: done**
 **time: 14.10.2026**
 
 PrimeNg components currently follow the operating system's dark/light setting by default, so if user has the system set to dark mode, the components in the app will also be displayed in dark mode, even though the dark mode is not yet implemented and it doesn't look good.
