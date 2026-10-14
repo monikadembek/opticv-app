@@ -1790,6 +1790,76 @@ With both changes, the whole app stays in light mode no matter what the OS is se
 
 ---
 
+## 123. Prepare to go live with the payments in Stripe
+
+**status: in progress**
+**time: 14.10.2026**
+
+Plan:
+
+1. Get the live price IDs
+
+Copying products to live mode creates new price IDs, so your sandbox price\_... values won't work in live mode.
+
+- In the Dashboard, switch to live mode → Product catalog → open each product → copy the price ID, not the product ID.
+- Check that each price is recurring and has the right amount, currency and interval.
+- These IDs go into STRIPE_PRICE_BASIC and STRIPE_PRICE_PRO. StripeService.priceIdToTier() matches webhook events to tiers using exactly these values. If one is wrong, users pay but their tier never updates; you'd only see an "unknown price id" line in the logs.
+
+2. Get a live API key
+
+- In live mode, go to Developers → API keys.
+- I recommend a restricted key (rk*live*...) over the full sk*live*... secret key. The backend only needs:
+  - Write: Customers, Checkout Sessions, Customer portal
+  - Read: Subscriptions
+- The key goes into STRIPE_SECRET_KEY.
+
+3. Create the live webhook endpoint
+
+Developers → Webhooks → Add endpoint, in live mode:
+
+- URL: https://api.opticv.net/api/stripe/webhook (the controller is stripe and the route is webhook, under the global /api prefix).
+- Events: checkout.session.completed, customer.subscription.updated, customer.subscription.deleted, invoice.paid, invoice.payment_failed
+- API version: choose 2026-07-29.dahlia, the version the code is pinned to in stripe.service.ts:39. The handlers read newer payload fields like invoice.parent.subscription_details and the period dates on subscription items. If the endpoint uses an older version, those fields are missing and renewals silently stop syncing.
+- Copy the endpoint's signing secret (whsec\_...) into STRIPE_WEBHOOK_SECRET.
+
+4. Set the live Dashboard settings
+
+Sandbox settings don't carry over to live mode. Set these in live mode:
+
+- Customer portal (Settings → Billing → Customer portal): save a configuration. Without one, createPortalSession fails in live mode, which breaks the "Manage billing" button and the past-due banner. If you allow plan switching there, add both live products.
+- Payment retries and dunning (Settings → Billing → Subscriptions and emails): Smart Retries, failed-payment emails, and what happens after the last retry (cancel the subscription vs mark the invoice uncollectible). Your code expects cancellation, which fires customer.subscription.deleted.
+- Customer emails: receipts and upcoming-renewal reminders.
+- Payment methods: keep to cards and other methods that confirm instantly. handleCheckoutSessionCompleted sets ACTIVE without checking payment_status, so a method that settles later would unlock paid features before the money arrives (this gap is already noted in docs/stripe.md).
+- Public details and branding: business name, support email, statement descriptor, logo and colours. These appear on Checkout, invoices and card statements.
+- Tax: decide on VAT before you take real money. Selling digital subscriptions to EU consumers usually means charging VAT (often through OSS). The code doesn't use Stripe Tax (automatic_tax) yet. Turning it on is a small code change, but whether you need it is a business/accounting decision.
+
+5. Update production config only
+
+- Put the 4 live values in the production environment variables on your host (Hostinger), as described in docs/production-deployment-plan.md §1. Setting them in production.env alone isn't enough.
+- Keep development and staging on sandbox keys, prices and webhook secrets. Never put live keys in development.env or commit them.
+- Restart or redeploy the backend. If a key is missing, Joi validation stops the app from starting.
+
+6. Clear sandbox Stripe IDs from the production database
+
+getOrCreateCustomer() reuses stripeCustomerId if the row already has one. If any user in the production database was created while it used sandbox keys, their stored cus*..., sub*... and price\_... IDs don't exist in live mode. Checkout would then fail with "No such customer." Before launch:
+
+- Set stripeCustomerId, stripeSubscriptionId and stripePriceId to null for those rows.
+- Reset their tier to FREE.
+
+If production uses a brand-new Supabase project (the deployment plan suggests this), there's nothing to clean up.
+
+7. Test with a real purchase
+
+1. Buy the cheapest plan with your own real card.
+1. Check that the webhook endpoint's delivery log shows 200 for each event.
+1. Check that your Subscription row has the live IDs, the correct tier and ACTIVE.
+1. Open the billing portal from Settings and cancel. Confirm cancelAtPeriodEnd is updated.
+1. Refund yourself from the Dashboard.
+
+Finally, turn on 2FA for your Stripe account if it isn't already, since it now handles real money.
+
+---
+
 ## Implement dark / light mode
 
 **status: todo**
