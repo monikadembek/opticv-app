@@ -15,27 +15,30 @@ The app already has a home page at `/home` inside the Angular app (`apps/opticv-
 Add more marketing pages (`/features`, `/pricing`, `/blog`) directly inside `opticv-web`.
 
 **Pros:**
+
 - Single codebase, no extra infrastructure
 - Shared design system (PrimeNG, Tailwind)
 - SSR + prerendering already works — great for SEO
 
 **Cons:**
+
 - Blog in Angular is painful — no CMS, no Markdown support out of the box
 - Angular bundle size grows with app features
 - Mixing marketing content with app code gets messy over time
 
 ### Option B: Separate Static Site (Recommended for blog)
 
-Use a dedicated static site generator for the landing page + blog, served from a separate subdomain (e.g. `opticv.com` → landing, `app.opticv.com` → Angular app).
+Use a dedicated static site generator for the landing page + blog, served from a separate subdomain (e.g. `opticv.net` → landing, `app.opticv.net` → Angular app).
 
-| Option | Fit | Why |
-|---|---|---|
-| **Astro** ⭐ | Excellent | TypeScript-native, supports Angular components via islands, markdown/MDX for blog, near-zero JS by default, brilliant SEO |
-| **Next.js** | Good | React-based, very mature, but adds React dependency not already present |
-| **Nuxt** | OK | Vue-based — different ecosystem from Angular |
-| **Hugo** | Good for blog-only | Very fast, Go-based, Markdown-native, but no component reuse with Angular |
+| Option       | Fit                | Why                                                                                                                       |
+| ------------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| **Astro** ⭐ | Excellent          | TypeScript-native, supports Angular components via islands, markdown/MDX for blog, near-zero JS by default, brilliant SEO |
+| **Next.js**  | Good               | React-based, very mature, but adds React dependency not already present                                                   |
+| **Nuxt**     | OK                 | Vue-based — different ecosystem from Angular                                                                              |
+| **Hugo**     | Good for blog-only | Very fast, Go-based, Markdown-native, but no component reuse with Angular                                                 |
 
 **Astro is the top recommendation** because:
+
 - TypeScript-first (aligns with the stack)
 - Angular components can be embedded via `@astrojs/angular` integration
 - Markdown + MDX for blog posts is first-class
@@ -45,32 +48,36 @@ Use a dedicated static site generator for the landing page + blog, served from a
 ### Connecting Landing Page and App
 
 #### Subdomain split (cleanest)
+
 ```
-opticv.com          → Astro landing page + blog (static, CDN-hosted)
-app.opticv.com      → Angular app (NestJS backend on :3000)
+opticv.net          → Astro landing page + blog (static, CDN-hosted)
+app.opticv.net      → Angular app (NestJS backend on :3000)
 ```
 
 **Connection points:**
-- "Get Started" / CTA buttons on the landing page link to `app.opticv.com/login` or `app.opticv.com/cv-optimization`
+
+- "Get Started" / CTA buttons on the landing page link to `app.opticv.net/login` or `app.opticv.net/cv-optimization`
 - Shared design tokens — copy Tailwind config and color palette into the Astro project
 - No shared auth needed — the landing page is fully public
 
 #### Same domain with path prefix (more complex)
+
 ```
-opticv.com/         → Landing page
-opticv.com/blog/    → Blog
-opticv.com/app/     → Angular app
+opticv.net/         → Landing page
+opticv.net/blog/    → Blog
+opticv.net/app/     → Angular app
 ```
+
 Requires a reverse proxy (Nginx/Caddy) to route paths to different origins. More DevOps work, but keeps a single domain.
 
 ### Recommendation Summary
 
-| Need | Solution |
-|---|---|
-| Landing page | **Astro** on a separate repo/subdomain |
-| Blog | **Astro + Markdown/MDX** (or connect a headless CMS like Contentful/Sanity later) |
-| App | Keep Angular app as-is at `app.opticv.com` |
-| Connection | CTA links between the two; shared Tailwind color palette |
+| Need         | Solution                                                                          |
+| ------------ | --------------------------------------------------------------------------------- |
+| Landing page | **Astro** on a separate repo/subdomain                                            |
+| Blog         | **Astro + Markdown/MDX** (or connect a headless CMS like Contentful/Sanity later) |
+| App          | Keep Angular app as-is at `app.opticv.net`                                        |
+| Connection   | CTA links between the two; shared Tailwind color palette                          |
 
 If keeping everything in the Nx monorepo, Astro can be added as a new project inside `apps/` using the `@nxtensions/astro` Nx integration.
 
@@ -81,6 +88,7 @@ If keeping everything in the Nx monorepo, Astro can be added as a new project in
 ### Stack Deployment Requirements
 
 Three things to deploy:
+
 1. **Angular SSR app** (`opticv-web`) — Node.js server (Express, port 4000)
 2. **NestJS backend** (`opticv-be`) — Node.js server (Express, port 3000)
 3. **PostgreSQL database** — already on **Supabase** ✅ (no action needed)
@@ -101,6 +109,7 @@ Railway Project
 ```
 
 **Why Railway:**
+
 - Native monorepo support — each service gets a different build command
 - Built-in Redis (needed for BullMQ + throttler)
 - No Dockerfile required to start
@@ -111,19 +120,19 @@ Railway Project
 
 **Billing formula:** Pay per actual resource consumed
 
-| Resource | Cost |
-|---|---|
-| CPU | $20 / vCPU / month |
-| RAM | $10 / GB RAM / month |
-| Egress (outbound traffic) | $0.10 / GB |
-| Storage | $0.25 / GB / month |
+| Resource                  | Cost                 |
+| ------------------------- | -------------------- |
+| CPU                       | $20 / vCPU / month   |
+| RAM                       | $10 / GB RAM / month |
+| Egress (outbound traffic) | $0.10 / GB           |
+| Storage                   | $0.25 / GB / month   |
 
 **Plans:**
 
-| Plan | Monthly fee | Included credit |
-|---|---|---|
-| **Hobby** | $5/month | $5 usage credit |
-| **Pro** | Higher | $20 usage credit |
+| Plan      | Monthly fee | Included credit  |
+| --------- | ----------- | ---------------- |
+| **Hobby** | $5/month    | $5 usage credit  |
+| **Pro**   | Higher      | $20 usage credit |
 
 **Realistic estimate for OptiCV at early/low traffic:**
 
@@ -144,18 +153,19 @@ Hostinger offers a managed Node.js hosting product with flat monthly pricing.
 
 #### Plans
 
-| | **Business Plan** | **Premium Plan** |
-|---|---|---|
-| CPU | 2 cores | 4 cores |
-| RAM | 3 GB | 4 GB |
-| Storage | 50 GB NVMe | 100 GB NVMe |
-| Node.js apps | 5 | 10 |
-| Bandwidth | Unlimited | Unlimited |
-| Renewal price | ~$17/month | ~$26/month |
+|               | **Business Plan** | **Premium Plan** |
+| ------------- | ----------------- | ---------------- |
+| CPU           | 2 cores           | 4 cores          |
+| RAM           | 3 GB              | 4 GB             |
+| Storage       | 50 GB NVMe        | 100 GB NVMe      |
+| Node.js apps  | 5                 | 10               |
+| Bandwidth     | Unlimited         | Unlimited        |
+| Renewal price | ~$17/month        | ~$26/month       |
 
 #### Redis Consideration
 
 Hostinger managed hosting does **not** include Redis. External provider needed:
+
 - **Upstash Redis** — free tier up to 10k requests/day, then pay-per-use (~$0–10/month for small apps)
 - **Redis Cloud** — free 30 MB tier
 
@@ -183,66 +193,68 @@ Managed cloud hosting sitting on top of AWS/GCP/DigitalOcean. Better suited for 
 
 ### Railway vs Cloudways Comparison
 
-| | **Railway** | **Cloudways** |
-|---|---|---|
-| **Type** | PaaS | Managed cloud hosting |
-| **Target user** | Developers, modern Node.js apps | Agencies, PHP/WordPress sites |
-| **Deploy from** | GitHub (auto-deploy on push) | SFTP, Git (more manual) |
-| **Node.js support** | First-class | Yes, but not primary focus |
-| **Redis** | 1-click plugin | Manual setup |
-| **Nx monorepo support** | Good | Awkward |
-| **Pricing model** | Pay per actual usage | Fixed monthly (server size) |
-| **Starting cost** | ~$5/month | ~$14/month |
-| **Free tier** | Yes (limited) | No |
-| **Primary strength** | Modern Node.js/containerized apps | PHP/WordPress/traditional web |
+|                         | **Railway**                       | **Cloudways**                 |
+| ----------------------- | --------------------------------- | ----------------------------- |
+| **Type**                | PaaS                              | Managed cloud hosting         |
+| **Target user**         | Developers, modern Node.js apps   | Agencies, PHP/WordPress sites |
+| **Deploy from**         | GitHub (auto-deploy on push)      | SFTP, Git (more manual)       |
+| **Node.js support**     | First-class                       | Yes, but not primary focus    |
+| **Redis**               | 1-click plugin                    | Manual setup                  |
+| **Nx monorepo support** | Good                              | Awkward                       |
+| **Pricing model**       | Pay per actual usage              | Fixed monthly (server size)   |
+| **Starting cost**       | ~$5/month                         | ~$14/month                    |
+| **Free tier**           | Yes (limited)                     | No                            |
+| **Primary strength**    | Modern Node.js/containerized apps | PHP/WordPress/traditional web |
 
 ---
 
 ### Railway vs Hostinger Comparison
 
-| | **Hostinger Managed** | **Railway** |
-|---|---|---|
-| **Pricing model** | Flat monthly fee | Pay per actual usage |
-| **Predictability** | ✅ Fixed cost, no surprises | ⚠️ Can fluctuate |
-| **Starting cost** | ~$17/month (renews) | ~$10–20/month |
-| **RAM** | 3 GB shared across apps | Per-service, scales up |
-| **Redis included** | ❌ No | ✅ 1-click plugin |
-| **GitHub auto-deploy** | ✅ Yes | ✅ Yes |
-| **Nx monorepo support** | ⚠️ Less clear | ✅ Custom build commands |
-| **Angular SSR support** | ✅ Listed as supported | ✅ Native Node.js |
-| **NestJS support** | ✅ Express-based | ✅ Native Node.js |
-| **Scaling** | Manual (upgrade plan) | Automatic |
-| **Redis/BullMQ** | ❌ Need external service | ✅ Built-in |
+|                         | **Hostinger Managed**       | **Railway**              |
+| ----------------------- | --------------------------- | ------------------------ |
+| **Pricing model**       | Flat monthly fee            | Pay per actual usage     |
+| **Predictability**      | ✅ Fixed cost, no surprises | ⚠️ Can fluctuate         |
+| **Starting cost**       | ~$17/month (renews)         | ~$10–20/month            |
+| **RAM**                 | 3 GB shared across apps     | Per-service, scales up   |
+| **Redis included**      | ❌ No                       | ✅ 1-click plugin        |
+| **GitHub auto-deploy**  | ✅ Yes                      | ✅ Yes                   |
+| **Nx monorepo support** | ⚠️ Less clear               | ✅ Custom build commands |
+| **Angular SSR support** | ✅ Listed as supported      | ✅ Native Node.js        |
+| **NestJS support**      | ✅ Express-based            | ✅ Native Node.js        |
+| **Scaling**             | Manual (upgrade plan)       | Automatic                |
+| **Redis/BullMQ**        | ❌ Need external service    | ✅ Built-in              |
 
 ---
 
 ### Final Hosting Recommendation
 
-| Scenario | Pick |
-|---|---|
+| Scenario                                         | Pick          |
+| ------------------------------------------------ | ------------- |
 | Want **predictable flat pricing** and simplicity | **Hostinger** |
-| Want **usage-based pricing** and built-in Redis | **Railway** |
-| Cost-conscious at launch (promo pricing) | **Hostinger** |
-| Expect rapid scaling | **Railway** |
+| Want **usage-based pricing** and built-in Redis  | **Railway**   |
+| Cost-conscious at launch (promo pricing)         | **Hostinger** |
+| Expect rapid scaling                             | **Railway**   |
 
 ---
 
 ## 3. Domain & Subdomains
 
-Domain `opticv.com` is already purchased. **Subdomains are free** — no additional purchase needed.
+Domain `opticv.net` is already purchased. **Subdomains are free** — no additional purchase needed.
 
 ### How Subdomains Work
 
-When you own `opticv.com`, you control all subdomains under it. Configure them via DNS settings at your domain registrar.
+When you own `opticv.net`, you control all subdomains under it. Configure them via DNS settings at your domain registrar.
 
 When deployed to Railway, each service gets a URL like:
+
 - `opticv-web-production.up.railway.app`
 - `opticv-be-production.up.railway.app`
 
 Add CNAME records in your DNS panel:
+
 ```
-app.opticv.com   →  CNAME  →  opticv-web-production.up.railway.app
-api.opticv.com   →  CNAME  →  opticv-be-production.up.railway.app
+app.opticv.net   →  CNAME  →  opticv-web-production.up.railway.app
+api.opticv.net   →  CNAME  →  opticv-be-production.up.railway.app
 ```
 
 ### SSL/HTTPS
@@ -252,6 +264,7 @@ Also free. Railway (and most modern hosts) automatically provision **Let's Encry
 ### Tip: Use Cloudflare for DNS
 
 Switch to Cloudflare as nameserver (free) for:
+
 - Fast global DNS propagation
 - DDoS protection
 - Free CDN layer
@@ -262,9 +275,9 @@ Switch to Cloudflare as nameserver (free) for:
 ## 4. Recommended Full Architecture
 
 ```
-opticv.com            → Netlify or Vercel     (Astro landing page — free)
-app.opticv.com        → Hostinger             (Angular SSR — paid)
-api.opticv.com        → Hostinger             (NestJS — paid)
+opticv.net            → Netlify or Vercel     (Astro landing page — free)
+app.opticv.net        → Hostinger             (Angular SSR — paid)
+api.opticv.net        → Hostinger             (NestJS — paid)
 ```
 
 - Supabase handles PostgreSQL ✅
@@ -279,6 +292,7 @@ api.opticv.com        → Hostinger             (NestJS — paid)
 **Decision: Render for both staging services**
 
 Render is a good fit for staging because:
+
 - Runs a real Node.js server — Angular SSR works without special adapters
 - Free tier is acceptable for staging (cold starts after inactivity are tolerable in non-prod)
 - Two services point at the same GitHub repo, each with a different build/start command
@@ -288,23 +302,23 @@ Render is a good fit for staging because:
 
 **`opticv-be` (staging)**
 
-| Setting | Value |
-|---|---|
-| Repo | same GitHub repo |
-| Branch | `staging` (or `develop`) |
-| Build command | `npm ci && npm exec nx build opticv-be` |
-| Start command | `node apps/opticv-be/dist/main.js` |
-| Environment | Set env vars per service in Render dashboard |
+| Setting       | Value                                        |
+| ------------- | -------------------------------------------- |
+| Repo          | same GitHub repo                             |
+| Branch        | `staging` (or `develop`)                     |
+| Build command | `npm ci && npm exec nx build opticv-be`      |
+| Start command | `node apps/opticv-be/dist/main.js`           |
+| Environment   | Set env vars per service in Render dashboard |
 
 **`opticv-web` (staging)**
 
-| Setting | Value |
-|---|---|
-| Repo | same GitHub repo |
-| Branch | `staging` (or `develop`) |
-| Build command | `npm ci && npm exec nx build opticv-web` |
+| Setting       | Value                                                    |
+| ------------- | -------------------------------------------------------- |
+| Repo          | same GitHub repo                                         |
+| Branch        | `staging` (or `develop`)                                 |
+| Build command | `npm ci && npm exec nx build opticv-web`                 |
 | Start command | `node apps/opticv-web/dist/opticv-web/server/server.mjs` |
-| Environment | Set `API_URL` to point at the staging backend |
+| Environment   | Set `API_URL` to point at the staging backend            |
 
 > ⚠️ Verify the exact SSR entry point path after the first build — it may differ slightly depending on Nx output config.
 
@@ -321,7 +335,7 @@ staging-opticv-web.onrender.com   → Angular SSR frontend
 staging-opticv-be.onrender.com    → NestJS backend
 ```
 
-Custom subdomains can be added later (e.g. `staging.app.opticv.com`) via CNAME in DNS.
+Custom subdomains can be added later (e.g. `staging.app.opticv.net`) via CNAME in DNS.
 
 ### Cost
 

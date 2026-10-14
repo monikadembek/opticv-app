@@ -28,6 +28,11 @@ export default defineConfig({
     url: 'http://localhost:4200',
     reuseExistingServer: true,
     cwd: workspaceRoot,
+    // The Angular SSR dev build routinely takes well over Playwright's
+    // 60s default here, causing spurious "Timed out waiting ... from
+    // config.webServer" failures before the server ever gets a chance
+    // to come up.
+    timeout: 180_000,
   },
   projects: [
     {

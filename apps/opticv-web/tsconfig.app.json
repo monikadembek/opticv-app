@@ -5,9 +5,8 @@
     "rootDir": "src",
     "lib": ["es2022", "dom", "dom.iterable"],
     "types": [],
+    "composite": true,
     "emitDeclarationOnly": false,
-    "composite": false,
-    "declarationMap": false,
     "moduleResolution": "bundler",
     "module": "preserve"
   },

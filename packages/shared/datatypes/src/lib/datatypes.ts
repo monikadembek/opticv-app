@@ -93,7 +93,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
       CV_OPTIMIZATION: 1,
       COVER_LETTER: 1,
       INTERVIEW_PREP: 1,
-      LINKEDIN: 0,
+      LINKEDIN: 1,
       CV_BUILDER: 1,
     },
     maxStoredCvs: 2,

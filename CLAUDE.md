@@ -84,15 +84,33 @@ npm exec nx run-many -t typecheck
 
 ### Prisma
 
-Prisma commands must run from the workspace root (the `cwd` matters for env file resolution):
+Prisma commands must run with `cwd` set to `apps/opticv-be` (not the workspace root) — `prisma.config.ts`
+lives there and resolves the schema path and env file relative to its own directory:
 
 ```bash
-npm exec prisma generate --schema=apps/opticv-be/prisma/schema.prisma
-npm exec prisma migrate dev --schema=apps/opticv-be/prisma/schema.prisma
-npm exec prisma studio --schema=apps/opticv-be/prisma/schema.prisma
+cd apps/opticv-be
+npm exec prisma generate
+npm exec prisma migrate dev
+npm exec prisma studio
 ```
 
 The generated Prisma client is output to `apps/opticv-be/src/generated/prisma/`.
+
+**`DATABASE_URL` / `DIRECT_URL` are `NODE_ENV`-driven**, like every other backend config value —
+they live in `apps/opticv-be/config/env/{development,staging,production}.env` alongside the rest,
+not in a separate flat `.env` file. `prisma.config.ts` loads `config/env/${NODE_ENV}.env` itself
+(defaulting to `development`) since the Prisma CLI runs outside Nest and can't rely on
+`ConfigModule`. To target staging or production from the workspace root, use:
+
+```bash
+npm run prisma:migrate:staging      # NODE_ENV=staging, cwd apps/opticv-be, migrate deploy
+npm run prisma:migrate:production   # NODE_ENV=production, cwd apps/opticv-be, migrate deploy
+npm run prisma:studio:staging
+npm run prisma:studio:production
+```
+
+(`migrate deploy`, not `migrate dev` — `dev` prompts interactively and can create new migrations;
+`deploy` only applies existing ones, which is what's needed against staging/production.)
 
 ---
 
@@ -115,7 +133,7 @@ packages/
 - **NestJS 11** with Express, built via **Webpack** (not `tsc` directly)
 - **Database:** PostgreSQL on Supabase, accessed through **Prisma 7** using the `@prisma/adapter-pg` driver adapter (connection-string based, not the default binary protocol)
 - `PrismaService` extends `PrismaClient` directly and is exported from `PrismaModule` — inject it into feature modules as needed
-- **Config:** `ConfigModule` loads `apps/opticv-be/config/env/{NODE_ENV}.env` at startup; schema validated by Joi (`config/validation.ts`). The `DATABASE_URL` for Prisma is read from `apps/opticv-be/.env` (not the same env file)
+- **Config:** `ConfigModule` loads `apps/opticv-be/config/env/{NODE_ENV}.env` at startup; schema validated by Joi (`config/validation.ts`). `DATABASE_URL`/`DIRECT_URL` are defined in the same file and picked up by `PrismaService` via `process.env`
 - Global API prefix: `/api`; CORS enabled
 - Build output: `apps/opticv-be/dist/`; deployment uses `prune` target to produce a minimal lockfile and copy workspace node_modules
 
@@ -168,8 +186,8 @@ The app uses **passwordless OTP authentication** via Supabase — no passwords, 
 
 ### Environment & Secrets
 
-- Backend env files: `apps/opticv-be/config/env/development.env` and `production.env` (loaded by NestJS ConfigModule)
-- `apps/opticv-be/.env` — contains `DATABASE_URL`; read directly by Prisma CLI and `PrismaService` at runtime
+- Backend env files: `apps/opticv-be/config/env/{development,staging,production}.env` (loaded by NestJS `ConfigModule`, keyed by `NODE_ENV`)
+- `DATABASE_URL` / `DIRECT_URL` live in those same files (not a separate `.env`) — `PrismaService` reads them via `process.env` (set by `ConfigModule` at Nest bootstrap), and `prisma.config.ts` loads the matching file itself for CLI usage outside Nest. See [Prisma](#prisma) above.
 - The Angular frontend has no runtime env files; environment config uses Angular's `environment.ts` pattern if needed
 
 ### CI (GitHub Actions)

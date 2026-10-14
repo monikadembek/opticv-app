@@ -17,6 +17,7 @@ import type {
 } from '@opticv/datatypes';
 import { getEffectiveTier, OptimizationResultSummary } from '@opticv/datatypes';
 import { QuotaService } from '../quota/quota.service.js';
+import { OptimizationEventBus } from './optimization-event-bus.js';
 
 const CV_SUBSET_PROMPT_TYPES: PromptType[] = [
   PromptType.RESUME_AUTOPSY,
@@ -41,6 +42,7 @@ export class OptimizationService {
     private readonly prisma: PrismaService,
     private readonly quotaService: QuotaService,
     @InjectQueue('optimization') private readonly queue: Queue,
+    private readonly eventBus: OptimizationEventBus,
   ) {}
 
   private async resolveTierAndPeriod(userId: string): Promise<{
@@ -130,13 +132,14 @@ export class OptimizationService {
       ),
     );
 
+    this.eventBus.registerRun(runId, CV_SUBSET_PROMPT_TYPES.length);
+
     await Promise.all(
       CV_SUBSET_PROMPT_TYPES.map((promptType) =>
-        this.queue.add(
-          'optimize',
-          { ...payloadBase, promptType } satisfies OptimizationJobPayload,
-          { attempts: 2, backoff: { type: 'exponential', delay: 2000 } },
-        ),
+        this.queue.add('optimize', {
+          ...payloadBase,
+          promptType,
+        } satisfies OptimizationJobPayload),
       ),
     );
 
@@ -149,6 +152,8 @@ export class OptimizationService {
     runId: string | undefined,
     userId: string,
   ): Promise<{ runId: string }> {
+    // A caller-supplied runId may belong to a run that is already registered.
+    const isNewRun = runId === undefined;
     runId = runId ?? randomUUID();
     const { cvText, parsedSections, jobDescription, jobTitle } =
       await this.loadAndValidateApplication(jobApplicationId, userId);
@@ -188,20 +193,20 @@ export class OptimizationService {
       },
     });
 
-    await this.queue.add(
-      'optimize',
-      {
-        runId,
-        jobApplicationId,
-        userId,
-        promptType,
-        cvText,
-        parsedSections,
-        jobDescription,
-        jobTitle,
-      } satisfies OptimizationJobPayload,
-      { attempts: 2, backoff: { type: 'exponential', delay: 2000 } },
-    );
+    if (isNewRun) {
+      this.eventBus.registerRun(runId, 1);
+    }
+
+    await this.queue.add('optimize', {
+      runId,
+      jobApplicationId,
+      userId,
+      promptType,
+      cvText,
+      parsedSections,
+      jobDescription,
+      jobTitle,
+    } satisfies OptimizationJobPayload);
 
     return { runId };
   }
@@ -226,6 +231,25 @@ export class OptimizationService {
     if (existing && existing.status !== 'FAILED') {
       throw new BadRequestException(
         'Only a failed or not-yet-started result can be retried for free; use the normal trigger endpoint instead.',
+      );
+    }
+
+    // Result rows are only created after quota is consumed, so a missing row
+    // was never paid for — unless a sibling CV-subset row shows the single
+    // CV_OPTIMIZATION credit for this application was already charged.
+    if (
+      !existing &&
+      !(await this.isCvSubsetPaid(jobApplicationId, promptType))
+    ) {
+      const { tier, periodStart, periodEnd, cancelAtPeriodEnd } =
+        await this.resolveTierAndPeriod(userId);
+      await this.quotaService.checkAndConsume(
+        userId,
+        PROMPT_TYPE_TO_FEATURE[promptType],
+        tier,
+        periodStart,
+        periodEnd,
+        cancelAtPeriodEnd,
       );
     }
 
@@ -260,22 +284,35 @@ export class OptimizationService {
       });
     }
 
-    await this.queue.add(
-      'optimize',
-      {
-        runId,
-        jobApplicationId,
-        userId,
-        promptType,
-        cvText,
-        parsedSections,
-        jobDescription,
-        jobTitle,
-      } satisfies OptimizationJobPayload,
-      { attempts: 2, backoff: { type: 'exponential', delay: 2000 } },
-    );
+    this.eventBus.registerRun(runId, 1);
+
+    await this.queue.add('optimize', {
+      runId,
+      jobApplicationId,
+      userId,
+      promptType,
+      cvText,
+      parsedSections,
+      jobDescription,
+      jobTitle,
+    } satisfies OptimizationJobPayload);
 
     return { runId };
+  }
+
+  private async isCvSubsetPaid(
+    jobApplicationId: string,
+    promptType: PromptType,
+  ): Promise<boolean> {
+    if (!CV_SUBSET_PROMPT_TYPES.includes(promptType)) return false;
+    const sibling = await this.prisma.optimizationResult.findFirst({
+      where: {
+        applicationId: jobApplicationId,
+        promptType: { in: CV_SUBSET_PROMPT_TYPES },
+      },
+      select: { id: true },
+    });
+    return sibling !== null;
   }
 
   async saveUserOutput(

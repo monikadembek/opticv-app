@@ -29,6 +29,7 @@ const MINIMAL_CV: CvStructuredData = {
 // ResizeObserver is not available in JSDOM — stub it with a proper class so
 // `new ResizeObserver(cb)` works and we can fire the callback manually.
 function stubResizeObserver(): (entries: ResizeObserverEntry[]) => void {
+  // eslint-disable-next-line @typescript-eslint/no-empty-function -- placeholder replaced by the constructor below
   let capturedCallback: (entries: ResizeObserverEntry[]) => void = () => {};
   class MockResizeObserver {
     constructor(cb: (entries: ResizeObserverEntry[]) => void) {

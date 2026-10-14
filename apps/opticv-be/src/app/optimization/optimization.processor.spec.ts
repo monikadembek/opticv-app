@@ -25,7 +25,14 @@ const basePayload: OptimizationJobPayload = {
   jobTitle: 'Senior Engineer',
 };
 
-const makeJob = (data: OptimizationJobPayload) => ({ data } as Job<OptimizationJobPayload>);
+const makeJob = (
+  data: OptimizationJobPayload,
+  {
+    attemptsMade = 0,
+    attempts = 1,
+  }: { attemptsMade?: number; attempts?: number } = {},
+) =>
+  ({ data, attemptsMade, opts: { attempts } }) as Job<OptimizationJobPayload>;
 
 const activePrompt = {
   id: 'pv-1',
@@ -182,7 +189,9 @@ describe('OptimizationProcessor', () => {
       new NotFoundException(`Prompt not found for type: ${PROMPT_TYPE}`),
     );
 
-    await expect(processor.process(makeJob(basePayload))).rejects.toThrow(NotFoundException);
+    await expect(processor.process(makeJob(basePayload))).rejects.toThrow(
+      NotFoundException,
+    );
 
     expect(mockPrisma.optimizationResult.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -200,13 +209,67 @@ describe('OptimizationProcessor', () => {
     mockPrisma.optimizationResult.update.mockResolvedValue({});
     mockPromptService.getActivePrompt.mockResolvedValue(activePrompt);
     mockPromptService.buildUserPrompt.mockReturnValue('built prompt');
-    mockOpenAiService.generateCompletion.mockRejectedValue(new Error('OpenAI timeout'));
+    mockOpenAiService.generateCompletion.mockRejectedValue(
+      new Error('OpenAI timeout'),
+    );
 
-    await expect(processor.process(makeJob(basePayload))).rejects.toThrow('OpenAI timeout');
+    await expect(processor.process(makeJob(basePayload))).rejects.toThrow(
+      'OpenAI timeout',
+    );
 
     expect(mockPrisma.optimizationResult.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ status: 'FAILED', errorMessage: 'OpenAI timeout' }),
+        data: expect.objectContaining({
+          status: 'FAILED',
+          errorMessage: 'OpenAI timeout',
+        }),
+      }),
+    );
+    expect(mockEventBus.emit).toHaveBeenCalledWith('run-1', {
+      promptType: PROMPT_TYPE,
+      status: 'failed',
+      error: 'OpenAI timeout',
+    });
+  });
+
+  it('does not set FAILED or emit when a non-final attempt fails, and re-throws so BullMQ retries', async () => {
+    mockPrisma.optimizationResult.update.mockResolvedValue({});
+    mockPromptService.getActivePrompt.mockResolvedValue(activePrompt);
+    mockPromptService.buildUserPrompt.mockReturnValue('built prompt');
+    mockOpenAiService.generateCompletion.mockRejectedValue(
+      new Error('OpenAI timeout'),
+    );
+
+    await expect(
+      processor.process(makeJob(basePayload, { attemptsMade: 0, attempts: 2 })),
+    ).rejects.toThrow('OpenAI timeout');
+
+    expect(mockPrisma.optimizationResult.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: 'FAILED' }),
+      }),
+    );
+    expect(mockEventBus.emit).not.toHaveBeenCalled();
+  });
+
+  it('sets FAILED and emits failure event when the final attempt fails', async () => {
+    mockPrisma.optimizationResult.update.mockResolvedValue({});
+    mockPromptService.getActivePrompt.mockResolvedValue(activePrompt);
+    mockPromptService.buildUserPrompt.mockReturnValue('built prompt');
+    mockOpenAiService.generateCompletion.mockRejectedValue(
+      new Error('OpenAI timeout'),
+    );
+
+    await expect(
+      processor.process(makeJob(basePayload, { attemptsMade: 1, attempts: 2 })),
+    ).rejects.toThrow('OpenAI timeout');
+
+    expect(mockPrisma.optimizationResult.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: 'FAILED',
+          errorMessage: 'OpenAI timeout',
+        }),
       }),
     );
     expect(mockEventBus.emit).toHaveBeenCalledWith('run-1', {

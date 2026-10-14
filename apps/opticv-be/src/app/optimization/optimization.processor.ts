@@ -9,11 +9,14 @@ import { CostCalculatorService } from '../ai/services/cost-calculator.service.js
 import { UsageLogService } from '../ai/services/usage-log.service.js';
 import { OptimizationEventBus } from './optimization-event-bus.js';
 import type { OptimizationJobPayload } from './optimization.types.js';
+import {
+  OPTIMIZATION_QUEUE,
+  buildOptimizationWorkerOptions,
+} from './optimization-queue.config.js';
 
 const FALLBACK_MODEL = 'gpt-4o-mini';
-const CONCURRENCY = parseInt(process.env['BULLMQ_CONCURRENCY'] ?? '5', 10);
 
-@Processor('optimization', { concurrency: CONCURRENCY })
+@Processor(OPTIMIZATION_QUEUE, buildOptimizationWorkerOptions())
 export class OptimizationProcessor extends WorkerHost {
   private readonly logger = new Logger(OptimizationProcessor.name);
 
@@ -72,7 +75,9 @@ export class OptimizationProcessor extends WorkerHost {
       } | null;
 
       if (!outputSchema) {
-        throw new Error(`Prompt version for ${promptType} has no outputSchema — cannot generate structured output`);
+        throw new Error(
+          `Prompt version for ${promptType} has no outputSchema — cannot generate structured output`,
+        );
       }
 
       const model = promptVersion.modelPreference ?? FALLBACK_MODEL;
@@ -131,6 +136,18 @@ export class OptimizationProcessor extends WorkerHost {
       });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
+
+      // BullMQ will run this job again: keep the row PROCESSING and stay
+      // silent, so the run is not reported as failed (and the free retry
+      // endpoint cannot queue a duplicate) while a retry is still pending.
+      const isFinalAttempt = job.attemptsMade + 1 >= (job.opts.attempts ?? 1);
+      if (!isFinalAttempt) {
+        this.logger.warn(
+          `Job attempt ${job.attemptsMade + 1} failed for ${promptType}, retrying: ${message}`,
+        );
+        throw err;
+      }
+
       this.logger.error(`Job failed for ${promptType}: ${message}`);
 
       await this.prisma.optimizationResult.update({

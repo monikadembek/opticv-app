@@ -1605,10 +1605,198 @@ After changes in the ui some images require update:
 
 ---
 
+## 118. Prepare production environment
+
+**status: done**
+**time: 14.09.2026 - 24.09.2026**
+
+- prepare all services, environments config and infrastructure for the production env
+- deploy to hostinger
+
+---
+
+## 119: Billing Bug: one logical run costs four credits instead of one. A FREE user can never complete a single optimization.
+
+## Bug - UI: a failed or never-arriving job leaves the card spinning with no error shown.
+
+**status - done**
+
+**time - 25.09.2026 - 06.10.2026**
+
+The problem
+
+cv-optimization.ts:846 loops over every active prompt type and calls the single-job endpoint once per prompt — four separate HTTP calls. The bulk /run endpoint exists but the UI never uses it.
+
+Every one of those four calls independently runs the quota check (optimization.service.ts:159), and all four map to the same feature, CV_OPTIMIZATION. Your FREE tier allows 1. So:
+
+- Call 1 (RESUME_AUTOPSY) → takes the 1 credit → 202 Accepted, job queued
+- Call 2 (KEYWORD_GAP) → no credit left → 403 QUOTA_EXCEEDED
+- Call 3 (SUMMARY_REWRITE) → cancelled, because in RxJS a single error tears down the whole stream
+
+That's exactly the pattern you saw. The quota isn't broken — one run is being billed four times.
+
+The stuck spinner is a second, separate bug. runOptimization only sets isProcessing = false when a completion event arrives (:878). The error handler at :884 just logs. So RESUME_AUTOPSY — whose request actually succeeded — spins forever if its result never arrives, and the three that failed never get their spinners cleared either.
+
+So there are two real bugs:
+
+1. Billing: one logical run costs four credits instead of one. A FREE user can never complete a single optimization.
+2. UI: a failed or never-arriving job leaves the card spinning with no error shown.
+
+How to fix it
+
+For the billing bug, the clean fix is to make the frontend call the bulk endpoint /run, which already charges once and queues all four jobs (optimization.service.ts:85-132). That's what it was built for. You'd rework runOptimization to make one call, then open one SSE stream on the returned runId for all four results.
+
+The alternative — charge only on the first prompt type server-side — would keep the frontend as-is but bolts special-case logic onto the quota service. I'd go with the bulk endpoint.
+
+For the UI bug, the error handler needs to clear isProcessing for the affected prompt type and surface the message, so quota errors show as "you're out of credits" instead of an eternal spinner.
+
+After implementation:
+What changed
+
+- Billing: a run now makes one call to the bulk /run endpoint for the four CV sections, so it uses one CV_OPTIMIZATION credit instead of four. Cover letter, interview prep and LinkedIn each get their own call. Each call has its own error handling, so one rejection no longer cancels the rest.
+- Stream closing (server): the event bus now records how many jobs each run queued and which prompt types have reported, counting each prompt type once so a BullMQ retry can't close the stream early. The stream closes when every job has reported, or after 180 s with no events. The run-complete message includes a timedOut flag.
+- Stream closing (client): the connection stays open until run-complete instead of closing after the first resul
+- No stuck spinners: a rejected request, a failed job, a dropped connection or a timeout now stops the spinner and shows a message on the card with role="alert". There are separate messages for out of credits, not on your plan (LinkedIn on FREE) and generic failures. Retry is hidden for cards that timed out, since their database row is stuck in PROCESSING and the retry endpoint would reject it.
+
+Where I went beyond or away from the plan
+
+- A timed-out run-complete reaches the component as an OptimizationStreamTimeoutError, because a completed stream can't carry data.
+- The event bus deletes a run's record once it completes, so runs nobody streams don't pile up in memory.
+- If a stream closes normally while a card is still spinning, that card is marked failed. This covers the "no card left spinning" requirement for every ending.
+- Retry now uses the same handling as a normal run, so a failed retry also shows its error.
+- The "hasn't been processed yet" text is hidden when an error message is showing.
+
+Things you should know
+
+1. You can get around quota with Retry. This was already there, but it's more visible now. When a trigger is rej no result, so the Retry button appears. The retry endpoint is free and accepts results that don't exist yet, so a FREE user who hits the limit can click Retry and get the section anyway. I didn't change this because it's outside the plan, but it should probably be a follow-up task.
+2. Failed cards show the raw backend error text (e.g. "Prompt not found for type: …"), as the spec asked. You may want friendlier wording.
+3. Results that arrive before the client opens the stream are still lost, as before. Now those cards show the timeout message after 3 minutes instead of spinning forever.
+4. nx format:check flags about 314 files locally, including mine, but only because of Windows CRLF line endings in the working copy. Checking with line endings ignored, all changed files pass, and git converts them to LF on commit. docs/tasks-list.md (your own edit) also fails the check; I left it alone.
+5. One unrelated frontend test (export-footer.spec.ts) timed out once and passed on re-run.
+
+---
+
+## 120. Include LinkedIn optimization in the FREE plan
+
+**status - done**
+**time - 07.10.2027**
+
+Include the LinkedIn optimization in the Free plan - allow 1 run
+
+---
+
+## 121. Upstash Redis - reduce Redis command usage (BE)
+
+**status: done**
+
+**time: 12.10.2026**
+
+**Problem**
+
+Upstash Redis runs out of free-tier credits after a few days. Upstash bills per command (500K/month on the free tier), and the backend sends commands to Redis around the clock, even with no users and no jobs:
+
+- The BullMQ worker (`@Processor('optimization')`) runs inside the Nest process and polls Redis all the time: a blocking wait for new jobs, renewed every few seconds, plus a stalled-job check on a timer. This idle polling uses most of the credits.
+- `ThrottlerStorageRedisService` (`app.module.ts`) uses the same Redis instance on every API request.
+- Neither the `optimization` queue (`optimization.module.ts`) nor any `queue.add(...)` call in `optimization.service.ts` sets `removeOnComplete` / `removeOnFail`, so completed and failed jobs stay in Redis forever.
+- When the process restarts mid-job, the job is retried (`attempts: 2`) and can go through the stalled-job check again, which adds more commands.
+
+Not fixed by task 119, which only changed billing and the UI spinner / Retry behaviour.
+
+**To do**
+
+- Add `defaultJobOptions` to `BullModule.registerQueue({ name: 'optimization' })`:
+  - move `attempts: 2` and `backoff: { type: 'exponential', delay: 2000 }` there and remove them from the three `queue.add(...)` calls in `optimization.service.ts`
+  - set `removeOnComplete` (e.g. keep for 1 hour / last 100 jobs)
+  - set `removeOnFail` (keep longer for debugging, e.g. 3–7 days)
+- Raise the worker's `stalledInterval` and `drainDelay` in the `@Processor('optimization', { ... })` options (`optimization.processor.ts`). Read them from env/config like `BULLMQ_CONCURRENCY`, add them to `config/validation.ts` and to all `config/env/*.env` files.
+- Decide where the throttler stores its counters: keep Redis, or switch to in-memory storage while only one backend instance runs (at least on dev/staging).
+- Update/add backend unit tests for the queue and worker options.
+- Check the Upstash dashboard command count for a day before and after the change.
+- Decide separately: move to a Redis plan with a flat monthly price (e.g. a small always-on instance) instead of Upstash's per-command pricing, because an idle BullMQ worker keeps polling no matter how it's tuned.
+
+**Acceptance criteria**
+
+- Completed and failed jobs are removed from Redis after the configured age/count.
+- An idle backend (no traffic, no jobs) sends noticeably fewer commands per day than before.
+- Optimization runs, retries and SSE results still work as before.
+
+**Manual Tests**
+
+Two manual checks to do:
+
+1. A smoke test with Docker Redis: start an optimization, retry a section, reopen a finished run.
+2. Confirm that finished jobs disappear from bull:optimization:\* after the configured time.
+
+To confirm that finished jobs disappear from bull:optimization:\* after the configured time do the following steps:
+
+Use your local Docker Redis with short retention values and watch the keys with redis-cli.
+
+One thing to know first: BullMQ doesn't delete old jobs on a timer. It cleans up when another job finishes. So a completed job older than the configured age only disappears once a later job completes, and the same applies to failed jobs. That's why the test below runs two optimizations.
+
+1. Set short retention values temporarily in apps/opticv-be/config/env/development.env:
+
+BULLMQ_REMOVE_ON_COMPLETE_AGE=30
+BULLMQ_REMOVE_ON_FAIL_AGE=30
+
+2. Start Redis and the app:
+
+docker compose up -d redis
+npm run start-be:dev
+npm exec nx serve opticv-web
+
+3. Run an optimization in the UI, then check that the settings were stored on the jobs. This gives you proof right away, without any waiting:
+
+docker compose exec redis redis-cli ZRANGE bull:optimization:completed 0 -1
+docker compose exec redis redis-cli HGET bull:optimization:<jobId> opts
+
+The first command lists the IDs of completed jobs. The second should return something like {"attempts":2,"backoff":{...},"removeOnComplete":{"age":30,"count":100},"removeOnFail":{"age":30}}. If removeOnComplete and removeOnFail are there, your config reached the queue.
+
+4. Check that completed jobs get removed:
+1. Note the job IDs in bull:optimization:completed.
+1. Wait more than 30 seconds.
+1. Run one more optimization, or retry a single section.
+1. Run the ZRANGE command again. The old IDs should be gone, and EXISTS bull:optimization:<oldJobId> should return 0. Only the newest jobs remain.
+
+1. Check failed jobs (optional). Make a job fail both attempts, for example by setting OPENAI_API_KEY to an invalid value and restarting the backend. Run an optimization and check ZRANGE bull:optimization:failed 0 -1. Wait more than 30 seconds, trigger another failure, and check again: the old failed IDs should be gone.
+
+1. Clean up:
+
+- Set the retention values back to 3600 and 604800.
+- Restore OPENAI_API_KEY if you changed it.
+- Restart the backend.
+
+To check the count limit as well, set BULLMQ_REMOVE_ON_COMPLETE_COUNT=3 and leave the age high. After a run that completes several jobs, ZCARD bull:optimization:completed should stay at 3 or fewer.
+
+Jobs created before this change don't carry the new settings, so they never get removed automatically. If your local Redis has old leftovers, either ignore those IDs or start clean with docker compose exec redis redis-cli FLUSHALL. That command wipes everything in Redis, so run it only against your local instance, never Upstash.
+
+---
+
+## 122. BUG - App is displayed in dark mode even though the dark mode is not yet implemented (FE)
+
+**status: done**
+**time: 14.10.2026**
+
+PrimeNg components currently follow the operating system's dark/light setting by default, so if user has the system set to dark mode, the components in the app will also be displayed in dark mode, even though the dark mode is not yet implemented and it doesn't look good.
+
+Turn off that behaviour so that app is always displayed in light mode until the proper dark mode is implemented.
+
+Set PrimeNG's darkModeSelector option. It defaults to 'system', which is why PrimeNG follows the OS setting. Change it to false.
+
+There's a second source of OS-driven dark mode. layout/footer/footer.html uses Tailwind dark: classes (dark:bg-neutral-800/50, etc.). In Tailwind 4, those also follow the OS setting by default, so the footer would still turn dark on a dark-mode OS. To make them use the same class, add this to src/styles.css after @import 'tailwindcss';:
+
+@custom-variant dark (&:where(.app-dark, .app-dark \*));
+
+With both changes, the whole app stays in light mode no matter what the OS is set to.
+
+---
+
 ## Implement dark / light mode
 
 **status: todo**
 **time:**
+
+Implement dark/light mode in the app.
+The plan has been saved to /docs/dark-mode-plan.md
 
 ---
 
@@ -1621,6 +1809,40 @@ After changes in the ui some images require update:
 - connect landing page with the app, make the login or optimize CV navigate to the app
 - consider whether we should keep the home page in the app, should we move user after login directly to dashboard, and home menu item should move back to landing page?
 - check if it would be possible to show login status in the landing page
+
+---
+
+## All jobs running at the same time - limit the number of jobs running at the same time
+
+The frontend now starts everything at once. But it's not quite "all 7 run at once": the backend still limits how many actually execute.
+
+Before (5f7729c): the page triggered each of the 7 prompts separately through mergeMap(..., 3). Each slot stayed taken until that prompt's SSE stream finished, so one user had at most 3 optimizations in flight. A new one started only when one finished.
+
+Now (commit 17117e1, cv-optimization.ts:917): runOptimization uses merge(...) with no concurrency limit, so it sends 4 requests at once:
+
+- 1 bulk run, which queues 4 jobs (Resume Autopsy, Keyword Gap, Summary Rewrite, Bullet Upgrade), billed as one CV optimization credit
+- 3 single runs: Cover Letter, Interview Prep, LinkedIn
+
+That puts all 7 jobs into the BullMQ queue immediately.
+
+What still limits them: the backend worker is set to BULLMQ_CONCURRENCY=5 (optimization.processor.ts:14-16, the same value in every env file). At most 5 jobs run against OpenAI at a time and the rest wait in Redis. That limit is shared by all users on a worker, not per user. So one user now takes up to 5 slots instead of 3, and can delay other users' jobs at busy times.
+
+Side effects:
+
+- The browser keeps 4 SSE connections open at once instead of up to 3. That's fine under HTTP/2. Under HTTP/1.1 it uses 4 of the 6 connections allowed per origin, and retries add more.
+- You can't simply put back merge(..., 3) and get the old behaviour. The bulk run is a single request that queues 4 jobs, so limiting requests no longer limits jobs.
+
+Options if you want the old throttling back:
+
+1. Per-user limit on the backend (recommended): BullMQ groups or a per-user rate limit. This works however the frontend triggers jobs.
+2. Lower BULLMQ_CONCURRENCY: simple, but it's a global limit and slows everyone down.
+3. Frontend ordering: run the bulk CV run first and start the 3 per-feature runs afterwards. That's a rough approximation and it's easy to get around through the API.
+
+Do you want me to go ahead with one of these?
+
+✻ Cogitated for 50s · done 3:21 PM
+
+※ recap: You're right: since the billing-bug fix, all 7 optimization jobs are queued at once, and the backend runs up to 5 of them at a time instead of the old 3. Next, choose a fix; I recommend a per-user limit on the backend.
 
 ---
 

@@ -1,6 +1,8 @@
 export const configuration = () => ({
   nodeEnv: process.env.NODE_ENV,
   port: parseInt(process.env.PORT || '3000', 10),
+  databaseUrl: process.env.DATABASE_URL,
+  directUrl: process.env.DIRECT_URL,
   supabase: {
     url: process.env.SUPABASE_URL,
     publishableKey: process.env.SUPABASE_PUBLISHABLE_KEY,
@@ -25,6 +27,23 @@ export const configuration = () => ({
   },
   bullmq: {
     concurrency: parseInt(process.env.BULLMQ_CONCURRENCY || '5', 10),
+    stalledInterval: parseInt(
+      process.env.BULLMQ_STALLED_INTERVAL || '300000',
+      10,
+    ),
+    drainDelay: parseInt(process.env.BULLMQ_DRAIN_DELAY || '60', 10),
+    removeOnCompleteAge: parseInt(
+      process.env.BULLMQ_REMOVE_ON_COMPLETE_AGE || '3600',
+      10,
+    ),
+    removeOnCompleteCount: parseInt(
+      process.env.BULLMQ_REMOVE_ON_COMPLETE_COUNT || '100',
+      10,
+    ),
+    removeOnFailAge: parseInt(
+      process.env.BULLMQ_REMOVE_ON_FAIL_AGE || '604800',
+      10,
+    ),
   },
   frontendUrl: process.env.FRONTEND_URL,
   stripe: {
@@ -42,5 +61,9 @@ export const configuration = () => ({
     aiIpLimit: parseInt(process.env.THROTTLER_AI_IP_LIMIT || '50', 10),
     aiUserTtl: parseInt(process.env.THROTTLER_AI_USER_TTL || '3600', 10),
     aiUserLimit: parseInt(process.env.THROTTLER_AI_USER_LIMIT || '10', 10),
+    storage:
+      process.env.THROTTLER_STORAGE === 'redis'
+        ? ('redis' as const)
+        : ('memory' as const),
   },
 });
