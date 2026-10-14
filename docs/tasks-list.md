@@ -1685,43 +1685,9 @@ Include the LinkedIn optimization in the Free plan - allow 1 run
 
 ---
 
-## All jobs running at the same time - limit the number of jobs running at the same time
-
-The frontend now starts everything at once. But it's not quite "all 7 run at once": the backend still limits how many actually execute.
-
-Before (5f7729c): the page triggered each of the 7 prompts separately through mergeMap(..., 3). Each slot stayed taken until that prompt's SSE stream finished, so one user had at most 3 optimizations in flight. A new one started only when one finished.
-
-Now (commit 17117e1, cv-optimization.ts:917): runOptimization uses merge(...) with no concurrency limit, so it sends 4 requests at once:
-
-- 1 bulk run, which queues 4 jobs (Resume Autopsy, Keyword Gap, Summary Rewrite, Bullet Upgrade), billed as one CV optimization credit
-- 3 single runs: Cover Letter, Interview Prep, LinkedIn
-
-That puts all 7 jobs into the BullMQ queue immediately.
-
-What still limits them: the backend worker is set to BULLMQ_CONCURRENCY=5 (optimization.processor.ts:14-16, the same value in every env file). At most 5 jobs run against OpenAI at a time and the rest wait in Redis. That limit is shared by all users on a worker, not per user. So one user now takes up to 5 slots instead of 3, and can delay other users' jobs at busy times.
-
-Side effects:
-
-- The browser keeps 4 SSE connections open at once instead of up to 3. That's fine under HTTP/2. Under HTTP/1.1 it uses 4 of the 6 connections allowed per origin, and retries add more.
-- You can't simply put back merge(..., 3) and get the old behaviour. The bulk run is a single request that queues 4 jobs, so limiting requests no longer limits jobs.
-
-Options if you want the old throttling back:
-
-1. Per-user limit on the backend (recommended): BullMQ groups or a per-user rate limit. This works however the frontend triggers jobs.
-2. Lower BULLMQ_CONCURRENCY: simple, but it's a global limit and slows everyone down.
-3. Frontend ordering: run the bulk CV run first and start the 3 per-feature runs afterwards. That's a rough approximation and it's easy to get around through the API.
-
-Do you want me to go ahead with one of these?
-
-✻ Cogitated for 50s · done 3:21 PM
-
-※ recap: You're right: since the billing-bug fix, all 7 optimization jobs are queued at once, and the backend runs up to 5 of them at a time instead of the old 3. Next, choose a fix; I recommend a per-user limit on the backend.
-
----
-
 ## 121. Upstash Redis - reduce Redis command usage (BE)
 
-**status: in progress**
+**status: done**
 
 **time: 12.10.2026**
 
@@ -1754,6 +1720,84 @@ Not fixed by task 119, which only changed billing and the UI spinner / Retry beh
 - An idle backend (no traffic, no jobs) sends noticeably fewer commands per day than before.
 - Optimization runs, retries and SSE results still work as before.
 
+**Manual Tests**
+
+Two manual checks to do:
+
+1. A smoke test with Docker Redis: start an optimization, retry a section, reopen a finished run.
+2. Confirm that finished jobs disappear from bull:optimization:\* after the configured time.
+
+To confirm that finished jobs disappear from bull:optimization:\* after the configured time do the following steps:
+
+Use your local Docker Redis with short retention values and watch the keys with redis-cli.
+
+One thing to know first: BullMQ doesn't delete old jobs on a timer. It cleans up when another job finishes. So a completed job older than the configured age only disappears once a later job completes, and the same applies to failed jobs. That's why the test below runs two optimizations.
+
+1. Set short retention values temporarily in apps/opticv-be/config/env/development.env:
+
+BULLMQ_REMOVE_ON_COMPLETE_AGE=30
+BULLMQ_REMOVE_ON_FAIL_AGE=30
+
+2. Start Redis and the app:
+
+docker compose up -d redis
+npm run start-be:dev
+npm exec nx serve opticv-web
+
+3. Run an optimization in the UI, then check that the settings were stored on the jobs. This gives you proof right away, without any waiting:
+
+docker compose exec redis redis-cli ZRANGE bull:optimization:completed 0 -1
+docker compose exec redis redis-cli HGET bull:optimization:<jobId> opts
+
+The first command lists the IDs of completed jobs. The second should return something like {"attempts":2,"backoff":{...},"removeOnComplete":{"age":30,"count":100},"removeOnFail":{"age":30}}. If removeOnComplete and removeOnFail are there, your config reached the queue.
+
+4. Check that completed jobs get removed:
+1. Note the job IDs in bull:optimization:completed.
+1. Wait more than 30 seconds.
+1. Run one more optimization, or retry a single section.
+1. Run the ZRANGE command again. The old IDs should be gone, and EXISTS bull:optimization:<oldJobId> should return 0. Only the newest jobs remain.
+
+1. Check failed jobs (optional). Make a job fail both attempts, for example by setting OPENAI_API_KEY to an invalid value and restarting the backend. Run an optimization and check ZRANGE bull:optimization:failed 0 -1. Wait more than 30 seconds, trigger another failure, and check again: the old failed IDs should be gone.
+
+1. Clean up:
+
+- Set the retention values back to 3600 and 604800.
+- Restore OPENAI_API_KEY if you changed it.
+- Restart the backend.
+
+To check the count limit as well, set BULLMQ_REMOVE_ON_COMPLETE_COUNT=3 and leave the age high. After a run that completes several jobs, ZCARD bull:optimization:completed should stay at 3 or fewer.
+
+Jobs created before this change don't carry the new settings, so they never get removed automatically. If your local Redis has old leftovers, either ignore those IDs or start clean with docker compose exec redis redis-cli FLUSHALL. That command wipes everything in Redis, so run it only against your local instance, never Upstash.
+
+---
+
+## 122. BUG - App is displayed in dark mode even though the dark mode is not yet implemented (FE)
+
+**status: done**
+**time: 14.10.2026**
+
+PrimeNg components currently follow the operating system's dark/light setting by default, so if user has the system set to dark mode, the components in the app will also be displayed in dark mode, even though the dark mode is not yet implemented and it doesn't look good.
+
+Turn off that behaviour so that app is always displayed in light mode until the proper dark mode is implemented.
+
+Set PrimeNG's darkModeSelector option. It defaults to 'system', which is why PrimeNG follows the OS setting. Change it to false.
+
+There's a second source of OS-driven dark mode. layout/footer/footer.html uses Tailwind dark: classes (dark:bg-neutral-800/50, etc.). In Tailwind 4, those also follow the OS setting by default, so the footer would still turn dark on a dark-mode OS. To make them use the same class, add this to src/styles.css after @import 'tailwindcss';:
+
+@custom-variant dark (&:where(.app-dark, .app-dark \*));
+
+With both changes, the whole app stays in light mode no matter what the OS is set to.
+
+---
+
+## Implement dark / light mode
+
+**status: todo**
+**time:**
+
+Implement dark/light mode in the app.
+The plan has been saved to /docs/dark-mode-plan.md
+
 ---
 
 ## Connect landing page with app
@@ -1768,10 +1812,37 @@ Not fixed by task 119, which only changed billing and the UI spinner / Retry beh
 
 ---
 
-## Implement dark / light mode
+## All jobs running at the same time - limit the number of jobs running at the same time
 
-**status: todo**
-**time: 22.08.2026**
+The frontend now starts everything at once. But it's not quite "all 7 run at once": the backend still limits how many actually execute.
+
+Before (5f7729c): the page triggered each of the 7 prompts separately through mergeMap(..., 3). Each slot stayed taken until that prompt's SSE stream finished, so one user had at most 3 optimizations in flight. A new one started only when one finished.
+
+Now (commit 17117e1, cv-optimization.ts:917): runOptimization uses merge(...) with no concurrency limit, so it sends 4 requests at once:
+
+- 1 bulk run, which queues 4 jobs (Resume Autopsy, Keyword Gap, Summary Rewrite, Bullet Upgrade), billed as one CV optimization credit
+- 3 single runs: Cover Letter, Interview Prep, LinkedIn
+
+That puts all 7 jobs into the BullMQ queue immediately.
+
+What still limits them: the backend worker is set to BULLMQ_CONCURRENCY=5 (optimization.processor.ts:14-16, the same value in every env file). At most 5 jobs run against OpenAI at a time and the rest wait in Redis. That limit is shared by all users on a worker, not per user. So one user now takes up to 5 slots instead of 3, and can delay other users' jobs at busy times.
+
+Side effects:
+
+- The browser keeps 4 SSE connections open at once instead of up to 3. That's fine under HTTP/2. Under HTTP/1.1 it uses 4 of the 6 connections allowed per origin, and retries add more.
+- You can't simply put back merge(..., 3) and get the old behaviour. The bulk run is a single request that queues 4 jobs, so limiting requests no longer limits jobs.
+
+Options if you want the old throttling back:
+
+1. Per-user limit on the backend (recommended): BullMQ groups or a per-user rate limit. This works however the frontend triggers jobs.
+2. Lower BULLMQ_CONCURRENCY: simple, but it's a global limit and slows everyone down.
+3. Frontend ordering: run the bulk CV run first and start the 3 per-feature runs afterwards. That's a rough approximation and it's easy to get around through the API.
+
+Do you want me to go ahead with one of these?
+
+✻ Cogitated for 50s · done 3:21 PM
+
+※ recap: You're right: since the billing-bug fix, all 7 optimization jobs are queued at once, and the backend runs up to 5 of them at a time instead of the old 3. Next, choose a fix; I recommend a per-user limit on the backend.
 
 ---
 
