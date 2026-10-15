@@ -1864,7 +1864,7 @@ Finally, turn on 2FA for your Stripe account if it isn't already, since it now h
 
 ## 124. Prepare payments for limited number of beta testers - 100%-off promotion codes
 
-**status: todo**
+**status: in progress**
 **time: 15.10.2026**
 
 Prepare a 100%-off promotion code with a redemption cap

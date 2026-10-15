@@ -91,6 +91,8 @@ export class StripeService {
       client_reference_id: userId,
       success_url: `${frontendUrl}/settings?billing=success`,
       cancel_url: `${frontendUrl}/settings?billing=canceled`,
+      allow_promotion_codes: true, // shows a "Add promotion code" field in Checkout
+      payment_method_collection: 'if_required', // no card needed when the total is €0
     });
 
     if (!session.url) {
