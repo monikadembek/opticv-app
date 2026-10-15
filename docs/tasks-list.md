@@ -1864,7 +1864,7 @@ Finally, turn on 2FA for your Stripe account if it isn't already, since it now h
 
 ## 124. Prepare payments for limited number of beta testers - 100%-off promotion codes
 
-**status: in progress**
+**status: done**
 **time: 15.10.2026**
 
 Prepare a 100%-off promotion code with a redemption cap
@@ -1890,7 +1890,7 @@ Trade-off: in Stripe and in your DB, testers show up as ACTIVE subscribers at â‚
 
 ## 125. Enable RLS in Supabase production database
 
-**status: todo**
+**status: in progress**
 **time: 15.10.2026**
 
 Enable Security RLS for all tables in Supabase production database.
