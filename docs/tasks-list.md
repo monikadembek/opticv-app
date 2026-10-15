@@ -1792,8 +1792,10 @@ With both changes, the whole app stays in light mode no matter what the OS is se
 
 ## 123. Prepare to go live with the payments in Stripe
 
-**status: in progress**
-**time: 14.10.2026**
+**status: done**
+**time: 14.10.2026-15.10.2026**
+
+All the documentation is in the file: /docs/stripe-payments-live.md
 
 Plan:
 
@@ -1857,6 +1859,100 @@ If production uses a brand-new Supabase project (the deployment plan suggests th
 1. Refund yourself from the Dashboard.
 
 Finally, turn on 2FA for your Stripe account if it isn't already, since it now handles real money.
+
+---
+
+## 124. Prepare payments for limited number of beta testers - 100%-off promotion codes
+
+**status: in progress**
+**time: 15.10.2026**
+
+Prepare a 100%-off promotion code with a redemption cap
+
+In the Stripe Dashboard (test mode first, then again in live mode):
+
+1. Create a coupon: 100% off, duration "repeating" for however long the beta lasts (for example 3 months), and limited to the Basic product so it can't be used on Pro.
+2. Create a promotion code on that coupon, for example OPTICV-BETA. Set max redemptions to the number of testers (for example 20) and optionally an expiry date. The redemption cap is your limit on the number of testers.
+   - If you want a code that can't be passed around, create one single-use code per tester instead (max redemptions = 1 each).
+
+In the code, createCheckoutSession in apps/opticv-be/src/app/stripe/stripe.service.ts needs two extra options:
+allow_promotion_codes: true, // shows a "Add promotion code" field in Checkout
+payment_method_collection: 'if_required' // no card needed when the total is €0
+
+That's all. The rest of your webhook flow already handles it:
+
+- checkout.session.completed and invoice.paid set the user to tier: BASIC, status: ACTIVE, with billing periods synced from Stripe, so quotas work as for a paying user.
+- When the coupon runs out, Stripe tries to charge. A tester who has added a card in the Billing Portal becomes a paying customer automatically. One who hasn't gets invoice.payment_failed → PAST_DUE, and your effective-tier logic in optimization.service.ts already treats them as FREE. After Stripe's retries, customer.subscription.deleted moves them back to FREE.
+
+Trade-off: in Stripe and in your DB, testers show up as ACTIVE subscribers at €0, not as "trialing". Your revenue reports will include €0 subscriptions.
+
+---
+
+## 125. Enable RLS in Supabase production database
+
+**status: todo**
+**time: 15.10.2026**
+
+Enable Security RLS for all tables in Supabase production database.
+
+Current setup makes this easy to do safely. Here's what I checked in the repo:
+
+- The frontend never queries tables directly. There are no supabase.from(...), .rpc() or .storage calls in opticv-web. Supabase is only used for auth.
+- The backend connects through Prisma as the postgres role (that's the user in DATABASE_URL in every env file). That role owns the tables and bypasses RLS.
+
+So you can turn RLS on for every table without adding any policies. With RLS on and no policies, the anon and authenticated roles can't read or change any rows through Supabase's auto-generated REST and GraphQL APIs. Right now, anyone with your public anon key can read and change these tables through that API. Prisma keeps working because it connects as postgres.
+
+Recommended: do it as a Prisma migration
+
+A migration applies the same change to dev, staging and production, and it's recorded in git.
+
+1. Create an empty migration (run from apps/opticv-be, against dev):
+   cd apps/opticv-be
+   npm exec prisma migrate dev -- --create-only --name enable_rls
+2. Put this in the generated migration.sql:
+   -- Enable RLS on all tables in public. No policies = deny-all for anon/authenticated
+   -- (Supabase Data API). The backend connects as postgres, so Prisma is unaffected.
+   ALTER TABLE "users" ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE "subscriptions" ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE "notifications" ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE "cv_documents" ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE "job_applications" ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE "optimization_results" ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE "prompt_versions" ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE "usage_quotas" ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE "usage_logs" ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE "\_prisma_migrations" ENABLE ROW LEVEL SECURITY;
+   (\_prisma_migrations also sits in public, so the API exposes it too.)
+3. Apply it to dev with npm exec prisma migrate dev and check the app still works.
+4. Roll it out from the workspace root:
+   npm run prisma:migrate:staging
+   npm run prisma:migrate:production
+
+Check it worked
+
+In the production Supabase SQL Editor:
+SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public';
+Every row should show true. The red "RLS disabled" warnings under Database → Advisors → Security Advisor should also go away. Then confirm the API is locked by calling GET https://<project>.supabase.co/rest/v1/users with the anon key as the apikey header. You should get back [].
+
+Things to keep in mind
+
+- New tables don't get RLS automatically. When you add a model, add ENABLE ROW LEVEL SECURITY to that migration. You could also add a line about this to CLAUDE.md so it doesn't get forgotten.
+- Optional extra step: if you never plan to use the Data API, you can also run REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon, authenticated;. Another option is to remove public from the exposed schemas in Settings → API.
+- Do not use FORCE ROW LEVEL SECURITY. It would apply RLS to the owner as well, and Prisma would stop working.
+- You'd need policies only if the frontend ever starts querying tables directly with the Supabase client. Then you'd write per-table policies such as USING (auth.uid() = user_id).
+- Quick-click alternative: you can enable RLS per table in the dashboard (Table Editor → table → Enable RLS). But that change wouldn't be recorded in your migrations, and staging and production could drift apart.
+
+---
+
+## 125. Create privacy policy and terms of service
+
+**status: todo**
+**time:**
+
+1. Create privacy policy
+2. Create terms of service
+3. Add both to landing page
+4. Add url of both in the Stripe Dashboard (Settings -> Business -> Business Details -> Public Details -> Edit: Privacy Policy URL and Terms of service URL)
 
 ---
 
