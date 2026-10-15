@@ -1890,7 +1890,7 @@ Trade-off: in Stripe and in your DB, testers show up as ACTIVE subscribers at �
 
 ## 125. Enable RLS in Supabase production database
 
-**status: in progress**
+**status: done**
 **time: 15.10.2026**
 
 Enable Security RLS for all tables in Supabase production database.
@@ -1924,6 +1924,8 @@ A migration applies the same change to dev, staging and production, and it's rec
    ALTER TABLE "\_prisma_migrations" ENABLE ROW LEVEL SECURITY;
    (\_prisma_migrations also sits in public, so the API exposes it too.)
 3. Apply it to dev with npm exec prisma migrate dev and check the app still works.
+   Or in case there are migrations on other branches (branch with cv-builder) which are not yet merged to dev then run:
+   npm exec prisma migrate deploy
 4. Roll it out from the workspace root:
    npm run prisma:migrate:staging
    npm run prisma:migrate:production
@@ -1941,6 +1943,12 @@ Things to keep in mind
 - Do not use FORCE ROW LEVEL SECURITY. It would apply RLS to the owner as well, and Prisma would stop working.
 - You'd need policies only if the frontend ever starts querying tables directly with the Supabase client. Then you'd write per-table policies such as USING (auth.uid() = user_id).
 - Quick-click alternative: you can enable RLS per table in the dashboard (Table Editor → table → Enable RLS). But that change wouldn't be recorded in your migrations, and staging and production could drift apart.
+
+When 117-cv-builder ships later
+
+- Merge dev into 117-cv-builder before you finish that branch, so it picks up the RLS migration. Otherwise prisma migrate dev will report drift on that branch too, just from the other side.
+- The CV Builder migration will be older than the RLS one but applied after it in production. That's fine: migrate deploy applies every migration that hasn't run yet, whatever its date. That migration only changes a column and an enum, so RLS doesn't affect it.
+- Any new table added on that branch (or later) needs its own ALTER TABLE … ENABLE ROW LEVEL SECURITY line in its migration. RLS doesn't turn on automatically for new tables.
 
 ---
 
