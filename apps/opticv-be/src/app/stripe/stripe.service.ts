@@ -93,6 +93,17 @@ export class StripeService {
       cancel_url: `${frontendUrl}/settings?billing=canceled`,
       allow_promotion_codes: true, // shows a "Add promotion code" field in Checkout
       payment_method_collection: 'if_required', // no card needed when the total is €0
+      // Requires a Terms of Service URL set in Stripe Dashboard → Settings → Public details
+      consent_collection: { terms_of_service: 'required' },
+      custom_text: {
+        terms_of_service_acceptance: {
+          message:
+            `I agree to the [Terms of Use](${frontendUrl}/terms-of-use) and acknowledge the ` +
+            `[Privacy Policy](${frontendUrl}/privacy-policy). I ask for my subscription to start ` +
+            `immediately and understand that it renews monthly until I cancel. I can still ` +
+            `withdraw within 14 days of my first payment for a full refund.`,
+        },
+      },
     });
 
     if (!session.url) {

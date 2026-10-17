@@ -54,6 +54,22 @@ export const appRoutes: Route[] = [
     canActivate: [authGuard],
   },
   {
+    path: 'privacy-policy',
+    title: 'Privacy Policy – OptiCV',
+    loadComponent: () =>
+      import('./features/legal/privacy-policy/privacy-policy').then(
+        (c) => c.PrivacyPolicy,
+      ),
+  },
+  {
+    path: 'terms-of-use',
+    title: 'Terms of Use – OptiCV',
+    loadComponent: () =>
+      import('./features/legal/terms-of-use/terms-of-use').then(
+        (c) => c.TermsOfUse,
+      ),
+  },
+  {
     path: '',
     pathMatch: 'full',
     redirectTo: 'home',
