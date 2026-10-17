@@ -1,6 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { ForbiddenException, InternalServerErrorException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { StripeService } from './stripe.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { SubscriptionService } from '../subscription/subscription.service.js';
@@ -77,10 +80,7 @@ describe('StripeService', () => {
         stripeCustomerId: 'cus_existing',
       });
 
-      const result = await service.getOrCreateCustomer(
-        'user-1',
-        'a@b.com',
-      );
+      const result = await service.getOrCreateCustomer('user-1', 'a@b.com');
 
       expect(result).toBe('cus_existing');
       expect(mockStripeClient.customers.create).not.toHaveBeenCalled();
@@ -90,10 +90,7 @@ describe('StripeService', () => {
       mockPrisma.subscription.findUnique.mockResolvedValue(null);
       mockStripeClient.customers.create.mockResolvedValue({ id: 'cus_new' });
 
-      const result = await service.getOrCreateCustomer(
-        'user-1',
-        'a@b.com',
-      );
+      const result = await service.getOrCreateCustomer('user-1', 'a@b.com');
 
       expect(result).toBe('cus_new');
       expect(mockStripeClient.customers.create).toHaveBeenCalledWith({
@@ -133,6 +130,12 @@ describe('StripeService', () => {
           customer: 'cus_existing',
           line_items: [{ price: 'price_basic', quantity: 1 }],
           client_reference_id: 'user-1',
+          consent_collection: { terms_of_service: 'required' },
+          custom_text: {
+            terms_of_service_acceptance: {
+              message: expect.stringMatching(/\/terms\).*\/privacy\)/),
+            },
+          },
         }),
       );
     });

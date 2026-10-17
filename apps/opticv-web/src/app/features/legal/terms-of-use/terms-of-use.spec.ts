@@ -33,7 +33,9 @@ describe('TermsOfUse', () => {
   });
 
   it('should link to the Privacy Policy', () => {
-    const link = fixture.debugElement.query(By.css('a[href="/privacy"]'));
+    const link = fixture.debugElement.query(
+      By.css('a[href="/privacy-policy"]'),
+    );
     expect(link).toBeTruthy();
   });
 });

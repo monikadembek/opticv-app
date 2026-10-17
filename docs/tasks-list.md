@@ -1954,7 +1954,7 @@ When 117-cv-builder ships later
 
 ## 126. Create privacy policy and terms of service
 
-**status: in progress**
+**status: done**
 **time: 16.10.2026 - 17.10.2026**
 
 1. Create privacy policy, add /privacy-policy route

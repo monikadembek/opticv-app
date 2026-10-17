@@ -60,6 +60,17 @@
         >
           <span pButtonLabel>Send sign-in code</span>
         </button>
+
+        <p class="auth-legal">
+          By continuing, you agree to our
+          <a routerLink="/terms-of-use" target="_blank" rel="noopener"
+            >Terms of Use</a
+          >
+          and acknowledge our
+          <a routerLink="/privacy-policy" target="_blank" rel="noopener"
+            >Privacy Policy</a
+          >.
+        </p>
       </form>
 
       @if (errorMessage()) {
