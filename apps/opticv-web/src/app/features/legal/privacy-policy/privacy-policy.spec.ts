@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
+import { CookieConsentStore } from '../../../core/stores/cookie-consent.store';
 import { PrivacyPolicy } from './privacy-policy';
 
 describe('PrivacyPolicy', () => {
@@ -35,6 +36,18 @@ describe('PrivacyPolicy', () => {
 
   it('should include the cookies section', () => {
     expect(fixture.debugElement.query(By.css('#cookies'))).toBeTruthy();
+  });
+
+  it('should reopen the cookie consent banner from the cookies section', () => {
+    const store = TestBed.inject(CookieConsentStore);
+    store.reject();
+    const button = fixture.debugElement.query(By.css('#cookies ~ p button'));
+    expect(button).toBeTruthy();
+    expect(button.nativeElement.textContent.trim()).toBe('Cookie settings');
+
+    button.nativeElement.click();
+
+    expect(store.isBannerVisible()).toBe(true);
   });
 
   it('should link to the Terms of Use', () => {

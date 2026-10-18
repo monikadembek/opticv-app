@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { CookieConsentStore } from '../../../core/stores/cookie-consent.store';
 
 @Component({
   selector: 'app-privacy-policy',
@@ -8,4 +9,10 @@ import { RouterLink } from '@angular/router';
   styleUrl: '../legal.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PrivacyPolicy {}
+export class PrivacyPolicy {
+  private readonly cookieConsentStore = inject(CookieConsentStore);
+
+  openCookieSettings(): void {
+    this.cookieConsentStore.reopenBanner();
+  }
+}

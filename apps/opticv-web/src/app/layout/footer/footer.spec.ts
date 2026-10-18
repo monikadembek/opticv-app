@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
+import { CookieConsentStore } from '../../core/stores/cookie-consent.store';
 import { Footer } from './footer';
 
 describe('Footer', () => {
@@ -49,6 +50,20 @@ describe('Footer', () => {
     expect(
       fixture.debugElement.query(By.css('a[href="/terms-of-use"]')),
     ).toBeTruthy();
+  });
+
+  it('should reopen the cookie consent banner from the Cookie settings button', () => {
+    const store = TestBed.inject(CookieConsentStore);
+    store.accept();
+    const button: HTMLButtonElement | undefined = Array.from<HTMLButtonElement>(
+      fixture.nativeElement.querySelectorAll('nav[aria-label="Legal"] button'),
+    ).find((b) => b.textContent?.trim() === 'Cookie settings');
+    expect(button).toBeTruthy();
+    expect(button?.type).toBe('button');
+
+    button?.click();
+
+    expect(store.isBannerVisible()).toBe(true);
   });
 
   it('should render a Facebook icon', () => {
