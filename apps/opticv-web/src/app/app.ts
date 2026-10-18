@@ -9,6 +9,7 @@ import { Router, RouterModule } from '@angular/router';
 import { TopHeader } from './layout/top-header/top-header';
 import { Footer } from './layout/footer/footer';
 import { PastDueBanner } from './layout/past-due-banner/past-due-banner';
+import { CookieConsentBanner } from './layout/cookie-consent-banner/cookie-consent-banner';
 import { Supabase } from './core/auth/services/supabase';
 import { ToastModule } from 'primeng/toast';
 import { PosthogService } from './core/services/posthog.service';
@@ -25,6 +26,7 @@ import posthog from 'posthog-js';
     ToastModule,
     WelcomeGuideModal,
     PastDueBanner,
+    CookieConsentBanner,
   ],
   selector: 'app-root',
   templateUrl: './app.html',

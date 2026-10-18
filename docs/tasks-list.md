@@ -2075,10 +2075,23 @@ Outside the documents, but worth checking
 
 ## 127. Add cookie consent banner
 
-**status: todo**
-**time:**
+**status: in progress**
+**time: 17.10.2026 - 18.10.2026**
 
 Add a cookie consent banner. The policy says analytics cookies are used only with consent where the law requires it. PostHog currently loads without asking, so EU and UK users need a banner (or PostHog's cookieless mode).
+Implement the functionality to start PostHog only after the visitor accepts analytics cookies, display the banner until user chooses.
+
+How it works now:
+
+- First visit: the banner appears at the bottom with equal Accept and Reject buttons and a link to the cookies section of the privacy policy. PostHog doesn't start, and any ph\_\* data left from an earlier Accept is deleted.
+- Accept: PostHog starts once, with your existing settings. If the user rejected earlier in the same session, tracking simply resumes.
+- Reject: PostHog never starts. If it was already running, tracking stops and its stored identifiers are deleted, with no page reload.
+- Changing the choice later:
+  - a "Cookie settings" button in the footer, next to the legal links;
+  - a "Cookie settings" button at the end of section 11 of the privacy policy;
+  - an "Analytics cookies" toggle in a new "Privacy" section on the Settings page.
+
+  When reopened from either button, the banner moves keyboard focus into itself and returns it to that button after the choice.
 
 ---
 
