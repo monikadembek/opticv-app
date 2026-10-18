@@ -271,6 +271,31 @@
   </section>
 
   <section
+    class="mb-6 rounded-lg border border-gray-200 p-6"
+    aria-label="Privacy"
+  >
+    <h2
+      class="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-500"
+    >
+      Privacy
+    </h2>
+    <div class="flex items-center justify-between gap-4 py-3">
+      <div>
+        <p class="text-sm font-semibold">Analytics cookies</p>
+        <p class="text-sm text-gray-500">
+          Help us improve OptiCV with anonymous usage analytics (PostHog).
+        </p>
+      </div>
+      <p-toggleswitch
+        [ngModel]="analyticsCookiesEnabled()"
+        (ngModelChange)="onAnalyticsCookiesToggle($event)"
+        [ngModelOptions]="{ standalone: true }"
+        ariaLabel="Analytics cookies"
+      />
+    </div>
+  </section>
+
+  <section
     aria-label="Danger zone"
     class="rounded-lg border border-gray-200 border-l-4 border-l-red-500 p-6"
   >

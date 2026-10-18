@@ -48,13 +48,19 @@
   margin-bottom: 0.35rem;
 }
 
-.legal-doc a {
+.legal-doc a,
+.legal-doc .link-button {
   color: #047857;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
-:host-context(.app-dark) .legal-doc a {
+.legal-doc .link-button {
+  cursor: pointer;
+}
+
+:host-context(.app-dark) .legal-doc a,
+:host-context(.app-dark) .legal-doc .link-button {
   color: #34d399;
 }
 

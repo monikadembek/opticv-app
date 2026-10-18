@@ -5,10 +5,15 @@
     <div>&copy; 2026 OptiCV. Made for job seekers who deserve better odds.</div>
     <div class="flex gap-3">
       <nav aria-label="Legal" class="flex gap-4">
-        <a routerLink="/privacy-policy" class="hover:underline"
-          >Privacy Policy</a
+        <a routerLink="/privacy-policy">Privacy Policy</a>
+        <a routerLink="/terms-of-use">Terms of Use</a>
+        <button
+          type="button"
+          class="cursor-pointer hover:text-(--primary-color)"
+          (click)="openCookieSettings()"
         >
-        <a routerLink="/terms-of-use" class="hover:underline">Terms of Use</a>
+          Cookie settings
+        </button>
       </nav>
       <a
         href="https://www.facebook.com/profile.php?id=61591526651342"
