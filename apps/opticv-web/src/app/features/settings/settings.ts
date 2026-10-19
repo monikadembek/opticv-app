@@ -37,6 +37,7 @@ import { UserSettingsApiService } from '../../core/services/user-settings-api.se
 import { catchError, EMPTY, tap } from 'rxjs';
 import posthog from 'posthog-js';
 import { CvStore } from '../../core/stores/cv.store';
+import { CookieConsentStore } from '../../core/stores/cookie-consent.store';
 
 @Component({
   selector: 'app-settings',
@@ -69,6 +70,7 @@ export class Settings implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly cvStore = inject(CvStore);
+  private readonly cookieConsentStore = inject(CookieConsentStore);
 
   readonly userProfile = this.userSettingsApiService.userProfile;
   readonly usageStatus = this.userSettingsApiService.usageStatus;
@@ -78,8 +80,10 @@ export class Settings implements OnInit {
   readonly isChangingEmail = signal(false);
   readonly newEmailSubmitted = signal(false);
   readonly emailChangePendingFor = signal<string | null>(null);
-  readonly productUpdatesEnabled = signal(true);
+  readonly productUpdatesEnabled = signal(false);
   readonly weeklyTipsEnabled = signal(false);
+  readonly analyticsCookiesEnabled =
+    this.cookieConsentStore.hasAcceptedAnalytics;
   readonly isRedirectingToCheckout = signal<'BASIC' | 'PRO' | null>(null);
   readonly isRedirectingToPortal = signal(false);
 
@@ -263,6 +267,14 @@ export class Settings implements OnInit {
         });
         this.userSettingsApiService.reloadUserProfile();
       });
+  }
+
+  onAnalyticsCookiesToggle(enabled: boolean): void {
+    if (enabled) {
+      this.cookieConsentStore.accept();
+    } else {
+      this.cookieConsentStore.reject();
+    }
   }
 
   onNotificationToggle(type: NotificationType, enabled: boolean): void {

@@ -11,7 +11,7 @@ import { ButtonModule } from 'primeng/button';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { InputTextModule } from 'primeng/inputtext';
 import { Supabase } from '../../services/supabase';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import posthog from 'posthog-js';
 
 @Component({
@@ -23,6 +23,7 @@ import posthog from 'posthog-js';
     InputTextModule,
     FloatLabelModule,
     FormsModule,
+    RouterLink,
   ],
   templateUrl: './login.html',
   styleUrl: './login.css',

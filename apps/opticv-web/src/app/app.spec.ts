@@ -6,6 +6,7 @@ import { App } from './app';
 import { TopHeader } from './layout/top-header/top-header';
 import { Footer } from './layout/footer/footer';
 import { PastDueBanner } from './layout/past-due-banner/past-due-banner';
+import { CookieConsentBanner } from './layout/cookie-consent-banner/cookie-consent-banner';
 import { Supabase } from './core/auth/services/supabase';
 import { ToastModule } from 'primeng/toast';
 import { CvStore } from './core/stores/cv.store';
@@ -24,6 +25,13 @@ class FooterStub {}
 
 @Component({ selector: 'app-past-due-banner', template: '', standalone: true })
 class PastDueBannerStub {}
+
+@Component({
+  selector: 'app-cookie-consent-banner',
+  template: '',
+  standalone: true,
+})
+class CookieConsentBannerStub {}
 
 // eslint-disable-next-line @angular-eslint/component-selector -- stubs the real PrimeNG p-toast selector
 @Component({ selector: 'p-toast', template: '', standalone: true })
@@ -89,6 +97,7 @@ describe('App', () => {
             TopHeader,
             Footer,
             PastDueBanner,
+            CookieConsentBanner,
             ToastModule,
             WelcomeGuideModal,
           ],
@@ -98,6 +107,7 @@ describe('App', () => {
             TopHeaderStub,
             FooterStub,
             PastDueBannerStub,
+            CookieConsentBannerStub,
             ToastStub,
             WelcomeGuideModalStub,
           ],

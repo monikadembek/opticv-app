@@ -7,7 +7,11 @@ import { R2Service } from '../storage/r2.service';
 import { QuotaService } from '../quota/quota.service';
 import { SubscriptionService } from '../subscription/subscription.service';
 
-const mockUser = { id: 'user-id', supabaseId: 'sb-id', email: 'test@example.com' };
+const mockUser = {
+  id: 'user-id',
+  supabaseId: 'sb-id',
+  email: 'test@example.com',
+};
 
 const FREE_TIER_CYCLE = {
   currentPeriodStart: new Date('2026-08-12T00:00:00.000Z'),
@@ -121,8 +125,14 @@ describe('UsersService', () => {
   });
 
   it('is idempotent when user already exists', async () => {
-    await service.upsertUser({ supabaseId: 'sb-id', email: 'test@example.com' });
-    await service.upsertUser({ supabaseId: 'sb-id', email: 'test@example.com' });
+    await service.upsertUser({
+      supabaseId: 'sb-id',
+      email: 'test@example.com',
+    });
+    await service.upsertUser({
+      supabaseId: 'sb-id',
+      email: 'test@example.com',
+    });
 
     expect(mockTx.user.upsert).toHaveBeenCalledTimes(2);
     expect(mockTx.subscription.upsert).toHaveBeenCalledTimes(2);
@@ -208,7 +218,10 @@ describe('UsersService', () => {
           cancelAtPeriodEnd: false,
           currentPeriodEnd: null,
         },
-        notifications: { productUpdatesEnabled: true, weeklyTipsEnabled: false },
+        notifications: {
+          productUpdatesEnabled: true,
+          weeklyTipsEnabled: false,
+        },
       });
     });
 
@@ -256,6 +269,10 @@ describe('UsersService', () => {
           currentPeriodEnd: null,
         },
       });
+      mockPrisma.notification.upsert.mockResolvedValueOnce({
+        productUpdatesEnabled: false,
+        weeklyTipsEnabled: false,
+      });
 
       const result = await service.getProfile('sb-id');
 
@@ -265,7 +282,7 @@ describe('UsersService', () => {
         update: {},
       });
       expect(result.notifications).toEqual({
-        productUpdatesEnabled: true,
+        productUpdatesEnabled: false,
         weeklyTipsEnabled: false,
       });
     });

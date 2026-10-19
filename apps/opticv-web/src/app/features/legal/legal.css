@@ -1,0 +1,115 @@
+.legal-doc {
+  max-width: 820px;
+  margin: 0 auto;
+  line-height: 1.65;
+}
+
+.legal-doc h1 {
+  font-family: Montserrat, Verdana, Geneva, Tahoma, sans-serif;
+  font-size: 2.25rem;
+  font-weight: 600;
+  line-height: 1.15;
+  margin: 0 0 0.5rem;
+}
+
+.legal-doc h2 {
+  font-family: Montserrat, Verdana, Geneva, Tahoma, sans-serif;
+  font-size: 1.4rem;
+  font-weight: 600;
+  line-height: 1.25;
+  margin: 2.5rem 0 0.75rem;
+}
+
+.legal-doc h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.5rem;
+}
+
+.legal-doc p {
+  margin: 0 0 0.9rem;
+}
+
+.legal-doc ul,
+.legal-doc ol {
+  margin: 0 0 0.9rem;
+  padding-left: 1.5rem;
+}
+
+.legal-doc ul {
+  list-style: disc;
+}
+
+.legal-doc ol {
+  list-style: decimal;
+}
+
+.legal-doc li {
+  margin-bottom: 0.35rem;
+}
+
+.legal-doc a,
+.legal-doc .link-button {
+  color: #047857;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.legal-doc .link-button {
+  cursor: pointer;
+}
+
+:host-context(.app-dark) .legal-doc a,
+:host-context(.app-dark) .legal-doc .link-button {
+  color: #34d399;
+}
+
+.legal-doc .legal-meta {
+  font-size: 0.9rem;
+  opacity: 0.75;
+  margin-bottom: 2rem;
+}
+
+.legal-doc .legal-note {
+  border-left: 4px solid #10b981;
+  padding: 0.75rem 1rem;
+  margin: 0 0 1.25rem;
+  background: rgba(16, 185, 129, 0.08);
+  border-radius: 4px;
+}
+
+.legal-doc .table-wrapper {
+  overflow-x: auto;
+  margin: 0 0 1.25rem;
+}
+
+.legal-doc table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.legal-doc th,
+.legal-doc td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid rgba(128, 128, 128, 0.35);
+}
+
+.legal-doc th {
+  font-weight: 600;
+  background: rgba(128, 128, 128, 0.08);
+}
+
+.legal-doc .withdrawal-form {
+  border: 1px dashed rgba(128, 128, 128, 0.6);
+  padding: 1rem 1.25rem;
+  border-radius: 6px;
+}
+
+@media screen and (max-width: 640px) {
+  .legal-doc h1 {
+    font-size: 1.75rem;
+  }
+}
