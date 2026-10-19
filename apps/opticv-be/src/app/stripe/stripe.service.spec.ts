@@ -133,7 +133,9 @@ describe('StripeService', () => {
           consent_collection: { terms_of_service: 'required' },
           custom_text: {
             terms_of_service_acceptance: {
-              message: expect.stringMatching(/\/terms\).*\/privacy\)/),
+              message: expect.stringMatching(
+                /\/terms-of-use\).*\/privacy-policy\)/,
+              ),
             },
           },
         }),

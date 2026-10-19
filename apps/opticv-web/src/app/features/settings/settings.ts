@@ -80,7 +80,7 @@ export class Settings implements OnInit {
   readonly isChangingEmail = signal(false);
   readonly newEmailSubmitted = signal(false);
   readonly emailChangePendingFor = signal<string | null>(null);
-  readonly productUpdatesEnabled = signal(true);
+  readonly productUpdatesEnabled = signal(false);
   readonly weeklyTipsEnabled = signal(false);
   readonly analyticsCookiesEnabled =
     this.cookieConsentStore.hasAcceptedAnalytics;

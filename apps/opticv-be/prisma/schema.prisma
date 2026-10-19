@@ -113,7 +113,7 @@ model Notification {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  productUpdatesEnabled Boolean @default(true)
+  productUpdatesEnabled Boolean @default(false)
   weeklyTipsEnabled     Boolean @default(false)
 
   createdAt DateTime @default(now())
