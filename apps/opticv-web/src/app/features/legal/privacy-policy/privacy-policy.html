@@ -1,7 +1,7 @@
 <div class="main-container responsive-horizontal-padding py-12">
   <article class="legal-doc">
     <h1>Privacy Policy</h1>
-    <p class="legal-meta">Last updated: 16 October 2026</p>
+    <p class="legal-meta">Last updated: 19 October 2026</p>
 
     <p>
       This Privacy Policy explains how OptiCV (“OptiCV”, “we”, “us”) collects,
@@ -88,7 +88,8 @@
       </li>
       <li>
         <strong>Analytics data:</strong> how you interact with the Service
-        (pages viewed, buttons clicked), collected with PostHog. See section 11.
+        (pages viewed, buttons clicked), collected with PostHog in the app and
+        with Google Analytics on our website (opticv.net). See section 11.
       </li>
       <li>
         <strong>Session replays:</strong> for a sample of sessions, and for
@@ -265,6 +266,11 @@
             <td>EU (Frankfurt)</td>
           </tr>
           <tr>
+            <td>Google (Google Analytics)</td>
+            <td>Website analytics on opticv.net</td>
+            <td>EU and USA</td>
+          </tr>
+          <tr>
             <td>Sentry</td>
             <td>Error monitoring and session replays</td>
             <td>EU (Germany)</td>
@@ -319,7 +325,10 @@
       <li>
         <strong>Logs, error reports and session replays:</strong> up to 30 days.
       </li>
-      <li><strong>Analytics data:</strong> up to 12 months.</li>
+      <li>
+        <strong>Analytics data:</strong> up to 12 months in PostHog, and up to
+        14 months in Google Analytics.
+      </li>
       <li>
         <strong>Correspondence, complaints and withdrawal notices:</strong> as
         long as needed to deal with them, and after that for as long as legal
@@ -439,6 +448,16 @@
             <td>Up to 1 year</td>
           </tr>
           <tr>
+            <td>Analytics</td>
+            <td>Google (Google Analytics)</td>
+            <td>
+              On our website (opticv.net), the <code>_ga</code> and
+              <code>_ga_*</code> cookies distinguish visitors and measure how
+              the website is used (page views, visits, how you found us)
+            </td>
+            <td>Up to 2 years</td>
+          </tr>
+          <tr>
             <td>Error monitoring</td>
             <td>Sentry</td>
             <td>
@@ -456,7 +475,14 @@
       consent where the law requires it, and you can change your choice at any
       time. You can also block or delete cookies in your browser settings, but
       blocking strictly necessary storage will sign you out and stop parts of
-      the Service from working.
+      the Service from working. To stop Google Analytics on all websites, you
+      can install the
+      <a
+        href="https://tools.google.com/dlpage/gaoptout"
+        target="_blank"
+        rel="noopener"
+        >Google Analytics opt-out browser add-on</a
+      >.
     </p>
     <p>
       <button type="button" class="link-button" (click)="openCookieSettings()">

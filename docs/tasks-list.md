@@ -2114,7 +2114,17 @@ When preparing the promotional emails remeber about adding an unsubscribe link t
 
 ---
 
-## 129. Automatically cancel Stripe subscription when account is deleted
+## 129. Update Privacy Policy with information about Google Analytics used in the landing page.
+
+**status: done**
+**time: 19.10.2026**
+
+Update privacy policy with information about Google Analytics used on landing page.
+Compare privacy policy from landing page https://opticv.net/privacy-policy/ and add information about google analytics used on landing page.
+
+---
+
+## 130. Automatically cancel Stripe subscription when account is deleted
 
 **status: todo**
 **time:**
