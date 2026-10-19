@@ -2097,10 +2097,14 @@ How it works now:
 
 ## 128. Turn "Product updates" emails off by default
 
-**status: todo**
-**time:**
+**status: in progress**
+**time: 18.10.2026 - 19.10.2026**
 
-Turn "Product updates" emails off by default. Your feature announcements and job-hunting tips count as promotional emails, and Polish law requires opt-in for those, but productUpdatesEnabled defaults to true. Also add an unsubscribe link to those emails.
+Turn "Product updates" emails off by default. Your feature announcements and job-hunting tips count as promotional emails, and Polish law requires opt-in for those, but productUpdatesEnabled defaults to true.
+When preparing the promotional emails remeber about adding an unsubscribe link to those emails.
+
+- prepare migration where productUpdatesEnabled in Notifications table is set to false by default
+- in frontend in settings set productUpdatesEnabled to signal false as a default value for the toggle control before we get the values from backend
 
 ---
 

@@ -851,10 +851,10 @@ describe('Settings', () => {
   // ─── notifications card ──────────────────────────────────────────────────
 
   describe('notifications card', () => {
-    it('defaults Product updates to enabled', async () => {
+    it('defaults Product updates to disabled', async () => {
       await setup({ value: mockProfile, hasValue: true });
       const { componentInstance } = TestBed.createComponent(Settings);
-      expect(componentInstance.productUpdatesEnabled()).toBe(true);
+      expect(componentInstance.productUpdatesEnabled()).toBe(false);
     });
 
     it('defaults Weekly job-search tips to disabled', async () => {
