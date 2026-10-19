@@ -2097,13 +2097,19 @@ How it works now:
 
 ## 128. Turn "Product updates" emails off by default
 
-**status: in progress**
+**status: done**
 **time: 18.10.2026 - 19.10.2026**
 
 Turn "Product updates" emails off by default. Your feature announcements and job-hunting tips count as promotional emails, and Polish law requires opt-in for those, but productUpdatesEnabled defaults to true.
 When preparing the promotional emails remeber about adding an unsubscribe link to those emails.
 
 - prepare migration where productUpdatesEnabled in Notifications table is set to false by default
+- run migration in dev:
+  npm exec prisma migrate deploy
+  npm exec prisma generate
+- run migration in staging and production environments
+  npm run prisma:migrate:staging
+  npm run prisma:migrate:production
 - in frontend in settings set productUpdatesEnabled to signal false as a default value for the toggle control before we get the values from backend
 
 ---
