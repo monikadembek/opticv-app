@@ -1,11 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { NotFoundException } from '@nestjs/common';
+import {
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { R2Service } from '../storage/r2.service';
 import { QuotaService } from '../quota/quota.service';
 import { SubscriptionService } from '../subscription/subscription.service';
+import { StripeService } from '../stripe/stripe.service';
+
+const mockDeleteUser = jest.fn();
+
+jest.mock('@supabase/supabase-js', () => ({
+  createClient: jest.fn(() => ({
+    auth: { admin: { deleteUser: mockDeleteUser } },
+  })),
+}));
 
 const mockUser = {
   id: 'user-id',
@@ -39,9 +51,11 @@ const mockPrisma = {
   user: {
     findUnique: jest.fn(),
     update: jest.fn(),
+    delete: jest.fn(),
   },
   cvDocument: {
     count: jest.fn().mockResolvedValue(0),
+    findMany: jest.fn(),
   },
   notification: {
     upsert: jest.fn(),
@@ -64,6 +78,10 @@ const mockSubscriptionService = {
   freeTierCycleFrom: jest.fn().mockReturnValue(FREE_TIER_CYCLE),
 };
 
+const mockStripeService = {
+  cancelAllSubscriptionsForCustomer: jest.fn(),
+};
+
 describe('UsersService', () => {
   let service: UsersService;
 
@@ -84,6 +102,7 @@ describe('UsersService', () => {
         { provide: ConfigService, useValue: mockConfig },
         { provide: QuotaService, useValue: mockQuotaService },
         { provide: SubscriptionService, useValue: mockSubscriptionService },
+        { provide: StripeService, useValue: mockStripeService },
       ],
     }).compile();
 
@@ -496,6 +515,128 @@ describe('UsersService', () => {
         PAID_TIER_CYCLE.currentPeriodEnd,
       );
       expect(result.storedCvs).toEqual({ used: 5, limit: 2 });
+    });
+  });
+
+  describe('deleteAccount', () => {
+    beforeEach(() => {
+      mockConfig.getOrThrow.mockImplementation((key: string) =>
+        key === 'supabase.url' ? 'https://supabase.test' : 'service-role-key',
+      );
+      mockStripeService.cancelAllSubscriptionsForCustomer.mockResolvedValue(
+        undefined,
+      );
+      mockPrisma.cvDocument.findMany.mockResolvedValue([
+        { storageKey: 'cvs/user-id/cv.pdf' },
+      ]);
+      mockPrisma.user.delete.mockResolvedValue(mockUser);
+      mockDeleteUser.mockResolvedValue({ error: null });
+    });
+
+    it('throws NotFoundException and deletes nothing when the user does not exist', async () => {
+      mockPrisma.user.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.deleteAccount('sb-id')).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(
+        mockStripeService.cancelAllSubscriptionsForCustomer,
+      ).not.toHaveBeenCalled();
+      expect(mockR2.delete).not.toHaveBeenCalled();
+      expect(mockPrisma.user.delete).not.toHaveBeenCalled();
+      expect(mockDeleteUser).not.toHaveBeenCalled();
+    });
+
+    it('cancels Stripe subscriptions before deleting any data', async () => {
+      mockPrisma.user.findUnique.mockResolvedValueOnce({
+        id: 'user-id',
+        subscription: { stripeCustomerId: 'cus_x' },
+      });
+
+      await service.deleteAccount('sb-id');
+
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+        where: { supabaseId: 'sb-id' },
+        select: {
+          id: true,
+          subscription: { select: { stripeCustomerId: true } },
+        },
+      });
+      expect(
+        mockStripeService.cancelAllSubscriptionsForCustomer,
+      ).toHaveBeenCalledWith('cus_x');
+      const cancelOrder =
+        mockStripeService.cancelAllSubscriptionsForCustomer.mock
+          .invocationCallOrder[0];
+      expect(cancelOrder).toBeLessThan(
+        mockPrisma.cvDocument.findMany.mock.invocationCallOrder[0],
+      );
+      expect(cancelOrder).toBeLessThan(
+        mockR2.delete.mock.invocationCallOrder[0],
+      );
+      expect(cancelOrder).toBeLessThan(
+        mockPrisma.user.delete.mock.invocationCallOrder[0],
+      );
+      expect(cancelOrder).toBeLessThan(
+        mockDeleteUser.mock.invocationCallOrder[0],
+      );
+    });
+
+    it.each([
+      ['no subscription row', null],
+      ['no Stripe customer', { stripeCustomerId: null }],
+    ])(
+      'skips Stripe and deletes the account when there is %s',
+      async (_label, subscription) => {
+        mockPrisma.user.findUnique.mockResolvedValueOnce({
+          id: 'user-id',
+          subscription,
+        });
+
+        await service.deleteAccount('sb-id');
+
+        expect(
+          mockStripeService.cancelAllSubscriptionsForCustomer,
+        ).not.toHaveBeenCalled();
+        expect(mockR2.delete).toHaveBeenCalledWith('cvs/user-id/cv.pdf');
+        expect(mockPrisma.user.delete).toHaveBeenCalledWith({
+          where: { id: 'user-id' },
+        });
+        expect(mockDeleteUser).toHaveBeenCalledWith('sb-id');
+      },
+    );
+
+    it('aborts the deletion when Stripe cancellation fails', async () => {
+      mockPrisma.user.findUnique.mockResolvedValueOnce({
+        id: 'user-id',
+        subscription: { stripeCustomerId: 'cus_x' },
+      });
+      mockStripeService.cancelAllSubscriptionsForCustomer.mockRejectedValueOnce(
+        new Error('Stripe down'),
+      );
+
+      await expect(service.deleteAccount('sb-id')).rejects.toThrow(
+        new InternalServerErrorException('Failed to delete account.'),
+      );
+      expect(mockPrisma.cvDocument.findMany).not.toHaveBeenCalled();
+      expect(mockR2.delete).not.toHaveBeenCalled();
+      expect(mockPrisma.user.delete).not.toHaveBeenCalled();
+      expect(mockDeleteUser).not.toHaveBeenCalled();
+    });
+
+    it('runs the full deletion when Stripe cancellation resolves', async () => {
+      mockPrisma.user.findUnique.mockResolvedValueOnce({
+        id: 'user-id',
+        subscription: { stripeCustomerId: 'cus_gone' },
+      });
+
+      await service.deleteAccount('sb-id');
+
+      expect(mockR2.delete).toHaveBeenCalledWith('cvs/user-id/cv.pdf');
+      expect(mockPrisma.user.delete).toHaveBeenCalledWith({
+        where: { id: 'user-id' },
+      });
+      expect(mockDeleteUser).toHaveBeenCalledWith('sb-id');
     });
   });
 });

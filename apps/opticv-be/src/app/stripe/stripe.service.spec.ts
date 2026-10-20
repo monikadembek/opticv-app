@@ -33,12 +33,35 @@ const mockStripeClient = {
   checkout: { sessions: { create: jest.fn() } },
   billingPortal: { sessions: { create: jest.fn() } },
   webhooks: { constructEvent: jest.fn() },
-  subscriptions: { retrieve: jest.fn() },
+  subscriptions: { retrieve: jest.fn(), list: jest.fn(), cancel: jest.fn() },
 };
 
 jest.mock('stripe', () => {
-  return jest.fn().mockImplementation(() => mockStripeClient);
+  const { errors } = jest.requireActual('stripe');
+  return Object.assign(
+    jest.fn().mockImplementation(() => mockStripeClient),
+    { errors },
+  );
 });
+
+const { errors: stripeErrors } = jest.requireActual('stripe');
+
+function asyncIterableOf<T>(items: T[]): AsyncIterable<T> {
+  return {
+    async *[Symbol.asyncIterator]() {
+      yield* items;
+    },
+  };
+}
+
+function failingAsyncIterable(error: unknown): AsyncIterable<never> {
+  return {
+    // eslint-disable-next-line require-yield
+    async *[Symbol.asyncIterator]() {
+      throw error;
+    },
+  };
+}
 
 const CONFIG_VALUES: Record<string, string> = {
   'stripe.secretKey': 'sk_test_123',
@@ -567,6 +590,125 @@ describe('StripeService', () => {
         where: { stripeCustomerId: 'cus_1' },
         data: { status: 'PAST_DUE' },
       });
+    });
+  });
+
+  describe('cancelAllSubscriptionsForCustomer', () => {
+    it('lists all subscriptions of the customer across statuses', async () => {
+      mockStripeClient.subscriptions.list.mockReturnValue(asyncIterableOf([]));
+
+      await service.cancelAllSubscriptionsForCustomer('cus_1');
+
+      expect(mockStripeClient.subscriptions.list).toHaveBeenCalledWith({
+        customer: 'cus_1',
+        status: 'all',
+        limit: 100,
+      });
+      expect(mockStripeClient.subscriptions.cancel).not.toHaveBeenCalled();
+    });
+
+    it('cancels every non-final subscription immediately without proration', async () => {
+      mockStripeClient.subscriptions.list.mockReturnValue(
+        asyncIterableOf([
+          { id: 'sub_active', status: 'active' },
+          { id: 'sub_trialing', status: 'trialing' },
+          { id: 'sub_past_due', status: 'past_due' },
+          { id: 'sub_unpaid', status: 'unpaid' },
+          { id: 'sub_incomplete', status: 'incomplete' },
+          { id: 'sub_paused', status: 'paused' },
+        ]),
+      );
+
+      await service.cancelAllSubscriptionsForCustomer('cus_1');
+
+      expect(mockStripeClient.subscriptions.cancel).toHaveBeenCalledTimes(6);
+      for (const id of [
+        'sub_active',
+        'sub_trialing',
+        'sub_past_due',
+        'sub_unpaid',
+        'sub_incomplete',
+        'sub_paused',
+      ]) {
+        expect(mockStripeClient.subscriptions.cancel).toHaveBeenCalledWith(id, {
+          prorate: false,
+          invoice_now: false,
+        });
+      }
+    });
+
+    it('skips canceled and incomplete_expired subscriptions', async () => {
+      mockStripeClient.subscriptions.list.mockReturnValue(
+        asyncIterableOf([
+          { id: 'sub_canceled', status: 'canceled' },
+          { id: 'sub_expired', status: 'incomplete_expired' },
+          { id: 'sub_active', status: 'active' },
+        ]),
+      );
+
+      await service.cancelAllSubscriptionsForCustomer('cus_1');
+
+      expect(mockStripeClient.subscriptions.cancel).toHaveBeenCalledTimes(1);
+      expect(mockStripeClient.subscriptions.cancel).toHaveBeenCalledWith(
+        'sub_active',
+        { prorate: false, invoice_now: false },
+      );
+    });
+
+    it('resolves without canceling when the customer no longer exists', async () => {
+      mockStripeClient.subscriptions.list.mockReturnValue(
+        failingAsyncIterable(
+          new stripeErrors.StripeInvalidRequestError({
+            code: 'resource_missing',
+            message: 'No such customer',
+          }),
+        ),
+      );
+
+      await expect(
+        service.cancelAllSubscriptionsForCustomer('cus_gone'),
+      ).resolves.toBeUndefined();
+      expect(mockStripeClient.subscriptions.cancel).not.toHaveBeenCalled();
+    });
+
+    it('rethrows other errors from listing', async () => {
+      const error = new stripeErrors.StripeAPIError({ message: 'Stripe down' });
+      mockStripeClient.subscriptions.list.mockReturnValue(
+        failingAsyncIterable(error),
+      );
+
+      await expect(
+        service.cancelAllSubscriptionsForCustomer('cus_1'),
+      ).rejects.toBe(error);
+      expect(mockStripeClient.subscriptions.cancel).not.toHaveBeenCalled();
+    });
+
+    it('rethrows a resource_missing error from canceling', async () => {
+      const error = new stripeErrors.StripeInvalidRequestError({
+        code: 'resource_missing',
+        message: 'No such subscription',
+      });
+      mockStripeClient.subscriptions.list.mockReturnValue(
+        asyncIterableOf([{ id: 'sub_active', status: 'active' }]),
+      );
+      mockStripeClient.subscriptions.cancel.mockRejectedValueOnce(error);
+
+      await expect(
+        service.cancelAllSubscriptionsForCustomer('cus_1'),
+      ).rejects.toBe(error);
+    });
+
+    it('does not touch the database', async () => {
+      mockStripeClient.subscriptions.list.mockReturnValue(
+        asyncIterableOf([{ id: 'sub_active', status: 'active' }]),
+      );
+      mockStripeClient.subscriptions.cancel.mockResolvedValue({});
+
+      await service.cancelAllSubscriptionsForCustomer('cus_1');
+
+      expect(mockPrisma.subscription.findUnique).not.toHaveBeenCalled();
+      expect(mockPrisma.subscription.upsert).not.toHaveBeenCalled();
+      expect(mockPrisma.subscription.update).not.toHaveBeenCalled();
     });
   });
 });
