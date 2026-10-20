@@ -140,6 +140,15 @@ export class Settings implements OnInit {
     };
   });
 
+  readonly hasActivePaidSubscription = computed<boolean>(() => {
+    const subscription = this.userProfile.value()?.subscription;
+    if (!subscription || subscription.tier === 'FREE') {
+      return false;
+    }
+
+    return ['ACTIVE', 'TRIALING', 'PAST_DUE'].includes(subscription.status);
+  });
+
   readonly usageResetLabel = computed<string>(() =>
     this.userProfile.value()?.subscription?.cancelAtPeriodEnd
       ? 'Access ends'
@@ -190,8 +199,9 @@ export class Settings implements OnInit {
 
   onDeleteAccount(): void {
     this.confirmationService.confirm({
-      message:
-        'This will permanently delete your account and all associated data. This action cannot be undone.',
+      message: this.hasActivePaidSubscription()
+        ? 'This will permanently delete your account and all associated data. This action cannot be undone. Your paid subscription will be canceled immediately and will not renew.'
+        : 'This will permanently delete your account and all associated data. This action cannot be undone.',
       header: 'Delete account',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Delete',

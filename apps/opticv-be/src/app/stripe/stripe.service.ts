@@ -22,6 +22,9 @@ const STRIPE_STATUS_TO_SUBSCRIPTION_STATUS: Record<
   trialing: 'TRIALING',
 };
 
+const FINAL_STRIPE_SUBSCRIPTION_STATUSES: ReadonlySet<Stripe.Subscription.Status> =
+  new Set(['canceled', 'incomplete_expired']);
+
 @Injectable()
 export class StripeService {
   private readonly logger = new Logger(StripeService.name);
@@ -131,6 +134,45 @@ export class StripeService {
     });
 
     return { url: session.url };
+  }
+
+  async cancelAllSubscriptionsForCustomer(
+    stripeCustomerId: string,
+  ): Promise<void> {
+    const subscriptionsToCancel: Stripe.Subscription[] = [];
+
+    try {
+      for await (const subscription of this.stripe.subscriptions.list({
+        customer: stripeCustomerId,
+        status: 'all',
+        limit: 100,
+      })) {
+        if (!FINAL_STRIPE_SUBSCRIPTION_STATUSES.has(subscription.status)) {
+          subscriptionsToCancel.push(subscription);
+        }
+      }
+    } catch (error) {
+      if (
+        error instanceof Stripe.errors.StripeInvalidRequestError &&
+        error.code === 'resource_missing'
+      ) {
+        this.logger.warn(
+          `Stripe customer ${stripeCustomerId} not found, no subscriptions to cancel`,
+        );
+        return;
+      }
+      throw error;
+    }
+
+    for (const subscription of subscriptionsToCancel) {
+      await this.stripe.subscriptions.cancel(subscription.id, {
+        prorate: false,
+        invoice_now: false,
+      });
+      this.logger.log(
+        `Canceled Stripe subscription ${subscription.id} for customer ${stripeCustomerId}`,
+      );
+    }
   }
 
   verifyAndConstructEvent(rawBody: Buffer, signature: string): Stripe.Event {

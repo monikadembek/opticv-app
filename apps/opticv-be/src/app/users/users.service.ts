@@ -10,6 +10,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { R2Service } from '../storage/r2.service';
 import { QuotaService } from '../quota/quota.service';
 import { SubscriptionService } from '../subscription/subscription.service';
+import { StripeService } from '../stripe/stripe.service';
 import { UserModel } from '../../generated/prisma/models.js';
 import type {
   NotificationPreferences,
@@ -32,6 +33,7 @@ export class UsersService {
     private readonly config: ConfigService,
     private readonly quotaService: QuotaService,
     private readonly subscriptionService: SubscriptionService,
+    private readonly stripeService: StripeService,
   ) {}
 
   async upsertUser(data: {
@@ -124,8 +126,7 @@ export class UsersService {
             status: updatedUser.subscription.status,
             cancelAtPeriodEnd: updatedUser.subscription.cancelAtPeriodEnd,
             currentPeriodEnd:
-              updatedUser.subscription.currentPeriodEnd?.toISOString() ??
-              null,
+              updatedUser.subscription.currentPeriodEnd?.toISOString() ?? null,
           }
         : null,
       notifications,
@@ -230,11 +231,30 @@ export class UsersService {
   async deleteAccount(supabaseId: string): Promise<void> {
     const user = await this.prisma.user.findUnique({
       where: { supabaseId },
-      select: { id: true },
+      select: {
+        id: true,
+        subscription: { select: { stripeCustomerId: true } },
+      },
     });
 
     if (!user) {
       throw new NotFoundException('User not found.');
+    }
+
+    const stripeCustomerId = user.subscription?.stripeCustomerId;
+    if (stripeCustomerId) {
+      try {
+        await this.stripeService.cancelAllSubscriptionsForCustomer(
+          stripeCustomerId,
+        );
+      } catch (error) {
+        this.logger.error(
+          `Failed to cancel Stripe subscriptions for user ${user.id} (customer ${stripeCustomerId}): ${error}`,
+        );
+        throw new InternalServerErrorException(
+          'Failed to delete account because cancelling Stripe subscriptions failed.',
+        );
+      }
     }
 
     const cvDocuments = await this.prisma.cvDocument.findMany({
