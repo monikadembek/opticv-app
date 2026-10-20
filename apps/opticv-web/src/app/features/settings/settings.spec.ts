@@ -1095,5 +1095,93 @@ describe('Settings', () => {
         }),
       );
     });
+
+    describe('subscription cancellation notice', () => {
+      const BASE_MESSAGE =
+        'This will permanently delete your account and all associated data. This action cannot be undone.';
+      const CANCELLATION_NOTICE =
+        'Your paid subscription will be canceled immediately and will not renew.';
+
+      async function openDialogMessage(
+        profile: UserProfile | null,
+      ): Promise<string | undefined> {
+        await setup({ value: profile, hasValue: profile !== null });
+        const fixture = TestBed.createComponent(Settings);
+        const componentConfirmService =
+          fixture.debugElement.injector.get(ConfirmationService);
+        const confirmSpy = vi.spyOn(componentConfirmService, 'confirm');
+
+        fixture.componentInstance.onDeleteAccount();
+
+        return confirmSpy.mock.calls[0][0].message;
+      }
+
+      function profileWith(
+        subscription: UserProfile['subscription'],
+      ): UserProfile {
+        return { ...mockProfile, subscription };
+      }
+
+      it.each([
+        ['PRO', 'ACTIVE'],
+        ['BASIC', 'TRIALING'],
+        ['PRO', 'PAST_DUE'],
+      ] as const)(
+        'includes the notice for a %s subscription with status %s',
+        async (tier, status) => {
+          const message = await openDialogMessage(
+            profileWith({
+              tier,
+              status,
+              cancelAtPeriodEnd: false,
+              currentPeriodEnd: '2026-11-20T00:00:00.000Z',
+            }),
+          );
+
+          expect(message).toContain(BASE_MESSAGE);
+          expect(message).toContain(CANCELLATION_NOTICE);
+        },
+      );
+
+      it('includes the notice for a paid subscription set to cancel at period end', async () => {
+        const message = await openDialogMessage(
+          profileWith({
+            tier: 'PRO',
+            status: 'ACTIVE',
+            cancelAtPeriodEnd: true,
+            currentPeriodEnd: '2026-11-20T00:00:00.000Z',
+          }),
+        );
+
+        expect(message).toContain(CANCELLATION_NOTICE);
+      });
+
+      it.each([
+        [
+          'a FREE subscription',
+          profileWith({
+            tier: 'FREE',
+            status: 'ACTIVE',
+            cancelAtPeriodEnd: false,
+            currentPeriodEnd: null,
+          }),
+        ],
+        [
+          'a CANCELED paid subscription',
+          profileWith({
+            tier: 'PRO',
+            status: 'CANCELED',
+            cancelAtPeriodEnd: false,
+            currentPeriodEnd: null,
+          }),
+        ],
+        ['no subscription', profileWith(null)],
+        ['a profile that has not loaded', null],
+      ])('omits the notice for %s', async (_label, profile) => {
+        const message = await openDialogMessage(profile);
+
+        expect(message).toBe(BASE_MESSAGE);
+      });
+    });
   });
 });
