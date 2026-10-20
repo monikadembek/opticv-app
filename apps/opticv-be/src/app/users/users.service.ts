@@ -251,9 +251,7 @@ export class UsersService {
         this.logger.error(
           `Failed to cancel Stripe subscriptions for user ${user.id} (customer ${stripeCustomerId}): ${error}`,
         );
-        throw new InternalServerErrorException(
-          'Failed to delete account because cancelling Stripe subscriptions failed.',
-        );
+        throw new InternalServerErrorException('Failed to delete account.');
       }
     }
 

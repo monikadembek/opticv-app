@@ -198,10 +198,15 @@ export class Settings implements OnInit {
   }
 
   onDeleteAccount(): void {
+    let message =
+      'This will permanently delete your account and all associated data. This action cannot be undone.';
+    if (this.hasActivePaidSubscription()) {
+      message +=
+        ' Your paid subscription will be canceled immediately and will not renew.';
+    }
+
     this.confirmationService.confirm({
-      message: this.hasActivePaidSubscription()
-        ? 'This will permanently delete your account and all associated data. This action cannot be undone. Your paid subscription will be canceled immediately and will not renew.'
-        : 'This will permanently delete your account and all associated data. This action cannot be undone.',
+      message,
       header: 'Delete account',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Delete',

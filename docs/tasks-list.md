@@ -2130,8 +2130,8 @@ Compare privacy policy from landing page https://opticv.net/privacy-policy/ and 
 **time: 20.10.2026**
 
 Deleting an account doesn't cancel the Stripe subscription (users.service.ts:230), so a user who deletes their account keeps getting charged. For now the Terms tell users to cancel first, but this should be fixed in code.
-When deleting user account first check user's subscriptions in Stripe and delete them all. If error occurs during cancelling the subscription throw 500 Internal Server error to abort deleting account without cancelling the subscriptions first.
-On frontend when user clicks button to delete account show in the confirmation dialog message that all subscriprions will be canceled if user is on a paid plan.
+When deleting user account first check user's subscriptions in Stripe and delete them all. If error occurs during cancelling the subscription throw 500 Internal Server error to abort deleting account without canceling the subscriptions first.
+On frontend when user clicks button to delete account and is on a paid plan then show in the confirmation dialog message that all subscriptions will be canceled.
 
 ---
 
