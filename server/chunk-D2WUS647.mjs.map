@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["apps/opticv-web/src/app/core/auth/utils/return-url.ts"],
+  "sourcesContent": ["export const RETURN_URL_PARAM = 'returnUrl';\n\nconst AUTH_PATHS = ['/login', '/verify'];\n\nexport function getSafeReturnUrl(\n  value: string | null | undefined,\n): string | null {\n  if (!value || !value.startsWith('/')) return null;\n  if (value.startsWith('//') || value.startsWith('/\\\\')) return null;\n\n  const path = value.split(/[?#]/)[0].replace(/\\/+$/, '').toLowerCase();\n  if (AUTH_PATHS.includes(path)) return null;\n\n  return value;\n}\n"],
+  "mappings": ";AAAO,IAAMA,EAAmB,YAE1BC,EAAa,CAAC,SAAU,SAAS,EAEjC,SAAUC,EACdC,EAAgC,CAGhC,GADI,CAACA,GAAS,CAACA,EAAMC,WAAW,GAAG,GAC/BD,EAAMC,WAAW,IAAI,GAAKD,EAAMC,WAAW,KAAK,EAAG,OAAO,KAE9D,IAAMC,EAAOF,EAAMG,MAAM,MAAM,EAAE,CAAC,EAAEC,QAAQ,OAAQ,EAAE,EAAEC,YAAW,EACnE,OAAIP,EAAWQ,SAASJ,CAAI,EAAU,KAE/BF,CACT",
+  "names": ["RETURN_URL_PARAM", "AUTH_PATHS", "getSafeReturnUrl", "value", "startsWith", "path", "split", "replace", "toLowerCase", "includes"]
+}
