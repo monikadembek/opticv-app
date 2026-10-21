@@ -2137,8 +2137,9 @@ On frontend when user clicks button to delete account and is on a paid plan then
 
 ## 131. Handle return url in the app when user navigates from landing page pricing table to the app settings page in order to buy subscription but is not logged in
 
-**status: in progress**
-**time: 20.10.2026**
+**status: done**
+
+**time: 20.10.2026-21.10.2026**
 
 User navigates to the app by clicking button in the landing page in pricing table and should be navigated to settings page, but if user is not logged in it will be navigated to the login page not the settings page where user can buy a subscription.
 One problem in the app is worth knowing about first. /settings is protected by authGuard (opticv-app/.../core/auth/guards/auth-guard.ts). For a logged-out visitor it redirects to plain /login and doesn't remember where they came from. Most people clicking "Get Pro" on the landing page won't be logged in, so they'll sign in and land on the default page, not settings. The click still works, but it breaks the purchase path.
@@ -2163,15 +2164,12 @@ The plan has been saved to /docs/dark-mode-plan.md
 
 ---
 
-## Connect landing page with app
+## Make paid subscription options more visible
 
 **status: todo**
-
 **time:**
 
-- connect landing page with the app, make the login or optimize CV navigate to the app
-- consider whether we should keep the home page in the app, should we move user after login directly to dashboard, and home menu item should move back to landing page?
-- check if it would be possible to show login status in the landing page
+Consider moving subscription content to home page, now upgrading to paid account is hidden in the settings page.
 
 ---
 
