@@ -69,6 +69,7 @@
   </div>
 
   <p class="auth-footer-link">
-    Wrong email? <a routerLink="/login">Go back</a>
+    Wrong email?
+    <a routerLink="/login" [queryParams]="returnUrlQueryParams">Go back</a>
   </p>
 </div>
