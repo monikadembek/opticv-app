@@ -11,8 +11,9 @@ import { ButtonModule } from 'primeng/button';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { InputTextModule } from 'primeng/inputtext';
 import { Supabase } from '../../services/supabase';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import posthog from 'posthog-js';
+import { getSafeReturnUrl, RETURN_URL_PARAM } from '../../utils/return-url';
 
 @Component({
   selector: 'app-login',
@@ -32,6 +33,10 @@ import posthog from 'posthog-js';
 export class Login {
   private readonly supabase = inject(Supabase);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly returnUrl = getSafeReturnUrl(
+    this.route.snapshot.queryParamMap.get(RETURN_URL_PARAM),
+  );
 
   email = '';
   readonly errorMessage = signal('');
@@ -49,7 +54,13 @@ export class Login {
           page: 'login',
         });
         this.supabase.setPendingEmail(email);
-        this.router.navigate(['/verify']);
+        if (this.returnUrl) {
+          this.router.navigate(['/verify'], {
+            queryParams: { [RETURN_URL_PARAM]: this.returnUrl },
+          });
+        } else {
+          this.router.navigate(['/verify']);
+        }
       }
       if (error) {
         console.log(error);
