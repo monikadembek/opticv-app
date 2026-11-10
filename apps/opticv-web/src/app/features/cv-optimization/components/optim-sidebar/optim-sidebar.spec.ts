@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { vi } from 'vitest';
-import { OptimSidebar, NAV_GROUPS } from './optim-sidebar';
+import { OptimSidebar, NAV_GROUPS, tabForSection } from './optim-sidebar';
 import { PromptType } from '@opticv/datatypes';
 
 describe('OptimSidebar', () => {
@@ -22,30 +22,12 @@ describe('OptimSidebar', () => {
   });
 
   describe('nav items', () => {
-    it('renders a nav button for every item in Job Posting + active tab group (default cv-analysis)', () => {
+    it('renders a nav button for every item of every group', () => {
       fixture.componentRef.setInput('pageState', 'completed');
       fixture.detectChanges();
-      const expectedItems = NAV_GROUPS.filter(
-        (g) => g.group === 'Job Posting' || g.group === 'Resume Analysis',
-      ).flatMap((g) => g.items);
+      const expectedItems = NAV_GROUPS.flatMap((g) => g.items);
       const buttons = fixture.nativeElement.querySelectorAll('button.nav-item');
       expect(buttons.length).toBe(expectedItems.length);
-    });
-
-    it('renders only Job Posting + Additional Materials items when activeTab is additional-materials', () => {
-      fixture.componentRef.setInput('pageState', 'completed');
-      fixture.componentRef.setInput('activeTab', 'additional-materials');
-      fixture.detectChanges();
-      const expectedItems = NAV_GROUPS.filter(
-        (g) => g.group === 'Job Posting' || g.group === 'Additional Materials',
-      ).flatMap((g) => g.items);
-      const buttons = fixture.nativeElement.querySelectorAll('button.nav-item');
-      expect(buttons.length).toBe(expectedItems.length);
-      expect(
-        Array.from(buttons as NodeListOf<HTMLButtonElement>).some((b) =>
-          b.textContent?.includes('Keywords'),
-        ),
-      ).toBe(false);
     });
 
     it('marks the active section button with active class', () => {
@@ -84,25 +66,30 @@ describe('OptimSidebar', () => {
       expect(emitSpy).toHaveBeenCalledOnce();
     });
 
-    it('shows group labels when expanded', () => {
+    it('shows a static label for every group when expanded', () => {
       fixture.componentRef.setInput('expanded', true);
       fixture.detectChanges();
-      const labels = fixture.nativeElement.querySelectorAll(
-        '.sidebar-group-label',
-      );
-      expect(labels.length).toBe(component.visibleNavGroups().length);
+      const labels = Array.from(
+        fixture.nativeElement.querySelectorAll('.sidebar-group-label'),
+      ).map((l) => (l as HTMLElement).textContent?.trim());
+      expect(labels).toEqual(NAV_GROUPS.map((g) => g.group));
+    });
+
+    it('renders no group header buttons or chevrons', () => {
+      expect(
+        fixture.nativeElement.querySelector('.group-header, .pi-chevron-down'),
+      ).toBeNull();
     });
 
     it('hides group labels and shows dividers when collapsed', () => {
       fixture.componentRef.setInput('expanded', false);
       fixture.detectChanges();
-      const labels = fixture.nativeElement.querySelectorAll(
-        '.sidebar-group-label',
-      );
-      const dividers =
-        fixture.nativeElement.querySelectorAll('.sidebar-divider');
-      expect(labels.length).toBe(0);
-      expect(dividers.length).toBe(component.visibleNavGroups().length);
+      expect(
+        fixture.nativeElement.querySelectorAll('.sidebar-group-label').length,
+      ).toBe(0);
+      expect(
+        fixture.nativeElement.querySelectorAll('.sidebar-divider').length,
+      ).toBe(NAV_GROUPS.length);
     });
 
     it('shows spinner icon for items in processingSet', () => {
@@ -136,6 +123,17 @@ describe('OptimSidebar', () => {
       fixture.detectChanges();
       const error = fixture.nativeElement.querySelector('.pi-times-circle');
       expect(error).toBeTruthy();
+    });
+  });
+
+  describe('tabForSection', () => {
+    it('maps section ids to their group tab', () => {
+      expect(tabForSection('JOB_POSTING')).toBe('job-posting');
+      expect(tabForSection(PromptType.KEYWORD_GAP)).toBe('cv-analysis');
+      expect(tabForSection(PromptType.COVER_LETTER)).toBe(
+        'additional-materials',
+      );
+      expect(tabForSection('unknown')).toBeUndefined();
     });
   });
 

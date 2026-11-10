@@ -268,7 +268,7 @@ describe('CvOptimization', () => {
 
   it('should render the page heading', () => {
     const heading: HTMLElement = fixture.nativeElement.querySelector('h2');
-    expect(heading.textContent?.trim()).toContain('CV Optimization');
+    expect(heading.textContent?.trim()).toContain('Resume Optimization');
   });
 
   it('should render the job-upload component', () => {
@@ -2611,6 +2611,17 @@ describe('CvOptimization', () => {
       component.onResultsTabChanged('additional-materials');
       component.onResultsTabChanged('cv-analysis');
       expect(component.activeResultsTab()).toBe('cv-analysis');
+    });
+
+    it('sets activeSection to the first item of the newly selected group', () => {
+      component.onResultsTabChanged('additional-materials');
+      expect(component.activeSection()).toBe(PromptType.COVER_LETTER);
+      component.onResultsTabChanged('cv-analysis');
+      expect(component.activeSection()).toBe(PromptType.RESUME_AUTOPSY);
+    });
+
+    it('does not render the in-page tab bar', () => {
+      expect(fixture.nativeElement.querySelector('p-tablist')).toBeNull();
     });
 
     it('cancels an open bullet edit when switching tabs', () => {
