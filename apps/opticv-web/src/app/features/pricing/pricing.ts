@@ -168,8 +168,8 @@ export class Pricing implements OnInit {
       return {
         label: isFree ? 'Get started for free' : `Get ${plan.name}`,
         ariaLabel: isFree
-          ? 'Get started with the Free plan'
-          : `Get the ${plan.name} plan`,
+          ? 'Get started for free with the Free plan'
+          : `Get ${plan.name} plan`,
         action: 'none',
         disabled: true,
         loading: false,
@@ -180,8 +180,8 @@ export class Pricing implements OnInit {
       return {
         label: isFree ? 'Get started for free' : `Get ${plan.name}`,
         ariaLabel: isFree
-          ? 'Get started with the Free plan'
-          : `Get the ${plan.name} plan`,
+          ? 'Get started for free with the Free plan'
+          : `Get ${plan.name} plan`,
         action: 'login',
         disabled: false,
         loading: false,

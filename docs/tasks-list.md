@@ -2181,13 +2181,15 @@ styled like the existing footer links. Optionally add rel="noopener noreferrer" 
 
 ## 134. Create pricing page
 
-**status: in progress**
+**status: done**
 **time: 11.11.2026**
 
-Create a dedicated /pricing page that compares plans. The pricing page should be available to everyone, no only the logged in users.
+Create a dedicated /pricing page that compares plans.
 
-- It would show Free, Basic, and Pro with their quotas, and the buttons would use the existing Stripe upgrade flow.
-- Settings page would link to it instead of holding the only upgrade UI.
+- The pricing page should be available to everyone, no only the logged in users.
+- Add Pricing menu item to the top header.
+- Pricing page should show Free, Basic, and Pro with their quotas, and the buttons would use the existing Stripe upgrade flow.
+- Settings page should link to it instead of holding the only upgrade UI.
 
 Take the pricing info from the landing page https://opticv.net/pricing/
 

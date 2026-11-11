@@ -76,6 +76,10 @@ export class TopHeader {
             label: 'Home',
             route: '/home',
           },
+          {
+            label: 'Pricing',
+            route: '/pricing',
+          },
         ];
       }
     });
