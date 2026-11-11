@@ -2197,7 +2197,7 @@ Take the pricing info from the landing page https://opticv.net/pricing/
 
 ## 135. Implement user menu in avatar
 
-**status: in progress**
+**status: done**
 **time: 11.11.2026**
 
 Replace the avatar-to-settings shortcut with a small user menu.
