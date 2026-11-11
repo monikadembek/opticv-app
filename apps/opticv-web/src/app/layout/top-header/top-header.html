@@ -39,20 +39,30 @@
             title="Help guide"
             (onClick)="openHelp()"
           ></p-button>
-          <p-avatar
-            [label]="userLabel()"
-            class="mr-2 cursor-pointer"
-            [style]="{ 'background-color': '#10b981', color: '#ffffff' }"
-            shape="circle"
-            title="Account settings"
-            routerLink="/settings"
+          <button
+            type="button"
+            class="header__avatar-button"
+            aria-label="Open user menu"
+            aria-haspopup="menu"
+            [attr.aria-controls]="isUserMenuOpen() ? userMenuId : null"
+            [attr.aria-expanded]="isUserMenuOpen()"
+            (click)="toggleUserMenu($event)"
+          >
+            <p-avatar
+              [label]="userLabel()"
+              [style]="{ 'background-color': '#10b981', color: '#ffffff' }"
+              shape="circle"
+            />
+          </button>
+          <p-menu
+            #userMenu
+            [id]="userMenuId"
+            [model]="userMenuItems()"
+            [popup]="true"
+            appendTo="body"
+            (onShow)="isUserMenuOpen.set(true)"
+            (onHide)="isUserMenuOpen.set(false)"
           />
-          <p-button
-            title="Sign Out"
-            size="small"
-            icon="pi pi-power-off"
-            (onClick)="emitSignOut()"
-          ></p-button>
           }
         </div>
       </ng-template>
