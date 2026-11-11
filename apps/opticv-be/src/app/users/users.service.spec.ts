@@ -490,7 +490,7 @@ describe('UsersService', () => {
             resetsAt: '2026-08-01T00:00:00.000Z',
           },
         ],
-        storedCvs: { used: 3, limit: 10 },
+        storedCvs: { used: 3, limit: 5 },
       });
     });
 
@@ -514,7 +514,7 @@ describe('UsersService', () => {
         PAID_TIER_CYCLE.currentPeriodStart,
         PAID_TIER_CYCLE.currentPeriodEnd,
       );
-      expect(result.storedCvs).toEqual({ used: 5, limit: 2 });
+      expect(result.storedCvs).toEqual({ used: 5, limit: 1 });
     });
   });
 
