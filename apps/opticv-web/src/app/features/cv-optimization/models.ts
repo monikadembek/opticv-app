@@ -6,4 +6,7 @@ export type SectionStatus =
   | 'pending'
   | undefined;
 
-export type ActiveResultsTab = 'cv-analysis' | 'additional-materials';
+export type ActiveResultsTab =
+  | 'job-posting'
+  | 'cv-analysis'
+  | 'additional-materials';

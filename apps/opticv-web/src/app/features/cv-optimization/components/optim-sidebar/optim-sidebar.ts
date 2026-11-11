@@ -8,12 +8,16 @@ import {
 import { PromptType } from '@opticv/datatypes';
 import { ActiveResultsTab } from '../../models';
 
-export const NAV_GROUPS: {
+export interface NavGroup {
   group: string;
+  tab: ActiveResultsTab;
   items: { id: PromptType | 'JOB_POSTING'; icon: string; label: string }[];
-}[] = [
+}
+
+export const NAV_GROUPS: NavGroup[] = [
   {
     group: 'Job Posting',
+    tab: 'job-posting',
     items: [
       {
         id: 'JOB_POSTING',
@@ -23,7 +27,8 @@ export const NAV_GROUPS: {
     ],
   },
   {
-    group: 'Resume Analysis',
+    group: 'Resume Optimization',
+    tab: 'cv-analysis',
     items: [
       {
         id: PromptType.RESUME_AUTOPSY,
@@ -45,6 +50,7 @@ export const NAV_GROUPS: {
   },
   {
     group: 'Additional Materials',
+    tab: 'additional-materials',
     items: [
       {
         id: PromptType.COVER_LETTER,
@@ -65,6 +71,10 @@ export const NAV_GROUPS: {
   },
 ];
 
+export function tabForSection(id: string): ActiveResultsTab | undefined {
+  return NAV_GROUPS.find((g) => g.items.some((i) => i.id === id))?.tab;
+}
+
 @Component({
   selector: 'app-optim-sidebar',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -82,22 +92,10 @@ export class OptimSidebar {
   readonly atsScore = input<number | null>(null);
   readonly keywordScore = input<number | null>(null);
   readonly pageState = input<'initial' | 'processing' | 'completed'>('initial');
-  readonly activeTab = input<ActiveResultsTab>('cv-analysis');
 
   readonly sectionClicked = output<string>();
   readonly toggleClicked = output<void>();
-
   readonly navGroups = NAV_GROUPS;
-
-  readonly visibleNavGroups = computed(() =>
-    this.navGroups.filter(
-      (g) =>
-        g.group === 'Job Posting' ||
-        (this.activeTab() === 'cv-analysis'
-          ? g.group === 'Resume Analysis'
-          : g.group === 'Additional Materials'),
-    ),
-  );
 
   readonly showScores = computed(
     () =>

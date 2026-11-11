@@ -79,6 +79,11 @@ div.sidebar-divider:first-child {
   border-radius: var(--radius-md);
 }
 
+.nav-item:focus-visible {
+  outline: 2px solid var(--primary-600);
+  outline-offset: -2px;
+}
+
 .nav-item.dimmed {
   opacity: 0.4;
   cursor: not-allowed;
