@@ -2150,11 +2150,13 @@ Add a return URL in the app: have the guard send them to /login?returnUrl=/setti
 
 ## 132. Move buttons for Resume Analysis and Additional materials back to sidebar
 
-**status: in progress**
-**time: 10.11.2026**
+**status: done**
+**time: 10.11.2026-11.11.2026**
 
 Currently in the cv-optimization page the buttons for Resume Analysis and Additional Materials are placed below the Job Posting section and when user scrolls down the page he cannot see them so the user might not even know how to get to the Additional Materials page if the button is not visible and it is not on the sidebar.
-We should move back both buttons to the sidebar. But we want to display on the right side only the sectiona related to the selected button, like it is now, so we don't have to scroll through all the available sections with results.
+
+Display on the sidebar 3 groups: Job Posting, Resume Optimization and Additional Materials and display all the belonging menu items to these groups.
+In tme main CV-optimization page display on top 3 tab buttons for the same groups and below display only the section cards that belog to the selected tab panel.
 
 ---
 
