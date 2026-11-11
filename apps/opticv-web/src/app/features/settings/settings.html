@@ -149,24 +149,10 @@
     <div class="flex gap-3 pt-3">
       @if (userProfile.value()?.subscription?.tier === 'FREE') {
       <p-button
-        type="button"
-        label="Upgrade to Basic"
-        icon="pi pi-arrow-up"
+        label="View plans"
         size="small"
-        [loading]="isRedirectingToCheckout() === 'BASIC'"
-        [disabled]="isRedirectingToCheckout() !== null"
-        (onClick)="onUpgrade('BASIC')"
-        aria-label="Upgrade to Basic"
-      />
-      <p-button
-        type="button"
-        label="Upgrade to Pro"
-        icon="pi pi-arrow-up"
-        size="small"
-        [loading]="isRedirectingToCheckout() === 'PRO'"
-        [disabled]="isRedirectingToCheckout() !== null"
-        (onClick)="onUpgrade('PRO')"
-        aria-label="Upgrade to Pro"
+        (onClick)="onViewPlans()"
+        aria-label="View plans"
       />
       } @else {
       <p-button

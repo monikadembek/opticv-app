@@ -57,6 +57,10 @@ export class TopHeader {
           label: 'Optimize CV',
           route: '/cv-optimization',
         },
+        {
+          label: 'Pricing',
+          route: '/pricing',
+        },
       ];
       if (this.isLoggedIn()) {
         this.items = [
@@ -71,6 +75,10 @@ export class TopHeader {
           {
             label: 'Home',
             route: '/home',
+          },
+          {
+            label: 'Pricing',
+            route: '/pricing',
           },
         ];
       }
