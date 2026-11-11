@@ -2358,6 +2358,27 @@ describe('CvOptimization', () => {
       );
     });
 
+    it('switches to the clicked section group', () => {
+      component.handleSectionClick(PromptType.INTERVIEW_PREP);
+      expect(component.activeResultsTab()).toBe('additional-materials');
+      component.handleSectionClick('JOB_POSTING');
+      expect(component.activeResultsTab()).toBe('job-posting');
+    });
+
+    it('leaves a non-default section expanded when first visiting its group', () => {
+      component.jobApplicationId.set('job-1');
+      fixture.detectChanges();
+      component.handleSectionClick(PromptType.INTERVIEW_PREP);
+      fixture.detectChanges();
+      expect(component.isSectionCollapsed(PromptType.INTERVIEW_PREP)).toBe(
+        false,
+      );
+      expect(component.isSectionCollapsed(PromptType.COVER_LETTER)).toBe(false);
+      expect(component.isSectionCollapsed(PromptType.LINKEDIN_REWRITE)).toBe(
+        true,
+      );
+    });
+
     it('does not throw when clicking a section that is already expanded', () => {
       expect(() =>
         component.handleSectionClick(PromptType.RESUME_AUTOPSY),
@@ -2620,8 +2641,32 @@ describe('CvOptimization', () => {
       expect(component.activeSection()).toBe(PromptType.RESUME_AUTOPSY);
     });
 
-    it('does not render the in-page tab bar', () => {
-      expect(fixture.nativeElement.querySelector('p-tablist')).toBeNull();
+    it('renders one tab per sidebar group above the section cards', () => {
+      component.jobApplicationId.set('job-1');
+      fixture.detectChanges();
+      const tabs = Array.from(
+        fixture.nativeElement.querySelectorAll('p-tablist p-tab'),
+      ).map((t) => (t as HTMLElement).textContent?.trim());
+      expect(tabs).toEqual([
+        'Job Posting',
+        'Resume Optimization',
+        'Additional Materials',
+      ]);
+    });
+
+    it('switches the shown group when a tab is clicked', () => {
+      component.jobApplicationId.set('job-1');
+      fixture.detectChanges();
+      const tabEls = fixture.nativeElement.querySelectorAll('p-tablist p-tab');
+      (tabEls[2] as HTMLElement).click();
+      fixture.detectChanges();
+      expect(component.activeResultsTab()).toBe('additional-materials');
+      expect(component.activeSection()).toBe(PromptType.COVER_LETTER);
+    });
+
+    it('ignores unknown tab values', () => {
+      component.onResultsTabChanged('unknown');
+      expect(component.activeResultsTab()).toBe('cv-analysis');
     });
 
     it('cancels an open bullet edit when switching tabs', () => {

@@ -94,6 +94,11 @@
         [value]="activeResultsTab()"
         (valueChange)="onResultsTabChanged($event)"
       >
+        <p-tablist>
+          @for (group of navGroups; track group.tab) {
+          <p-tab [value]="group.tab">{{ group.group }}</p-tab>
+          }
+        </p-tablist>
         <p-tabpanels class="px-0!">
           <p-tabpanel value="job-posting">
             <!-- Job info: live flow (read-only prefilled form) -->

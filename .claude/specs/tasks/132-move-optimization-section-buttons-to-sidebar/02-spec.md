@@ -2,20 +2,20 @@
 
 ## Source
 
-Azure DevOps Task: 132 — Move buttons for Resume Analysis and Additional Materials back to sidebar
+Azure DevOps Task: 132 — Move buttons for Resume Analysis and Additional materials back to sidebar
 
 ## Goal
 
-Make the "Resume Analysis" and "Additional Materials" switchers permanently visible by moving them from the in-page `p-tabs` tab bar (below the Job Posting section, scrolls out of view) into the left sidebar (and the mobile section strip). The right-hand content continues to render only the sections of the selected switcher, so the user does not scroll through all result sections.
+Make navigation between the result groups permanently visible by listing all groups and their items in the sidebar (and the mobile strip), in addition to a tab bar above the cards with one tab per group. The right-hand content still renders only the cards of the group that contains the selected item, so the user does not scroll through all result sections.
 
 ## Context
 
 Frontend only (`apps/opticv-web`), feature `features/cv-optimization`:
 
-- `cv-optimization.html` / `cv-optimization.ts` — hosts `<p-tabs>` bound to `activeResultsTab` (`'cv-analysis' | 'additional-materials'`), with `onResultsTabChanged()`; also drives the export footer (visible only on `cv-analysis`), per-tab default expand state (`initializedTabDefaults`), scrollspy, and Expand/Collapse All (`activeTabSectionIds`).
-- `components/optim-sidebar/*` — renders `NAV_GROUPS` filtered by `activeTab` (Job Posting + the active group only). Group labels are plain text; in collapsed mode a divider replaces the label.
-- `components/mobile-tabs/*` — mobile horizontal strip, same filtering by `activeTab`.
-- Shared model `ActiveResultsTab` in `../../models`.
+- `cv-optimization.html` / `cv-optimization.ts` — hosts the results area. `activeResultsTab` (`'job-posting' | 'cv-analysis' | 'additional-materials'`) decides which group's cards are visible. It also drives the export footer (visible only on `cv-analysis`), per-group default expand state (`initializedTabDefaults`), scrollspy, and Expand/Collapse All (`activeTabSectionIds`).
+- `components/optim-sidebar/*` — renders `NAV_GROUPS`.
+- `components/mobile-tabs/*` — mobile horizontal strip.
+- Shared model `ActiveResultsTab` in `models.ts`.
 
 No backend, API, or DB impact.
 
@@ -23,58 +23,68 @@ No backend, API, or DB impact.
 
 ### In scope
 
-- Sidebar: both groups ("Resume Analysis", "Additional Materials") are always visible as accordion-style headers (clickable buttons). The selected group is expanded and lists its section items; the other group is collapsed to its header only. "Job Posting and CV" item remains at the top as today.
-- Clicking a group header switches the active results tab (same effect as the old tab click) and expands that group.
-- Sidebar collapsed (icon-only) mode: each group header is rendered as an icon button with a `title` tooltip (e.g. `pi-chart-bar` for Resume Analysis, `pi-file-edit` for Additional Materials — final icons chosen to be distinct from item icons), highlighted when active. Section item icons of the active group follow below as today.
-- Remove the `<p-tablist>` (tab bar) from the main content; keep showing only the active tab's panel content (`p-tabpanel` / equivalent conditional) so the right side shows only the selected group's sections.
-- Mobile: `app-mobile-tabs` gets two switcher buttons (Resume Analysis / Additional Materials) in addition to the section items of the active group, because the in-page tab bar no longer exists.
-- Sidebar/mobile emit a new output (e.g. `tabSelected`) that `cv-optimization.html` wires to `onResultsTabChanged()`, preserving its existing side effects (cancelling bullet/keyword edits, first-view default expansion, scrollspy re-setup, export footer visibility, Expand/Collapse All scope).
-- Accessibility: header buttons are real `<button>`s with `aria-expanded` and `aria-controls` for the group's item list, visible focus, keyboard operable, WCAG AA contrast.
-- Update unit tests (`optim-sidebar.spec.ts`, `mobile-tabs.spec.ts`, `cv-optimization.spec.ts` where it relies on the tab bar).
+- **Groups.** The sidebar shows three groups, each with a static label (same style as the existing "Job Posting" label): **Job Posting**, **Resume Optimization** (previously "Resume Analysis"), **Additional Materials**. Job Posting is treated as the first group, with the single item "Job Posting and CV".
+- **Always visible.** All items of all groups are always displayed. Group labels are not buttons: no accordion behavior, no chevron, no expand/collapse.
+- **Right-hand content.** Only the cards of the group that holds the selected item are visible:
+  - Job Posting group → the Job Posting card (live flow) or the job info banner (stored mode) only.
+  - Resume Optimization group → ATS Analysis, Keywords, Summary Rewrite, Bullet Upgrades.
+  - Additional Materials group → Cover Letter, Interview Prep, LinkedIn Profile.
+- **Item click.** Clicking a sidebar (or mobile strip) item selects it. If the item belongs to a different group than the one currently shown, the page switches to that group first, then expands the item's card (if collapsed) and scrolls to it after the new group has rendered. If it belongs to the current group, it expands and scrolls as before.
+- **First-view defaults.** The first time a group is shown, its default card is expanded and the group's other cards are collapsed: Job Posting card for Job Posting, ATS Analysis for Resume Optimization, Cover Letter for Additional Materials. A card the user clicked to open must stay expanded even on a group's first view.
+- **Tab bar.** A tab bar (`p-tablist`) sits above the section cards with three tabs matching the sidebar groups, in the same order and with the same names: Job Posting, Resume Optimization, Additional Materials. Selecting a tab shows that group's cards. Tabs and sidebar stay in sync: selecting a tab sets the first item of that group as the active item; selecting a sidebar item switches the selected tab. Panels remain `p-tabpanel`s, so the ARIA tab relationships are valid. Hidden groups stay in the DOM so component state (e.g. editors) is preserved.
+- **Collapsed (icon-only) sidebar.** Group labels are replaced by a divider per group, as with the previous divider behavior; item buttons keep icon + tooltip.
+- **Mobile.** The mobile strip lists the items of all groups in order (Job Posting, Resume Optimization, Additional Materials). There are no separate group switchers; selecting an item behaves as in "Item click".
+- **Renames.** Group "Resume Analysis" → "Resume Optimization". Page heading "CV Optimization" → "Resume Optimization" (both the heading shown during/after a run and the initial upload form heading).
+- **Accessibility.** Item buttons remain real `<button>`s with visible focus, keyboard operable, WCAG AA contrast, and no dangling ARIA relationships.
+- **Tests.** Update/add unit tests for the sidebar, mobile strip and page-level flow.
 
 ### Out of scope
 
 - Changes to section content, scoring rings, export footer behavior, backend/API.
-- Changing which sections belong to which group.
-- New routes or URL-persisted tab state.
-- Redesigning sidebar styling beyond what the accordion headers need.
+- Changing which sections belong to the Resume Optimization and Additional Materials groups.
+- New routes or URL-persisted group state.
+- Accordion/collapsible group headers, chevron icons, group switcher buttons in the sidebar, mobile group switchers (these were built and then removed at the product owner's request).
 
 ## Behavior
 
-1. On the CV optimization page (processing/completed states), the sidebar shows: score rings (unchanged), the "Job Posting and CV" item, then the "Resume Analysis" and "Additional Materials" headers. The group matching `activeResultsTab` is expanded showing its items (with status icons / spinner as today); the other is collapsed.
-2. Clicking the inactive group header sets `activeResultsTab` to that group's tab; the right side swaps to that group's sections only, the sidebar expands that group and collapses the other. Clicking the already active header leaves it as is (it does not collapse, so there is always one active tab).
-3. Clicking a section item behaves as today (`handleSectionClick`: set active section, expand the card if collapsed, smooth scroll to it).
-4. In the initial state (before a run) the sidebar nav is disabled/dimmed as today; group headers are disabled/dimmed too.
-5. Collapsed sidebar: group headers appear as icon buttons with tooltips; clicking switches the tab as in (2).
-6. Mobile: the strip shows the two group switchers (active highlighted) followed by Job Posting + the active group's items; switching works as in (2).
-7. Main content shows no tab bar; the Job Posting section stays above, followed by the active tab's section cards.
+1. In processing/completed states the sidebar shows: score rings (unchanged), then the three groups, each with its label and all of its items (status icons / spinner as today).
+2. Clicking an item in the group currently shown: it becomes the active item, its card expands if collapsed, and the page scrolls to it.
+3. Clicking an item in another group: the right-hand content swaps to that group's cards, any open bullet or keyword edit is cancelled, the item becomes active, its card is expanded (regardless of the group's first-view default), and the page scrolls to it once rendered.
+4. The group shown by default after a run (and after "New Optimization") is Resume Optimization (`cv-analysis`). The active item defaults to ATS Analysis.
+5. In the initial state (before a run) all items are disabled/dimmed as today.
+6. Expand All / Collapse All applies only to the cards of the group currently shown.
+7. The export footer is shown only while the Resume Optimization group is shown.
+8. The partial-results warning stays above the group content for all groups.
+9. The tab bar above the cards shows the three groups with the shown group's tab selected. Clicking a tab switches the group as in (3) (edits cancelled, first item active) without scrolling. The Job Posting card is no longer permanently shown above the other cards.
 
 ## Edge Cases
 
-- Initial page state: group buttons disabled, no tab switching possible.
-- Stored mode vs. live flow: identical behavior; partial stored results still show "not processed" placeholders per section.
-- Switching tabs while a keyword/bullet edit is active: edits are cancelled as in the current `onResultsTabChanged`.
-- First visit to Additional Materials applies its default expansion (Cover Letter expanded) once, as today.
-- Export footer only visible on Resume Analysis, unchanged.
-- Active section when switching tabs: to be set to the first item of the newly selected group so the sidebar highlight and scrollspy are consistent (assumption — see below).
-- "New Optimization" resets `activeResultsTab` to `cv-analysis`; sidebar must follow.
+- Initial page state: all items disabled, no switching possible.
+- Stored mode vs. live flow: identical behavior; Job Posting group shows the job info banner in stored mode and the read-only card in live flow; partial stored results still show "not processed" placeholders per section.
+- Switching groups while a keyword/bullet edit is active: edits are cancelled.
+- First visit to a group via a non-default item (e.g. Interview Prep before Additional Materials was opened): the clicked card stays expanded, the group's other non-default cards are collapsed.
+- Scrollspy: only updates the active item among cards of the group in view; it does not switch groups.
+- "New Optimization" resets the shown group to Resume Optimization.
+- No job application available: the Job Posting group shows no card.
 
 ## Data / API
 
 - Endpoints: none.
-- Models: reuse `ActiveResultsTab`; `NAV_GROUPS` may gain a tab id / icon per group so groups map to tabs without string comparison on labels.
+- Models: `ActiveResultsTab` gains `'job-posting'`. `NAV_GROUPS` entries each carry a `tab`. A helper maps a section id to its group tab.
 - DB: none.
 
 ## Assumptions
 
-- Accordion semantics: exactly one group expanded at a time, tied to the active tab (no independent expand/collapse of the inactive group).
-- Group header icons are chosen by the implementer; no UI mockups were provided for this task.
-- Existing `p-tabs` panels may be replaced by `@if (activeResultsTab() === ...)` blocks, or the tab bar hidden, whichever keeps the existing section markup and tests simplest.
+- The default shown group stays Resume Optimization even though Job Posting is listed first in the sidebar.
+- The tab bar uses the same group list as the sidebar, so names and order cannot diverge.
+- Hidden group panels remain mounted (state retained) rather than being destroyed.
+- Inactive groups' items show their status icons because all items are always visible.
+- Mobile strip labels continue to use the first word of each item label.
 
 ## Acceptance (DEV)
 
 - build passes (`nx build opticv-web`), lint and typecheck pass
-- unit tests added/updated for sidebar (both groups visible, active expanded, click emits tab change, collapsed icon mode, disabled in initial state), mobile-tabs, and page-level tab switching via sidebar
-- no breaking changes to export footer, scrollspy, Expand/Collapse All, or per-tab default expansion
-- AXE/WCAG AA: keyboard navigable, `aria-expanded` set, sufficient contrast
-- Both switcher buttons visible without scrolling on desktop and mobile
+- unit tests cover: all groups/items rendered with static labels and no group buttons/chevrons; collapsed sidebar dividers; group tab mapping; mobile strip lists all items; cross-group item click switches group and keeps the clicked card expanded on first visit; first-view defaults; three tabs rendered above the cards with the sidebar group names, tab click switches the shown group
+- no breaking changes to export footer, scrollspy, Expand/Collapse All, or per-group default expansion
+- AXE/WCAG AA: keyboard navigable, no dangling ARIA attributes, sufficient contrast
+- All navigation items visible without scrolling the results on desktop and mobile

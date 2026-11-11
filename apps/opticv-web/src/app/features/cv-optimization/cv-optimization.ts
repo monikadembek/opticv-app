@@ -27,7 +27,7 @@ import {
 } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
-import { Tabs, TabPanels, TabPanel } from 'primeng/tabs';
+import { Tabs, TabList, Tab, TabPanels, TabPanel } from 'primeng/tabs';
 import {
   BulletEditKey,
   BulletSelectionKey,
@@ -265,6 +265,8 @@ function planLimitMessage(code: unknown, feature: unknown): string {
     ExportFooter,
     MobileTabs,
     Tabs,
+    TabList,
+    Tab,
     TabPanels,
     TabPanel,
   ],
@@ -400,6 +402,7 @@ export class CvOptimization implements OnInit {
   private readonly breakpointObserver = inject(BreakpointObserver);
   readonly activeSection = signal<string>(PromptType.RESUME_AUTOPSY);
   readonly collapsedSections = signal<ReadonlySet<string>>(new Set());
+  readonly navGroups = NAV_GROUPS;
   readonly activeResultsTab = signal<ActiveResultsTab>('cv-analysis');
   private readonly initializedTabDefaults = signal<
     ReadonlySet<ActiveResultsTab>
@@ -652,28 +655,29 @@ export class CvOptimization implements OnInit {
     // runs the first time the given tab is viewed
     effect(() => {
       const state = this.pageState();
-      const tab = this.activeResultsTab();
       if (state === 'initial') return;
-      if (this.initializedTabDefaults().has(tab)) return;
-
-      const defaultExpandedId: string =
-        tab === 'job-posting'
-          ? 'JOB_POSTING'
-          : tab === 'cv-analysis'
-            ? PromptType.RESUME_AUTOPSY
-            : PromptType.COVER_LETTER;
-
-      this.collapsedSections.update((current) => {
-        const next = new Set(current);
-        for (const id of this.activeTabSectionIds()) {
-          if (id !== defaultExpandedId) next.add(id);
-        }
-        return next;
-      });
-      this.initializedTabDefaults.update(
-        (current) => new Set([...current, tab]),
-      );
+      this.applyTabDefaults(this.activeResultsTab());
     });
+  }
+
+  private applyTabDefaults(tab: ActiveResultsTab): void {
+    if (this.initializedTabDefaults().has(tab)) return;
+
+    const defaultExpandedId: string =
+      tab === 'job-posting'
+        ? 'JOB_POSTING'
+        : tab === 'cv-analysis'
+          ? PromptType.RESUME_AUTOPSY
+          : PromptType.COVER_LETTER;
+
+    this.collapsedSections.update((current) => {
+      const next = new Set(current);
+      for (const id of this.activeTabSectionIds()) {
+        if (id !== defaultExpandedId) next.add(id);
+      }
+      return next;
+    });
+    this.initializedTabDefaults.update((current) => new Set([...current, tab]));
   }
 
   ngOnInit(): void {
@@ -788,6 +792,9 @@ export class CvOptimization implements OnInit {
       targetTab !== undefined && targetTab !== this.activeResultsTab();
     if (switchingTab) {
       this.onResultsTabChanged(targetTab);
+      if (this.pageState() !== 'initial') {
+        this.applyTabDefaults(targetTab);
+      }
     }
     this.activeSection.set(id);
     if (this.isSectionCollapsed(id)) {

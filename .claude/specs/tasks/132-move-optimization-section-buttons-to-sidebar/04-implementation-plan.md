@@ -1,65 +1,63 @@
 # Implementation Plan — Task 132
 
-Source: `02-spec.md` (review result: PASS WITH ISSUES, no critical issues). All work is frontend, under `apps/opticv-web/src/app/features/cv-optimization/`. No dependency installs, backend, or shared-type changes.
+Source: `02-spec.md` (updated to the final design). All work is frontend, under `apps/opticv-web/src/app/features/cv-optimization/`. No dependency installs, backend, or shared-type changes.
 
-## Planning decisions (resolving review gaps without adding requirements)
+## Planning decisions
 
-- **Tab panels:** keep `p-tabs` / `p-tabpanels` / `p-tabpanel` exactly as they are and remove only `p-tablist` + `p-tab`. Panel mounting and state retention then behave as today (no change to cover-letter / editor state handling).
-- **Single-select switcher:** group header click is a switcher, not a collapsible accordion. Clicking the active header is a no-op (no emit).
-- **Active section on switch:** `onResultsTabChanged` sets `activeSection` to the first item id of the newly selected group (spec Edge Cases). No scroll is triggered; page scroll position is left unchanged. Scrollspy re-setup continues via the existing effect on `activeResultsTab`.
-- **Inactive group header:** shows no status indicators (spec: "collapsed to its header only").
-- **Mobile:** switchers are rendered as the first buttons in the existing strip, labelled with the first word of the group name (same convention as existing items), full name in `aria-label`. The strip is already hidden in the `initial` state by the page template.
-- **Header icons:** Resume Analysis → `pi-file`, Additional Materials → `pi-book` (distinct from all item icons).
+- **Groups as data:** every `NAV_GROUPS` entry carries a `tab` (`'job-posting' | 'cv-analysis' | 'additional-materials'`). A `tabForSection(id)` helper maps an item id to its group.
+- **No group controls:** group labels stay static; the sidebar and mobile strip emit only `sectionClicked`. The page decides whether a group switch is needed.
+- **Tabs and panels:** PrimeNG `p-tabs` stays, with a `p-tablist` of three `p-tab`s generated from `NAV_GROUPS` (so names/order match the sidebar) and three `p-tabpanel`s. Hidden panels stay mounted (state retained) and ARIA tab relationships are valid because the tabs exist.
+- **First-view defaults:** extracted into a reusable method so a section click can apply them before expanding the clicked card.
+- **Scroll after switch:** when the click changes group, scrolling is deferred until after the next render.
 
 ## Files
 
-### 1. Modify `components/optim-sidebar/optim-sidebar.ts`
+### 1. Modify `models.ts`
 
-- Extend the `NAV_GROUPS` type with optional `tab: ActiveResultsTab` and `icon: string` on the two tab groups ("Resume Analysis" → `'cv-analysis'`, "Additional Materials" → `'additional-materials'`). "Job Posting" keeps neither.
-- Add `tabSelected = output<ActiveResultsTab>()`.
-- Replace `visibleNavGroups` with a `navGroups` view computed from `NAV_GROUPS` that returns every group plus an `isActive` flag (`group.tab === activeTab()`); the Job Posting group is always treated as expanded.
-- Add `onGroupClick(tab)` that emits `tabSelected` only when `tab !== activeTab()`.
-- Keep scoring-ring methods, `showScores`, and `sectionClicked` unchanged.
+- Add `'job-posting'` to `ActiveResultsTab`.
 
-### 2. Modify `components/optim-sidebar/optim-sidebar.html`
+### 2. Modify `components/optim-sidebar/optim-sidebar.ts`
 
-- Job Posting group: unchanged rendering (label when expanded, divider when collapsed, then its item).
-- Each tab group: render a `<button type="button" class="group-header">` instead of the plain label (expanded: icon + group name; collapsed: icon only with `title`). Bind `[class.active]`, `[attr.aria-expanded]="isActive"`, `[attr.aria-controls]="'nav-group-' + tab"`, `[disabled]="pageState() === 'initial'"`, `[class.dimmed]` for the same state, and `(click)="onGroupClick(tab)"`. In collapsed mode keep an `aria-label` with the full group name.
-- Render the group's items inside `<div [id]="'nav-group-' + tab">` only when `isActive`; item buttons stay as they are (status icons, `sectionClicked`).
-- Keep native control flow only (`@for` / `@if`); no `ngClass`.
+- Introduce an exported `NavGroup` interface (`group`, `tab`, `items`) and type `NAV_GROUPS` with it.
+- Give the groups `tab` values: Job Posting → `'job-posting'`, Resume Optimization → `'cv-analysis'`, Additional Materials → `'additional-materials'`. Rename "Resume Analysis" to "Resume Optimization".
+- Export `tabForSection(id: string): ActiveResultsTab | undefined`.
+- Remove the `activeTab` input and the group filtering; expose `navGroups = NAV_GROUPS`.
+- Keep scoring-ring methods, `showScores`, `sectionClicked`, `toggleClicked`.
 
-### 3. Modify `components/optim-sidebar/optim-sidebar.css`
+### 3. Modify `components/optim-sidebar/optim-sidebar.html` and `.css`
 
-- Add `.group-header` styles reusing existing tokens (full-width flex button, same padding/typography as `.sidebar-group-label` but interactive, hover background `--neutral-100`, active color `--primary-700` with `--primary-50` background, `:focus-visible` outline, `.dimmed`/disabled treatment matching `.nav-item.dimmed`).
-- Add collapsed-mode styling so the header icon is centered like `.nav-item__icon`. Verify text/background contrast meets WCAG AA.
-- No other layout changes.
+- Render every group: static `.sidebar-group-label` when expanded, `.sidebar-divider` when collapsed, then all of the group's item buttons (unchanged item markup: status icons, tooltip when collapsed, disabled/dimmed in the initial state).
+- Keep the existing `:focus-visible` outline for `.nav-item`. No group-header, chevron or indented-list styles.
 
-### 4. Modify `components/mobile-tabs/mobile-tabs.ts` and `mobile-tabs.html`
+### 4. Modify `components/mobile-tabs/mobile-tabs.ts`, `.html`, `.css`
 
-- Add `tabSelected = output<ActiveResultsTab>()`.
-- Expose a `tabSwitchers` list derived from `NAV_GROUPS` (groups having `tab`), and keep `navItems` as the Job Posting + active-group items.
-- Template: render the switcher buttons first (`class="mobile-tab"`, `.active` when `group.tab === activeTab()`, `aria-pressed`, `aria-label` full name, label = first word, group icon), then the existing item buttons. Clicking the active switcher does nothing.
-- Scroll-into-view effect keeps using the index of the active section within `navItems()` offset by the number of switchers so it still targets the right button; update the index lookup accordingly (button query list now contains switchers + items).
+- Remove `activeTab`, `tabSelected`, switcher list and switcher click handler.
+- `navItems` becomes the flat list of all `NAV_GROUPS` items; the scroll-into-view effect indexes directly into the button list.
+- Template renders only item buttons (first word of label); keep `:focus-visible` outline.
 
-### 5. Modify `cv-optimization.html`
+### 5. Modify `cv-optimization.ts`
 
-- Wire `(tabSelected)="onResultsTabChanged($event)"` on both `<app-optim-sidebar>` and `<app-mobile-tabs>`.
-- Remove `<p-tablist>` and its two `<p-tab>` elements; leave `<p-tabs>`, `<p-tabpanels>` and both `<p-tabpanel>` blocks untouched.
+- Keep the `Tabs`, `TabList`, `Tab`, `TabPanels`, `TabPanel` imports; add `Injector` injection and `afterNextRender` import; import `NAV_GROUPS` and `tabForSection`; expose `navGroups = NAV_GROUPS` for the template.
+- Remove `'JOB_POSTING'` from `cvAnalysisSectionIds`; add `jobPostingSectionIds` (contains `'JOB_POSTING'` only when a job application exists).
+- `activeTabSectionIds`: switch over the three tabs.
+- Extract the first-view default logic into private `applyTabDefaults(tab)` (default expanded card: `JOB_POSTING` / `RESUME_AUTOPSY` / `COVER_LETTER`; collapse the other cards of that group; mark tab initialized). The existing effect calls it when the page state is not initial.
+- `onResultsTabChanged(tab: string | number | undefined)` (bound to `p-tabs` `valueChange`; ignores values other than the three tabs): cancel bullet/keyword edits, set `activeResultsTab`, set `activeSection` to the group's first item.
+- `handleSectionClick(id)`: resolve `tabForSection(id)`; when it differs from the shown group, call `onResultsTabChanged` and, if the page state is not initial, `applyTabDefaults`; then set `activeSection`, expand the card if collapsed, and scroll — immediately when no switch happened, via `afterNextRender` (with the injected `Injector`) when the group changed. Scrolling lives in private `scrollToSection(id)`.
 
-### 6. Modify `cv-optimization.ts`
+### 6. Modify `cv-optimization.html`
 
-- Remove `TabList` and `Tab` from the `primeng/tabs` import and from the component `imports` array (keep `Tabs`, `TabPanels`, `TabPanel`).
-- In `onResultsTabChanged`, after setting `activeResultsTab`, set `activeSection` to the first item id of the selected group using `NAV_GROUPS`. Existing edit-cancellation behavior stays first.
-- No change to the `New Optimization` reset (`activeResultsTab.set('cv-analysis')`); also reset `activeSection` only if it is already reset there today (verify during implementation; do not add new reset logic otherwise).
+- Drop `[activeTab]` and `(tabSelected)` bindings on `<app-optim-sidebar>` and `<app-mobile-tabs>`.
+- Keep `<p-tabs [value]="activeResultsTab()" (valueChange)="onResultsTabChanged($event)">`. Add `<p-tablist>` with `@for (group of navGroups; track group.tab) { <p-tab [value]="group.tab">{{ group.group }}</p-tab> }`. Panels (`<p-tabpanels class="px-0!">`) in order: job-posting, cv-analysis, additional-materials.
+- Move the live-flow Job Posting card and the stored-mode job info banner into the job-posting panel. The partial-results warning stays above the panels.
+- Change both "CV Optimization" headings (run state and initial form) to "Resume Optimization".
 
 ### 7. Modify tests
 
-- `optim-sidebar.spec.ts`: replace the group-label / divider count assertions (which relied on `visibleNavGroups`) and update item-count tests. Add tests: both group headers always rendered; active header has `aria-expanded="true"`, inactive `"false"`; only active group's items rendered; clicking inactive header emits `tabSelected` with the right tab; clicking active header does not emit; headers disabled in `initial` state; collapsed mode renders icon-only headers with `title`/`aria-label`.
-- `mobile-tabs.spec.ts`: add tests for rendered switchers, active highlight, `tabSelected` emission, and no emission for the active switcher; adjust existing item-count assertions to account for the two switchers.
-- `cv-optimization.spec.ts`: existing `onResultsTabChanged` tests remain valid; add tests that switching tab sets `activeSection` to the first item of the new group, and that the tab bar (`p-tablist`) is no longer rendered while the sidebar `tabSelected` event triggers the tab change.
+- `optim-sidebar.spec.ts`: all groups' items rendered; static labels for every group when expanded; no group-header buttons or chevrons; dividers per group when collapsed; `tabForSection` mapping; keep item, status, toggle and scoring tests.
+- `mobile-tabs.spec.ts`: one button per item across all groups; active highlight; `sectionClicked` emission.
+- `cv-optimization.spec.ts`: heading text "Resume Optimization"; switching tab sets the first item of the new group as active section; three tabs rendered above the cards with the sidebar group names, tab click switches the group and sets the first item active, unknown tab values ignored; `handleSectionClick` switches to the clicked section's group; first visit to a group via a non-default item leaves that card expanded while the group's default card stays expanded and other cards collapse.
 
 ## Verification checklist
 
-- `npm exec nx test opticv-web` passes (updated and new specs).
-- `npm exec nx lint opticv-web`, `npm exec nx typecheck opticv-web`, `npm exec nx build opticv-web` pass.
-- Manual: both switchers visible without scrolling on desktop (expanded and collapsed sidebar) and mobile; switching shows only that group's sections; export footer only on Resume Analysis; Expand/Collapse All scoped to active tab; first visit to Additional Materials expands Cover Letter; keyboard Tab/Enter/Space operates headers; AXE clean.
+- `npm exec nx typecheck opticv-web`, `npm exec nx lint opticv-web`, `npm exec nx build opticv-web`, `npm exec nx test opticv-web` pass.
+- Manual: tab bar above the cards shows three tabs in sync with the sidebar; all three groups and their items visible in the sidebar (expanded and collapsed) and in the mobile strip; clicking an item in another group swaps the right-hand cards, expands the card and scrolls to it; Job Posting group shows only the job posting card/banner; export footer only for Resume Optimization; Expand/Collapse All scoped to the shown group; keyboard operation; AXE clean.
