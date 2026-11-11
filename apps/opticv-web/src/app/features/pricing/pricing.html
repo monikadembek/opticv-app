@@ -1,0 +1,68 @@
+<div class="pricing-page mx-auto max-w-6xl px-4 py-10">
+  <h1 class="mb-2 text-center text-3xl font-semibold">
+    Choose the plan that works best for you
+  </h1>
+  <p class="mb-10 text-center text-[15px] text-gray-600">
+    Start free. Upgrade when you need more.
+  </p>
+
+  <ul class="grid list-none grid-cols-1 gap-6 p-0 md:grid-cols-3">
+    @for (plan of plans(); track plan.tier) {
+    <li
+      class="flex flex-col rounded-lg border p-6"
+      [class.border-emerald-600]="plan.isCurrent"
+      [class.border-2]="plan.isCurrent"
+      [class.border-gray-200]="!plan.isCurrent"
+    >
+      <article
+        class="flex h-full flex-col"
+        [attr.aria-labelledby]="'plan-' + plan.tier"
+      >
+        <h2 [id]="'plan-' + plan.tier" class="text-xl font-semibold">
+          {{ plan.name }}
+        </h2>
+        <p class="mb-4 text-sm text-gray-600">{{ plan.tagline }}</p>
+        <p class="mb-6">
+          <span class="text-4xl font-bold">{{ plan.price }}</span>
+          <span class="text-sm text-gray-600"> / month</span>
+        </p>
+
+        <div class="mb-6 min-h-10">
+          @if (plan.cta; as cta) {
+          <p-button
+            type="button"
+            styleClass="w-full"
+            [label]="cta.label"
+            [loading]="cta.loading"
+            [disabled]="cta.disabled"
+            [outlined]="plan.tier === 'FREE'"
+            [ariaLabel]="cta.ariaLabel"
+            (onClick)="onCta(plan)"
+          />
+          }
+        </div>
+
+        <ul class="m-0 flex list-none flex-col gap-2 p-0 text-sm">
+          @for (quota of plan.quotas; track quota) {
+          <li class="flex gap-2">
+            <i
+              class="pi pi-check mt-1 text-xs text-emerald-700"
+              aria-hidden="true"
+            ></i>
+            <span>{{ quota }}</span>
+          </li>
+          } @for (feature of includedFeatures; track feature) {
+          <li class="flex gap-2">
+            <i
+              class="pi pi-check mt-1 text-xs text-emerald-700"
+              aria-hidden="true"
+            ></i>
+            <span>{{ feature }}</span>
+          </li>
+          }
+        </ul>
+      </article>
+    </li>
+    }
+  </ul>
+</div>

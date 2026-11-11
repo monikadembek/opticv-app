@@ -6,6 +6,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { Settings } from './settings';
 import { UserSettingsApiService } from '../../core/services/user-settings-api.service';
 import { Supabase } from '../../core/auth/services/supabase';
+import { BillingRedirectService } from '../../core/services/billing-redirect.service';
 import type { UsageStatus, UserProfile } from '@opticv/datatypes';
 
 const mockProfile: UserProfile = {
@@ -66,7 +67,17 @@ function createSupabaseMock() {
   };
 }
 
+function createBillingMock() {
+  return {
+    openPortal: vi.fn(),
+    startCheckout: vi.fn(),
+    redirectingToPortal: signal(false).asReadonly(),
+    redirectingToCheckout: signal<'BASIC' | 'PRO' | null>(null).asReadonly(),
+  };
+}
+
 describe('Settings', () => {
+  let billingMock: ReturnType<typeof createBillingMock>;
   let userSettingsMock: ReturnType<typeof createUserSettingsMock>;
   let supabaseMock: ReturnType<typeof createSupabaseMock>;
   let messageService: MessageService;
@@ -77,6 +88,7 @@ describe('Settings', () => {
   ) {
     userSettingsMock = createUserSettingsMock(profileOverrides, usageOverrides);
     supabaseMock = createSupabaseMock();
+    billingMock = createBillingMock();
 
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
@@ -86,6 +98,7 @@ describe('Settings', () => {
         MessageService,
         { provide: UserSettingsApiService, useValue: userSettingsMock },
         { provide: Supabase, useValue: supabaseMock },
+        { provide: BillingRedirectService, useValue: billingMock },
       ],
     }).compileComponents();
 
@@ -791,7 +804,7 @@ describe('Settings', () => {
       expect(text).not.toContain('plan will end on');
     });
 
-    it('shows upgrade buttons (not Manage billing) for a FREE tier user', async () => {
+    it('shows a View plans button (no upgrade or Manage billing buttons) for a FREE tier user', async () => {
       await setup({ value: mockProfile, hasValue: true });
       const fixture = TestBed.createComponent(Settings);
       fixture.detectChanges();
@@ -799,15 +812,57 @@ describe('Settings', () => {
       const buttons = Array.from(
         fixture.nativeElement.querySelectorAll('button'),
       ) as HTMLButtonElement[];
-      expect(
-        buttons.some((el) => el.textContent?.includes('Upgrade to Basic')),
-      ).toBe(true);
-      expect(
-        buttons.some((el) => el.textContent?.includes('Upgrade to Pro')),
-      ).toBe(true);
+      expect(buttons.some((el) => el.textContent?.includes('View plans'))).toBe(
+        true,
+      );
+      expect(buttons.some((el) => el.textContent?.includes('Upgrade to'))).toBe(
+        false,
+      );
       expect(
         buttons.some((el) => el.textContent?.includes('Manage billing')),
       ).toBe(false);
+    });
+
+    it('navigates to /pricing when View plans is clicked', async () => {
+      await setup({ value: mockProfile, hasValue: true });
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+      const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+      const button = (
+        Array.from(
+          fixture.nativeElement.querySelectorAll('button'),
+        ) as HTMLButtonElement[]
+      ).find((el) => el.textContent?.includes('View plans'));
+      button?.click();
+
+      expect(navigateSpy).toHaveBeenCalledWith(['/pricing']);
+    });
+
+    it('opens the billing portal when Manage billing is clicked', async () => {
+      await setup({
+        value: {
+          ...mockProfile,
+          subscription: {
+            tier: 'PRO',
+            status: 'ACTIVE',
+            cancelAtPeriodEnd: false,
+            currentPeriodEnd: null,
+          },
+        },
+        hasValue: true,
+      });
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+
+      const button = (
+        Array.from(
+          fixture.nativeElement.querySelectorAll('button'),
+        ) as HTMLButtonElement[]
+      ).find((el) => el.textContent?.includes('Manage billing'));
+      button?.click();
+
+      expect(billingMock.openPortal).toHaveBeenCalledOnce();
     });
 
     it('shows an enabled Manage billing button (not upgrade buttons) for a paid tier user', async () => {
@@ -833,9 +888,9 @@ describe('Settings', () => {
         el.textContent?.includes('Manage billing'),
       );
       expect(manageBillingButton?.disabled).toBe(false);
-      expect(
-        buttons.some((el) => el.textContent?.includes('Upgrade to Basic')),
-      ).toBe(false);
+      expect(buttons.some((el) => el.textContent?.includes('View plans'))).toBe(
+        false,
+      );
     });
 
     it('does not render "Visa ending" text', async () => {

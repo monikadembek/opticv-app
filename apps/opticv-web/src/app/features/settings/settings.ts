@@ -33,6 +33,7 @@ import type {
   UserProfile,
 } from '@opticv/datatypes';
 import { Supabase } from '../../core/auth/services/supabase';
+import { BillingRedirectService } from '../../core/services/billing-redirect.service';
 import { UserSettingsApiService } from '../../core/services/user-settings-api.service';
 import { catchError, EMPTY, tap } from 'rxjs';
 import posthog from 'posthog-js';
@@ -71,6 +72,7 @@ export class Settings implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly cvStore = inject(CvStore);
   private readonly cookieConsentStore = inject(CookieConsentStore);
+  private readonly billingRedirectService = inject(BillingRedirectService);
 
   readonly userProfile = this.userSettingsApiService.userProfile;
   readonly usageStatus = this.userSettingsApiService.usageStatus;
@@ -84,8 +86,8 @@ export class Settings implements OnInit {
   readonly weeklyTipsEnabled = signal(false);
   readonly analyticsCookiesEnabled =
     this.cookieConsentStore.hasAcceptedAnalytics;
-  readonly isRedirectingToCheckout = signal<'BASIC' | 'PRO' | null>(null);
-  readonly isRedirectingToPortal = signal(false);
+  readonly isRedirectingToPortal =
+    this.billingRedirectService.redirectingToPortal;
 
   readonly fullNameModel = signal({ displayName: '' });
   readonly fullNameForm = form(this.fullNameModel, (path) => {
@@ -360,52 +362,12 @@ export class Settings implements OnInit {
     });
   }
 
-  onUpgrade(tier: 'BASIC' | 'PRO'): void {
-    this.isRedirectingToCheckout.set(tier);
-
-    this.userSettingsApiService
-      .createCheckoutSession(tier)
-      .pipe(
-        catchError((err) => {
-          const message =
-            (err as { error?: { message?: string } })?.error?.message ??
-            'Failed to start checkout. Please try again.';
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Checkout Error',
-            detail: message,
-          });
-          this.isRedirectingToCheckout.set(null);
-          return EMPTY;
-        }),
-      )
-      .subscribe((response) => {
-        window.location.href = response.url;
-      });
+  onViewPlans(): void {
+    this.router.navigate(['/pricing']);
   }
 
   onManageBilling(): void {
-    this.isRedirectingToPortal.set(true);
-
-    this.userSettingsApiService
-      .createPortalSession()
-      .pipe(
-        catchError((err) => {
-          const message =
-            (err as { error?: { message?: string } })?.error?.message ??
-            'Failed to open billing portal. Please try again.';
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Billing Portal Error',
-            detail: message,
-          });
-          this.isRedirectingToPortal.set(false);
-          return EMPTY;
-        }),
-      )
-      .subscribe((response) => {
-        window.location.href = response.url;
-      });
+    this.billingRedirectService.openPortal();
   }
 
   getAvatarLabel(profile: UserProfile | null): string {
