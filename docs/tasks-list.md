@@ -2162,8 +2162,8 @@ In tme main CV-optimization page display on top 3 tab buttons for the same group
 
 ## 133. Add button or link to go to landing page from app
 
-**status: todo**
-**time:**
+**status: done**
+**time: 11.11.2026**
 
 We need a way to go from app to landing page. Add a button in the menu or in the footer so user can click it and go back to landing page.
 

@@ -13,6 +13,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { Supabase } from '../../services/supabase';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import posthog from 'posthog-js';
+import { LANDING_PAGE_URL } from '../../../../shared/constants';
 import { getSafeReturnUrl, RETURN_URL_PARAM } from '../../utils/return-url';
 
 @Component({
@@ -37,6 +38,8 @@ export class Login {
   private readonly returnUrl = getSafeReturnUrl(
     this.route.snapshot.queryParamMap.get(RETURN_URL_PARAM),
   );
+
+  readonly landingPageUrl = LANDING_PAGE_URL;
 
   email = '';
   readonly errorMessage = signal('');
