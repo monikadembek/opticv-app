@@ -1,14 +1,28 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
+import { signal } from '@angular/core';
+import { MenuItem } from 'primeng/api';
 import { vi } from 'vitest';
 import posthog from 'posthog-js';
 import { TopHeader } from './top-header';
 import { UserGuideStore } from '../../core/stores/user-guide.store';
+import { UserSettingsApiService } from '../../core/services/user-settings-api.service';
+import { BillingRedirectService } from '../../core/services/billing-redirect.service';
 
 function createUserGuideStoreMock() {
   return {
     openWelcomeModal: vi.fn(),
+  };
+}
+
+const profile = signal<unknown>(null);
+const redirectingToPortal = signal(false);
+
+function createBillingMock() {
+  return {
+    openPortal: vi.fn(),
+    redirectingToPortal: redirectingToPortal.asReadonly(),
   };
 }
 
@@ -32,15 +46,24 @@ describe('TopHeader', () => {
   let fixture: ComponentFixture<TopHeader>;
   let router: Router;
   let userGuideStoreMock: ReturnType<typeof createUserGuideStoreMock>;
+  let billingMock: ReturnType<typeof createBillingMock>;
 
   beforeEach(async () => {
     TestBed.resetTestingModule();
     userGuideStoreMock = createUserGuideStoreMock();
+    billingMock = createBillingMock();
+    profile.set(null);
+    redirectingToPortal.set(false);
     await TestBed.configureTestingModule({
       imports: [TopHeader],
       providers: [
         provideRouter([]),
         { provide: UserGuideStore, useValue: userGuideStoreMock },
+        {
+          provide: UserSettingsApiService,
+          useValue: { userProfile: { value: profile } },
+        },
+        { provide: BillingRedirectService, useValue: billingMock },
       ],
     }).compileComponents();
 
@@ -110,6 +133,12 @@ describe('TopHeader', () => {
       expect(signOutButton).toBeNull();
     });
 
+    it('should not show avatar button', () => {
+      expect(
+        fixture.debugElement.query(By.css('button.header__avatar-button')),
+      ).toBeNull();
+    });
+
     it('should not show avatar', () => {
       const avatar = fixture.debugElement.query(By.css('p-avatar'));
       expect(avatar).toBeNull();
@@ -130,11 +159,52 @@ describe('TopHeader', () => {
       fixture.detectChanges();
     });
 
-    it('should show Sign Out button', () => {
+    it('should not show the standalone Sign Out button', () => {
       const signOutButton = fixture.debugElement.query(
         By.css('p-button[title="Sign Out"]'),
       );
-      expect(signOutButton).toBeTruthy();
+      expect(signOutButton).toBeNull();
+    });
+
+    it('should show the avatar button with correct ARIA attributes', () => {
+      const button = fixture.debugElement.query(
+        By.css('button.header__avatar-button'),
+      ).nativeElement as HTMLButtonElement;
+      expect(button.getAttribute('aria-label')).toBe('Open user menu');
+      expect(button.getAttribute('aria-haspopup')).toBe('menu');
+      expect(button.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('should only set aria-controls while the menu is open', () => {
+      const button = fixture.debugElement.query(
+        By.css('button.header__avatar-button'),
+      ).nativeElement as HTMLButtonElement;
+      expect(button.hasAttribute('aria-controls')).toBe(false);
+
+      component.isUserMenuOpen.set(true);
+      fixture.detectChanges();
+      expect(button.getAttribute('aria-controls')).toBe(component.userMenuId);
+      expect(button.getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('should not put the menu id on the p-menu host element', () => {
+      const host = fixture.debugElement.query(By.css('p-menu'))
+        .nativeElement as HTMLElement;
+      expect(host.getAttribute('id')).toBeNull();
+    });
+
+    it('should reset isUserMenuOpen when the user logs out', () => {
+      component.isUserMenuOpen.set(true);
+      fixture.componentRef.setInput('isLoggedIn', false);
+      fixture.detectChanges();
+      expect(component.isUserMenuOpen()).toBe(false);
+
+      fixture.componentRef.setInput('isLoggedIn', true);
+      fixture.detectChanges();
+      const button = fixture.debugElement.query(
+        By.css('button.header__avatar-button'),
+      ).nativeElement as HTMLButtonElement;
+      expect(button.getAttribute('aria-expanded')).toBe('false');
     });
 
     it('should not show Sign In button', () => {
@@ -166,12 +236,118 @@ describe('TopHeader', () => {
     });
   });
 
+  describe('user menu', () => {
+    const billingGroup = () => component.userMenuItems()[0];
+    const billingItem = () => billingGroup().items![0];
+    const profileGroup = () => component.userMenuItems()[2];
+    const accountSettingsItem = () => profileGroup().items![0];
+    const signOutItem = () => profileGroup().items![1];
+    const run = (item: MenuItem) => item.command?.({});
+    const withTier = (tier: string) => profile.set({ subscription: { tier } });
+
+    it('should have Plan & Billing group, separator and Profile group in order', () => {
+      const entries = component.userMenuItems();
+      expect(entries).toHaveLength(3);
+      expect(entries[0].label).toContain('Plan & Billing');
+      expect(entries[1].separator).toBe(true);
+      expect(entries[2].label).toBe('Profile');
+    });
+
+    it('should list Account Settings and Sign Out in the Profile group', () => {
+      expect(profileGroup().items!.map((i) => i.label)).toEqual([
+        'Account Settings',
+        'Sign Out',
+      ]);
+    });
+
+    it('should navigate to /settings from Account Settings', () => {
+      const navigateSpy = vi.spyOn(router, 'navigate');
+      run(accountSettingsItem());
+      expect(navigateSpy).toHaveBeenCalledWith(['/settings']);
+    });
+
+    it('should show Free plan and Upgrade action for FREE tier', () => {
+      withTier('FREE');
+      expect(billingGroup().label).toBe('Plan & Billing · Free Plan');
+      expect(billingItem().label).toBe('Upgrade');
+      expect(billingItem().disabled).toBe(false);
+    });
+
+    it('should navigate to /pricing when Upgrade is clicked', () => {
+      withTier('FREE');
+      const navigateSpy = vi.spyOn(router, 'navigate');
+      run(billingItem());
+      expect(navigateSpy).toHaveBeenCalledWith(['/pricing']);
+      expect(billingMock.openPortal).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['BASIC', 'Basic'],
+      ['PRO', 'Pro'],
+    ])('should show %s plan and Manage subscription action', (tier, name) => {
+      withTier(tier);
+      expect(billingGroup().label).toBe(`Plan & Billing · ${name} Plan`);
+      expect(billingItem().label).toBe('Manage subscription');
+      expect(billingItem().disabled).toBe(false);
+    });
+
+    it.each(['BASIC', 'PRO'])(
+      'should open the billing portal for %s tier',
+      (tier) => {
+        withTier(tier);
+        const navigateSpy = vi.spyOn(router, 'navigate');
+        run(billingItem());
+        expect(billingMock.openPortal).toHaveBeenCalledTimes(1);
+        expect(navigateSpy).not.toHaveBeenCalled();
+      },
+    );
+
+    it('should disable Manage subscription while redirecting to the portal', () => {
+      withTier('PRO');
+      redirectingToPortal.set(true);
+      expect(billingItem().disabled).toBe(true);
+    });
+
+    it('should not disable Upgrade while redirecting to the portal', () => {
+      withTier('FREE');
+      redirectingToPortal.set(true);
+      expect(billingItem().disabled).toBe(false);
+    });
+
+    it('should show no tier and disable the billing action when profile is missing', () => {
+      expect(billingGroup().label).toBe('Plan & Billing');
+      expect(billingItem().disabled).toBe(true);
+    });
+
+    it('should show no tier and disable the billing action when subscription is missing', () => {
+      profile.set({});
+      expect(billingGroup().label).toBe('Plan & Billing');
+      expect(billingItem().disabled).toBe(true);
+    });
+
+    it('should emit signOut from Sign Out', () => {
+      const signOutSpy = vi.fn();
+      component.signOut.subscribe(signOutSpy);
+      run(signOutItem());
+      expect(signOutSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('emitSignOut', () => {
     it('should emit signOut event', () => {
       const signOutSpy = vi.fn();
       component.signOut.subscribe(signOutSpy);
       component.emitSignOut();
       expect(signOutSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('captures signout_button_clicked', () => {
+      const captureSpy = vi.spyOn(posthog, 'capture');
+      component.emitSignOut();
+      expect(captureSpy).toHaveBeenCalledWith('signout_button_clicked', {
+        place: 'user menu',
+        button_title: 'Sign Out',
+      });
     });
   });
 
