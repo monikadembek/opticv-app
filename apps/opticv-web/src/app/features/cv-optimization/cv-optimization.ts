@@ -2,6 +2,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  Injector,
+  afterNextRender,
   OnInit,
   computed,
   effect,
@@ -79,7 +81,11 @@ import {
   recomputeKeywordGapResult,
 } from './utils/recompute-scores';
 import { JobApplicationApiService } from '../../core/services/job-application-api.service';
-import { OptimSidebar } from './components/optim-sidebar/optim-sidebar';
+import {
+  NAV_GROUPS,
+  OptimSidebar,
+  tabForSection,
+} from './components/optim-sidebar/optim-sidebar';
 import { SectionCard } from './components/section-card/section-card';
 import { JobInfoBanner } from './components/job-info-banner/job-info-banner';
 import { ExportFooter } from './components/export-footer/export-footer';
@@ -277,6 +283,7 @@ export class CvOptimization implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly injector = inject(Injector);
   private readonly persistSubject = new Subject<void>();
   private readonly persistSummarySubject = new Subject<void>();
   private readonly persistCoverLetterSubject = new Subject<void>();
@@ -395,6 +402,7 @@ export class CvOptimization implements OnInit {
   private readonly breakpointObserver = inject(BreakpointObserver);
   readonly activeSection = signal<string>(PromptType.RESUME_AUTOPSY);
   readonly collapsedSections = signal<ReadonlySet<string>>(new Set());
+  readonly navGroups = NAV_GROUPS;
   readonly activeResultsTab = signal<ActiveResultsTab>('cv-analysis');
   private readonly initializedTabDefaults = signal<
     ReadonlySet<ActiveResultsTab>
@@ -578,7 +586,6 @@ export class CvOptimization implements OnInit {
 
   readonly cvAnalysisSectionIds = computed<string[]>(() => {
     const ids = [
-      'JOB_POSTING',
       PromptType.RESUME_AUTOPSY,
       PromptType.KEYWORD_GAP,
       PromptType.SUMMARY_REWRITE,
@@ -587,6 +594,10 @@ export class CvOptimization implements OnInit {
     const all = new Set(this.allSectionIds());
     return ids.filter((id) => all.has(id));
   });
+
+  readonly jobPostingSectionIds = computed<string[]>(() =>
+    this.allSectionIds().filter((id) => id === 'JOB_POSTING'),
+  );
 
   readonly additionalMaterialsSectionIds = computed<string[]>(() => {
     const ids = [
@@ -598,11 +609,16 @@ export class CvOptimization implements OnInit {
     return ids.filter((id) => all.has(id));
   });
 
-  readonly activeTabSectionIds = computed<string[]>(() =>
-    this.activeResultsTab() === 'cv-analysis'
-      ? this.cvAnalysisSectionIds()
-      : this.additionalMaterialsSectionIds(),
-  );
+  readonly activeTabSectionIds = computed<string[]>(() => {
+    switch (this.activeResultsTab()) {
+      case 'job-posting':
+        return this.jobPostingSectionIds();
+      case 'cv-analysis':
+        return this.cvAnalysisSectionIds();
+      case 'additional-materials':
+        return this.additionalMaterialsSectionIds();
+    }
+  });
 
   readonly allSectionsCollapsed = computed(() =>
     this.activeTabSectionIds().every((id) => this.collapsedSections().has(id)),
@@ -639,26 +655,29 @@ export class CvOptimization implements OnInit {
     // runs the first time the given tab is viewed
     effect(() => {
       const state = this.pageState();
-      const tab = this.activeResultsTab();
       if (state === 'initial') return;
-      if (this.initializedTabDefaults().has(tab)) return;
+      this.applyTabDefaults(this.activeResultsTab());
+    });
+  }
 
-      const defaultExpandedId =
-        tab === 'cv-analysis'
+  private applyTabDefaults(tab: ActiveResultsTab): void {
+    if (this.initializedTabDefaults().has(tab)) return;
+
+    const defaultExpandedId: string =
+      tab === 'job-posting'
+        ? 'JOB_POSTING'
+        : tab === 'cv-analysis'
           ? PromptType.RESUME_AUTOPSY
           : PromptType.COVER_LETTER;
 
-      this.collapsedSections.update((current) => {
-        const next = new Set(current);
-        for (const id of this.activeTabSectionIds()) {
-          if (id !== defaultExpandedId) next.add(id);
-        }
-        return next;
-      });
-      this.initializedTabDefaults.update(
-        (current) => new Set([...current, tab]),
-      );
+    this.collapsedSections.update((current) => {
+      const next = new Set(current);
+      for (const id of this.activeTabSectionIds()) {
+        if (id !== defaultExpandedId) next.add(id);
+      }
+      return next;
     });
+    this.initializedTabDefaults.update((current) => new Set([...current, tab]));
   }
 
   ngOnInit(): void {
@@ -753,17 +772,44 @@ export class CvOptimization implements OnInit {
   }
 
   onResultsTabChanged(tab: string | number | undefined): void {
-    if (tab !== 'cv-analysis' && tab !== 'additional-materials') return;
+    if (
+      tab !== 'job-posting' &&
+      tab !== 'cv-analysis' &&
+      tab !== 'additional-materials'
+    ) {
+      return;
+    }
     this.onBulletEditCancelled();
     this.onKeywordEditCancelled();
     this.activeResultsTab.set(tab);
+    const firstItem = NAV_GROUPS.find((g) => g.tab === tab)?.items[0];
+    if (firstItem) this.activeSection.set(firstItem.id);
   }
 
   handleSectionClick(id: string): void {
+    const targetTab = tabForSection(id);
+    const switchingTab =
+      targetTab !== undefined && targetTab !== this.activeResultsTab();
+    if (switchingTab) {
+      this.onResultsTabChanged(targetTab);
+      if (this.pageState() !== 'initial') {
+        this.applyTabDefaults(targetTab);
+      }
+    }
     this.activeSection.set(id);
     if (this.isSectionCollapsed(id)) {
       this.onSectionCollapsedChange(id, false);
     }
+    if (switchingTab) {
+      afterNextRender(() => this.scrollToSection(id), {
+        injector: this.injector,
+      });
+    } else {
+      this.scrollToSection(id);
+    }
+  }
+
+  private scrollToSection(id: string): void {
     const el = document.getElementById(`section-${id}`);
     if (el) {
       const top =

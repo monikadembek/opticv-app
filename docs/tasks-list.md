@@ -2148,6 +2148,77 @@ Add a return URL in the app: have the guard send them to /login?returnUrl=/setti
 
 ---
 
+## 132. Move buttons for Resume Analysis and Additional materials back to sidebar
+
+**status: done**
+**time: 10.11.2026-11.11.2026**
+
+Currently in the cv-optimization page the buttons for Resume Analysis and Additional Materials are placed below the Job Posting section and when user scrolls down the page he cannot see them so the user might not even know how to get to the Additional Materials page if the button is not visible and it is not on the sidebar.
+
+Display on the sidebar 3 groups: Job Posting, Resume Optimization and Additional Materials and display all the belonging menu items to these groups.
+In tme main CV-optimization page display on top 3 tab buttons for the same groups and below display only the section cards that belog to the selected tab panel.
+
+---
+
+## 133. Add button or link to go to landing page from app
+
+**status: todo**
+**time:**
+
+We need a way to go from app to landing page. Add a button in the menu or in the footer so user can click it and go back to landing page.
+
+Add an "About OptiCV" link to the footer (apps/opticv-web/src/app/layout/footer/footer.html).
+
+- The footer renders on every route (guest and authenticated), so the link is always reachable.
+- It's unobtrusive and doesn't compete with the header's primary nav (Dashboard / Upload CV / Optimize CV).
+- The footer already has a <nav aria-label="Legal"> and external social links, so it fits the existing pattern.
+
+Implementation: a plain anchor next to the legal links:
+<a href="https://opticv.net" target="_blank" rel="noopener noreferrer">About OptiCV</a>
+styled like the existing footer links. Optionally add rel="noopener noreferrer" to the two social links, which currently lack rel.
+
+---
+
+## 134. Make the information about subscription plans more visible
+
+**status: todo**
+**time:**
+
+I would like to make the information about subscription plans more visible, now upgrading to paid account is hidden in the settings page, new user who logs in in the app should see the information about plans more clearly, and the option to upgrade/cancel subscription should also be more visible.
+
+What's there today
+
+- Plan info, upgrade, and Manage billing exist only on /settings.
+- The header avatar goes straight to settings, and there is no user dropdown.
+- The only billing signal outside settings is the past-due banner.
+- The header and footer are global, so anything placed there reaches every page.
+
+Suggested changes, most to least impactful
+
+1. Plan chip and Upgrade button in the header.
+   - Show a small tier badge ("Free") next to the avatar for logged-in users.
+   - On the Free tier, add a visible Upgrade button next to it.
+   - Both link to a pricing view.
+   - This is the highest-visibility change because the header appears on every page.
+2. A dedicated /pricing page (or a modal) that compares plans.
+   - It would show Free, Basic, and Pro with their quotas, and the buttons would use the existing Stripe upgrade flow.
+   - Settings would link to it instead of holding the only upgrade UI.
+   - The same page can be shown to guests, so you can link to it from the landing page too.
+3. A usage nudge on the pages where limits matter.
+   - On the dashboard and upload/optimize pages, show "2 of 3 optimizations used" with an upgrade link when the user is near or at the limit.
+   - When a user hits a quota, show an upgrade prompt rather than only an error. People are most likely to upgrade at that moment.
+   - Settings already shows quota progress bars, so that data should be reusable.
+4. A dismissible first-login banner or welcome-guide step.
+   - There's already a welcome-guide-modal, so I'd add a "Plans" step to it, or a dismissible banner like the past-due one on the dashboard for new Free users.
+5. Replace the avatar-to-settings shortcut with a small user menu.
+   - Entries would be Account settings, Plan & billing (showing the current tier, with Upgrade or Manage subscription), and Sign out.
+   - This makes cancel and manage-billing reachable in two clicks from anywhere.
+   - It's optional but tidy. It also frees the header, since Sign Out and Help can move inside the menu.
+
+My recommendation: do 1, 2, and 3 together. Skip 4 unless you want extra onboarding. Do 5 only if the header feels crowded after adding the chip. If you do add 5, the "Plan & billing" entry covers the visible Manage subscription and cancel option you asked for.
+
+---
+
 ## Automatically delete accounts after 24 months of inactivity
 
 Implement a scheduled cleanup job that checks accounts for inactivity. If account has a 24 months of inactivity it sends an email to user with information that account may be deleted and after 30 days it deletes the account.
@@ -2161,15 +2232,6 @@ Implement a scheduled cleanup job that checks accounts for inactivity. If accoun
 
 Implement dark/light mode in the app.
 The plan has been saved to /docs/dark-mode-plan.md
-
----
-
-## Make paid subscription options more visible
-
-**status: todo**
-**time:**
-
-Consider moving subscription content to home page, now upgrading to paid account is hidden in the settings page.
 
 ---
 

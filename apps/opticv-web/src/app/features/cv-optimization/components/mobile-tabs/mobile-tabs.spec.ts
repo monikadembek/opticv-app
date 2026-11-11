@@ -22,10 +22,8 @@ describe('MobileTabs', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('renders a tab button for every visible nav item (default cv-analysis tab)', () => {
-    const expectedItems = NAV_GROUPS.filter(
-      (g) => g.group === 'Job Posting' || g.group === 'Resume Analysis',
-    ).flatMap((g) => g.items);
+  it('renders a tab button for every item of every group', () => {
+    const expectedItems = NAV_GROUPS.flatMap((g) => g.items);
     const buttons = fixture.nativeElement.querySelectorAll('.mobile-tab');
     expect(buttons.length).toBe(expectedItems.length);
   });
@@ -38,10 +36,11 @@ describe('MobileTabs', () => {
     expect(activeBtn.textContent).toContain('Keyword');
   });
 
-  it('does not apply active class to inactive tabs', () => {
+  it('applies the active class to exactly one tab', () => {
     fixture.componentRef.setInput('activeSection', PromptType.RESUME_AUTOPSY);
     fixture.detectChanges();
-    const activeBtns = fixture.nativeElement.querySelectorAll('.mobile-tab.active');
+    const activeBtns =
+      fixture.nativeElement.querySelectorAll('.mobile-tab.active');
     expect(activeBtns.length).toBe(1);
   });
 
@@ -50,39 +49,5 @@ describe('MobileTabs', () => {
     const firstTab = fixture.debugElement.query(By.css('.mobile-tab'));
     firstTab.triggerEventHandler('click');
     expect(emitSpy).toHaveBeenCalledWith(NAV_GROUPS[0].items[0].id);
-  });
-
-  it('navItems matches all items from NAV_GROUPS by default (cv-analysis tab)', () => {
-    const expectedItems = NAV_GROUPS.filter(
-      (g) => g.group === 'Job Posting' || g.group === 'Resume Analysis',
-    ).flatMap((g) => g.items);
-    expect(component.navItems()).toEqual(expectedItems);
-  });
-
-  describe('activeTab filtering', () => {
-    it('shows Job Posting + Resume Analysis items when activeTab is cv-analysis', () => {
-      fixture.componentRef.setInput('activeTab', 'cv-analysis');
-      fixture.detectChanges();
-      const expectedItems = NAV_GROUPS.filter(
-        (g) => g.group === 'Job Posting' || g.group === 'Resume Analysis',
-      ).flatMap((g) => g.items);
-      const buttons = fixture.nativeElement.querySelectorAll('.mobile-tab');
-      expect(buttons.length).toBe(expectedItems.length);
-    });
-
-    it('shows Job Posting + Additional Materials items when activeTab is additional-materials', () => {
-      fixture.componentRef.setInput('activeTab', 'additional-materials');
-      fixture.detectChanges();
-      const expectedItems = NAV_GROUPS.filter(
-        (g) => g.group === 'Job Posting' || g.group === 'Additional Materials',
-      ).flatMap((g) => g.items);
-      const buttons = fixture.nativeElement.querySelectorAll('.mobile-tab');
-      expect(buttons.length).toBe(expectedItems.length);
-      expect(
-        Array.from(buttons as NodeListOf<HTMLButtonElement>).some((b) =>
-          b.textContent?.includes('Keyword'),
-        ),
-      ).toBe(false);
-    });
   });
 });
