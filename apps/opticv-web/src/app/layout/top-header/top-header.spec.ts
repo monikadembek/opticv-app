@@ -175,6 +175,38 @@ describe('TopHeader', () => {
       expect(button.getAttribute('aria-expanded')).toBe('false');
     });
 
+    it('should only set aria-controls while the menu is open', () => {
+      const button = fixture.debugElement.query(
+        By.css('button.header__avatar-button'),
+      ).nativeElement as HTMLButtonElement;
+      expect(button.hasAttribute('aria-controls')).toBe(false);
+
+      component.isUserMenuOpen.set(true);
+      fixture.detectChanges();
+      expect(button.getAttribute('aria-controls')).toBe(component.userMenuId);
+      expect(button.getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('should not put the menu id on the p-menu host element', () => {
+      const host = fixture.debugElement.query(By.css('p-menu'))
+        .nativeElement as HTMLElement;
+      expect(host.getAttribute('id')).toBeNull();
+    });
+
+    it('should reset isUserMenuOpen when the user logs out', () => {
+      component.isUserMenuOpen.set(true);
+      fixture.componentRef.setInput('isLoggedIn', false);
+      fixture.detectChanges();
+      expect(component.isUserMenuOpen()).toBe(false);
+
+      fixture.componentRef.setInput('isLoggedIn', true);
+      fixture.detectChanges();
+      const button = fixture.debugElement.query(
+        By.css('button.header__avatar-button'),
+      ).nativeElement as HTMLButtonElement;
+      expect(button.getAttribute('aria-expanded')).toBe('false');
+    });
+
     it('should not show Sign In button', () => {
       const signInButton = fixture.debugElement.query(
         By.css('p-button[label="Sign In"]'),

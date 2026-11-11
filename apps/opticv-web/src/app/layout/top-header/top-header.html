@@ -44,7 +44,7 @@
             class="header__avatar-button"
             aria-label="Open user menu"
             aria-haspopup="menu"
-            aria-controls="user-menu"
+            [attr.aria-controls]="isUserMenuOpen() ? userMenuId : null"
             [attr.aria-expanded]="isUserMenuOpen()"
             (click)="toggleUserMenu($event)"
           >
@@ -56,7 +56,7 @@
           </button>
           <p-menu
             #userMenu
-            id="user-menu"
+            [id]="userMenuId"
             [model]="userMenuItems()"
             [popup]="true"
             appendTo="body"

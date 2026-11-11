@@ -53,6 +53,8 @@ export class TopHeader {
   userLabel = input('U');
   signOut = output<void>();
 
+  /** Bound to p-menu's `id` input, which PrimeNG applies to the rendered popup overlay. */
+  readonly userMenuId = 'user-menu';
   readonly isUserMenuOpen = signal(false);
 
   private readonly tier = computed(
@@ -107,6 +109,13 @@ export class TopHeader {
   ];
 
   constructor() {
+    // p-menu is destroyed on sign-out and onHide may not fire, so reset here.
+    effect(() => {
+      if (!this.isLoggedIn()) {
+        this.isUserMenuOpen.set(false);
+      }
+    });
+
     effect(() => {
       const loggedInMenuItems: MenuItem[] = [
         {
@@ -161,11 +170,11 @@ export class TopHeader {
     this.userMenu()?.toggle(event);
   }
 
-  openAccountSettings(): void {
+  private openAccountSettings(): void {
     this.router.navigate(['/settings']);
   }
 
-  openPlanAndBilling(isPaid: boolean): void {
+  private openPlanAndBilling(isPaid: boolean): void {
     if (isPaid) {
       this.billingRedirectService.openPortal();
     } else {
