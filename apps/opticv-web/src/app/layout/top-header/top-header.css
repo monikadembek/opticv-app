@@ -124,3 +124,18 @@ p-menubar {
   color: var(--color-primary) !important;
   font-weight: bold;
 }
+
+.header__avatar-button {
+  display: inline-flex;
+  padding: 0;
+  margin-right: 0.5rem;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.header__avatar-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
