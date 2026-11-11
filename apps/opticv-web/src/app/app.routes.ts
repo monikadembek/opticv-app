@@ -54,6 +54,12 @@ export const appRoutes: Route[] = [
     canActivate: [authGuard],
   },
   {
+    path: 'pricing',
+    title: 'Pricing – OptiCV',
+    loadComponent: () =>
+      import('./features/pricing/pricing').then((c) => c.Pricing),
+  },
+  {
     path: 'privacy-policy',
     title: 'Privacy Policy – OptiCV',
     loadComponent: () =>

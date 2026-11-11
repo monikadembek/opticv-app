@@ -94,7 +94,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
       INTERVIEW_PREP: 1,
       LINKEDIN: 1,
     },
-    maxStoredCvs: 2,
+    maxStoredCvs: 1,
     allowedTemplates: ['default', 'classic'],
   },
   BASIC: {
@@ -104,7 +104,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
       INTERVIEW_PREP: 10,
       LINKEDIN: 10,
     },
-    maxStoredCvs: 10,
+    maxStoredCvs: 5,
     allowedTemplates: 'ALL',
   },
   PRO: {
@@ -114,7 +114,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
       INTERVIEW_PREP: 30,
       LINKEDIN: 30,
     },
-    maxStoredCvs: 20,
+    maxStoredCvs: 10,
     allowedTemplates: 'ALL',
   },
 };
