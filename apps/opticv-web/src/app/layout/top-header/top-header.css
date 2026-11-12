@@ -140,6 +140,7 @@ p-menubar {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
+
 .header__tier-badge {
   position: absolute;
   right: -0.75rem;

@@ -5,6 +5,7 @@ import { signal } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { vi } from 'vitest';
 import posthog from 'posthog-js';
+import type { SubscriptionStatus, SubscriptionTier } from '@opticv/datatypes';
 import { TopHeader } from './top-header';
 import { UserGuideStore } from '../../core/stores/user-guide.store';
 import { UserSettingsApiService } from '../../core/services/user-settings-api.service';
@@ -352,8 +353,10 @@ describe('TopHeader', () => {
   });
 
   describe('tier badge', () => {
-    const withSubscription = (tier: string, status: string) =>
-      profile.set({ subscription: { tier, status } });
+    const withSubscription = (
+      tier: SubscriptionTier,
+      status: SubscriptionStatus,
+    ) => profile.set({ subscription: { tier, status } });
     const badge = () =>
       fixture.debugElement.query(By.css('.header__tier-badge'))
         ?.nativeElement as HTMLElement | undefined;
@@ -387,7 +390,7 @@ describe('TopHeader', () => {
         expect(badge()).toBeUndefined();
       });
 
-      it.each([
+      it.each<[SubscriptionTier, string, string]>([
         ['FREE', 'Free', 'bg-slate-100'],
         ['BASIC', 'Basic', 'bg-sky-100'],
         ['PRO', 'Pro', 'bg-amber-100'],
@@ -408,7 +411,7 @@ describe('TopHeader', () => {
         expect(badge()?.textContent?.trim()).toBe('Pro');
       });
 
-      it.each(['PAST_DUE', 'CANCELED'])(
+      it.each<SubscriptionStatus>(['PAST_DUE', 'CANCELED'])(
         'should show Free for a %s PRO subscription',
         (status) => {
           withSubscription('PRO', status);
