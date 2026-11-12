@@ -454,7 +454,8 @@ describe('Dashboard', () => {
       fixture.detectChanges();
 
       expect(
-        usageSection()?.querySelectorAll('a[href="/pricing"]').length,
+        usageSection()?.querySelectorAll('button[routerlink="/pricing"]')
+          .length,
       ).toBe(1);
     });
 

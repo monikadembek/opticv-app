@@ -15,8 +15,8 @@ describe('UsageMeter', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
-  function upgradeLink(el: HTMLElement): HTMLAnchorElement | null {
-    return el.querySelector('a[href="/pricing"]');
+  function upgradeButton(el: HTMLElement): HTMLButtonElement | null {
+    return el.querySelector('button[routerlink="/pricing"]');
   }
 
   beforeEach(async () => {
@@ -51,17 +51,17 @@ describe('UsageMeter', () => {
 
   it('hides the upgrade link below 80% usage', () => {
     const el = render({ used: 7, limit: 10 });
-    expect(upgradeLink(el)).toBeNull();
+    expect(upgradeButton(el)).toBeNull();
   });
 
   it('shows the upgrade link at 80% usage', () => {
     const el = render({ used: 8, limit: 10 });
-    expect(upgradeLink(el)?.textContent?.trim()).toBe('Upgrade');
+    expect(upgradeButton(el)?.textContent?.trim()).toBe('Upgrade');
   });
 
   it('hides the upgrade link when the user cannot upgrade', () => {
     const el = render({ used: 10, limit: 10, canUpgrade: false });
-    expect(upgradeLink(el)).toBeNull();
+    expect(upgradeButton(el)).toBeNull();
   });
 
   it('shows the reset date with its label', () => {
@@ -84,7 +84,7 @@ describe('UsageMeter', () => {
     const spy = vi.fn();
     fixture.componentInstance.upgradeClicked.subscribe(spy);
 
-    upgradeLink(el)?.click();
+    upgradeButton(el)?.click();
 
     expect(spy).toHaveBeenCalledOnce();
   });
