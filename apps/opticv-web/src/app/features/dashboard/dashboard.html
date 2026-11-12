@@ -29,7 +29,7 @@
         <span class="font-bold text-xl font-(family-name:--font-heading)"
           >{{ optimizationsItems().length }}</span
         >
-        <span class="text-sm">Optimizations</span>
+        <span class="text-sm">Optimizations runs</span>
       </div>
     </div>
 
@@ -53,6 +53,39 @@
         <span class="text-sm">Latest activity</span>
       </div>
     </div>
+    <!-- </div> -->
+
+    @if (planUsageStore.optimizationQuota() || planUsageStore.storedCvs()) {
+    <section
+      class="flex-3 flex flex-col gap-4 rounded-lg border border-(--border-subtle) p-4"
+      aria-label="Usage"
+    >
+      <h2
+        class="text-sm font-semibold uppercase tracking-wide text-surface-500"
+      >
+        Usage this month
+      </h2>
+      @if (planUsageStore.optimizationQuota(); as quota) {
+      <app-usage-meter
+        label="optimizations used"
+        [used]="quota.used"
+        [limit]="quota.limit"
+        [resetsAt]="quota.resetsAt"
+        [resetLabel]="planUsageStore.resetLabel()"
+        [canUpgrade]="planUsageStore.canUpgrade()"
+        (upgradeClicked)="onUpgradeClicked('usage_meter_optimizations')"
+      />
+      } @if (planUsageStore.storedCvs(); as cvs) {
+      <app-usage-meter
+        label="CVs stored"
+        [used]="cvs.used"
+        [limit]="cvs.limit"
+        [canUpgrade]="planUsageStore.canUpgrade()"
+        (upgradeClicked)="onUpgradeClicked('usage_meter_cvs')"
+      />
+      }
+    </section>
+    }
   </div>
 
   <p-tabs value="0">
