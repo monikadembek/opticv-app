@@ -20,11 +20,18 @@ import { SubscriptionTier } from '@opticv/datatypes';
 import { UserGuideStore } from '../../core/stores/user-guide.store';
 import { UserSettingsApiService } from '../../core/services/user-settings-api.service';
 import { BillingRedirectService } from '../../core/services/billing-redirect.service';
+import { PlanUsageStore } from '../../core/stores/plan-usage.store';
 
 const TIER_LABELS: Record<SubscriptionTier, string> = {
   FREE: 'Free',
   BASIC: 'Basic',
   PRO: 'Pro',
+};
+
+const TIER_BADGE_CLASSES: Record<SubscriptionTier, string> = {
+  FREE: 'bg-slate-100 text-slate-700',
+  BASIC: 'bg-sky-100 text-sky-800',
+  PRO: 'bg-amber-100 text-amber-800',
 };
 
 @Component({
@@ -46,6 +53,7 @@ export class TopHeader {
   private readonly userGuideStore = inject(UserGuideStore);
   private readonly userSettingsApiService = inject(UserSettingsApiService);
   private readonly billingRedirectService = inject(BillingRedirectService);
+  private readonly planUsageStore = inject(PlanUsageStore);
 
   private readonly userMenu = viewChild<Menu>('userMenu');
 
@@ -60,6 +68,23 @@ export class TopHeader {
   private readonly tier = computed(
     () => this.userSettingsApiService.userProfile.value()?.subscription?.tier,
   );
+
+  readonly badgeTier = computed(() => this.planUsageStore.effectiveTier());
+
+  readonly badgeLabel = computed(() => {
+    const tier = this.badgeTier();
+    return tier ? TIER_LABELS[tier] : null;
+  });
+
+  readonly badgeClass = computed(() => {
+    const tier = this.badgeTier();
+    return tier ? TIER_BADGE_CLASSES[tier] : '';
+  });
+
+  readonly avatarButtonAriaLabel = computed(() => {
+    const label = this.badgeLabel();
+    return label ? `Open user menu, ${label} plan` : 'Open user menu';
+  });
 
   readonly userMenuItems = computed<MenuItem[]>(() => {
     const tier = this.tier();
