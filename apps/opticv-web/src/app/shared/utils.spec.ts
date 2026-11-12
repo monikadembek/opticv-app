@@ -1,4 +1,9 @@
-import { formatFileSize, getMimeLabel } from './utils';
+import {
+  formatFileSize,
+  getMimeLabel,
+  isNearLimit,
+  usagePercent,
+} from './utils';
 
 describe('formatFileSize', () => {
   it('should format bytes', () => {
@@ -37,5 +42,40 @@ describe('getMimeLabel', () => {
     expect(getMimeLabel('image/png')).toBe('image/png');
     expect(getMimeLabel('text/plain')).toBe('text/plain');
     expect(getMimeLabel('')).toBe('');
+  });
+});
+
+describe('usagePercent', () => {
+  it('returns the used share of the limit as a percentage', () => {
+    expect(usagePercent(0, 1)).toBe(0);
+    expect(usagePercent(7, 10)).toBe(70);
+    expect(usagePercent(1, 1)).toBe(100);
+  });
+
+  it('caps the value at 100 when usage exceeds the limit', () => {
+    expect(usagePercent(6, 5)).toBe(100);
+  });
+
+  it('returns 0 when the limit is 0', () => {
+    expect(usagePercent(0, 0)).toBe(0);
+  });
+});
+
+describe('isNearLimit', () => {
+  it('is false below 80% of the limit', () => {
+    expect(isNearLimit(0, 1)).toBe(false);
+    expect(isNearLimit(7, 10)).toBe(false);
+    expect(isNearLimit(3, 5)).toBe(false);
+  });
+
+  it('is true at or above 80% of the limit', () => {
+    expect(isNearLimit(8, 10)).toBe(true);
+    expect(isNearLimit(4, 5)).toBe(true);
+    expect(isNearLimit(1, 1)).toBe(true);
+    expect(isNearLimit(6, 5)).toBe(true);
+  });
+
+  it('is false when the limit is 0', () => {
+    expect(isNearLimit(0, 0)).toBe(false);
   });
 });

@@ -122,8 +122,60 @@
         <p class="font-semibold text-primary">CV uploaded successfully.</p>
       </div>
 
-      } @else {
+      } @else if (planUsageStore.isAtCvLimit()) { @if
+      (planUsageStore.storedCvs(); as cvs) {
+      <div class="w-full flex flex-col gap-5">
+        <app-usage-meter
+          label="CVs stored"
+          [used]="cvs.used"
+          [limit]="cvs.limit"
+          [canUpgrade]="planUsageStore.canUpgrade()"
+          (upgradeClicked)="onUpgradeClicked('usage_meter_cvs')"
+        />
+        <div
+          role="status"
+          class="flex items-start gap-3 rounded-md border border-(--border-subtle) bg-surface-50 p-4 text-sm"
+        >
+          <i
+            class="pi pi-info-circle mt-0.5 text-primary"
+            aria-hidden="true"
+          ></i>
+          <p>
+            You've reached your limit of <strong>{{ cvs.limit }}</strong> stored
+            CVs. Delete a CV from your dashboard @if
+            (planUsageStore.canUpgrade()) { or upgrade your plan } to add more.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <p-button
+            label="Go to dashboard"
+            [outlined]="true"
+            size="small"
+            routerLink="/dashboard"
+          />
+          @if (planUsageStore.canUpgrade()) {
+          <p-button
+            label="View plans"
+            size="small"
+            routerLink="/pricing"
+            (onClick)="onUpgradeClicked('upload_limit_prompt')"
+          />
+          }
+        </div>
+      </div>
+      } } @else {
       <div class="w-full">
+        @if (planUsageStore.storedCvs(); as cvs) {
+        <div class="mb-5">
+          <app-usage-meter
+            label="CVs stored"
+            [used]="cvs.used"
+            [limit]="cvs.limit"
+            [canUpgrade]="planUsageStore.canUpgrade()"
+            (upgradeClicked)="onUpgradeClicked('usage_meter_cvs')"
+          />
+        </div>
+        }
         <app-cv-dropzone
           [isLoading]="isLoading()"
           (fileSelected)="onFileSelected($event)"
