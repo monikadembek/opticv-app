@@ -16,6 +16,7 @@ import { PosthogService } from './core/services/posthog.service';
 import { CvStore } from './core/stores/cv.store';
 import { UserGuideStore } from './core/stores/user-guide.store';
 import { WelcomeGuideModal } from './shared/welcome-guide-modal/welcome-guide-modal';
+import { QuotaUpgradeDialog } from './shared/quota-upgrade-dialog/quota-upgrade-dialog';
 import posthog from 'posthog-js';
 
 @Component({
@@ -27,6 +28,7 @@ import posthog from 'posthog-js';
     WelcomeGuideModal,
     PastDueBanner,
     CookieConsentBanner,
+    QuotaUpgradeDialog,
   ],
   selector: 'app-root',
   templateUrl: './app.html',

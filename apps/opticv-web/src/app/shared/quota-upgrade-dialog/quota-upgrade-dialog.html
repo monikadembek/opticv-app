@@ -1,0 +1,29 @@
+<p-dialog
+  [visible]="quotaDialogStore.isOpen()"
+  (visibleChange)="onVisibleChange($event)"
+  [header]="content()?.header ?? ''"
+  [modal]="true"
+  [closable]="true"
+  [closeOnEscape]="true"
+  [dismissableMask]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '480px', maxWidth: '95vw' }"
+>
+  @if (content(); as c) {
+  <p class="text-sm text-surface-700">{{ c.message }}</p>
+  }
+
+  <ng-template #footer>
+    @if (content()?.showUpgrade) {
+    <p-button label="Not now" [outlined]="true" (onClick)="close()" />
+    <p-button
+      label="View plans"
+      icon="pi pi-arrow-up"
+      (onClick)="onViewPlans()"
+    />
+    } @else {
+    <p-button label="Close" (onClick)="close()" />
+    }
+  </ng-template>
+</p-dialog>
