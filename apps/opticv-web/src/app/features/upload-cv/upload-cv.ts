@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   inject,
+  OnInit,
   signal,
   viewChild,
 } from '@angular/core';
@@ -16,22 +17,26 @@ import {
 } from './components/cv-dropzone/cv-dropzone';
 import { CvUploadApiService } from './services/cv-upload-api.service';
 import { formatFileSize, getMimeLabel } from '../../shared/utils';
-import { Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Router, RouterLink } from '@angular/router';
 import posthog from 'posthog-js';
 import { catchError, EMPTY, map, of, switchMap } from 'rxjs';
 import { CvStore } from '../../core/stores/cv.store';
+import { PlanUsageStore } from '../../core/stores/plan-usage.store';
+import { UsageMeter } from '../../shared/usage-meter/usage-meter';
 
 @Component({
   selector: 'app-upload-cv',
-  imports: [CvDropzone, ButtonModule, DatePipe],
+  imports: [CvDropzone, ButtonModule, DatePipe, RouterLink, UsageMeter],
   templateUrl: './upload-cv.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class UploadCv {
+export class UploadCv implements OnInit {
   private readonly router = inject(Router);
   private readonly cvUploadApiService = inject(CvUploadApiService);
   private readonly messageService = inject(MessageService);
   private readonly cvStore = inject(CvStore);
+  readonly planUsageStore = inject(PlanUsageStore);
 
   readonly dropZoneComponent = viewChild.required<CvDropzone>(CvDropzone);
 
@@ -49,6 +54,10 @@ export class UploadCv {
     return '';
   });
 
+  ngOnInit(): void {
+    this.planUsageStore.reload();
+  }
+
   onFileSelected(file: File): void {
     this.isLoading.set(true);
     this.cvUploadApiService
@@ -57,6 +66,13 @@ export class UploadCv {
         catchError((err) => {
           this.isLoading.set(false);
           this.dropZoneComponent().selectedFile.set(null);
+          if (
+            err instanceof HttpErrorResponse &&
+            err.error?.code === 'CV_LIMIT_EXCEEDED'
+          ) {
+            this.planUsageStore.reload();
+            return EMPTY;
+          }
           const message =
             err?.error?.message ?? 'Upload failed. Please try again.';
           this.messageService.add({
@@ -79,10 +95,15 @@ export class UploadCv {
         }),
         switchMap((result) => {
           this.cvStore.loadUserCVs(true);
+          this.planUsageStore.reload();
           return of(result);
         }),
       )
       .subscribe({});
+  }
+
+  onUpgradeClicked(place: 'usage_meter_cvs' | 'upload_limit_prompt'): void {
+    posthog.capture('upgrade_cta_clicked', { page: 'upload-cv', place });
   }
 
   optimizeCv(file: UploadCvResponse): void {

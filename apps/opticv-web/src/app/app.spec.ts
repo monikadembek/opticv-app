@@ -12,6 +12,7 @@ import { ToastModule } from 'primeng/toast';
 import { CvStore } from './core/stores/cv.store';
 import { UserGuideStore } from './core/stores/user-guide.store';
 import { WelcomeGuideModal } from './shared/welcome-guide-modal/welcome-guide-modal';
+import { QuotaUpgradeDialog } from './shared/quota-upgrade-dialog/quota-upgrade-dialog';
 
 @Component({ selector: 'app-top-header', template: '', standalone: true })
 class TopHeaderStub {
@@ -43,6 +44,13 @@ class ToastStub {}
   standalone: true,
 })
 class WelcomeGuideModalStub {}
+
+@Component({
+  selector: 'app-quota-upgrade-dialog',
+  template: '',
+  standalone: true,
+})
+class QuotaUpgradeDialogStub {}
 
 const mockSession = { user: { email: 'test@example.com' } } as any;
 
@@ -100,6 +108,7 @@ describe('App', () => {
             CookieConsentBanner,
             ToastModule,
             WelcomeGuideModal,
+            QuotaUpgradeDialog,
           ],
         },
         add: {
@@ -110,6 +119,7 @@ describe('App', () => {
             CookieConsentBannerStub,
             ToastStub,
             WelcomeGuideModalStub,
+            QuotaUpgradeDialogStub,
           ],
         },
       })
@@ -166,6 +176,14 @@ describe('App', () => {
     const fixture = createApp();
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('main.main')).toBeTruthy();
+  });
+
+  it('should render app-quota-upgrade-dialog', async () => {
+    const fixture = createApp();
+    await fixture.whenStable();
+    expect(
+      fixture.nativeElement.querySelector('app-quota-upgrade-dialog'),
+    ).toBeTruthy();
   });
 
   it('should render app-footer', async () => {

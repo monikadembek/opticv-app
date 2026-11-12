@@ -21,6 +21,8 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { Supabase } from '../../core/auth/services/supabase';
 import { DatePipe, isPlatformBrowser } from '@angular/common';
 import { CvApiService } from '../../core/services/cv-api.service';
+import { PlanUsageStore } from '../../core/stores/plan-usage.store';
+import { UsageMeter } from '../../shared/usage-meter/usage-meter';
 
 @Component({
   selector: 'app-dashboard',
@@ -30,6 +32,7 @@ import { CvApiService } from '../../core/services/cv-api.service';
     OptimizationList,
     ConfirmDialogModule,
     DatePipe,
+    UsageMeter,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
@@ -38,6 +41,7 @@ import { CvApiService } from '../../core/services/cv-api.service';
 })
 export class Dashboard implements OnInit {
   readonly cvStore = inject(CvStore);
+  readonly planUsageStore = inject(PlanUsageStore);
   private readonly jobApplicationApiService = inject(JobApplicationApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly confirmationService = inject(ConfirmationService);
@@ -87,6 +91,7 @@ export class Dashboard implements OnInit {
   }
 
   ngOnInit(): void {
+    this.planUsageStore.reload();
     this.loadOptimizations();
   }
 
@@ -141,6 +146,7 @@ export class Dashboard implements OnInit {
             next: () => {
               const newCvList = this.cvFiles().filter((f) => f.id !== file.id);
               this.cvStore.updateCvList(newCvList);
+              this.planUsageStore.reload();
               this.messageService.add({
                 severity: 'success',
                 summary: 'Success',
@@ -159,6 +165,12 @@ export class Dashboard implements OnInit {
           });
       },
     });
+  }
+
+  onUpgradeClicked(
+    place: 'usage_meter_optimizations' | 'usage_meter_cvs',
+  ): void {
+    posthog.capture('upgrade_cta_clicked', { page: 'dashboard', place });
   }
 
   loadOptimizations(): void {

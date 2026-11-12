@@ -2208,43 +2208,27 @@ Replace the avatar-to-settings shortcut with a small user menu.
 
 ---
 
-## Task to make the information about subscription plans more visible
+## 136. Show limits usage on the pages where limits matter
 
-**status: todo**
-**time:**
+**status: done**
+**time: 12.11.2026**
 
-I would like to make the information about subscription plans more visible, now upgrading to paid account is hidden in the settings page, new user who logs in in the app should see the information about plans more clearly, and the option to upgrade/cancel subscription should also be more visible.
+Display a usage nudge on the pages where limits matter.
 
-What's there today
+- On the dashboard page show monthly usage for the optimizations run and stored cvs, show "2 of 3 optimizations used" with an upgrade link when the user is near or at the limit.
+- On the upload page also show monthly usage of stored cvs
+- When a user hits a quota, show an upgrade prompt rather than only an error. People are most likely to upgrade at that moment.
 
-- Plan info, upgrade, and Manage billing exist only on /settings.
-- The header avatar goes straight to settings, and there is no user dropdown.
-- The only billing signal outside settings is the past-due banner.
-- The header and footer are global, so anything placed there reaches every page.
+Settings already shows quota progress bars, so that data should be reusable.
 
-Suggested changes, most to least impactful
+---
 
-1. Plan chip and Upgrade button in the header.
-   - Show a small tier badge ("Free") next to the avatar for logged-in users.
-   - On the Free tier, add a visible Upgrade button next to it.
-   - Both link to a pricing view.
-   - This is the highest-visibility change because the header appears on every page.
-2. A dedicated /pricing page (or a modal) that compares plans.
-   - It would show Free, Basic, and Pro with their quotas, and the buttons would use the existing Stripe upgrade flow.
-   - Settings would link to it instead of holding the only upgrade UI.
-   - The same page can be shown to guests, so you can link to it from the landing page too.
-3. A usage nudge on the pages where limits matter.
-   - On the dashboard and upload/optimize pages, show "2 of 3 optimizations used" with an upgrade link when the user is near or at the limit.
-   - When a user hits a quota, show an upgrade prompt rather than only an error. People are most likely to upgrade at that moment.
-   - Settings already shows quota progress bars, so that data should be reusable.
-4. A dismissible first-login banner or welcome-guide step.
-   - There's already a welcome-guide-modal, so I'd add a "Plans" step to it, or a dismissible banner like the past-due one on the dashboard for new Free users.
-5. Replace the avatar-to-settings shortcut with a small user menu.
-   - Entries would be Account settings, Plan & billing (showing the current tier, with Upgrade or Manage subscription), and Sign out.
-   - This makes cancel and manage-billing reachable in two clicks from anywhere.
-   - It's optional but tidy. It also frees the header, since Sign Out and Help can move inside the menu.
+## 137. Show small tier badge on the avatar
 
-My recommendation: do 1, 2, and 3 together. Skip 4 unless you want extra onboarding. Do 5 only if the header feels crowded after adding the chip. If you do add 5, the "Plan & billing" entry covers the visible Manage subscription and cancel option you asked for.
+**status: done**
+**time: 12.11.2026**
+
+Show a small tier badge (Free/Basic/Pro) next to the avatar for logged-in users.
 
 ---
 
