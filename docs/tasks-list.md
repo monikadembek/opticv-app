@@ -2225,7 +2225,7 @@ Settings already shows quota progress bars, so that data should be reusable.
 
 ## 137. Show small tier badge on the avatar
 
-**status: todo**
+**status: done**
 **time: 12.11.2026**
 
 Show a small tier badge (Free/Basic/Pro) next to the avatar for logged-in users.

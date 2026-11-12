@@ -5,6 +5,7 @@ import { signal } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { vi } from 'vitest';
 import posthog from 'posthog-js';
+import type { SubscriptionStatus, SubscriptionTier } from '@opticv/datatypes';
 import { TopHeader } from './top-header';
 import { UserGuideStore } from '../../core/stores/user-guide.store';
 import { UserSettingsApiService } from '../../core/services/user-settings-api.service';
@@ -347,6 +348,102 @@ describe('TopHeader', () => {
       expect(captureSpy).toHaveBeenCalledWith('signout_button_clicked', {
         place: 'user menu',
         button_title: 'Sign Out',
+      });
+    });
+  });
+
+  describe('tier badge', () => {
+    const withSubscription = (
+      tier: SubscriptionTier,
+      status: SubscriptionStatus,
+    ) => profile.set({ subscription: { tier, status } });
+    const badge = () =>
+      fixture.debugElement.query(By.css('.header__tier-badge'))
+        ?.nativeElement as HTMLElement | undefined;
+    const avatarButton = () =>
+      fixture.debugElement.query(By.css('button.header__avatar-button'))
+        .nativeElement as HTMLButtonElement;
+
+    it('should not render the badge when logged out', () => {
+      withSubscription('PRO', 'ACTIVE');
+      fixture.componentRef.setInput('isLoggedIn', false);
+      fixture.detectChanges();
+      expect(badge()).toBeUndefined();
+    });
+
+    describe('when logged in', () => {
+      beforeEach(() => {
+        fixture.componentRef.setInput('isLoggedIn', true);
+      });
+
+      it('should hide the badge and keep the default aria-label while the profile is unknown', () => {
+        fixture.detectChanges();
+        expect(badge()).toBeUndefined();
+        expect(avatarButton().getAttribute('aria-label')).toBe(
+          'Open user menu',
+        );
+      });
+
+      it('should hide the badge when there is no subscription', () => {
+        profile.set({ subscription: null });
+        fixture.detectChanges();
+        expect(badge()).toBeUndefined();
+      });
+
+      it.each<[SubscriptionTier, string, string]>([
+        ['FREE', 'Free', 'bg-slate-100'],
+        ['BASIC', 'Basic', 'bg-sky-100'],
+        ['PRO', 'Pro', 'bg-amber-100'],
+      ])(
+        'should show the %s badge with its label and color',
+        (tier, label, colorClass) => {
+          withSubscription(tier, 'ACTIVE');
+          fixture.detectChanges();
+          expect(badge()?.textContent?.trim()).toBe(label);
+          expect(badge()?.classList).toContain('header__tier-badge');
+          expect(badge()?.classList).toContain(colorClass);
+        },
+      );
+
+      it('should show Pro for a trialing PRO subscription', () => {
+        withSubscription('PRO', 'TRIALING');
+        fixture.detectChanges();
+        expect(badge()?.textContent?.trim()).toBe('Pro');
+      });
+
+      it.each<SubscriptionStatus>(['PAST_DUE', 'CANCELED'])(
+        'should show Free for a %s PRO subscription',
+        (status) => {
+          withSubscription('PRO', status);
+          fixture.detectChanges();
+          expect(badge()?.textContent?.trim()).toBe('Free');
+        },
+      );
+
+      it('should include the plan in the avatar button aria-label', () => {
+        withSubscription('PRO', 'ACTIVE');
+        fixture.detectChanges();
+        expect(avatarButton().getAttribute('aria-label')).toBe(
+          'Open user menu, Pro plan',
+        );
+      });
+
+      it('should be aria-hidden and inside the avatar button', () => {
+        withSubscription('BASIC', 'ACTIVE');
+        fixture.detectChanges();
+        expect(badge()?.getAttribute('aria-hidden')).toBe('true');
+        expect(avatarButton().contains(badge() ?? null)).toBe(true);
+      });
+
+      it('should update when the tier changes', () => {
+        withSubscription('FREE', 'ACTIVE');
+        fixture.detectChanges();
+        expect(badge()?.textContent?.trim()).toBe('Free');
+
+        withSubscription('PRO', 'ACTIVE');
+        fixture.detectChanges();
+        expect(badge()?.textContent?.trim()).toBe('Pro');
+        expect(badge()?.classList).toContain('bg-amber-100');
       });
     });
   });
