@@ -1,0 +1,2 @@
+import './polyfills.server.mjs';
+var s="returnUrl",n=["/login","/verify"];function e(t){if(!t||!t.startsWith("/")||t.startsWith("//")||t.startsWith("/\\"))return null;let r=t.split(/[?#]/)[0].replace(/\/+$/,"").toLowerCase();return n.includes(r)?null:t}export{s as a,e as b};
