@@ -13,3 +13,13 @@ const MIME_LABELS: Record<string, string> = {
 export function getMimeLabel(mimeType: string): string {
   return MIME_LABELS[mimeType] ?? mimeType;
 }
+
+const NEAR_LIMIT_RATIO = 0.8;
+
+export function usagePercent(used: number, limit: number): number {
+  return limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
+}
+
+export function isNearLimit(used: number, limit: number): boolean {
+  return limit > 0 && used / limit >= NEAR_LIMIT_RATIO;
+}
