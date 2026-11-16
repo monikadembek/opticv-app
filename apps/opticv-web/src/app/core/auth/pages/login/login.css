@@ -117,3 +117,20 @@
 .auth-footer-link a:hover {
   text-decoration: underline;
 }
+
+.auth-legal {
+  font-size: 0.8rem;
+  color: #71717b;
+  line-height: 1.5;
+  text-align: center;
+  margin: 0;
+}
+
+.auth-legal a {
+  color: #047857;
+}
+
+.auth-legal a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

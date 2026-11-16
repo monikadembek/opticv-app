@@ -6,11 +6,13 @@ import { App } from './app';
 import { TopHeader } from './layout/top-header/top-header';
 import { Footer } from './layout/footer/footer';
 import { PastDueBanner } from './layout/past-due-banner/past-due-banner';
+import { CookieConsentBanner } from './layout/cookie-consent-banner/cookie-consent-banner';
 import { Supabase } from './core/auth/services/supabase';
 import { ToastModule } from 'primeng/toast';
 import { CvStore } from './core/stores/cv.store';
 import { UserGuideStore } from './core/stores/user-guide.store';
 import { WelcomeGuideModal } from './shared/welcome-guide-modal/welcome-guide-modal';
+import { QuotaUpgradeDialog } from './shared/quota-upgrade-dialog/quota-upgrade-dialog';
 
 @Component({ selector: 'app-top-header', template: '', standalone: true })
 class TopHeaderStub {
@@ -25,6 +27,13 @@ class FooterStub {}
 @Component({ selector: 'app-past-due-banner', template: '', standalone: true })
 class PastDueBannerStub {}
 
+@Component({
+  selector: 'app-cookie-consent-banner',
+  template: '',
+  standalone: true,
+})
+class CookieConsentBannerStub {}
+
 // eslint-disable-next-line @angular-eslint/component-selector -- stubs the real PrimeNG p-toast selector
 @Component({ selector: 'p-toast', template: '', standalone: true })
 class ToastStub {}
@@ -35,6 +44,13 @@ class ToastStub {}
   standalone: true,
 })
 class WelcomeGuideModalStub {}
+
+@Component({
+  selector: 'app-quota-upgrade-dialog',
+  template: '',
+  standalone: true,
+})
+class QuotaUpgradeDialogStub {}
 
 const mockSession = { user: { email: 'test@example.com' } } as any;
 
@@ -89,8 +105,10 @@ describe('App', () => {
             TopHeader,
             Footer,
             PastDueBanner,
+            CookieConsentBanner,
             ToastModule,
             WelcomeGuideModal,
+            QuotaUpgradeDialog,
           ],
         },
         add: {
@@ -98,8 +116,10 @@ describe('App', () => {
             TopHeaderStub,
             FooterStub,
             PastDueBannerStub,
+            CookieConsentBannerStub,
             ToastStub,
             WelcomeGuideModalStub,
+            QuotaUpgradeDialogStub,
           ],
         },
       })
@@ -156,6 +176,14 @@ describe('App', () => {
     const fixture = createApp();
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('main.main')).toBeTruthy();
+  });
+
+  it('should render app-quota-upgrade-dialog', async () => {
+    const fixture = createApp();
+    await fixture.whenStable();
+    expect(
+      fixture.nativeElement.querySelector('app-quota-upgrade-dialog'),
+    ).toBeTruthy();
   });
 
   it('should render app-footer', async () => {

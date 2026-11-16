@@ -1,0 +1,38 @@
+@if (isVisible()) {
+<section
+  role="region"
+  aria-label="Cookie consent"
+  class="w-full border-t border-neutral-200 bg-white px-4 py-4 text-sm text-neutral-700 shadow-[0_-2px_8px_rgba(0,0,0,0.06)] dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200"
+>
+  <div
+    class="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+  >
+    <p class="m-0">
+      We use analytics cookies (PostHog) to understand how OptiCV is used and
+      make it better, but only if you agree. You can change your choice at any
+      time. Read more in our
+      <a
+        #firstControl
+        routerLink="/privacy-policy"
+        fragment="cookies"
+        class="font-medium underline"
+        >Privacy Policy</a
+      >.
+    </p>
+    <div class="flex shrink-0 gap-2">
+      <p-button
+        type="button"
+        label="Reject"
+        severity="secondary"
+        (onClick)="onReject()"
+      />
+      <p-button
+        type="button"
+        label="Accept"
+        severity="secondary"
+        (onClick)="onAccept()"
+      />
+    </div>
+  </div>
+</section>
+}

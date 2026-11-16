@@ -256,7 +256,7 @@ describe('CvService', () => {
       mockPrisma.subscription.findUnique.mockResolvedValueOnce({
         tier: 'FREE',
       });
-      mockPrisma.cvDocument.count.mockResolvedValueOnce(2);
+      mockPrisma.cvDocument.count.mockResolvedValueOnce(1);
       const file = makeFile();
 
       await expect(service.uploadCv(file, 'user-id')).rejects.toThrow(
@@ -270,18 +270,18 @@ describe('CvService', () => {
       mockPrisma.subscription.findUnique.mockResolvedValueOnce({
         tier: 'FREE',
       });
-      mockPrisma.cvDocument.count.mockResolvedValueOnce(1);
+      mockPrisma.cvDocument.count.mockResolvedValueOnce(0);
       const file = makeFile();
 
       await expect(service.uploadCv(file, 'user-id')).resolves.toBeDefined();
       expect(mockPrisma.cvDocument.create).toHaveBeenCalled();
     });
 
-    it('uses the BASIC tier cap (10) when the user has no FREE-tier limit', async () => {
+    it('uses the BASIC tier cap (5) when the user has no FREE-tier limit', async () => {
       mockPrisma.subscription.findUnique.mockResolvedValueOnce({
         tier: 'BASIC',
       });
-      mockPrisma.cvDocument.count.mockResolvedValueOnce(9);
+      mockPrisma.cvDocument.count.mockResolvedValueOnce(4);
       const file = makeFile();
 
       await expect(service.uploadCv(file, 'user-id')).resolves.toBeDefined();
@@ -289,7 +289,7 @@ describe('CvService', () => {
 
     it('defaults to FREE tier limits when no subscription row exists', async () => {
       mockPrisma.subscription.findUnique.mockResolvedValueOnce(null);
-      mockPrisma.cvDocument.count.mockResolvedValueOnce(2);
+      mockPrisma.cvDocument.count.mockResolvedValueOnce(1);
       const file = makeFile();
 
       await expect(service.uploadCv(file, 'user-id')).rejects.toThrow(

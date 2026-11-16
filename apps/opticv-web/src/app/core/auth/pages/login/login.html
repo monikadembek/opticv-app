@@ -60,6 +60,17 @@
         >
           <span pButtonLabel>Send sign-in code</span>
         </button>
+
+        <p class="auth-legal">
+          By continuing, you agree to our
+          <a routerLink="/terms-of-use" target="_blank" rel="noopener"
+            >Terms of Use</a
+          >
+          and acknowledge our
+          <a routerLink="/privacy-policy" target="_blank" rel="noopener"
+            >Privacy Policy</a
+          >.
+        </p>
       </form>
 
       @if (errorMessage()) {
@@ -82,7 +93,7 @@
 
   <p class="auth-footer-link">
     New here?
-    <a href="https://opticv.net" target="_blank" rel="noopener"
+    <a [href]="landingPageUrl" target="_blank" rel="noopener"
       >Learn about OptiCV</a
     >
   </p>

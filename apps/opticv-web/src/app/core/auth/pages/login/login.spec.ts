@@ -1,11 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { Component } from '@angular/core';
+import { NgForm } from '@angular/forms';
 import { Login } from './login';
 import { Supabase } from '../../services/supabase';
 
 @Component({ template: '', standalone: true })
 class VerifyStub {}
+
+@Component({ template: '', standalone: true })
+class RootStub {}
 
 function createSupabaseMock(
   otpResult: { data: any; error: any } = { data: {}, error: null },
@@ -122,6 +126,53 @@ describe('Login', () => {
       supabaseMock.signInWithOtp.mockResolvedValue({ data: {}, error: null });
       await component.onSubmit(buildForm('user@example.com'));
       expect(component.errorMessage()).toBe('');
+    });
+  });
+
+  describe('with returnUrl query param', () => {
+    async function createWithUrl(url: string) {
+      TestBed.resetTestingModule();
+      supabaseMock = createSupabaseMock();
+
+      await TestBed.configureTestingModule({
+        imports: [Login],
+        providers: [
+          provideRouter([
+            { path: '', component: RootStub },
+            { path: 'verify', component: VerifyStub },
+          ]),
+          { provide: Supabase, useValue: supabaseMock },
+        ],
+      }).compileComponents();
+
+      await TestBed.inject(Router).navigateByUrl(url);
+      fixture = TestBed.createComponent(Login);
+      component = fixture.componentInstance;
+      await fixture.whenStable();
+    }
+
+    function buildForm(email: string) {
+      return { valid: true, form: { value: { email } } } as unknown as NgForm;
+    }
+
+    it('should navigate to /verify passing returnUrl when OTP succeeds', async () => {
+      await createWithUrl('/?returnUrl=%2Fsettings');
+      const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+      await component.onSubmit(buildForm('user@example.com'));
+
+      expect(navigateSpy).toHaveBeenCalledWith(['/verify'], {
+        queryParams: { returnUrl: '/settings' },
+      });
+    });
+
+    it('should navigate to /verify without returnUrl when it is invalid', async () => {
+      await createWithUrl('/?returnUrl=%2F%2Fevil.com');
+      const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+      await component.onSubmit(buildForm('user@example.com'));
+
+      expect(navigateSpy).toHaveBeenCalledWith(['/verify']);
     });
   });
 });

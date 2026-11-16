@@ -22,6 +22,9 @@ const STRIPE_STATUS_TO_SUBSCRIPTION_STATUS: Record<
   trialing: 'TRIALING',
 };
 
+const FINAL_STRIPE_SUBSCRIPTION_STATUSES: ReadonlySet<Stripe.Subscription.Status> =
+  new Set(['canceled', 'incomplete_expired']);
+
 @Injectable()
 export class StripeService {
   private readonly logger = new Logger(StripeService.name);
@@ -91,6 +94,19 @@ export class StripeService {
       client_reference_id: userId,
       success_url: `${frontendUrl}/settings?billing=success`,
       cancel_url: `${frontendUrl}/settings?billing=canceled`,
+      allow_promotion_codes: true, // shows a "Add promotion code" field in Checkout
+      payment_method_collection: 'if_required', // no card needed when the total is €0
+      // Requires a Terms of Service URL set in Stripe Dashboard → Settings → Public details
+      consent_collection: { terms_of_service: 'required' },
+      custom_text: {
+        terms_of_service_acceptance: {
+          message:
+            `I agree to the [Terms of Use](${frontendUrl}/terms-of-use) and acknowledge the ` +
+            `[Privacy Policy](${frontendUrl}/privacy-policy). I ask for my subscription to start ` +
+            `immediately and understand that it renews monthly until I cancel. I can still ` +
+            `withdraw within 14 days of my first payment for a full refund.`,
+        },
+      },
     });
 
     if (!session.url) {
@@ -118,6 +134,45 @@ export class StripeService {
     });
 
     return { url: session.url };
+  }
+
+  async cancelAllSubscriptionsForCustomer(
+    stripeCustomerId: string,
+  ): Promise<void> {
+    const subscriptionsToCancel: Stripe.Subscription[] = [];
+
+    try {
+      for await (const subscription of this.stripe.subscriptions.list({
+        customer: stripeCustomerId,
+        status: 'all',
+        limit: 100,
+      })) {
+        if (!FINAL_STRIPE_SUBSCRIPTION_STATUSES.has(subscription.status)) {
+          subscriptionsToCancel.push(subscription);
+        }
+      }
+    } catch (error) {
+      if (
+        error instanceof Stripe.errors.StripeInvalidRequestError &&
+        error.code === 'resource_missing'
+      ) {
+        this.logger.warn(
+          `Stripe customer ${stripeCustomerId} not found, no subscriptions to cancel`,
+        );
+        return;
+      }
+      throw error;
+    }
+
+    for (const subscription of subscriptionsToCancel) {
+      await this.stripe.subscriptions.cancel(subscription.id, {
+        prorate: false,
+        invoice_now: false,
+      });
+      this.logger.log(
+        `Canceled Stripe subscription ${subscription.id} for customer ${stripeCustomerId}`,
+      );
+    }
   }
 
   verifyAndConstructEvent(rawBody: Buffer, signature: string): Stripe.Event {

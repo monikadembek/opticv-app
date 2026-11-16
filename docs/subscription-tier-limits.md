@@ -13,16 +13,16 @@ This plan adds the missing pieces: corrected tier enum, per-feature monthly quot
 | CV optimization runs                  | 1                      | 10    | 30  |
 | Cover letter generations              | 1                      | 10    | 30  |
 | Interview prep generations            | 1                      | 10    | 30  |
-| LinkedIn profile content              | 0 (not offered)        | 10    | 30  |
+| LinkedIn profile content              | 1                      | 10    | 30  |
 | CV templates                          | default + classic only | all   | all |
-| Stored CV documents (active, at once) | 2                      | 10    | 20  |
+| Stored CV documents (active, at once) | 1                      | 5     | 10  |
 
 ### Decisions locked with the user
 
 - **Full run → separate features.** Today `triggerOptimization` fires all 7 `PromptType`s at once. We **decouple**: a "CV optimization run" consumes only the CV prompt types (RESUME_AUTOPSY, KEYWORD_GAP, SUMMARY_REWRITE, BULLET_UPGRADE). Cover letter, interview prep, and LinkedIn become their own separately-triggered features, each consuming its own quota.
 - **Reset window = subscription billing period, with calendar-month fallback.** Paid users with real Stripe `currentPeriodStart/End` use those; when null (all FREE users today), fall back to the 1st-of-calendar-month → now window.
 - **Counting source = new `UsageQuota` counter table** (per-user, per-feature, per-period), incremented on each successful action. Not derived from `UsageLog` (which is per-job token accounting and doesn't map 1:1 to user-facing runs).
-- **CV storage cap = FREE 2 / BASIC 10 / PRO 20** active documents.
+- **CV storage cap = FREE 1 / BASIC 5 / PRO 10** active documents.
 - **Template gating = frontend-only** (templates are a client-side export concept; no backend template model). Gate the selector by tier from the user profile.
 
 ---
@@ -152,7 +152,7 @@ Consume `TIER_LIMITS` and the user's `subscription.tier` (already on `UserProfil
 5. **Migration safety.** The enum change (`PRO_ANNUAL`/`SPRINT` → removed) is destructive in Postgres. Map existing rows first; review generated SQL. Keep the three declarations (shared TS type, Prisma enum, DTO Swagger list) in sync.
 6. **Existing throttling stays.** Tier quotas are orthogonal to the IP/time `AiThrottlerGuard`/`ApiThrottlerGuard` — keep both; they solve different problems (abuse-per-second vs. monthly fair-use).
 7. **Deleting a CV frees a storage slot.** Since the cap is on _active_ docs, `DELETE cv/:id` (and `isActive` toggling) naturally frees capacity — confirm the count query uses `isActive: true`.
-8. **Downgrade behavior.** A user on PRO with 15 stored CVs who downgrades to FREE (cap 2) will be over-limit. Decide policy: block new uploads until under cap (recommended, simplest) — no forced deletion.
+8. **Downgrade behavior.** A user on PRO with 15 stored CVs who downgrades to FREE (cap 1) will be over-limit. Decide policy: block new uploads until under cap (recommended, simplest) — no forced deletion.
 9. **No billing yet.** Tiers can only change via manual DB edit until Stripe is wired. This plan is billing-agnostic; the billing-period reset logic is already forward-compatible with Stripe fields.
 10. **Admin/testing.** Consider a way to reset or bump a user's quota for QA (e.g. a seed script or admin-only endpoint) — optional but useful.
 
@@ -163,7 +163,7 @@ Consume `TIER_LIMITS` and the user's `subscription.tier` (already on `UserProfil
 1. **Types build:** `npm exec nx build datatypes` then `npm exec nx typecheck opticv-be` and `npm exec nx typecheck opticv-web` — confirm the new enum/config compiles everywhere the old values were referenced.
 2. **Migration:** run `npm exec prisma migrate dev --schema=apps/opticv-be/prisma/schema.prisma` against a dev DB; inspect `usage_quotas` table and the altered enum via `npm exec prisma studio`.
 3. **Backend unit tests:** add specs for `QuotaService` (limit reached → throws; increment; period rollover across month boundary; billing-period vs calendar fallback; LinkedIn-on-FREE → forbidden). Run `npm exec nx test opticv-be`.
-4. **End-to-end manual (dev):** start `npm run start-be:dev` + `npm exec nx serve opticv-web`. As a FREE user: run 1 CV optimization (succeeds) → attempt a 2nd in the same month (blocked with clear message); attempt LinkedIn (blocked as unavailable); confirm only `default`/`classic` templates selectable; upload 2 CVs (ok) → 3rd blocked. Flip the user's `Subscription.tier` to `BASIC`/`PRO` in Prisma Studio and confirm limits expand and all templates unlock.
+4. **End-to-end manual (dev):** start `npm run start-be:dev` + `npm exec nx serve opticv-web`. As a FREE user: run 1 CV optimization (succeeds) → attempt a 2nd in the same month (blocked with clear message); attempt LinkedIn (blocked as unavailable); confirm only `default`/`classic` templates selectable; upload 1 CV (ok) → 2nd blocked. Flip the user's `Subscription.tier` to `BASIC`/`PRO` in Prisma Studio and confirm limits expand and all templates unlock.
 5. **Usage endpoint:** hit `GET users/me/usage` and confirm `used/limit/remaining/resetsAt` reflect actions taken; confirm the settings page displays them.
 6. **Race check (optional):** fire concurrent trigger requests at the FREE cap and confirm only the allowed number succeed (no double-spend).
 7. **Lint** `npm exec nx run-many -t lint`

@@ -53,8 +53,8 @@ npm exec nx test opticv-be                # Jest (backend)
 npm exec nx test opticv-web               # Vitest via Angular build (frontend)
 npm exec nx run-many -t test              # all projects
 
-# Run a single test file
-npm exec nx test opticv-be -- --testFile=path/to/spec.ts
+# Run a single test file (Jest regex pattern matched against the file path)
+npm exec nx test opticv-be -- users.service.spec
 ```
 
 ### Lint & Format

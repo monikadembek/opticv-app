@@ -1790,6 +1790,454 @@ With both changes, the whole app stays in light mode no matter what the OS is se
 
 ---
 
+## 123. Prepare to go live with the payments in Stripe
+
+**status: done**
+**time: 14.10.2026-15.10.2026**
+
+All the documentation is in the file: /docs/stripe-payments-live.md
+
+Plan:
+
+1. Get the live price IDs
+
+Copying products to live mode creates new price IDs, so your sandbox price\_... values won't work in live mode.
+
+- In the Dashboard, switch to live mode → Product catalog → open each product → copy the price ID, not the product ID.
+- Check that each price is recurring and has the right amount, currency and interval.
+- These IDs go into STRIPE_PRICE_BASIC and STRIPE_PRICE_PRO. StripeService.priceIdToTier() matches webhook events to tiers using exactly these values. If one is wrong, users pay but their tier never updates; you'd only see an "unknown price id" line in the logs.
+
+2. Get a live API key
+
+- In live mode, go to Developers → API keys.
+- I recommend a restricted key (rk*live*...) over the full sk*live*... secret key. The backend only needs:
+  - Write: Customers, Checkout Sessions, Customer portal
+  - Read: Subscriptions
+- The key goes into STRIPE_SECRET_KEY.
+
+3. Create the live webhook endpoint
+
+Developers → Webhooks → Add endpoint, in live mode:
+
+- URL: https://api.opticv.net/api/stripe/webhook (the controller is stripe and the route is webhook, under the global /api prefix).
+- Events: checkout.session.completed, customer.subscription.updated, customer.subscription.deleted, invoice.paid, invoice.payment_failed
+- API version: choose 2026-07-29.dahlia, the version the code is pinned to in stripe.service.ts:39. The handlers read newer payload fields like invoice.parent.subscription_details and the period dates on subscription items. If the endpoint uses an older version, those fields are missing and renewals silently stop syncing.
+- Copy the endpoint's signing secret (whsec\_...) into STRIPE_WEBHOOK_SECRET.
+
+4. Set the live Dashboard settings
+
+Sandbox settings don't carry over to live mode. Set these in live mode:
+
+- Customer portal (Settings → Billing → Customer portal): save a configuration. Without one, createPortalSession fails in live mode, which breaks the "Manage billing" button and the past-due banner. If you allow plan switching there, add both live products.
+- Payment retries and dunning (Settings → Billing → Subscriptions and emails): Smart Retries, failed-payment emails, and what happens after the last retry (cancel the subscription vs mark the invoice uncollectible). Your code expects cancellation, which fires customer.subscription.deleted.
+- Customer emails: receipts and upcoming-renewal reminders.
+- Payment methods: keep to cards and other methods that confirm instantly. handleCheckoutSessionCompleted sets ACTIVE without checking payment_status, so a method that settles later would unlock paid features before the money arrives (this gap is already noted in docs/stripe.md).
+- Public details and branding: business name, support email, statement descriptor, logo and colours. These appear on Checkout, invoices and card statements.
+- Tax: decide on VAT before you take real money. Selling digital subscriptions to EU consumers usually means charging VAT (often through OSS). The code doesn't use Stripe Tax (automatic_tax) yet. Turning it on is a small code change, but whether you need it is a business/accounting decision.
+
+5. Update production config only
+
+- Put the 4 live values in the production environment variables on your host (Hostinger), as described in docs/production-deployment-plan.md §1. Setting them in production.env alone isn't enough.
+- Keep development and staging on sandbox keys, prices and webhook secrets. Never put live keys in development.env or commit them.
+- Restart or redeploy the backend. If a key is missing, Joi validation stops the app from starting.
+
+6. Clear sandbox Stripe IDs from the production database
+
+getOrCreateCustomer() reuses stripeCustomerId if the row already has one. If any user in the production database was created while it used sandbox keys, their stored cus*..., sub*... and price\_... IDs don't exist in live mode. Checkout would then fail with "No such customer." Before launch:
+
+- Set stripeCustomerId, stripeSubscriptionId and stripePriceId to null for those rows.
+- Reset their tier to FREE.
+
+If production uses a brand-new Supabase project (the deployment plan suggests this), there's nothing to clean up.
+
+7. Test with a real purchase
+
+1. Buy the cheapest plan with your own real card.
+1. Check that the webhook endpoint's delivery log shows 200 for each event.
+1. Check that your Subscription row has the live IDs, the correct tier and ACTIVE.
+1. Open the billing portal from Settings and cancel. Confirm cancelAtPeriodEnd is updated.
+1. Refund yourself from the Dashboard.
+
+Finally, turn on 2FA for your Stripe account if it isn't already, since it now handles real money.
+
+---
+
+## 124. Prepare payments for limited number of beta testers - 100%-off promotion codes
+
+**status: done**
+**time: 15.10.2026**
+
+Prepare a 100%-off promotion code with a redemption cap
+
+In the Stripe Dashboard (test mode first, then again in live mode):
+
+1. Create a coupon: 100% off, duration "repeating" for however long the beta lasts (for example 3 months), and limited to the Basic product so it can't be used on Pro.
+2. Create a promotion code on that coupon, for example OPTICV-BETA. Set max redemptions to the number of testers (for example 20) and optionally an expiry date. The redemption cap is your limit on the number of testers.
+   - If you want a code that can't be passed around, create one single-use code per tester instead (max redemptions = 1 each).
+
+In the code, createCheckoutSession in apps/opticv-be/src/app/stripe/stripe.service.ts needs two extra options:
+allow_promotion_codes: true, // shows a "Add promotion code" field in Checkout
+payment_method_collection: 'if_required' // no card needed when the total is €0
+
+That's all. The rest of your webhook flow already handles it:
+
+- checkout.session.completed and invoice.paid set the user to tier: BASIC, status: ACTIVE, with billing periods synced from Stripe, so quotas work as for a paying user.
+- When the coupon runs out, Stripe tries to charge. A tester who has added a card in the Billing Portal becomes a paying customer automatically. One who hasn't gets invoice.payment_failed → PAST_DUE, and your effective-tier logic in optimization.service.ts already treats them as FREE. After Stripe's retries, customer.subscription.deleted moves them back to FREE.
+
+Trade-off: in Stripe and in your DB, testers show up as ACTIVE subscribers at €0, not as "trialing". Your revenue reports will include €0 subscriptions.
+
+---
+
+## 125. Enable RLS in Supabase production database
+
+**status: done**
+**time: 15.10.2026**
+
+Enable Security RLS for all tables in Supabase production database.
+
+Current setup makes this easy to do safely. Here's what I checked in the repo:
+
+- The frontend never queries tables directly. There are no supabase.from(...), .rpc() or .storage calls in opticv-web. Supabase is only used for auth.
+- The backend connects through Prisma as the postgres role (that's the user in DATABASE_URL in every env file). That role owns the tables and bypasses RLS.
+
+So you can turn RLS on for every table without adding any policies. With RLS on and no policies, the anon and authenticated roles can't read or change any rows through Supabase's auto-generated REST and GraphQL APIs. Right now, anyone with your public anon key can read and change these tables through that API. Prisma keeps working because it connects as postgres.
+
+Recommended: do it as a Prisma migration
+
+A migration applies the same change to dev, staging and production, and it's recorded in git.
+
+1. Create an empty migration (run from apps/opticv-be, against dev):
+   cd apps/opticv-be
+   npm exec prisma migrate dev -- --create-only --name enable_rls
+2. Put this in the generated migration.sql:
+   -- Enable RLS on all tables in public. No policies = deny-all for anon/authenticated
+   -- (Supabase Data API). The backend connects as postgres, so Prisma is unaffected.
+   ALTER TABLE "users" ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE "subscriptions" ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE "notifications" ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE "cv_documents" ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE "job_applications" ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE "optimization_results" ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE "prompt_versions" ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE "usage_quotas" ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE "usage_logs" ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE "\_prisma_migrations" ENABLE ROW LEVEL SECURITY;
+   (\_prisma_migrations also sits in public, so the API exposes it too.)
+3. Apply it to dev with npm exec prisma migrate dev and check the app still works.
+   Or in case there are migrations on other branches (branch with cv-builder) which are not yet merged to dev then run:
+   npm exec prisma migrate deploy
+4. Roll it out from the workspace root:
+   npm run prisma:migrate:staging
+   npm run prisma:migrate:production
+
+Check it worked
+
+In the production Supabase SQL Editor:
+SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public';
+Every row should show true. The red "RLS disabled" warnings under Database → Advisors → Security Advisor should also go away. Then confirm the API is locked by calling GET https://<project>.supabase.co/rest/v1/users with the anon key as the apikey header. You should get back [].
+
+Things to keep in mind
+
+- New tables don't get RLS automatically. When you add a model, add ENABLE ROW LEVEL SECURITY to that migration. You could also add a line about this to CLAUDE.md so it doesn't get forgotten.
+- Optional extra step: if you never plan to use the Data API, you can also run REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon, authenticated;. Another option is to remove public from the exposed schemas in Settings → API.
+- Do not use FORCE ROW LEVEL SECURITY. It would apply RLS to the owner as well, and Prisma would stop working.
+- You'd need policies only if the frontend ever starts querying tables directly with the Supabase client. Then you'd write per-table policies such as USING (auth.uid() = user_id).
+- Quick-click alternative: you can enable RLS per table in the dashboard (Table Editor → table → Enable RLS). But that change wouldn't be recorded in your migrations, and staging and production could drift apart.
+
+When 117-cv-builder ships later
+
+- Merge dev into 117-cv-builder before you finish that branch, so it picks up the RLS migration. Otherwise prisma migrate dev will report drift on that branch too, just from the other side.
+- The CV Builder migration will be older than the RLS one but applied after it in production. That's fine: migrate deploy applies every migration that hasn't run yet, whatever its date. That migration only changes a column and an enum, so RLS doesn't affect it.
+- Any new table added on that branch (or later) needs its own ALTER TABLE … ENABLE ROW LEVEL SECURITY line in its migration. RLS doesn't turn on automatically for new tables.
+
+---
+
+## 126. Create privacy policy and terms of service
+
+**status: done**
+**time: 16.10.2026 - 17.10.2026**
+
+1. Create privacy policy, add /privacy-policy route
+2. Create terms of service, add /terms-of-use route
+3. Add links to both legal pages in the footer
+4. On login page add note about agreeing to terms of use and privacy policy with links to both pages
+5. Add url of both legal pages in the Stripe Dashboard (Settings -> Business -> Business Details -> Public Details -> Edit: Privacy Policy URL and Terms of service URL)
+
+---
+
+To write both documents I need two kinds of input: facts about how the app handles data, which I mostly got from the code, and facts about you as the operator, which only you can give me.
+
+What the code already shows
+
+┌──────────────────────┬────────────────────────────────────────────────────────────────────────────────────────────────────┬──────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Area │ What I found │ Why it matters │
+├──────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ Account data │ Email, display name, avatar, Supabase ID (User model). Login is passwordless OTP through Supabase, │ Supabase and Resend are processors │
+│ │ with emails sent through Resend SMTP │ │
+├──────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ CVs and job │ Uploaded CVs (stored in Cloudflare R2), parsed text, job descriptions, optimization results, cover │ CVs are personal data and can contain sensitive data (photo, date of birth, health, nationality) │
+│ applications │ letters, interview prep │ │
+├──────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ AI processing │ OpenAI (gpt-4o plus extraction models) │ The policy has to say that CV content goes to OpenAI, whether it's used for training (it isn't by │
+│ │ │ default on the API), and that it's a transfer outside the EU │
+├──────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ Payments │ Stripe subscriptions (FREE/PRO tiers, promo codes) │ Stripe is a controller/processor. The terms need pricing, renewal, cancellation and refund rules │
+├──────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ Analytics │ PostHog EU (eu.i.posthog.com) with pageviews │ Uses cookies, so you probably need a cookie consent banner │
+├──────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ Error monitoring │ Sentry on the frontend and backend, Session Replay records 10% of sessions and 100% of sessions │ Must be disclosed. Check that replay masks CV text on screen │
+│ │ with errors (apps/opticv-web/src/main.ts:40) │ │
+├──────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ Infrastructure │ Hostinger (app and API), Supabase Postgres, Upstash Redis │ Hosting providers and the regions they run in │
+├──────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ Usage tracking │ UsageLog / UsageQuota │ Your legitimate interest and quota enforcement │
+├──────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ User rights │ DELETE /users/me exists, so account deletion is supported │ Covers the right to erasure. I'll check what it actually deletes (R2 files, Stripe customer) │
+└──────────────────────┴────────────────────────────────────────────────────────────────────────────────────────────────────┴──────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+What I need from you
+
+About you as the operator
+
+1. Who is the legal entity: you as a sole trader (JDG), a company, or a private person? I need the name, address, NIP/REGON/KRS if you have them, and a contact email for privacy requests.
+2. Which country you operate from. I'm assuming Poland, which means GDPR plus Polish law. In Poland the terms of use legally have to be a regulamin under the act on providing services electronically (ustawa o świadczeniu usług drogą elektroniczną), with specific required content.
+3. Which language(s) the documents should be in: Polish, English, or both.
+
+About the service 4. Who your users are: consumers only, or businesses too? Any minimum age (I'd suggest 16 or 18)? 5. Pricing model: PRO price, billing period, whether you offer trials, and your refund policy. EU consumers have a 14-day withdrawal right for digital services. You can only waive it if the user explicitly consents at checkout, and Stripe Checkout has a consent_collection option for that. 6. Data retention: how long you keep CVs and results after upload, after the account goes inactive, and after deletion. Also whether you want to keep invoices for 5 years, as Polish tax law requires. 7. Whether OpenAI is the only AI provider, or Anthropic/Gemini fallbacks are planned. 8. Whether you send marketing emails or only transactional ones. 9. Any disclaimers you want: AI output may be inaccurate, no guarantee of getting a job, the user is responsible for the truthfulness of their CV, acceptable use rules.
+
+Important caveat
+
+I can write solid drafts based on the real data flows above, but I'm not a lawyer. Since you take payments from EU consumers and process CVs with AI, have a lawyer review the drafts before launch. That review is usually cheap.
+
+Proposed next steps
+
+Once you answer the questions, I can:
+
+1. Write the Privacy Policy and Terms of Use, plus a short cookie policy section.
+2. Add /privacy-policy and /terms-of-use pages to opticv-web, link them from the footer, the login page ("By continuing you accept…") and Stripe Checkout.
+3. Optionally add a cookie consent banner that gates PostHog (and Sentry Replay) until the user accepts.
+
+If you'd like, I can start drafting now with placeholders like [COMPANY NAME] and you fill them in later.
+
+※ recap: You're creating a privacy policy and terms of use for OptiCV; I've mapped the app's data flows (OpenAI, Stripe, PostHog, Sentry, Supabase). Next, answer my questions about your legal entity, country, language, pricing, refunds and data retention, or I'll draft with placeholders. (disable recaps in /config)
+
+❯ 1. Legal entity is a private person, Monika Dembek, opticvapp@gmail.com, adress: 85-133 Bydgoszcz, Lenartowicza 22/4. 2. I operate from Poland, but my main clients will be english speaking people, probably mostly from US or UK. 3. The document should be in English, as both the app and landing page prepared earlier to promote the app are in English. 4. My users will be at the beginning consumers only. Is specifying minimum age required for an app that helps people optimize their CV? 5. Pricing model: Free plan, and 2 paid tiers basic and pro which are subscription billed monthly. I don't have implemented any withdrawal functionality. Is it required? Can it be ommited? 6. Data retention is not specified yet for inactive accounts. What do you recommend should be done with inactive accounts? When user deletes their account all their data is deleted from database and from Cloudflare. 7. For now OpenAI is the only AI provider. 8. I plan to send some informational emails, regarding new features in the app and some emails with some job hunting tips. 9. Suggest disclaimers appropriate for my kind of app.
+Write the Privacy Policy and Terms of Use, plus a short cookie section. Also add /privacy and/terms pages and link them from footer, the login page and stripe checkout
+
+---
+
+I've written both documents as /privacy and /terms pages in the app. The cookie section is part of the privacy policy. Both pages are linked from the footer, the login page and Stripe Checkout. Frontend tests pass (56 files) and lint shows no errors. Backend typecheck shows errors only in files I didn't touch (cv.service.ts, users.service.ts, job-application.service.ts), so they appear to be pre-existing. These are good drafts based on how the app actually handles data, but a lawyer should review them before launch.
+
+Your questions
+
+Is a minimum age required? No law requires one for this kind of app, but you should set one. Without it, you'd be handling children's data under COPPA (US, under 13) and Polish rules on consent (under 16), and minors can't validly buy subscriptions. I set 16+ to use the app, and under-18s need a parent's permission for paid plans.
+
+Can the 14-day withdrawal right be omitted? No, not for EU or UK consumers: it's mandatory and can't be waived in the terms. You don't need to build anything for it, though. I wrote it as "email us within 14 days of your first payment and get a full refund", which you issue manually from the Stripe Dashboard. The Terms include the model withdrawal form the law requires. A full refund is easier to handle than calculating a partial one. Monthly renewals don't restart the 14 days.
+
+What should happen to inactive accounts? I recommend deleting them after 24 months without a sign-in, with an email warning 30 days before. Because this isn't built yet, the policy says "we may delete", so it doesn't promise something the app doesn't do. A scheduled cleanup job would be worth adding.
+
+What disclaimers fit your app? Section 9 of the Terms covers:
+
+- AI output can be wrong, so always review it.
+- The user is responsible for a truthful CV and should only add keywords for skills they really have.
+- The ATS score is an estimate and doesn't copy any particular employer's system.
+- There's no guarantee of interviews or job offers.
+- It's not professional advice.
+- Output may not be unique.
+
+The Terms also have acceptable-use rules, including no fake credentials and no multiple accounts to get around limits.
+
+What changed:
+
+- New pages: features/legal/privacy-policy/ and features/legal/terms-of-use/, with tests and a shared legal.css that also works in dark mode.
+- Routes: /privacy-policy and /terms-of-use in app.routes.ts. Both are public.
+- Footer: a "Legal" section with both links.
+- Login: "By continuing, you agree to our Terms of Use and acknowledge our Privacy Policy." The links open in a new tab, so the email the user typed isn't lost.
+- Stripe Checkout (stripe.service.ts): a required checkbox for accepting the terms, with text linking both documents and confirming that the plan starts immediately, renews monthly and carries the 14-day refund.
+
+Before you deploy
+
+1. Set a Terms of Service URL in Stripe, in both test and live mode (Dashboard → Settings → Public details), to https://app.opticv.net/terms. Without it, Stripe rejects every checkout session, because the new required checkbox needs that URL.
+2. Deleting an account doesn't cancel the Stripe subscription (users.service.ts:230), so a user who deletes their account keeps getting charged. For now the Terms tell users to cancel first, but this should be fixed in code. I can do that.
+3. Add a cookie consent banner. The policy says analytics cookies are used only with consent where the law requires it. PostHog currently loads without asking, so EU and UK users need a banner (or PostHog's cookieless mode).
+4. Turn "Product updates" emails off by default. Your feature announcements and job-hunting tips count as promotional emails, and Polish law requires opt-in for those, but productUpdatesEnabled defaults to true. Also add an unsubscribe link to those emails.
+5. Fill in the gaps I couldn't verify: the Supabase and Upstash regions (the policy currently says "EU or US" => USA). Also check that the retention periods match your Sentry and PostHog plans (I wrote 90 days and 24 months => 30 days and 12 months).
+
+Outside the documents, but worth checking
+
+- Your address will be public. Polish law requires your address on the site, and it's on both pages. A virtual office address is a common alternative if you'd rather not show your home address.
+- Unregistered activity limit. As a private person you can run this as działalność nierejestrowana only while revenue stays under the quarterly limit (225% of the minimum wage). Above that you have to register a business.
+- UK VAT. Sellers based outside the UK must register for UK VAT from the first sale of digital services to UK consumers. Stripe Tax can handle this.
+- UK representative. UK GDPR may require a UK representative because you process CVs of UK users.
+- Landing page. opticv.net isn't in this repo, so add footer links there yourself.
+
+---
+
+## 127. Add cookie consent banner
+
+**status: done**
+**time: 17.10.2026 - 18.10.2026**
+
+Add a cookie consent banner. The policy says analytics cookies are used only with consent where the law requires it. PostHog currently loads without asking, so EU and UK users need a banner (or PostHog's cookieless mode).
+Implement the functionality to start PostHog only after the visitor accepts analytics cookies, display the banner until user chooses.
+
+How it works now:
+
+- First visit: the banner appears at the bottom with equal Accept and Reject buttons and a link to the cookies section of the privacy policy. PostHog doesn't start, and any ph\_\* data left from an earlier Accept is deleted.
+- Accept: PostHog starts once, with your existing settings. If the user rejected earlier in the same session, tracking simply resumes.
+- Reject: PostHog never starts. If it was already running, tracking stops and its stored identifiers are deleted, with no page reload.
+- Changing the choice later:
+  - a "Cookie settings" button in the footer, next to the legal links;
+  - a "Cookie settings" button at the end of section 11 of the privacy policy;
+  - an "Analytics cookies" toggle in a new "Privacy" section on the Settings page.
+
+  When reopened from either button, the banner moves keyboard focus into itself and returns it to that button after the choice.
+
+---
+
+## 128. Turn "Product updates" emails off by default
+
+**status: done**
+**time: 18.10.2026 - 19.10.2026**
+
+Turn "Product updates" emails off by default. Your feature announcements and job-hunting tips count as promotional emails, and Polish law requires opt-in for those, but productUpdatesEnabled defaults to true.
+When preparing the promotional emails remeber about adding an unsubscribe link to those emails.
+
+- prepare migration where productUpdatesEnabled in Notifications table is set to false by default
+- run migration in dev:
+  npm exec prisma migrate deploy
+  npm exec prisma generate
+- run migration in staging and production environments
+  npm run prisma:migrate:staging
+  npm run prisma:migrate:production
+- in frontend in settings set productUpdatesEnabled to signal false as a default value for the toggle control before we get the values from backend
+
+---
+
+## 129. Update Privacy Policy with information about Google Analytics used in the landing page.
+
+**status: done**
+**time: 19.10.2026**
+
+Update privacy policy with information about Google Analytics used on landing page.
+Compare privacy policy from landing page https://opticv.net/privacy-policy/ and add information about google analytics used on landing page.
+
+---
+
+## 130. Automatically cancel Stripe subscription when account is deleted
+
+**status: done**
+**time: 20.10.2026**
+
+Deleting an account doesn't cancel the Stripe subscription (users.service.ts:230), so a user who deletes their account keeps getting charged. For now the Terms tell users to cancel first, but this should be fixed in code.
+When deleting user account first check user's subscriptions in Stripe and delete them all. If error occurs during cancelling the subscription throw 500 Internal Server error to abort deleting account without canceling the subscriptions first.
+On frontend when user clicks button to delete account and is on a paid plan then show in the confirmation dialog message that all subscriptions will be canceled.
+
+---
+
+## 131. Handle return url in the app when user navigates from landing page pricing table to the app settings page in order to buy subscription but is not logged in
+
+**status: done**
+
+**time: 20.10.2026-21.10.2026**
+
+User navigates to the app by clicking button in the landing page in pricing table and should be navigated to settings page, but if user is not logged in it will be navigated to the login page not the settings page where user can buy a subscription.
+One problem in the app is worth knowing about first. /settings is protected by authGuard (opticv-app/.../core/auth/guards/auth-guard.ts). For a logged-out visitor it redirects to plain /login and doesn't remember where they came from. Most people clicking "Get Pro" on the landing page won't be logged in, so they'll sign in and land on the default page, not settings. The click still works, but it breaks the purchase path.
+
+Add a return URL in the app: have the guard send them to /login?returnUrl=/settings, then redirect there after login or after the verify step. This is a small change and also fixes any other deep link into the app.
+
+---
+
+## 132. Move buttons for Resume Analysis and Additional materials back to sidebar
+
+**status: done**
+**time: 10.11.2026-11.11.2026**
+
+Currently in the cv-optimization page the buttons for Resume Analysis and Additional Materials are placed below the Job Posting section and when user scrolls down the page he cannot see them so the user might not even know how to get to the Additional Materials page if the button is not visible and it is not on the sidebar.
+
+Display on the sidebar 3 groups: Job Posting, Resume Optimization and Additional Materials and display all the belonging menu items to these groups.
+In tme main CV-optimization page display on top 3 tab buttons for the same groups and below display only the section cards that belog to the selected tab panel.
+
+---
+
+## 133. Add button or link to go to landing page from app
+
+**status: done**
+**time: 11.11.2026**
+
+We need a way to go from app to landing page. Add a button in the menu or in the footer so user can click it and go back to landing page.
+
+Add an "About OptiCV" link to the footer (apps/opticv-web/src/app/layout/footer/footer.html).
+
+- The footer renders on every route (guest and authenticated), so the link is always reachable.
+- It's unobtrusive and doesn't compete with the header's primary nav (Dashboard / Upload CV / Optimize CV).
+- The footer already has a <nav aria-label="Legal"> and external social links, so it fits the existing pattern.
+
+Implementation: a plain anchor next to the legal links:
+<a href="https://opticv.net" target="_blank" rel="noopener noreferrer">About OptiCV</a>
+styled like the existing footer links. Optionally add rel="noopener noreferrer" to the two social links, which currently lack rel.
+
+---
+
+## 134. Create pricing page
+
+**status: done**
+**time: 11.11.2026**
+
+Create a dedicated /pricing page that compares plans.
+
+- The pricing page should be available to everyone, no only the logged in users.
+- Add Pricing menu item to the top header.
+- Pricing page should show Free, Basic, and Pro with their quotas, and the buttons would use the existing Stripe upgrade flow.
+- Settings page should link to it instead of holding the only upgrade UI.
+
+Take the pricing info from the landing page https://opticv.net/pricing/
+
+---
+
+## 135. Implement user menu in avatar
+
+**status: done**
+**time: 11.11.2026**
+
+Replace the avatar-to-settings shortcut with a small user menu.
+
+- Entries should be: Plan & billing (showing the current tier, with Upgrade or Manage subscription), Profile with options to go to Account settings and Sign out.
+- This makes cancel and manage-billing reachable in two clicks from anywhere.
+- Remove the current sign out icon button from top header, and move it inside the menu
+
+---
+
+## 136. Show limits usage on the pages where limits matter
+
+**status: done**
+**time: 12.11.2026**
+
+Display a usage nudge on the pages where limits matter.
+
+- On the dashboard page show monthly usage for the optimizations run and stored cvs, show "2 of 3 optimizations used" with an upgrade link when the user is near or at the limit.
+- On the upload page also show monthly usage of stored cvs
+- When a user hits a quota, show an upgrade prompt rather than only an error. People are most likely to upgrade at that moment.
+
+Settings already shows quota progress bars, so that data should be reusable.
+
+---
+
+## 137. Show small tier badge on the avatar
+
+**status: done**
+**time: 12.11.2026**
+
+Show a small tier badge (Free/Basic/Pro) next to the avatar for logged-in users.
+
+---
+
+## Automatically delete accounts after 24 months of inactivity
+
+Implement a scheduled cleanup job that checks accounts for inactivity. If account has a 24 months of inactivity it sends an email to user with information that account may be deleted and after 30 days it deletes the account.
+
+---
+
 ## Implement dark / light mode
 
 **status: todo**
@@ -1797,18 +2245,6 @@ With both changes, the whole app stays in light mode no matter what the OS is se
 
 Implement dark/light mode in the app.
 The plan has been saved to /docs/dark-mode-plan.md
-
----
-
-## Connect landing page with app
-
-**status: todo**
-
-**time:**
-
-- connect landing page with the app, make the login or optimize CV navigate to the app
-- consider whether we should keep the home page in the app, should we move user after login directly to dashboard, and home menu item should move back to landing page?
-- check if it would be possible to show login status in the landing page
 
 ---
 

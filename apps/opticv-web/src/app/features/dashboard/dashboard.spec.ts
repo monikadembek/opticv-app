@@ -1,16 +1,38 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import posthog from 'posthog-js';
 import { provideRouter } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { of, throwError } from 'rxjs';
 import type {
   CvDocumentListItem,
   JobApplicationListItem,
+  QuotaStatus,
 } from '@opticv/datatypes';
 import { Dashboard } from './dashboard';
 import { CvApiService } from '../../core/services/cv-api.service';
 import { JobApplicationApiService } from '../../core/services/job-application-api.service';
 import { CvStore } from '../../core/stores/cv.store';
 import { Supabase } from '../../core/auth/services/supabase';
+import { PlanUsageStore } from '../../core/stores/plan-usage.store';
+
+const mockOptimizationQuota: QuotaStatus = {
+  feature: 'CV_OPTIMIZATION',
+  used: 8,
+  limit: 10,
+  remaining: 2,
+  resetsAt: '2026-12-01T12:00:00.000Z',
+};
+
+function createPlanUsageStoreMock() {
+  return {
+    optimizationQuota: signal<QuotaStatus | null>(null),
+    storedCvs: signal<{ used: number; limit: number } | null>(null),
+    canUpgrade: signal(true),
+    resetLabel: signal('Resets'),
+    reload: vi.fn(),
+  };
+}
 
 const mockCvFiles: CvDocumentListItem[] = [
   {
@@ -54,6 +76,7 @@ describe('Dashboard', () => {
     deleteJobApplication: ReturnType<typeof vi.fn>;
   };
   let messageService: { add: ReturnType<typeof vi.fn> };
+  let planUsageStore: ReturnType<typeof createPlanUsageStoreMock>;
 
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -80,6 +103,7 @@ describe('Dashboard', () => {
       deleteJobApplication: vi.fn().mockReturnValue(of(undefined)),
     };
     messageService = { add: vi.fn() };
+    planUsageStore = createPlanUsageStoreMock();
 
     await TestBed.configureTestingModule({
       imports: [Dashboard],
@@ -87,6 +111,7 @@ describe('Dashboard', () => {
         { provide: CvApiService, useValue: cvApiService },
         {
           provide: JobApplicationApiService,
+
           useValue: jobApplicationApiService,
         },
         { provide: MessageService, useValue: messageService },
@@ -94,6 +119,7 @@ describe('Dashboard', () => {
           provide: Supabase,
           useValue: { currentUser: vi.fn().mockReturnValue(null) },
         },
+        { provide: PlanUsageStore, useValue: planUsageStore },
         ConfirmationService,
         provideRouter([]),
       ],
@@ -151,6 +177,10 @@ describe('Dashboard', () => {
       expect(jobApplicationApiService.getJobApplications).toHaveBeenCalled();
       expect(component.optimizationsItems()).toEqual(mockOptimizations);
       expect(component.isLoadingOptimizations()).toBe(false);
+    });
+
+    it('reloads usage on init', () => {
+      expect(planUsageStore.reload).toHaveBeenCalledOnce();
     });
   });
 
@@ -229,6 +259,35 @@ describe('Dashboard', () => {
 
       expect(cvApiService.deleteCv).toHaveBeenCalledWith(mockCvFiles[0].id);
       expect(component.cvFiles()).not.toContain(mockCvFiles[0]);
+    });
+
+    it('reloads usage after successful deletion', () => {
+      const confirmationService =
+        fixture.debugElement.injector.get(ConfirmationService);
+      vi.spyOn(confirmationService, 'confirm').mockImplementation((opts) => {
+        opts.accept?.();
+        return confirmationService;
+      });
+      planUsageStore.reload.mockClear();
+
+      component.deleteCv(mockCvFiles[0]);
+
+      expect(planUsageStore.reload).toHaveBeenCalledOnce();
+    });
+
+    it('does not reload usage when deletion fails', () => {
+      cvApiService.deleteCv.mockReturnValue(throwError(() => ({})));
+      const confirmationService =
+        fixture.debugElement.injector.get(ConfirmationService);
+      vi.spyOn(confirmationService, 'confirm').mockImplementation((opts) => {
+        opts.accept?.();
+        return confirmationService;
+      });
+      planUsageStore.reload.mockClear();
+
+      component.deleteCv(mockCvFiles[0]);
+
+      expect(planUsageStore.reload).not.toHaveBeenCalled();
     });
 
     it('shows a success toast after deletion', () => {
@@ -365,6 +424,61 @@ describe('Dashboard', () => {
 
     it('shows the latest activity date when activity exists', () => {
       expect(component.lastActivityTime()).not.toBeNull();
+    });
+  });
+
+  describe('usage panel', () => {
+    const usageSection = () =>
+      fixture.nativeElement.querySelector('section[aria-label="Usage"]');
+
+    it('is hidden while usage is not loaded', () => {
+      expect(usageSection()).toBeNull();
+    });
+
+    it('shows optimization and stored CV usage', () => {
+      planUsageStore.optimizationQuota.set(mockOptimizationQuota);
+      planUsageStore.storedCvs.set({ used: 1, limit: 5 });
+      fixture.detectChanges();
+
+      const text = usageSection()?.textContent ?? '';
+      expect(text).toContain('Usage this month');
+      expect(text).toContain('8 of 10 optimizations used');
+      expect(text).toContain('Resets Dec 1, 2026');
+      expect(text).toContain('1 of 5 CVs stored');
+      expect(usageSection()?.querySelectorAll('app-usage-meter').length).toBe(
+        2,
+      );
+    });
+
+    it('shows only stored CV usage when the optimization quota is missing', () => {
+      planUsageStore.storedCvs.set({ used: 1, limit: 5 });
+      fixture.detectChanges();
+
+      const text = usageSection()?.textContent ?? '';
+      expect(text).not.toContain('optimizations used');
+      expect(text).toContain('1 of 5 CVs stored');
+    });
+
+    it('shows an upgrade link only for meters near the limit', () => {
+      planUsageStore.optimizationQuota.set(mockOptimizationQuota);
+      planUsageStore.storedCvs.set({ used: 1, limit: 5 });
+      fixture.detectChanges();
+
+      expect(
+        usageSection()?.querySelectorAll('button[routerlink="/pricing"]')
+          .length,
+      ).toBe(1);
+    });
+
+    it('tracks upgrade clicks', () => {
+      const captureSpy = vi.spyOn(posthog, 'capture');
+
+      component.onUpgradeClicked('usage_meter_cvs');
+
+      expect(captureSpy).toHaveBeenCalledWith('upgrade_cta_clicked', {
+        page: 'dashboard',
+        place: 'usage_meter_cvs',
+      });
     });
   });
 });

@@ -6,6 +6,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { Settings } from './settings';
 import { UserSettingsApiService } from '../../core/services/user-settings-api.service';
 import { Supabase } from '../../core/auth/services/supabase';
+import { BillingRedirectService } from '../../core/services/billing-redirect.service';
 import type { UsageStatus, UserProfile } from '@opticv/datatypes';
 
 const mockProfile: UserProfile = {
@@ -66,7 +67,17 @@ function createSupabaseMock() {
   };
 }
 
+function createBillingMock() {
+  return {
+    openPortal: vi.fn(),
+    startCheckout: vi.fn(),
+    redirectingToPortal: signal(false).asReadonly(),
+    redirectingToCheckout: signal<'BASIC' | 'PRO' | null>(null).asReadonly(),
+  };
+}
+
 describe('Settings', () => {
+  let billingMock: ReturnType<typeof createBillingMock>;
   let userSettingsMock: ReturnType<typeof createUserSettingsMock>;
   let supabaseMock: ReturnType<typeof createSupabaseMock>;
   let messageService: MessageService;
@@ -77,6 +88,7 @@ describe('Settings', () => {
   ) {
     userSettingsMock = createUserSettingsMock(profileOverrides, usageOverrides);
     supabaseMock = createSupabaseMock();
+    billingMock = createBillingMock();
 
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
@@ -86,6 +98,7 @@ describe('Settings', () => {
         MessageService,
         { provide: UserSettingsApiService, useValue: userSettingsMock },
         { provide: Supabase, useValue: supabaseMock },
+        { provide: BillingRedirectService, useValue: billingMock },
       ],
     }).compileComponents();
 
@@ -791,7 +804,7 @@ describe('Settings', () => {
       expect(text).not.toContain('plan will end on');
     });
 
-    it('shows upgrade buttons (not Manage billing) for a FREE tier user', async () => {
+    it('shows a View plans button (no upgrade or Manage billing buttons) for a FREE tier user', async () => {
       await setup({ value: mockProfile, hasValue: true });
       const fixture = TestBed.createComponent(Settings);
       fixture.detectChanges();
@@ -799,15 +812,57 @@ describe('Settings', () => {
       const buttons = Array.from(
         fixture.nativeElement.querySelectorAll('button'),
       ) as HTMLButtonElement[];
-      expect(
-        buttons.some((el) => el.textContent?.includes('Upgrade to Basic')),
-      ).toBe(true);
-      expect(
-        buttons.some((el) => el.textContent?.includes('Upgrade to Pro')),
-      ).toBe(true);
+      expect(buttons.some((el) => el.textContent?.includes('View plans'))).toBe(
+        true,
+      );
+      expect(buttons.some((el) => el.textContent?.includes('Upgrade to'))).toBe(
+        false,
+      );
       expect(
         buttons.some((el) => el.textContent?.includes('Manage billing')),
       ).toBe(false);
+    });
+
+    it('navigates to /pricing when View plans is clicked', async () => {
+      await setup({ value: mockProfile, hasValue: true });
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+      const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+      const button = (
+        Array.from(
+          fixture.nativeElement.querySelectorAll('button'),
+        ) as HTMLButtonElement[]
+      ).find((el) => el.textContent?.includes('View plans'));
+      button?.click();
+
+      expect(navigateSpy).toHaveBeenCalledWith(['/pricing']);
+    });
+
+    it('opens the billing portal when Manage billing is clicked', async () => {
+      await setup({
+        value: {
+          ...mockProfile,
+          subscription: {
+            tier: 'PRO',
+            status: 'ACTIVE',
+            cancelAtPeriodEnd: false,
+            currentPeriodEnd: null,
+          },
+        },
+        hasValue: true,
+      });
+      const fixture = TestBed.createComponent(Settings);
+      fixture.detectChanges();
+
+      const button = (
+        Array.from(
+          fixture.nativeElement.querySelectorAll('button'),
+        ) as HTMLButtonElement[]
+      ).find((el) => el.textContent?.includes('Manage billing'));
+      button?.click();
+
+      expect(billingMock.openPortal).toHaveBeenCalledOnce();
     });
 
     it('shows an enabled Manage billing button (not upgrade buttons) for a paid tier user', async () => {
@@ -833,9 +888,9 @@ describe('Settings', () => {
         el.textContent?.includes('Manage billing'),
       );
       expect(manageBillingButton?.disabled).toBe(false);
-      expect(
-        buttons.some((el) => el.textContent?.includes('Upgrade to Basic')),
-      ).toBe(false);
+      expect(buttons.some((el) => el.textContent?.includes('View plans'))).toBe(
+        false,
+      );
     });
 
     it('does not render "Visa ending" text', async () => {
@@ -851,10 +906,10 @@ describe('Settings', () => {
   // ─── notifications card ──────────────────────────────────────────────────
 
   describe('notifications card', () => {
-    it('defaults Product updates to enabled', async () => {
+    it('defaults Product updates to disabled', async () => {
       await setup({ value: mockProfile, hasValue: true });
       const { componentInstance } = TestBed.createComponent(Settings);
-      expect(componentInstance.productUpdatesEnabled()).toBe(true);
+      expect(componentInstance.productUpdatesEnabled()).toBe(false);
     });
 
     it('defaults Weekly job-search tips to disabled', async () => {
@@ -1094,6 +1149,94 @@ describe('Settings', () => {
           detail: 'Failed to delete account. Please try again.',
         }),
       );
+    });
+
+    describe('subscription cancellation notice', () => {
+      const BASE_MESSAGE =
+        'This will permanently delete your account and all associated data. This action cannot be undone.';
+      const CANCELLATION_NOTICE =
+        'Your paid subscription will be canceled immediately and will not renew.';
+
+      async function openDialogMessage(
+        profile: UserProfile | null,
+      ): Promise<string | undefined> {
+        await setup({ value: profile, hasValue: profile !== null });
+        const fixture = TestBed.createComponent(Settings);
+        const componentConfirmService =
+          fixture.debugElement.injector.get(ConfirmationService);
+        const confirmSpy = vi.spyOn(componentConfirmService, 'confirm');
+
+        fixture.componentInstance.onDeleteAccount();
+
+        return confirmSpy.mock.calls[0][0].message;
+      }
+
+      function profileWith(
+        subscription: UserProfile['subscription'],
+      ): UserProfile {
+        return { ...mockProfile, subscription };
+      }
+
+      it.each([
+        ['PRO', 'ACTIVE'],
+        ['BASIC', 'TRIALING'],
+        ['PRO', 'PAST_DUE'],
+      ] as const)(
+        'includes the notice for a %s subscription with status %s',
+        async (tier, status) => {
+          const message = await openDialogMessage(
+            profileWith({
+              tier,
+              status,
+              cancelAtPeriodEnd: false,
+              currentPeriodEnd: '2026-11-20T00:00:00.000Z',
+            }),
+          );
+
+          expect(message).toContain(BASE_MESSAGE);
+          expect(message).toContain(CANCELLATION_NOTICE);
+        },
+      );
+
+      it('includes the notice for a paid subscription set to cancel at period end', async () => {
+        const message = await openDialogMessage(
+          profileWith({
+            tier: 'PRO',
+            status: 'ACTIVE',
+            cancelAtPeriodEnd: true,
+            currentPeriodEnd: '2026-11-20T00:00:00.000Z',
+          }),
+        );
+
+        expect(message).toContain(CANCELLATION_NOTICE);
+      });
+
+      it.each([
+        [
+          'a FREE subscription',
+          profileWith({
+            tier: 'FREE',
+            status: 'ACTIVE',
+            cancelAtPeriodEnd: false,
+            currentPeriodEnd: null,
+          }),
+        ],
+        [
+          'a CANCELED paid subscription',
+          profileWith({
+            tier: 'PRO',
+            status: 'CANCELED',
+            cancelAtPeriodEnd: false,
+            currentPeriodEnd: null,
+          }),
+        ],
+        ['no subscription', profileWith(null)],
+        ['a profile that has not loaded', null],
+      ])('omits the notice for %s', async (_label, profile) => {
+        const message = await openDialogMessage(profile);
+
+        expect(message).toBe(BASE_MESSAGE);
+      });
     });
   });
 });

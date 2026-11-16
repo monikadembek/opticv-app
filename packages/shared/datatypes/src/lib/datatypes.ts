@@ -96,7 +96,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
       LINKEDIN: 1,
       CV_BUILDER: 1,
     },
-    maxStoredCvs: 2,
+    maxStoredCvs: 1,
     allowedTemplates: ['default', 'classic'],
   },
   BASIC: {
@@ -107,7 +107,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
       LINKEDIN: 10,
       CV_BUILDER: 5,
     },
-    maxStoredCvs: 10,
+    maxStoredCvs: 5,
     allowedTemplates: 'ALL',
   },
   PRO: {
@@ -118,7 +118,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
       LINKEDIN: 30,
       CV_BUILDER: 10,
     },
-    maxStoredCvs: 20,
+    maxStoredCvs: 10,
     allowedTemplates: 'ALL',
   },
 };

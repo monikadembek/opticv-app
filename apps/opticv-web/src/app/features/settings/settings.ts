@@ -33,10 +33,12 @@ import type {
   UserProfile,
 } from '@opticv/datatypes';
 import { Supabase } from '../../core/auth/services/supabase';
+import { BillingRedirectService } from '../../core/services/billing-redirect.service';
 import { UserSettingsApiService } from '../../core/services/user-settings-api.service';
 import { catchError, EMPTY, tap } from 'rxjs';
 import posthog from 'posthog-js';
 import { CvStore } from '../../core/stores/cv.store';
+import { CookieConsentStore } from '../../core/stores/cookie-consent.store';
 
 @Component({
   selector: 'app-settings',
@@ -69,6 +71,8 @@ export class Settings implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly cvStore = inject(CvStore);
+  private readonly cookieConsentStore = inject(CookieConsentStore);
+  private readonly billingRedirectService = inject(BillingRedirectService);
 
   readonly userProfile = this.userSettingsApiService.userProfile;
   readonly usageStatus = this.userSettingsApiService.usageStatus;
@@ -78,10 +82,12 @@ export class Settings implements OnInit {
   readonly isChangingEmail = signal(false);
   readonly newEmailSubmitted = signal(false);
   readonly emailChangePendingFor = signal<string | null>(null);
-  readonly productUpdatesEnabled = signal(true);
+  readonly productUpdatesEnabled = signal(false);
   readonly weeklyTipsEnabled = signal(false);
-  readonly isRedirectingToCheckout = signal<'BASIC' | 'PRO' | null>(null);
-  readonly isRedirectingToPortal = signal(false);
+  readonly analyticsCookiesEnabled =
+    this.cookieConsentStore.hasAcceptedAnalytics;
+  readonly isRedirectingToPortal =
+    this.billingRedirectService.redirectingToPortal;
 
   readonly fullNameModel = signal({ displayName: '' });
   readonly fullNameForm = form(this.fullNameModel, (path) => {
@@ -137,6 +143,15 @@ export class Settings implements OnInit {
     };
   });
 
+  readonly hasActivePaidSubscription = computed<boolean>(() => {
+    const subscription = this.userProfile.value()?.subscription;
+    if (!subscription || subscription.tier === 'FREE') {
+      return false;
+    }
+
+    return ['ACTIVE', 'TRIALING', 'PAST_DUE'].includes(subscription.status);
+  });
+
   readonly usageResetLabel = computed<string>(() =>
     this.userProfile.value()?.subscription?.cancelAtPeriodEnd
       ? 'Access ends'
@@ -186,9 +201,15 @@ export class Settings implements OnInit {
   }
 
   onDeleteAccount(): void {
+    let message =
+      'This will permanently delete your account and all associated data. This action cannot be undone.';
+    if (this.hasActivePaidSubscription()) {
+      message +=
+        ' Your paid subscription will be canceled immediately and will not renew.';
+    }
+
     this.confirmationService.confirm({
-      message:
-        'This will permanently delete your account and all associated data. This action cannot be undone.',
+      message,
       header: 'Delete account',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Delete',
@@ -266,6 +287,14 @@ export class Settings implements OnInit {
       });
   }
 
+  onAnalyticsCookiesToggle(enabled: boolean): void {
+    if (enabled) {
+      this.cookieConsentStore.accept();
+    } else {
+      this.cookieConsentStore.reject();
+    }
+  }
+
   onNotificationToggle(type: NotificationType, enabled: boolean): void {
     const preference =
       type === 'PRODUCT_UPDATES'
@@ -334,52 +363,12 @@ export class Settings implements OnInit {
     });
   }
 
-  onUpgrade(tier: 'BASIC' | 'PRO'): void {
-    this.isRedirectingToCheckout.set(tier);
-
-    this.userSettingsApiService
-      .createCheckoutSession(tier)
-      .pipe(
-        catchError((err) => {
-          const message =
-            (err as { error?: { message?: string } })?.error?.message ??
-            'Failed to start checkout. Please try again.';
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Checkout Error',
-            detail: message,
-          });
-          this.isRedirectingToCheckout.set(null);
-          return EMPTY;
-        }),
-      )
-      .subscribe((response) => {
-        window.location.href = response.url;
-      });
+  onViewPlans(): void {
+    this.router.navigate(['/pricing']);
   }
 
   onManageBilling(): void {
-    this.isRedirectingToPortal.set(true);
-
-    this.userSettingsApiService
-      .createPortalSession()
-      .pipe(
-        catchError((err) => {
-          const message =
-            (err as { error?: { message?: string } })?.error?.message ??
-            'Failed to open billing portal. Please try again.';
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Billing Portal Error',
-            detail: message,
-          });
-          this.isRedirectingToPortal.set(false);
-          return EMPTY;
-        }),
-      )
-      .subscribe((response) => {
-        window.location.href = response.url;
-      });
+    this.billingRedirectService.openPortal();
   }
 
   getAvatarLabel(profile: UserProfile | null): string {

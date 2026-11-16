@@ -149,24 +149,10 @@
     <div class="flex gap-3 pt-3">
       @if (userProfile.value()?.subscription?.tier === 'FREE') {
       <p-button
-        type="button"
-        label="Upgrade to Basic"
-        icon="pi pi-arrow-up"
+        label="View plans"
         size="small"
-        [loading]="isRedirectingToCheckout() === 'BASIC'"
-        [disabled]="isRedirectingToCheckout() !== null"
-        (onClick)="onUpgrade('BASIC')"
-        aria-label="Upgrade to Basic"
-      />
-      <p-button
-        type="button"
-        label="Upgrade to Pro"
-        icon="pi pi-arrow-up"
-        size="small"
-        [loading]="isRedirectingToCheckout() === 'PRO'"
-        [disabled]="isRedirectingToCheckout() !== null"
-        (onClick)="onUpgrade('PRO')"
-        aria-label="Upgrade to Pro"
+        (onClick)="onViewPlans()"
+        aria-label="View plans"
       />
       } @else {
       <p-button
@@ -267,6 +253,31 @@
           ariaLabel="Weekly job-search tips"
         />
       </div>
+    </div>
+  </section>
+
+  <section
+    class="mb-6 rounded-lg border border-gray-200 p-6"
+    aria-label="Privacy"
+  >
+    <h2
+      class="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-500"
+    >
+      Privacy
+    </h2>
+    <div class="flex items-center justify-between gap-4 py-3">
+      <div>
+        <p class="text-sm font-semibold">Analytics cookies</p>
+        <p class="text-sm text-gray-500">
+          Help us improve OptiCV with anonymous usage analytics (PostHog).
+        </p>
+      </div>
+      <p-toggleswitch
+        [ngModel]="analyticsCookiesEnabled()"
+        (ngModelChange)="onAnalyticsCookiesToggle($event)"
+        [ngModelOptions]="{ standalone: true }"
+        ariaLabel="Analytics cookies"
+      />
     </div>
   </section>
 
