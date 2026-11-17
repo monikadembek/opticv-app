@@ -33,15 +33,17 @@ export class CvExtractionService {
       throw new NotFoundException('CV document not found.');
     }
 
-    if (doc.manuallyEdited) {
-      throw new ForbiddenException({ code: 'MANUAL_EDIT_PROTECTED' });
-    }
-
     if (doc.extractionStatus === 'COMPLETED' && doc.structuredData !== null) {
       this.logger.log(
         `Cache hit for CV ${cvId} — returning stored structured data`,
       );
       return doc.structuredData as unknown as CvStructuredData;
+    }
+
+    // Only block an actual re-run of AI extraction — returning stored data
+    // (cache hit above) never overwrites manual edits.
+    if (doc.manuallyEdited) {
+      throw new ForbiddenException({ code: 'MANUAL_EDIT_PROTECTED' });
     }
 
     const isPdf = doc.mimeType === 'application/pdf';

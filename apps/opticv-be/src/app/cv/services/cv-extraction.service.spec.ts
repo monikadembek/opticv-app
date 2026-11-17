@@ -98,17 +98,43 @@ describe('CvExtractionService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('throws ForbiddenException with MANUAL_EDIT_PROTECTED when the CV was manually edited', async () => {
+    it('throws ForbiddenException with MANUAL_EDIT_PROTECTED when a manually edited CV would be re-extracted', async () => {
       mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(
         makeDoc({ manuallyEdited: true }),
       );
 
-      await expect(
-        service.extractStructuredData('cv-id', 'user-id'),
-      ).rejects.toThrow(ForbiddenException);
+      const error = await service
+        .extractStructuredData('cv-id', 'user-id')
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(ForbiddenException);
+      expect((error as ForbiddenException).getResponse()).toEqual({
+        code: 'MANUAL_EDIT_PROTECTED',
+      });
       expect(mockOpenAiService.extractCvData).not.toHaveBeenCalled();
       expect(mockOpenAiService.extractCvDataFromFile).not.toHaveBeenCalled();
       expect(mockR2Service.download).not.toHaveBeenCalled();
+    });
+
+    it('returns stored structured data for a manually edited CV without calling AI', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(
+        makeDoc({
+          manuallyEdited: true,
+          extractionStatus: 'COMPLETED',
+          structuredData: mockStructuredData,
+          storageKey: null,
+          fileName: null,
+          mimeType: null,
+        }),
+      );
+
+      const result = await service.extractStructuredData('cv-id', 'user-id');
+
+      expect(result).toEqual(mockStructuredData);
+      expect(mockOpenAiService.extractCvData).not.toHaveBeenCalled();
+      expect(mockOpenAiService.extractCvDataFromFile).not.toHaveBeenCalled();
+      expect(mockR2Service.download).not.toHaveBeenCalled();
+      expect(mockPrisma.cvDocument.update).not.toHaveBeenCalled();
     });
 
     it('returns cached structured data when extractionStatus is COMPLETED', async () => {

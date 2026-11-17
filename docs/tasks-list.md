@@ -2399,6 +2399,57 @@ Implement a guided tour specific to the cv-optimization page, highlighting its k
 
 ---
 
+### Bug - "Start Optimization Process" leaves orphan job applications, retries non-retryable errors and can get stuck loading
+
+**status: todo**
+**time:**
+
+**Context**
+
+`JobUpload.onSubmit()` (`apps/opticv-web/src/app/features/cv-optimization/components/job-upload/job-upload.ts`) chains two requests:
+
+1. `createJobApplication(payload)`, which creates a `JobApplication` row
+2. `extractCvData(cvDocumentId)` (`POST /cv/:id/extract`) with `retry(2)`, which returns the CV's structured data (or runs AI extraction if there is none yet)
+
+Extraction can fail for many reasons: OpenAI timeout or error (502), R2 download failure, DOCX without `parsedText` (400), rate limiting by `AiThrottlerGuard` (429), `MANUAL_EDIT_PROTECTED` (403), or a network drop.
+
+**Already fixed (task 117):** before the fix, the extraction error was only `console.log`-ed. `isSubmitting` was never reset, so the "Start Optimization Process" button kept spinning and stayed disabled until a page reload, and the user saw no message. The `subscribe.error` handler now sets `submitError` (server message or "Could not read your CV data. Please try again.") and resets `isSubmitting`. Covered by two tests in `job-upload.spec.ts`.
+
+**Remaining issues**
+
+1. **Orphan / duplicate job applications.** By the time extraction fails, request 1 has already created a `JobApplication`. Each new attempt creates another one, so the dashboard "My Optimizations" list fills up with duplicate entries that have no results.
+2. **`retry(2)` retries everything, including errors that will never succeed.** 400 / 403 / 404 / 429 are retried pointlessly. A 502 retry re-runs the paid OpenAI extraction up to 3 times per click.
+3. **Stuck spinner on early return.** `isSubmitting.set(true)` runs before `if (!payload) return;` (around line 157), and the early return never resets it. In practice `isSubmitDisabled()` should prevent this, but it's the same stuck-loading pattern.
+4. **(minor)** Leftover `console.log` calls in `onSubmit()` (submit result, extracted data, error).
+
+**Possible solutions**
+
+- **Orphans (pick one):**
+  - **a) Reuse the job application on retry (simplest, frontend only):** keep `this.jobApplication` after a successful request 1. If extraction then fails and the user resubmits with the same form values, skip `createJobApplication` and call only `extractCvData`. Clear `this.jobApplication` when the form values (CV, job title, company, description) change.
+  - **b) Extract first, then create:** call `extractCvData` before `createJobApplication`, so a job application only exists once the CV data is available. Small reorder; extraction is idempotent (cache hit) so repeating it is cheap.
+  - **c) Roll back on failure:** delete the just-created job application in the extraction error handler. More moving parts and needs an extra request; less preferred.
+- **Retries:** retry only errors that can succeed on a second try (status `0` network errors and 5xx, maybe excluding 502 if we don't want to re-pay for AI), with a short backoff, for example:
+  ```ts
+  retry({
+    count: 2,
+    delay: (err, attempt) =>
+      err?.status === 0 || err?.status >= 500
+        ? timer(attempt * 1000)
+        : throwError(() => err),
+  });
+  ```
+- **Early return:** move `isSubmitting.set(true)` below the `if (!payload) return;` check, or reset it before returning.
+- **Logging:** remove the `console.log` calls (or replace them with the app's logging approach, if any).
+
+**Acceptance**
+
+- A failed extraction followed by a retry does not create a second `JobApplication`.
+- 4xx errors from `extractCvData` are not retried; network and 5xx errors are retried at most twice.
+- `isSubmitting` is always reset on every exit path of `onSubmit()`.
+- Unit tests in `job-upload.spec.ts` cover: no duplicate `createJobApplication` call on retry, no retry on 4xx, retry on 5xx, early-return path.
+
+---
+
 ### UX - create animations or video on how to use the app
 
 **status: todo**
