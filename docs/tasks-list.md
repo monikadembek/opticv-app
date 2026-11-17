@@ -2232,9 +2232,43 @@ Show a small tier badge (Free/Basic/Pro) next to the avatar for logged-in users.
 
 ---
 
+## 138. CV Builder - CV names + unified "My CVs" table
+
+**status: todo**
+**time:**
+
+Allow naming cvs that were built inside the app and the ones that were uploaded.
+Reorganize CV table in the dashboard.
+
+@docs/cv-naming-plan.md
+
+---
+
 ## Automatically delete accounts after 24 months of inactivity
 
 Implement a scheduled cleanup job that checks accounts for inactivity. If account has a 24 months of inactivity it sends an email to user with information that account may be deleted and after 30 days it deletes the account.
+
+---
+
+## Refactoring - when deleting a cv first delete rows in the database and only the file in the R2, so that in case dataabse delete fails we don't point to an empty file which no longer exists on the R2
+
+Order of operations: the R2 file is deleted before the database row. If the database delete fails, the record stays but points to a file that no longer exists. Deleting the row first and the file afterwards would fail more safely, leaving at worst an unused file in storage.
+
+---
+
+## Refactoring - archiving deleted CV instead of removing it from database
+
+Now we have limitations about max number of uploaded cv files on the account, for the pro account it is 10cvs stored and above user can't upload any more cv files without deleting the previous files. What could we do so that the previously run optimization are preserved and not deleted when user deletes a cv file?
+
+Archived CV
+
+I recommend 'archiving' a deleted CV instead of removing its row. The original file would be deleted from R2 storage, the CV would be hidden from the CV list and no longer count toward the 10-CV limit (the limit already counts only `isActive` CVs), and its parsed text and structured data would be kept. Past optimizations need that data: the optimization page loads the CV's structured data to show results. After a CV is archived, what should the user still be able to do with job applications that used it?
+
+View + re-run (Recommended)
+Past optimizations stay fully viewable and editable, and the user can still re-run or regenerate optimizations for those existing job applications. New job applications can't pick an archived CV.
+
+Implementation plan:
+@docs/cv-archive-on-delete-plan.md
 
 ---
 
