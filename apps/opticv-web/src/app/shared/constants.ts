@@ -7,4 +7,5 @@ export const FEATURE_LABELS: Record<LimitedFeature, string> = {
   COVER_LETTER: 'Cover letter generations',
   INTERVIEW_PREP: 'Interview prep generations',
   LINKEDIN: 'LinkedIn content generations',
+  CV_BUILDER: 'CV builder creations',
 };
