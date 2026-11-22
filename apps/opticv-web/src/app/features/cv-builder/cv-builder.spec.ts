@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Location } from '@angular/common';
+import { signal } from '@angular/core';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { of, throwError } from 'rxjs';
 import type { CvDocument, CvStructuredData } from '@opticv/datatypes';
 import { CvBuilder } from './cv-builder';
@@ -31,6 +33,7 @@ const mockStructuredData: CvStructuredData = {
 const mockCvDocument: CvDocument = {
   id: 'doc-id',
   userId: 'user-id',
+  name: 'My CV',
   fileName: null,
   fileSize: null,
   mimeType: null,
@@ -60,9 +63,16 @@ describe('CvBuilder', () => {
     getStructuredData: ReturnType<typeof vi.fn>;
     createManualCv: ReturnType<typeof vi.fn>;
     updateStructuredData: ReturnType<typeof vi.fn>;
+    renameCv: ReturnType<typeof vi.fn>;
   };
   let messageService: { add: ReturnType<typeof vi.fn> };
-  let router: { navigate: ReturnType<typeof vi.fn> };
+  let router: {
+    navigate: ReturnType<typeof vi.fn>;
+    lastSuccessfulNavigation: ReturnType<
+      typeof signal<{ previousNavigation: unknown } | null>
+    >;
+  };
+  let location: { back: ReturnType<typeof vi.fn> };
 
   function setup(routeId: string | null = null) {
     vi.stubGlobal(
@@ -76,12 +86,19 @@ describe('CvBuilder', () => {
     cvApiService = {
       getStructuredData: vi
         .fn()
-        .mockReturnValue(of({ data: mockStructuredData })),
+        .mockReturnValue(of({ data: mockStructuredData, name: 'My CV' })),
       createManualCv: vi.fn().mockReturnValue(of(mockCvDocument)),
       updateStructuredData: vi.fn().mockReturnValue(of(mockCvDocument)),
+      renameCv: vi.fn().mockReturnValue(of(mockCvDocument)),
     };
     messageService = { add: vi.fn() };
-    router = { navigate: vi.fn() };
+    router = {
+      navigate: vi.fn(),
+      lastSuccessfulNavigation: signal<{ previousNavigation: unknown } | null>(
+        null,
+      ),
+    };
+    location = { back: vi.fn() };
 
     TestBed.configureTestingModule({
       imports: [CvBuilder],
@@ -89,6 +106,7 @@ describe('CvBuilder', () => {
         { provide: CvApiService, useValue: cvApiService },
         { provide: MessageService, useValue: messageService },
         { provide: Router, useValue: router },
+        { provide: Location, useValue: location },
         { provide: ActivatedRoute, useValue: makeActivatedRoute(routeId) },
       ],
     }).compileComponents();
@@ -118,12 +136,22 @@ describe('CvBuilder', () => {
       expect(cvApiService.getStructuredData).not.toHaveBeenCalled();
     });
 
-    it('calls createManualCv on save', () => {
+    it('defaults the name to "Untitled CV"', () => {
+      expect(component.name()).toBe('Untitled CV');
+      const input: HTMLInputElement =
+        fixture.nativeElement.querySelector('#cv-name');
+      expect(input.value).toBe('Untitled CV');
+    });
+
+    it('calls createManualCv on save with the trimmed name', () => {
+      component.name.set('  Frontend CV  ');
       component.save();
 
-      expect(cvApiService.createManualCv).toHaveBeenCalledWith(
-        component.mergedCv(),
-      );
+      expect(cvApiService.createManualCv).toHaveBeenCalledWith({
+        ...component.mergedCv(),
+        name: 'Frontend CV',
+      });
+      expect(cvApiService.renameCv).not.toHaveBeenCalled();
       expect(cvApiService.updateStructuredData).not.toHaveBeenCalled();
     });
 
@@ -155,6 +183,112 @@ describe('CvBuilder', () => {
       expect(messageService.add).toHaveBeenCalledWith(
         expect.objectContaining({ severity: 'error', summary: 'Save failed' }),
       );
+    });
+
+    it('joins array error messages in the toast', () => {
+      cvApiService.createManualCv.mockReturnValue(
+        throwError(() => ({ error: { message: ['a is bad', 'b is bad'] } })),
+      );
+
+      component.save();
+
+      expect(messageService.add).toHaveBeenCalledWith(
+        expect.objectContaining({ detail: 'a is bad, b is bad' }),
+      );
+    });
+
+    describe('name validation', () => {
+      const saveButton = () =>
+        fixture.nativeElement.querySelector('p-button[label="Save"] button');
+      const nameInput = (): HTMLInputElement =>
+        fixture.nativeElement.querySelector('#cv-name');
+
+      it.each([
+        ['empty', '', 'CV name is required.'],
+        ['whitespace-only', '   ', 'CV name is required.'],
+        [
+          'over 100 characters',
+          'a'.repeat(101),
+          'CV name must be 100 characters or fewer.',
+        ],
+      ])(
+        'disables Save and shows a linked error for an %s name',
+        (_, value, message) => {
+          component.name.set(value);
+          fixture.detectChanges();
+
+          expect(saveButton().disabled).toBe(true);
+          const error = fixture.nativeElement.querySelector('#cv-name-error');
+          expect(error.textContent).toContain(message);
+          expect(error.getAttribute('role')).toBe('alert');
+          expect(nameInput().getAttribute('aria-describedby')).toBe(
+            'cv-name-error',
+          );
+          expect(nameInput().getAttribute('aria-invalid')).toBe('true');
+        },
+      );
+
+      it('has no error for a valid name', () => {
+        expect(
+          fixture.nativeElement.querySelector('#cv-name-error'),
+        ).toBeNull();
+        expect(nameInput().getAttribute('aria-describedby')).toBeNull();
+        expect(saveButton().disabled).toBe(false);
+      });
+
+      it('does not save while the name is invalid', () => {
+        component.name.set('  ');
+        component.save();
+
+        expect(cvApiService.createManualCv).not.toHaveBeenCalled();
+        expect(component.saving()).toBe(false);
+      });
+    });
+
+    describe('cancel', () => {
+      it('renders a Cancel button next to Save', () => {
+        const labels = Array.from(
+          fixture.nativeElement.querySelectorAll(
+            '.builder-actions p-button',
+          ) as NodeListOf<Element>,
+        ).map((b) => b.getAttribute('label'));
+        expect(labels).toEqual(['Cancel', 'Save']);
+      });
+
+      it('goes back to the previous page when there is one', () => {
+        router.lastSuccessfulNavigation.set({ previousNavigation: {} });
+
+        component.cancel();
+
+        expect(location.back).toHaveBeenCalledOnce();
+        expect(router.navigate).not.toHaveBeenCalled();
+      });
+
+      it('falls back to the dashboard when there is no previous page', () => {
+        router.lastSuccessfulNavigation.set({ previousNavigation: null });
+
+        component.cancel();
+
+        expect(location.back).not.toHaveBeenCalled();
+        expect(router.navigate).toHaveBeenCalledWith(['/dashboard']);
+      });
+
+      it('does nothing while saving', () => {
+        router.lastSuccessfulNavigation.set({ previousNavigation: {} });
+        component.saving.set(true);
+
+        component.cancel();
+
+        expect(location.back).not.toHaveBeenCalled();
+        expect(router.navigate).not.toHaveBeenCalled();
+      });
+
+      it('does not save anything', () => {
+        component.cancel();
+
+        expect(cvApiService.createManualCv).not.toHaveBeenCalled();
+        expect(cvApiService.updateStructuredData).not.toHaveBeenCalled();
+      });
     });
 
     it('does not show a duplicate toast for QUOTA_EXCEEDED errors', () => {
@@ -249,6 +383,136 @@ describe('CvBuilder', () => {
     });
   });
 
+  describe('unsaved changes', () => {
+    const confirmSpy = () =>
+      vi.spyOn(
+        fixture.debugElement.injector.get(ConfirmationService),
+        'confirm',
+      );
+
+    describe('create mode', () => {
+      beforeEach(() => setup(null));
+
+      it('has no unsaved changes initially', () => {
+        expect(component.hasUnsavedChanges()).toBe(false);
+        expect(component.canDeactivate()).toBe(true);
+      });
+
+      it('detects edits to the CV and its name', () => {
+        component.summary.set('Something new');
+        expect(component.hasUnsavedChanges()).toBe(true);
+
+        component.summary.set(null);
+        expect(component.hasUnsavedChanges()).toBe(false);
+
+        component.name.set('Another name');
+        expect(component.hasUnsavedChanges()).toBe(true);
+      });
+
+      it('ignores whitespace-only changes to the name', () => {
+        component.name.set('  Untitled CV  ');
+        expect(component.hasUnsavedChanges()).toBe(false);
+      });
+
+      it('asks before leaving and stays when the user keeps editing', async () => {
+        const spy = confirmSpy().mockImplementation((opts) => {
+          opts.reject?.();
+          return fixture.debugElement.injector.get(ConfirmationService);
+        });
+        component.summary.set('Something new');
+
+        await expect(component.canDeactivate()).resolves.toBe(false);
+        expect(spy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            key: 'unsaved-changes',
+            header: 'Discard changes?',
+            acceptLabel: 'Discard changes',
+            rejectLabel: 'Keep editing',
+          }),
+        );
+      });
+
+      it('leaves when the user discards the changes', async () => {
+        confirmSpy().mockImplementation((opts) => {
+          opts.accept?.();
+          return fixture.debugElement.injector.get(ConfirmationService);
+        });
+        component.summary.set('Something new');
+
+        await expect(component.canDeactivate()).resolves.toBe(true);
+      });
+
+      it('does not ask after a successful save', () => {
+        const spy = confirmSpy();
+        component.summary.set('Something new');
+
+        component.save();
+
+        expect(component.hasUnsavedChanges()).toBe(false);
+        expect(component.canDeactivate()).toBe(true);
+        expect(spy).not.toHaveBeenCalled();
+      });
+
+      it('keeps the changes marked as unsaved when saving fails', () => {
+        cvApiService.createManualCv.mockReturnValue(
+          throwError(() => ({ error: { message: 'Save failed' } })),
+        );
+        component.summary.set('Something new');
+
+        component.save();
+
+        expect(component.hasUnsavedChanges()).toBe(true);
+      });
+
+      it('blocks the browser unload only when there are unsaved changes', () => {
+        const clean = new Event('beforeunload', { cancelable: true });
+        window.dispatchEvent(clean);
+        expect(clean.defaultPrevented).toBe(false);
+
+        component.summary.set('Something new');
+        const dirty = new Event('beforeunload', { cancelable: true });
+        window.dispatchEvent(dirty);
+        expect(dirty.defaultPrevented).toBe(true);
+      });
+    });
+
+    describe('edit mode', () => {
+      beforeEach(() => setup('doc-id'));
+
+      it('has no unsaved changes right after loading', () => {
+        expect(component.hasUnsavedChanges()).toBe(false);
+      });
+
+      it('detects edits to the loaded CV', () => {
+        component.skillsText.set('TypeScript');
+        expect(component.hasUnsavedChanges()).toBe(true);
+      });
+    });
+
+    it('does not ask when the CV failed to load', () => {
+      setup('doc-id'); // initialises the mocks
+      TestBed.resetTestingModule();
+      cvApiService.getStructuredData.mockReturnValue(
+        throwError(() => ({ error: { message: 'Not found' } })),
+      );
+      TestBed.configureTestingModule({
+        imports: [CvBuilder],
+        providers: [
+          { provide: CvApiService, useValue: cvApiService },
+          { provide: MessageService, useValue: messageService },
+          { provide: Router, useValue: router },
+          { provide: Location, useValue: location },
+          { provide: ActivatedRoute, useValue: makeActivatedRoute('doc-id') },
+        ],
+      });
+      const failed = TestBed.createComponent(CvBuilder);
+      failed.detectChanges();
+
+      expect(failed.componentInstance.hasUnsavedChanges()).toBe(false);
+      expect(failed.componentInstance.canDeactivate()).toBe(true);
+    });
+  });
+
   describe('edit mode', () => {
     beforeEach(() => setup('doc-id'));
 
@@ -264,6 +528,11 @@ describe('CvBuilder', () => {
       expect(component.originalGdprClause()).toBe('Custom clause text');
     });
 
+    it('prefills the name from the structured data response', () => {
+      expect(component.name()).toBe('My CV');
+      expect(component.originalName()).toBe('My CV');
+    });
+
     it('calls updateStructuredData on save with the existing cvId', () => {
       component.save();
 
@@ -272,6 +541,62 @@ describe('CvBuilder', () => {
         component.mergedCv(),
       );
       expect(cvApiService.createManualCv).not.toHaveBeenCalled();
+    });
+
+    it('does not rename when the name is unchanged', () => {
+      component.name.set('  My CV ');
+      component.save();
+
+      expect(cvApiService.renameCv).not.toHaveBeenCalled();
+      expect(router.navigate).toHaveBeenCalledWith(['/dashboard']);
+    });
+
+    it('renames after updating structured data when the name changed', () => {
+      component.name.set(' Renamed CV ');
+      component.save();
+
+      expect(cvApiService.renameCv).toHaveBeenCalledWith(
+        'doc-id',
+        'Renamed CV',
+      );
+      expect(
+        cvApiService.updateStructuredData.mock.invocationCallOrder[0],
+      ).toBeLessThan(cvApiService.renameCv.mock.invocationCallOrder[0]);
+    });
+
+    it('stores the renamed document name and updatedAt', () => {
+      const renamed: CvDocument = {
+        ...mockCvDocument,
+        name: 'Renamed CV',
+        updatedAt: '2024-03-01T00:00:00.000Z',
+      };
+      cvApiService.renameCv.mockReturnValue(of(renamed));
+      const cvStore = TestBed.inject(CvStore);
+
+      component.name.set('Renamed CV');
+      component.save();
+
+      const item = cvStore.cvList().find((c) => c.id === 'doc-id');
+      expect(item?.name).toBe('Renamed CV');
+      expect(item?.updatedAt).toBe('2024-03-01T00:00:00.000Z');
+    });
+
+    it('shows an error and does not navigate when the rename fails', () => {
+      cvApiService.renameCv.mockReturnValue(
+        throwError(() => ({ error: { message: 'CV document not found.' } })),
+      );
+
+      component.name.set('Renamed CV');
+      component.save();
+
+      expect(messageService.add).toHaveBeenCalledWith(
+        expect.objectContaining({
+          severity: 'error',
+          detail: 'CV document not found.',
+        }),
+      );
+      expect(router.navigate).not.toHaveBeenCalled();
+      expect(component.saving()).toBe(false);
     });
 
     it('sets loadError when the fetch fails', () => {
@@ -286,6 +611,7 @@ describe('CvBuilder', () => {
           { provide: CvApiService, useValue: cvApiService },
           { provide: MessageService, useValue: messageService },
           { provide: Router, useValue: router },
+          { provide: Location, useValue: location },
           { provide: ActivatedRoute, useValue: makeActivatedRoute('doc-id') },
         ],
       }).compileComponents();
@@ -311,7 +637,7 @@ describe('CvBuilder', () => {
         gdprClause: undefined,
       } as unknown as CvStructuredData;
       cvApiService.getStructuredData.mockReturnValue(
-        of({ data: malformedData }),
+        of({ data: malformedData, name: 'My CV' }),
       );
 
       TestBed.configureTestingModule({
@@ -320,6 +646,7 @@ describe('CvBuilder', () => {
           { provide: CvApiService, useValue: cvApiService },
           { provide: MessageService, useValue: messageService },
           { provide: Router, useValue: router },
+          { provide: Location, useValue: location },
           { provide: ActivatedRoute, useValue: makeActivatedRoute('doc-id') },
         ],
       }).compileComponents();

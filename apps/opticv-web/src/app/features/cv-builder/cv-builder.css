@@ -36,6 +36,29 @@
   gap: var(--space-3, 12px);
 }
 
+.builder-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+}
+
+.builder-name-field {
+  display: flex;
+  flex-direction: column;
+  max-width: 28rem;
+  gap: var(--space-1, 4px);
+}
+
+.builder-name-field label {
+  font-size: var(--text-sm);
+  color: var(--text-body);
+}
+
+.builder-name-error {
+  color: var(--critical);
+  font-size: var(--text-xs);
+}
+
 .builder-heading {
   font-family: var(--font-heading);
   font-size: var(--text-3xl);

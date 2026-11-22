@@ -17,18 +17,47 @@
 <div class="builder-layout">
   <div class="builder-header">
     <h1 class="builder-heading">{{ cvId() ? 'Edit CV' : 'Create CV' }}</h1>
-    <p-button
-      label="Save"
-      icon="pi pi-check"
-      [loading]="saving()"
-      [disabled]="saving()"
-      ariaLabel="Save CV"
-      (onClick)="save()"
-    />
+    <div class="builder-actions">
+      <p-button
+        label="Cancel"
+        severity="secondary"
+        size="small"
+        [outlined]="true"
+        [disabled]="saving()"
+        (onClick)="cancel()"
+      />
+      <p-button
+        label="Save"
+        size="small"
+        [loading]="saving()"
+        [disabled]="saving() || !!nameError()"
+        ariaLabel="Save CV"
+        (onClick)="save()"
+      />
+    </div>
   </div>
 
   <div class="builder-content">
     <div class="builder-form">
+      <div class="builder-name-field">
+        <label for="cv-name">CV name</label>
+        <input
+          pInputText
+          id="cv-name"
+          type="text"
+          [attr.maxlength]="nameMaxLength"
+          [ngModel]="name()"
+          (ngModelChange)="name.set($event)"
+          [invalid]="!!nameError()"
+          [attr.aria-invalid]="!!nameError()"
+          [attr.aria-describedby]="nameError() ? 'cv-name-error' : null"
+        />
+        @if (nameError()) {
+        <small id="cv-name-error" class="builder-name-error" role="alert"
+          >{{ nameError() }}</small
+        >
+        }
+      </div>
       <app-section-card sectionId="contact" icon="pi-user" title="Contact">
         <div class="field-grid">
           <div class="field">
@@ -389,3 +418,8 @@
   </div>
 </div>
 }
+
+<p-confirmDialog
+  key="unsaved-changes"
+  [style]="{ width: '480px', maxWidth: '95vw' }"
+/>

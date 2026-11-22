@@ -6,23 +6,28 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { of, switchMap } from 'rxjs';
 import { FormsModule } from '@angular/forms';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
-import type {
-  CvCertification,
-  CvContactInfo,
-  CvDocument,
-  CvDocumentListItem,
-  CvEducationItem,
-  CvExperienceItem,
-  CvLanguage,
-  CvProject,
-  CvStructuredData,
+import {
+  CV_NAME_MAX_LENGTH,
+  DEFAULT_CV_NAME,
+  type CvCertification,
+  type CvContactInfo,
+  type CvDocument,
+  type CvDocumentListItem,
+  type CvEducationItem,
+  type CvExperienceItem,
+  type CvLanguage,
+  type CvProject,
+  type CvStructuredData,
 } from '@opticv/datatypes';
 import { CvApiService } from '../../core/services/cv-api.service';
 import { CvStore } from '../../core/stores/cv.store';
@@ -35,6 +40,8 @@ import {
 } from '../cv-optimization/cv-templates';
 import { ExperienceSection } from './components/experience-section/experience-section';
 import { EducationSection } from './components/education-section/education-section';
+import { getErrorMessage, validateCvName } from '../../shared/utils';
+import type { HasUnsavedChanges } from '../../core/guards/unsaved-changes.guard';
 
 const EMPTY_CONTACT: CvContactInfo = {
   name: null,
@@ -59,19 +66,41 @@ const EMPTY_CONTACT: CvContactInfo = {
     CvA4Preview,
     ExperienceSection,
     EducationSection,
+    ConfirmDialogModule,
   ],
   templateUrl: './cv-builder.html',
   styleUrl: './cv-builder.css',
+  providers: [ConfirmationService],
+  host: {
+    '(window:beforeunload)': 'onBeforeUnload($event)',
+  },
 })
-export class CvBuilder {
+export class CvBuilder implements HasUnsavedChanges {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly location = inject(Location);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cvApiService = inject(CvApiService);
   private readonly cvStore = inject(CvStore);
   private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
 
   readonly cvId = signal<string | null>(null);
+
+  readonly nameMaxLength = CV_NAME_MAX_LENGTH;
+  readonly name = signal<string>(DEFAULT_CV_NAME);
+  readonly originalName = signal<string | null>(null);
+  readonly trimmedName = computed(() => this.name().trim());
+  readonly nameError = computed<string | null>(() => {
+    switch (validateCvName(this.name())) {
+      case 'required':
+        return 'CV name is required.';
+      case 'maxlength':
+        return `CV name must be ${CV_NAME_MAX_LENGTH} characters or fewer.`;
+      default:
+        return null;
+    }
+  });
 
   readonly contact = signal<CvContactInfo>({ ...EMPTY_CONTACT });
   readonly summary = signal<string | null>(null);
@@ -112,11 +141,53 @@ export class CvBuilder {
     gdprClause: this.computeGdprClause(),
   }));
 
+  /** Snapshot of the last loaded or saved state; null until there is one. */
+  private readonly savedSnapshot = signal<string | null>(null);
+  private readonly currentSnapshot = computed(() =>
+    JSON.stringify({ name: this.trimmedName(), cv: this.mergedCv() }),
+  );
+  readonly hasUnsavedChanges = computed(() => {
+    const saved = this.savedSnapshot();
+    return saved !== null && saved !== this.currentSnapshot();
+  });
+
   constructor() {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.cvId.set(id);
       this.loadExistingCv(id);
+    } else {
+      this.markAsSaved();
+    }
+  }
+
+  private markAsSaved(): void {
+    this.savedSnapshot.set(this.currentSnapshot());
+  }
+
+  canDeactivate(): boolean | Promise<boolean> {
+    if (!this.hasUnsavedChanges()) return true;
+    return new Promise<boolean>((resolve) => {
+      this.confirmationService.confirm({
+        key: 'unsaved-changes',
+        header: 'Discard changes?',
+        message:
+          'You have unsaved changes to this CV. If you leave now, they will be lost.',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Discard changes',
+        rejectLabel: 'Keep editing',
+        acceptButtonStyleClass: 'p-button-danger',
+        rejectButtonStyleClass: 'p-button-secondary p-button-outlined',
+        defaultFocus: 'reject',
+        accept: () => resolve(true),
+        reject: () => resolve(false),
+      });
+    });
+  }
+
+  onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.hasUnsavedChanges()) {
+      event.preventDefault();
     }
   }
 
@@ -132,7 +203,9 @@ export class CvBuilder {
       .getStructuredData(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ data }) => {
+        next: ({ data, name }) => {
+          this.name.set(name);
+          this.originalName.set(name);
           this.contact.set({ ...EMPTY_CONTACT, ...data.contact });
           this.summary.set(data.summary ?? null);
           this.experience.set(data.experience ?? []);
@@ -144,6 +217,7 @@ export class CvBuilder {
           this.other.set(data.other ?? null);
           this.includeGdprClause.set(!!data.gdprClause);
           this.originalGdprClause.set(data.gdprClause ?? null);
+          this.markAsSaved();
           this.loading.set(false);
         },
         error: (err) => {
@@ -233,17 +307,39 @@ export class CvBuilder {
     );
   }
 
+  cancel(): void {
+    if (this.saving()) return;
+    // Go back only when there is an in-app page to return to; a direct link
+    // or a refresh has no previous navigation, so fall back to the dashboard.
+    if (this.router.lastSuccessfulNavigation()?.previousNavigation) {
+      this.location.back();
+    } else {
+      this.router.navigate(['/dashboard']);
+    }
+  }
+
   save(): void {
+    if (this.nameError() || this.saving()) return;
     this.saving.set(true);
+    const name = this.trimmedName();
     const payload = this.mergedCv();
     const id = this.cvId();
     const request$ = id
-      ? this.cvApiService.updateStructuredData(id, payload)
-      : this.cvApiService.createManualCv(payload);
+      ? this.cvApiService
+          .updateStructuredData(id, payload)
+          .pipe(
+            switchMap((doc) =>
+              name !== this.originalName()
+                ? this.cvApiService.renameCv(id, name)
+                : of(doc),
+            ),
+          )
+      : this.cvApiService.createManualCv({ ...payload, name });
 
     request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (doc) => {
         this.saving.set(false);
+        this.markAsSaved();
         this.syncCvStore(doc);
         this.messageService.add({
           severity: 'success',
@@ -259,8 +355,10 @@ export class CvBuilder {
           this.messageService.add({
             severity: 'error',
             summary: 'Save failed',
-            detail:
-              err?.error?.message ?? 'Could not save CV. Please try again.',
+            detail: getErrorMessage(
+              err,
+              'Could not save CV. Please try again.',
+            ),
           });
         }
       },
@@ -270,11 +368,13 @@ export class CvBuilder {
   private syncCvStore(doc: CvDocument): void {
     const listItem: CvDocumentListItem = {
       id: doc.id,
+      name: doc.name,
       fileName: doc.fileName,
       fileSize: doc.fileSize,
       mimeType: doc.mimeType,
       storageKey: doc.storageKey,
       createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
       parsedText: doc.parsedText,
       parseStatus: doc.parseStatus,
       extractionStatus: doc.extractionStatus,

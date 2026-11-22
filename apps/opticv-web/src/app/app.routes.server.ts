@@ -9,5 +9,7 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'pricing', renderMode: RenderMode.Client },
   { path: 'cv-optimization/:jobApplicationId', renderMode: RenderMode.Client },
   { path: 'cv-optimization', renderMode: RenderMode.Client },
+  { path: 'cv-builder/:id', renderMode: RenderMode.Client },
+  { path: 'cv-builder', renderMode: RenderMode.Client },
   { path: '**', renderMode: RenderMode.Prerender },
 ];
