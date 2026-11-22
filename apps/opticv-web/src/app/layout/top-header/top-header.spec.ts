@@ -89,18 +89,20 @@ describe('TopHeader', () => {
       expect(component.items![1]['route']).toBe('/pricing');
     });
 
-    it('should add Dashboard, Upload CV, Optimize CV and Pricing items when logged in', () => {
+    it('should add Dashboard, Upload CV, CV Builder, Optimize CV and Pricing items when logged in', () => {
       fixture.componentRef.setInput('isLoggedIn', true);
       fixture.detectChanges();
-      expect(component.items).toHaveLength(5);
+      expect(component.items).toHaveLength(6);
       expect(component.items![1].label).toBe('Dashboard');
       expect(component.items![1]['route']).toBe('/dashboard');
       expect(component.items![2].label).toBe('Upload CV');
       expect(component.items![2]['route']).toBe('/upload-cv');
-      expect(component.items![3].label).toBe('Optimize CV');
-      expect(component.items![3]['route']).toBe('/cv-optimization');
-      expect(component.items![4].label).toBe('Pricing');
-      expect(component.items![4]['route']).toBe('/pricing');
+      expect(component.items![3].label).toBe('CV Builder');
+      expect(component.items![3]['route']).toBe('/cv-builder');
+      expect(component.items![4].label).toBe('Optimize CV');
+      expect(component.items![4]['route']).toBe('/cv-optimization');
+      expect(component.items![5].label).toBe('Pricing');
+      expect(component.items![5]['route']).toBe('/pricing');
     });
   });
 
