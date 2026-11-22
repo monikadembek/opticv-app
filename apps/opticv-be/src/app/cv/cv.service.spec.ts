@@ -16,11 +16,13 @@ import type { CvStructuredData } from '@opticv/datatypes';
 const mockDoc = {
   id: 'doc-id',
   userId: 'user-id',
+  name: 'cv',
   fileName: 'cv.pdf',
   fileSize: 1024,
   mimeType: 'application/pdf',
   storageKey: 'uploads/user-id/uuid.pdf',
   createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-02'),
   parsedText: 'parsed text',
   parseStatus: 'COMPLETED' as const,
   extractionStatus: 'PENDING' as const,
@@ -152,6 +154,7 @@ describe('CvService', () => {
       expect(mockPrisma.cvDocument.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           userId: 'user-id',
+          name: 'cv',
           fileName: 'cv.pdf',
           fileSize: 1024,
           mimeType: 'application/pdf',
@@ -164,6 +167,7 @@ describe('CvService', () => {
       expect(parseSpy).not.toHaveBeenCalled();
       expect(result).toEqual({
         id: mockDoc.id,
+        name: mockDoc.name,
         fileName: mockDoc.fileName,
         fileSize: mockDoc.fileSize,
         mimeType: mockDoc.mimeType,
@@ -191,6 +195,52 @@ describe('CvService', () => {
       const [key] = mockR2.upload.mock.calls[0] as [string, ...unknown[]];
       expect(key).toMatch(/\.docx$/);
       expect(result.mimeType).toBe(file.mimetype);
+      expect(mockPrisma.cvDocument.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ name: 'cv', fileName: 'cv.docx' }),
+      });
+    });
+
+    it.each([
+      ['Foo Bar.pdf', 'Foo Bar'],
+      ['a.b.c.pdf', 'a.b.c'],
+      ['resume', 'resume'],
+      ['.pdf', 'Untitled CV'],
+      ['   .pdf', 'Untitled CV'],
+    ])(
+      'derives the CV name from the file name (%s -> %s)',
+      async (originalname, expectedName) => {
+        await service.uploadCv(makeFile({ originalname }), 'user-id');
+
+        expect(mockPrisma.cvDocument.create).toHaveBeenCalledWith({
+          data: expect.objectContaining({ name: expectedName }),
+        });
+      },
+    );
+
+    it('truncates the derived CV name to 100 characters', async () => {
+      const longBase = 'x'.repeat(150);
+      await service.uploadCv(
+        makeFile({ originalname: `${longBase}.pdf` }),
+        'user-id',
+      );
+
+      const [{ data }] = mockPrisma.cvDocument.create.mock.calls[0] as [
+        { data: { name: string } },
+      ];
+      expect(data.name).toBe('x'.repeat(100));
+    });
+
+    it('does not split multi-code-unit characters when truncating', async () => {
+      const emoji = '\u{1F600}';
+      await service.uploadCv(
+        makeFile({ originalname: `${emoji.repeat(120)}.pdf` }),
+        'user-id',
+      );
+
+      const [{ data }] = mockPrisma.cvDocument.create.mock.calls[0] as [
+        { data: { name: string } },
+      ];
+      expect(data.name).toBe(emoji.repeat(100));
     });
 
     it('storage key encodes the userId and uses the correct extension', async () => {
@@ -309,11 +359,13 @@ describe('CvService', () => {
         orderBy: { createdAt: 'desc' },
         select: {
           id: true,
+          name: true,
           fileName: true,
           fileSize: true,
           mimeType: true,
           storageKey: true,
           createdAt: true,
+          updatedAt: true,
           parsedText: true,
           parseStatus: true,
           extractionStatus: true,
@@ -381,16 +433,24 @@ describe('CvService', () => {
       structuredData: { contact: { name: 'Jane' } },
     };
 
-    it('returns structured data for a completed extraction', async () => {
+    it('returns structured data and the CV name for a completed extraction', async () => {
       mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(mockStructuredDoc);
 
       const result = await service.getStructuredData('doc-id', 'user-id');
 
       expect(mockPrisma.cvDocument.findUnique).toHaveBeenCalledWith({
         where: { id: 'doc-id' },
-        select: { userId: true, extractionStatus: true, structuredData: true },
+        select: {
+          userId: true,
+          name: true,
+          extractionStatus: true,
+          structuredData: true,
+        },
       });
-      expect(result).toEqual({ data: mockStructuredDoc.structuredData });
+      expect(result).toEqual({
+        data: mockStructuredDoc.structuredData,
+        name: mockStructuredDoc.name,
+      });
     });
 
     it('throws NotFoundException when document does not exist', async () => {
@@ -490,6 +550,7 @@ describe('CvService', () => {
   describe('createManualCv', () => {
     const manualDoc = {
       ...mockDoc,
+      name: 'Untitled CV',
       fileName: null,
       fileSize: null,
       mimeType: null,
@@ -519,6 +580,7 @@ describe('CvService', () => {
       expect(mockPrisma.cvDocument.create).toHaveBeenCalledWith({
         data: {
           userId: 'user-id',
+          name: 'Untitled CV',
           fileName: null,
           fileSize: null,
           mimeType: null,
@@ -532,6 +594,27 @@ describe('CvService', () => {
         },
       });
       expect(result).toEqual(manualDoc);
+    });
+
+    it('stores the provided name and keeps it out of structuredData', async () => {
+      mockPrisma.subscription.findUnique.mockResolvedValueOnce(null);
+      mockPrisma.cvDocument.create.mockResolvedValueOnce({
+        ...manualDoc,
+        name: 'My CV',
+      });
+
+      const result = await service.createManualCv(
+        { ...mockStructuredData, name: 'My CV' },
+        'user-id',
+      );
+
+      const [{ data }] = mockPrisma.cvDocument.create.mock.calls[0] as [
+        { data: { name: string; structuredData: Record<string, unknown> } },
+      ];
+      expect(data.name).toBe('My CV');
+      expect(data.structuredData).toEqual(mockStructuredData);
+      expect(data.structuredData).not.toHaveProperty('name');
+      expect(result.name).toBe('My CV');
     });
 
     it('propagates ForbiddenException when quota is exceeded', async () => {
@@ -556,6 +639,48 @@ describe('CvService', () => {
         service.createManualCv(mockStructuredData, 'user-id'),
       ).rejects.toThrow(ForbiddenException);
       expect(mockPrisma.cvDocument.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('renameCv', () => {
+    it('renames a CV owned by the user and returns the updated document', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce({
+        userId: 'user-id',
+      });
+      const renamedDoc = { ...mockDoc, name: 'New name' };
+      mockPrisma.cvDocument.update.mockResolvedValueOnce(renamedDoc);
+
+      const result = await service.renameCv('doc-id', 'New name', 'user-id');
+
+      expect(mockPrisma.cvDocument.findUnique).toHaveBeenCalledWith({
+        where: { id: 'doc-id' },
+        select: { userId: true },
+      });
+      expect(mockPrisma.cvDocument.update).toHaveBeenCalledWith({
+        where: { id: 'doc-id' },
+        data: { name: 'New name' },
+      });
+      expect(result).toEqual(renamedDoc);
+    });
+
+    it('throws NotFoundException when document does not exist', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(null);
+
+      await expect(
+        service.renameCv('missing-id', 'New name', 'user-id'),
+      ).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.cvDocument.update).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFoundException when document belongs to another user', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce({
+        userId: 'other-user',
+      });
+
+      await expect(
+        service.renameCv('doc-id', 'New name', 'user-id'),
+      ).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.cvDocument.update).not.toHaveBeenCalled();
     });
   });
 

@@ -1,6 +1,10 @@
 import { validate } from 'class-validator';
 import { plainToInstance, instanceToPlain } from 'class-transformer';
-import { CvStructuredDataRequestDto } from './cv-request.dto';
+import {
+  CreateManualCvRequestDto,
+  CvStructuredDataRequestDto,
+  RenameCvDto,
+} from './cv-request.dto';
 
 const validPayload = {
   contact: {
@@ -115,6 +119,103 @@ describe('CvStructuredDataRequestDto', () => {
     const { contact, ...rest } = validPayload;
     void contact;
     const dto = plainToInstance(CvStructuredDataRequestDto, rest);
+
+    const errors = await validate(dto);
+
+    expect(errors.some((e) => e.property === 'contact')).toBe(true);
+  });
+});
+
+describe('RenameCvDto', () => {
+  const validateName = async (name: unknown) => {
+    const dto = plainToInstance(RenameCvDto, { name });
+    const errors = await validate(dto);
+    return { dto, errors };
+  };
+
+  it('passes validation and trims surrounding whitespace', async () => {
+    const { dto, errors } = await validateName('  Foo  ');
+
+    expect(errors).toHaveLength(0);
+    expect(dto.name).toBe('Foo');
+  });
+
+  it('accepts a name of exactly 100 characters', async () => {
+    const { errors } = await validateName('a'.repeat(100));
+
+    expect(errors).toHaveLength(0);
+  });
+
+  it('fails validation when name is missing', async () => {
+    const dto = plainToInstance(RenameCvDto, {});
+
+    const errors = await validate(dto);
+
+    expect(errors.some((e) => e.property === 'name')).toBe(true);
+  });
+
+  it.each([
+    ['empty', ''],
+    ['whitespace only', '   '],
+    ['longer than 100 characters', 'a'.repeat(101)],
+  ])('fails validation when name is %s', async (_label, name) => {
+    const { errors } = await validateName(name);
+
+    expect(errors.some((e) => e.property === 'name')).toBe(true);
+  });
+
+  it('fails validation (without throwing) when name is not a string', async () => {
+    const { errors } = await validateName(123);
+
+    const nameError = errors.find((e) => e.property === 'name');
+    expect(nameError?.constraints).toHaveProperty('isString');
+  });
+});
+
+describe('CreateManualCvRequestDto', () => {
+  it('passes validation without a name', async () => {
+    const dto = plainToInstance(CreateManualCvRequestDto, validPayload);
+
+    const errors = await validate(dto);
+
+    expect(errors).toHaveLength(0);
+    expect(Object.prototype.hasOwnProperty.call(dto, 'name')).toBe(false);
+  });
+
+  it('passes validation with a name and trims it', async () => {
+    const dto = plainToInstance(CreateManualCvRequestDto, {
+      ...validPayload,
+      name: '  Foo ',
+    });
+
+    const errors = await validate(dto);
+
+    expect(errors).toHaveLength(0);
+    expect(dto.name).toBe('Foo');
+  });
+
+  it.each([
+    ['empty', ''],
+    ['whitespace only', '   '],
+    ['longer than 100 characters', 'a'.repeat(101)],
+  ])('fails validation when name is %s', async (_label, name) => {
+    const dto = plainToInstance(CreateManualCvRequestDto, {
+      ...validPayload,
+      name,
+    });
+
+    const errors = await validate(dto);
+
+    expect(errors.some((e) => e.property === 'name')).toBe(true);
+  });
+
+  it('still validates the structured CV fields', async () => {
+    const { contact, ...rest } = validPayload;
+    void contact;
+    const dto = plainToInstance(CreateManualCvRequestDto, {
+      ...rest,
+      name: 'My CV',
+    });
 
     const errors = await validate(dto);
 

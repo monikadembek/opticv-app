@@ -71,7 +71,9 @@ describe('JobApplicationService', () => {
 
     it('creates and returns the job application when CV belongs to user', async () => {
       const result = await service.create(dto, 'user-id');
-      expect(mockPrisma.cvDocument.findUnique).toHaveBeenCalledWith({ where: { id: 'cv-id' } });
+      expect(mockPrisma.cvDocument.findUnique).toHaveBeenCalledWith({
+        where: { id: 'cv-id' },
+      });
       expect(mockPrisma.jobApplication.create).toHaveBeenCalledWith({
         data: { ...dto, userId: 'user-id' },
       });
@@ -86,7 +88,10 @@ describe('JobApplicationService', () => {
     });
 
     it('throws NotFoundException when CV belongs to another user', async () => {
-      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce({ ...mockCv, userId: 'other-user' });
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce({
+        ...mockCv,
+        userId: 'other-user',
+      });
       await expect(service.create(dto, 'user-id')).rejects.toThrow(
         new NotFoundException('CV document not found.'),
       );
@@ -96,9 +101,22 @@ describe('JobApplicationService', () => {
   describe('findAll', () => {
     it('returns data and total for the user', async () => {
       const result = await service.findAll('user-id', {});
-      expect(mockPrisma.jobApplication.count).toHaveBeenCalledWith({ where: { userId: 'user-id' } });
+      expect(mockPrisma.jobApplication.count).toHaveBeenCalledWith({
+        where: { userId: 'user-id' },
+      });
       expect(result.total).toBe(1);
       expect(result.data).toHaveLength(1);
+    });
+
+    it('selects the CV name (not the file name) for the related CV document', async () => {
+      await service.findAll('user-id', {});
+      expect(mockPrisma.jobApplication.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          select: expect.objectContaining({
+            cvDocument: { select: { id: true, name: true } },
+          }),
+        }),
+      );
     });
 
     it('applies take when limit is provided', async () => {
@@ -117,7 +135,8 @@ describe('JobApplicationService', () => {
 
     it('omits take when limit is undefined', async () => {
       await service.findAll('user-id', {});
-      const call = mockPrisma.jobApplication.findMany.mock.calls[0][0] as Record<string, unknown>;
+      const call = mockPrisma.jobApplication.findMany.mock
+        .calls[0][0] as Record<string, unknown>;
       expect(call).not.toHaveProperty('take');
     });
 
@@ -135,6 +154,15 @@ describe('JobApplicationService', () => {
       expect(result).toEqual(mockApp);
     });
 
+    it('includes the CV name (not the file name) for the related CV document', async () => {
+      await service.findOne('app-id', 'user-id');
+      expect(mockPrisma.jobApplication.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: { cvDocument: { select: { id: true, name: true } } },
+        }),
+      );
+    });
+
     it('throws NotFoundException when record does not exist', async () => {
       mockPrisma.jobApplication.findUnique.mockResolvedValueOnce(null);
       await expect(service.findOne('missing-id', 'user-id')).rejects.toThrow(
@@ -143,7 +171,10 @@ describe('JobApplicationService', () => {
     });
 
     it('throws NotFoundException when record belongs to another user', async () => {
-      mockPrisma.jobApplication.findUnique.mockResolvedValueOnce({ ...mockApp, userId: 'other-user' });
+      mockPrisma.jobApplication.findUnique.mockResolvedValueOnce({
+        ...mockApp,
+        userId: 'other-user',
+      });
       await expect(service.findOne('app-id', 'user-id')).rejects.toThrow(
         new NotFoundException('Job application not found.'),
       );
@@ -163,14 +194,20 @@ describe('JobApplicationService', () => {
     });
 
     it('validates new cvDocumentId ownership when provided', async () => {
-      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce({ id: 'new-cv', userId: 'other-user' });
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce({
+        id: 'new-cv',
+        userId: 'other-user',
+      });
       await expect(
         service.update('app-id', { cvDocumentId: 'new-cv' }, 'user-id'),
       ).rejects.toThrow(new NotFoundException('CV document not found.'));
     });
 
     it('throws NotFoundException when application does not belong to user', async () => {
-      mockPrisma.jobApplication.findUnique.mockResolvedValueOnce({ ...mockApp, userId: 'other-user' });
+      mockPrisma.jobApplication.findUnique.mockResolvedValueOnce({
+        ...mockApp,
+        userId: 'other-user',
+      });
       await expect(service.update('app-id', dto, 'user-id')).rejects.toThrow(
         new NotFoundException('Job application not found.'),
       );
@@ -179,7 +216,11 @@ describe('JobApplicationService', () => {
 
   describe('updateAtsScore', () => {
     it('updates only atsScore and returns the record', async () => {
-      const result = await service.updateAtsScore('app-id', { atsScore: 85 }, 'user-id');
+      const result = await service.updateAtsScore(
+        'app-id',
+        { atsScore: 85 },
+        'user-id',
+      );
       expect(mockPrisma.jobApplication.update).toHaveBeenCalledWith({
         where: { id: 'app-id' },
         data: { atsScore: 85 },
@@ -188,21 +229,29 @@ describe('JobApplicationService', () => {
     });
 
     it('throws NotFoundException when application does not belong to user', async () => {
-      mockPrisma.jobApplication.findUnique.mockResolvedValueOnce({ ...mockApp, userId: 'other-user' });
-      await expect(service.updateAtsScore('app-id', { atsScore: 85 }, 'user-id')).rejects.toThrow(
-        new NotFoundException('Job application not found.'),
-      );
+      mockPrisma.jobApplication.findUnique.mockResolvedValueOnce({
+        ...mockApp,
+        userId: 'other-user',
+      });
+      await expect(
+        service.updateAtsScore('app-id', { atsScore: 85 }, 'user-id'),
+      ).rejects.toThrow(new NotFoundException('Job application not found.'));
     });
   });
 
   describe('remove', () => {
     it('deletes the record', async () => {
       await service.remove('app-id', 'user-id');
-      expect(mockPrisma.jobApplication.delete).toHaveBeenCalledWith({ where: { id: 'app-id' } });
+      expect(mockPrisma.jobApplication.delete).toHaveBeenCalledWith({
+        where: { id: 'app-id' },
+      });
     });
 
     it('throws NotFoundException when application does not belong to user', async () => {
-      mockPrisma.jobApplication.findUnique.mockResolvedValueOnce({ ...mockApp, userId: 'other-user' });
+      mockPrisma.jobApplication.findUnique.mockResolvedValueOnce({
+        ...mockApp,
+        userId: 'other-user',
+      });
       await expect(service.remove('app-id', 'user-id')).rejects.toThrow(
         new NotFoundException('Job application not found.'),
       );

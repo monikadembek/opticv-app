@@ -87,6 +87,9 @@ export type TierLimits = {
   allowedTemplates: 'ALL' | string[];
 };
 
+export const DEFAULT_CV_NAME = 'Untitled CV';
+export const CV_NAME_MAX_LENGTH = 100;
+
 export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
   FREE: {
     features: {
@@ -183,6 +186,7 @@ export type UserProfile = {
 export type CvDocument = {
   id: string;
   userId: string;
+  name: string;
   fileName: string | null;
   fileSize: number | null;
   mimeType: string | null;
@@ -200,6 +204,7 @@ export type CvDocument = {
 export type UploadCvResponse = Pick<
   CvDocument,
   | 'id'
+  | 'name'
   | 'fileName'
   | 'fileSize'
   | 'mimeType'
@@ -211,16 +216,31 @@ export type UploadCvResponse = Pick<
 export type CvDocumentListItem = Pick<
   CvDocument,
   | 'id'
+  | 'name'
   | 'fileName'
   | 'fileSize'
   | 'mimeType'
   | 'storageKey'
   | 'createdAt'
+  | 'updatedAt'
   | 'parsedText'
   | 'parseStatus'
   | 'extractionStatus'
   | 'manuallyEdited'
 >;
+
+export type RenameCvRequest = {
+  name: string;
+};
+
+export type CreateManualCvRequest = CvStructuredData & {
+  name?: string;
+};
+
+export type CvStructuredDataResponse = {
+  data: CvStructuredData;
+  name: string;
+};
 
 export type JobApplication = {
   id: string;
@@ -248,11 +268,11 @@ export type JobApplicationListItem = Pick<
   | 'createdAt'
   | 'updatedAt'
 > & {
-  cvDocument: { id: string; fileName: string | null };
+  cvDocument: { id: string; name: string };
 };
 
 export type JobApplicationWithCv = JobApplication & {
-  cvDocument: { id: string; fileName: string | null };
+  cvDocument: { id: string; name: string };
 };
 
 export type JobApplicationListResponse = {

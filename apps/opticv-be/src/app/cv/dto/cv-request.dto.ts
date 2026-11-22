@@ -1,13 +1,24 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform, TransformFnParams, Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
   IsDefined,
+  IsNotEmpty,
   IsOptional,
   IsString,
+  MaxLength,
   ValidateNested,
 } from 'class-validator';
+import {
+  CV_NAME_MAX_LENGTH,
+  type CreateManualCvRequest,
+  type RenameCvRequest,
+} from '@opticv/datatypes';
+
+// Only trims strings so that non-string input reaches @IsString and yields a 400.
+const trimIfString = ({ value }: TransformFnParams): unknown =>
+  typeof value === 'string' ? value.trim() : value;
 
 export class CvContactInfoRequestDto {
   @ApiProperty({ nullable: true, example: 'Jane Doe' })
@@ -218,4 +229,30 @@ export class CvStructuredDataRequestDto {
   @IsOptional()
   @IsString()
   gdprClause!: string | null;
+}
+
+export class CreateManualCvRequestDto
+  extends CvStructuredDataRequestDto
+  implements CreateManualCvRequest
+{
+  @ApiPropertyOptional({
+    example: 'Frontend CV',
+    maxLength: CV_NAME_MAX_LENGTH,
+    description: "Display name of the CV. Defaults to 'Untitled CV'.",
+  })
+  @IsOptional()
+  @Transform(trimIfString)
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(CV_NAME_MAX_LENGTH)
+  name?: string;
+}
+
+export class RenameCvDto implements RenameCvRequest {
+  @ApiProperty({ example: 'Frontend CV', maxLength: CV_NAME_MAX_LENGTH })
+  @Transform(trimIfString)
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(CV_NAME_MAX_LENGTH)
+  name!: string;
 }

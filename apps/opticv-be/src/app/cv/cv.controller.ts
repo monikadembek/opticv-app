@@ -32,6 +32,7 @@ import type {
   CvDocument,
   CvDocumentListItem,
   CvStructuredData,
+  CvStructuredDataResponse,
   UploadCvResponse,
 } from '@opticv/datatypes';
 import {
@@ -39,9 +40,14 @@ import {
   CvDocumentListItemDto,
   CvDownloadUrlResponseDto,
   CvExtractResponseDto,
+  CvStructuredDataResponseDto,
   UploadCvResponseDto,
 } from './dto/cv-response.dto';
-import { CvStructuredDataRequestDto } from './dto/cv-request.dto';
+import {
+  CreateManualCvRequestDto,
+  CvStructuredDataRequestDto,
+  RenameCvDto,
+} from './dto/cv-request.dto';
 
 @ApiTags('cv')
 @ApiBearerAuth()
@@ -91,13 +97,14 @@ export class CvController {
     type: CvDocumentDto,
     description: 'CV created successfully',
   })
+  @ApiResponse({ status: 400, description: 'Invalid request body' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
     status: 403,
     description: 'Quota exceeded or feature not available',
   })
   createManualCv(
-    @Body() body: CvStructuredDataRequestDto,
+    @Body() body: CreateManualCvRequestDto,
     @CurrentUser() user: UserModel,
   ): Promise<CvDocument> {
     return this.cvService.createManualCv(body, user.id);
@@ -131,6 +138,26 @@ export class CvController {
     return this.cvService.getDownloadUrl(id, user.id);
   }
 
+  @Patch(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Rename a CV' })
+  @ApiBody({ type: RenameCvDto })
+  @ApiResponse({
+    status: 200,
+    type: CvDocumentDto,
+    description: 'CV renamed successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid name' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'CV not found' })
+  renameCv(
+    @Param('id') id: string,
+    @Body() body: RenameCvDto,
+    @CurrentUser() user: UserModel,
+  ): Promise<CvDocument> {
+    return this.cvService.renameCv(id, body.name, user.id);
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a CV document' })
@@ -148,8 +175,8 @@ export class CvController {
   @ApiOperation({ summary: 'Get extracted structured data for a CV' })
   @ApiResponse({
     status: 200,
-    type: CvExtractResponseDto,
-    description: 'Structured CV data',
+    type: CvStructuredDataResponseDto,
+    description: 'Structured CV data with the CV name',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
@@ -159,7 +186,7 @@ export class CvController {
   getStructuredData(
     @Param('id') id: string,
     @CurrentUser() user: UserModel,
-  ): Promise<{ data: CvStructuredData }> {
+  ): Promise<CvStructuredDataResponse> {
     return this.cvService.getStructuredData(id, user.id);
   }
 

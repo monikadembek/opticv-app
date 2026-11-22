@@ -135,6 +135,9 @@ export class UploadCvResponseDto {
   @ApiProperty({ example: 'cv-uuid-123' })
   id!: string;
 
+  @ApiProperty({ example: 'my-cv' })
+  name!: string;
+
   @ApiProperty({ example: 'my-cv.pdf' })
   fileName!: string;
 
@@ -157,6 +160,9 @@ export class UploadCvResponseDto {
 export class CvDocumentListItemDto {
   @ApiProperty({ example: 'cv-uuid-123' })
   id!: string;
+
+  @ApiProperty({ example: 'my-cv' })
+  name!: string;
 
   @ApiProperty({ nullable: true, example: 'my-cv.pdf' })
   fileName!: string | null;
@@ -187,11 +193,22 @@ export class CvDocumentListItemDto {
 
   @ApiProperty({ example: '2024-01-15T10:30:00.000Z' })
   createdAt!: string;
+
+  @ApiProperty({ example: '2024-01-15T10:30:00.000Z' })
+  updatedAt!: string;
 }
 
 export class CvExtractResponseDto {
   @ApiProperty({ type: () => CvStructuredDataDto })
   data!: CvStructuredDataDto;
+}
+
+export class CvStructuredDataResponseDto {
+  @ApiProperty({ type: () => CvStructuredDataDto })
+  data!: CvStructuredDataDto;
+
+  @ApiProperty({ example: 'my-cv' })
+  name!: string;
 }
 
 export class CvDocumentDto {
@@ -200,6 +217,9 @@ export class CvDocumentDto {
 
   @ApiProperty({ example: 'user-uuid-123' })
   userId!: string;
+
+  @ApiProperty({ example: 'Untitled CV' })
+  name!: string;
 
   @ApiProperty({ nullable: true, example: null })
   fileName!: string | null;

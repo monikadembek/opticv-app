@@ -16,6 +16,7 @@ describe('datatypes', () => {
   it('should export UploadCvResponse type', () => {
     const response: UploadCvResponse = {
       id: '1',
+      name: 'cv',
       fileName: 'cv.pdf',
       fileSize: 1024,
       mimeType: 'application/pdf',
@@ -24,8 +25,8 @@ describe('datatypes', () => {
       parseStatus: 'PENDING',
     };
     expect(response.fileName).toBe('cv.pdf');
+    expect(response.name).toBe('cv');
   });
-
 });
 
 describe('getEffectiveTier', () => {
@@ -37,10 +38,7 @@ describe('getEffectiveTier', () => {
     ['PRO', 'TRIALING', 'PRO'],
     ['PRO', 'PAST_DUE', 'FREE'],
     ['BASIC', 'CANCELED', 'FREE'],
-  ] as const)(
-    'resolves tier=%s status=%s to %s',
-    (tier, status, expected) => {
-      expect(getEffectiveTier(tier, status)).toBe(expected);
-    },
-  );
+  ] as const)('resolves tier=%s status=%s to %s', (tier, status, expected) => {
+    expect(getEffectiveTier(tier, status)).toBe(expected);
+  });
 });
