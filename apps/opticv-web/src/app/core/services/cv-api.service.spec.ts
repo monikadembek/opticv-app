@@ -8,6 +8,7 @@ import type {
   CvDocument,
   CvDocumentListItem,
   CvStructuredData,
+  CvStructuredDataResponse,
 } from '@opticv/datatypes';
 import { CvApiService } from './cv-api.service';
 import { environment } from '../../../environments/environment';
@@ -16,11 +17,13 @@ const API = environment.apiUrl;
 
 const mockFile: CvDocumentListItem = {
   id: 'doc-id',
+  name: 'cv',
   fileName: 'cv.pdf',
   fileSize: 1024,
   mimeType: 'application/pdf',
   storageKey: 'uploads/user-id/uuid.pdf',
   createdAt: new Date('2024-01-01').toISOString(),
+  updatedAt: new Date('2024-01-01').toISOString(),
   parsedText: null,
   parseStatus: 'COMPLETED',
   extractionStatus: 'COMPLETED',
@@ -51,6 +54,7 @@ const mockStructuredData: CvStructuredData = {
 const mockCvDocument: CvDocument = {
   id: 'doc-id',
   userId: 'user-id',
+  name: 'Untitled CV',
   fileName: null,
   fileSize: null,
   mimeType: null,
@@ -168,16 +172,16 @@ describe('CvApiService', () => {
   });
 
   describe('getStructuredData', () => {
-    it('GETs /api/cv/:id/structured-data and returns structured data', () => {
-      let result: { data: CvStructuredData } | undefined;
+    it('GETs /api/cv/:id/structured-data and returns structured data with the name', () => {
+      let result: CvStructuredDataResponse | undefined;
 
       service.getStructuredData('doc-id').subscribe((res) => (result = res));
 
       const req = httpMock.expectOne(`${API}/cv/doc-id/structured-data`);
       expect(req.request.method).toBe('GET');
-      req.flush({ data: mockStructuredData });
+      req.flush({ data: mockStructuredData, name: 'My CV' });
 
-      expect(result).toEqual({ data: mockStructuredData });
+      expect(result).toEqual({ data: mockStructuredData, name: 'My CV' });
     });
 
     it('propagates HTTP errors', () => {
@@ -208,6 +212,19 @@ describe('CvApiService', () => {
       req.flush(mockCvDocument);
 
       expect(result).toEqual(mockCvDocument);
+    });
+
+    it('includes the name in the body when one is given', () => {
+      service
+        .createManualCv({ ...mockStructuredData, name: 'Frontend CV' })
+        .subscribe();
+
+      const req = httpMock.expectOne(`${API}/cv/manual`);
+      expect(req.request.body).toEqual({
+        ...mockStructuredData,
+        name: 'Frontend CV',
+      });
+      req.flush({ ...mockCvDocument, name: 'Frontend CV' });
     });
 
     it('propagates HTTP errors', () => {
@@ -251,6 +268,38 @@ describe('CvApiService', () => {
       req.flush('Not Found', { status: 404, statusText: 'Not Found' });
 
       expect(errorReceived).toBe(true);
+    });
+  });
+
+  describe('renameCv', () => {
+    it('PATCHes /api/cv/:id with the name and returns the CvDocument', () => {
+      let result: CvDocument | undefined;
+      const renamed = { ...mockCvDocument, name: 'New name' };
+
+      service.renameCv('doc-id', 'New name').subscribe((res) => (result = res));
+
+      const req = httpMock.expectOne(`${API}/cv/doc-id`);
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual({ name: 'New name' });
+      req.flush(renamed);
+
+      expect(result).toEqual(renamed);
+    });
+
+    it('propagates a 404 to the caller', () => {
+      let status: number | undefined;
+
+      service
+        .renameCv('doc-id', 'New name')
+        .subscribe({ error: (err) => (status = err.status) });
+
+      const req = httpMock.expectOne(`${API}/cv/doc-id`);
+      req.flush(
+        { message: 'CV document not found.' },
+        { status: 404, statusText: 'Not Found' },
+      );
+
+      expect(status).toBe(404);
     });
   });
 });

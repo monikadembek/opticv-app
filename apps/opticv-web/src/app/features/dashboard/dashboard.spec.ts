@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { of, throwError } from 'rxjs';
 import type {
+  CvDocument,
   CvDocumentListItem,
   JobApplicationListItem,
   QuotaStatus,
@@ -37,17 +38,39 @@ function createPlanUsageStoreMock() {
 const mockCvFiles: CvDocumentListItem[] = [
   {
     id: 'id-1',
+    name: 'cv1',
     fileName: 'cv1.pdf',
     fileSize: 1024,
     mimeType: 'application/pdf',
     storageKey: 'uploads/user-id/uuid.pdf',
     createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
     parsedText: null,
     parseStatus: 'COMPLETED',
     extractionStatus: 'COMPLETED',
     manuallyEdited: false,
   },
+  {
+    id: 'id-2',
+    name: 'Other CV',
+    fileName: null,
+    fileSize: null,
+    mimeType: null,
+    storageKey: null,
+    createdAt: '2024-01-02T00:00:00.000Z',
+    updatedAt: '2024-01-02T00:00:00.000Z',
+    parsedText: null,
+    parseStatus: 'COMPLETED',
+    extractionStatus: 'COMPLETED',
+    manuallyEdited: true,
+  },
 ];
+
+const renamedDoc = {
+  id: 'id-1',
+  name: 'Renamed CV',
+  updatedAt: '2024-05-01T00:00:00.000Z',
+} as CvDocument;
 
 const mockOptimizations: JobApplicationListItem[] = [
   {
@@ -59,7 +82,7 @@ const mockOptimizations: JobApplicationListItem[] = [
     atsScore: 85,
     createdAt: '2024-01-05T00:00:00.000Z',
     updatedAt: '2024-01-06T00:00:00.000Z',
-    cvDocument: { id: 'cv-id-1', fileName: 'cv.pdf' },
+    cvDocument: { id: 'cv-id-1', name: 'cv' },
   },
 ];
 
@@ -70,6 +93,7 @@ describe('Dashboard', () => {
     getUserCvs: ReturnType<typeof vi.fn>;
     downloadCv: ReturnType<typeof vi.fn>;
     deleteCv: ReturnType<typeof vi.fn>;
+    renameCv: ReturnType<typeof vi.fn>;
   };
   let jobApplicationApiService: {
     getJobApplications: ReturnType<typeof vi.fn>;
@@ -95,6 +119,7 @@ describe('Dashboard', () => {
       getUserCvs: vi.fn().mockReturnValue(of(mockCvFiles)),
       downloadCv: vi.fn().mockReturnValue(of({ url: 'https://signed.url' })),
       deleteCv: vi.fn().mockReturnValue(of(undefined)),
+      renameCv: vi.fn().mockReturnValue(of(renamedDoc)),
     };
     jobApplicationApiService = {
       getJobApplications: vi
@@ -336,6 +361,133 @@ describe('Dashboard', () => {
       component.deleteCv(mockCvFiles[0]);
 
       expect(cvApiService.deleteCv).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('rename', () => {
+    let cvStore: InstanceType<typeof CvStore>;
+
+    beforeEach(() => {
+      cvStore = TestBed.inject(CvStore);
+      cvStore.updateCvList(mockCvFiles);
+    });
+
+    it('opens the dialog for the chosen file', () => {
+      component.openRenameDialog(mockCvFiles[0]);
+      expect(component.renameTarget()).toEqual(mockCvFiles[0]);
+    });
+
+    it('updates only the renamed row in the store on success', () => {
+      component.openRenameDialog(mockCvFiles[0]);
+
+      component.renameCv('Renamed CV');
+
+      expect(cvApiService.renameCv).toHaveBeenCalledWith('id-1', 'Renamed CV');
+      const [first, second] = cvStore.cvList();
+      expect(first.name).toBe('Renamed CV');
+      expect(first.updatedAt).toBe('2024-05-01T00:00:00.000Z');
+      expect(second).toEqual(mockCvFiles[1]);
+    });
+
+    it('closes the dialog, resets saving and shows a success toast', () => {
+      component.openRenameDialog(mockCvFiles[0]);
+
+      component.renameCv('Renamed CV');
+
+      expect(component.renameTarget()).toBeNull();
+      expect(component.renaming()).toBe(false);
+      expect(messageService.add).toHaveBeenCalledWith({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'CV renamed successfully.',
+      });
+    });
+
+    it('keeps the dialog open and shows the backend message on failure', () => {
+      cvApiService.renameCv.mockReturnValue(
+        throwError(() => ({ error: { message: 'CV document not found.' } })),
+      );
+      component.openRenameDialog(mockCvFiles[0]);
+
+      component.renameCv('Renamed CV');
+
+      expect(messageService.add).toHaveBeenCalledWith({
+        severity: 'error',
+        summary: 'Rename failed',
+        detail: 'CV document not found.',
+      });
+      expect(component.renameTarget()).toEqual(mockCvFiles[0]);
+      expect(component.renaming()).toBe(false);
+      expect(cvStore.cvList()).toEqual(mockCvFiles);
+    });
+
+    it('uses the fallback message when the error has none', () => {
+      cvApiService.renameCv.mockReturnValue(throwError(() => ({})));
+      component.openRenameDialog(mockCvFiles[0]);
+
+      component.renameCv('Renamed CV');
+
+      expect(messageService.add).toHaveBeenCalledWith(
+        expect.objectContaining({
+          detail: 'Renaming CV failed. Please try again.',
+        }),
+      );
+    });
+
+    it('does nothing without a target', () => {
+      component.renameCv('Renamed CV');
+      expect(cvApiService.renameCv).not.toHaveBeenCalled();
+    });
+
+    it('ignores closeRenameDialog while renaming', () => {
+      component.openRenameDialog(mockCvFiles[0]);
+      component.renaming.set(true);
+
+      component.closeRenameDialog();
+
+      expect(component.renameTarget()).toEqual(mockCvFiles[0]);
+    });
+
+    it('closes the dialog when not renaming', () => {
+      component.openRenameDialog(mockCvFiles[0]);
+
+      component.closeRenameDialog();
+
+      expect(component.renameTarget()).toBeNull();
+    });
+  });
+
+  describe('analytics', () => {
+    it('captures cv_source and no file_name on download', () => {
+      const captureSpy = vi.spyOn(posthog, 'capture');
+
+      component.downloadCv(mockCvFiles[0]);
+
+      expect(captureSpy).toHaveBeenCalledWith('original_cv_downloaded', {
+        page: 'dashboard',
+        button_icon: 'download',
+        file_id: 'id-1',
+        cv_source: 'pdf',
+      });
+    });
+
+    it('captures cv_source and no file_name on delete', () => {
+      const captureSpy = vi.spyOn(posthog, 'capture');
+      const confirmationService =
+        fixture.debugElement.injector.get(ConfirmationService);
+      vi.spyOn(confirmationService, 'confirm').mockImplementation((opts) => {
+        opts.accept?.();
+        return confirmationService;
+      });
+
+      component.deleteCv(mockCvFiles[0]);
+
+      expect(captureSpy).toHaveBeenCalledWith('cv_deleted', {
+        page: 'dashboard',
+        button_icon: 'trash',
+        file_id: 'id-1',
+        cv_source: 'pdf',
+      });
     });
   });
 

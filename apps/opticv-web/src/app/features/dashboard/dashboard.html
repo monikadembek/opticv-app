@@ -109,6 +109,7 @@
           [cvsError]="cvsError()"
           (downloadCvFile)="downloadCv($event)"
           (deleteCvFile)="deleteCv($event)"
+          (renameCvFile)="openRenameDialog($event)"
           (loadCvs)="loadUserCvs()"
         />
       </p-tabpanel>
@@ -126,3 +127,11 @@
 </div>
 
 <p-confirmDialog [style]="{ width: '600px', maxWidth: '95vw' }" />
+
+<app-rename-cv-dialog
+  [visible]="!!renameTarget()"
+  [cvName]="renameTarget()?.name ?? ''"
+  [saving]="renaming()"
+  (save)="renameCv($event)"
+  (dismiss)="closeRenameDialog()"
+/>

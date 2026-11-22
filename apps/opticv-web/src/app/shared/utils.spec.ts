@@ -1,9 +1,19 @@
+import { FormControl } from '@angular/forms';
 import {
+  cvNameValidator,
   formatFileSize,
+  getCvSource,
+  getErrorMessage,
   getMimeLabel,
+  getSourceLabel,
   isNearLimit,
   usagePercent,
+  validateCvName,
 } from './utils';
+
+const PDF = 'application/pdf';
+const DOCX =
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
 describe('formatFileSize', () => {
   it('should format bytes', () => {
@@ -77,5 +87,79 @@ describe('isNearLimit', () => {
 
   it('is false when the limit is 0', () => {
     expect(isNearLimit(0, 0)).toBe(false);
+  });
+});
+
+describe('getSourceLabel', () => {
+  it('returns "Built in app" when there is no MIME type', () => {
+    expect(getSourceLabel({ mimeType: null })).toBe('Built in app');
+  });
+
+  it('returns the MIME label for uploaded files', () => {
+    expect(getSourceLabel({ mimeType: PDF })).toBe('PDF');
+    expect(getSourceLabel({ mimeType: DOCX })).toBe('DOCX');
+  });
+});
+
+describe('getCvSource', () => {
+  it('returns "built" when there is no MIME type', () => {
+    expect(getCvSource({ mimeType: null })).toBe('built');
+  });
+
+  it('returns "pdf" for PDF files', () => {
+    expect(getCvSource({ mimeType: PDF })).toBe('pdf');
+  });
+
+  it('returns "docx" for Word files', () => {
+    expect(getCvSource({ mimeType: DOCX })).toBe('docx');
+  });
+});
+
+describe('validateCvName', () => {
+  it('returns "required" for empty or whitespace-only names', () => {
+    expect(validateCvName('')).toBe('required');
+    expect(validateCvName('   ')).toBe('required');
+  });
+
+  it('returns "maxlength" for names longer than 100 characters', () => {
+    expect(validateCvName('a'.repeat(101))).toBe('maxlength');
+  });
+
+  it('accepts a name of exactly 100 characters', () => {
+    expect(validateCvName('a'.repeat(100))).toBeNull();
+  });
+
+  it('trims before validating', () => {
+    expect(validateCvName('  ok  ')).toBeNull();
+    expect(validateCvName(` ${'a'.repeat(100)} `)).toBeNull();
+  });
+});
+
+describe('cvNameValidator', () => {
+  it('maps each validation result to an errors object', () => {
+    expect(cvNameValidator(new FormControl(''))).toEqual({ required: true });
+    expect(cvNameValidator(new FormControl('a'.repeat(101)))).toEqual({
+      maxlength: true,
+    });
+    expect(cvNameValidator(new FormControl('Frontend CV'))).toBeNull();
+  });
+});
+
+describe('getErrorMessage', () => {
+  it('returns a string message', () => {
+    expect(getErrorMessage({ error: { message: 'Nope' } }, 'fallback')).toBe(
+      'Nope',
+    );
+  });
+
+  it('joins an array of messages', () => {
+    expect(
+      getErrorMessage({ error: { message: ['a is bad', 'b is bad'] } }, 'f'),
+    ).toBe('a is bad, b is bad');
+  });
+
+  it('returns the fallback when there is no message', () => {
+    expect(getErrorMessage({}, 'fallback')).toBe('fallback');
+    expect(getErrorMessage(null, 'fallback')).toBe('fallback');
   });
 });
