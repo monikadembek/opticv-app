@@ -2234,14 +2234,17 @@ Show a small tier badge (Free/Basic/Pro) next to the avatar for logged-in users.
 
 ## 138. CV Builder - CV names + unified "My CVs" table
 
-**status: in progress**
-**time: 18.11.2018**
+**status: done**
+**time: 18.11.2018 - 23.11.2026**
 
-Allow naming cvs that were built inside the app and the ones that were uploaded.
-Add default name to the CV document and allow renaming cv documents in dashboard.
-Reorganize CV table in the dashboard. Remove columns that for the built cv have no values.
+1. Allow naming cvs that were built inside the app and the ones that were uploaded.
+   Add default name to the CV document and allow renaming cv documents in dashboard.
+   Reorganize CV table in the dashboard. Remove columns that for the built cv have no values.
 
 @docs/cv-naming-plan.md
+
+2. Add can deactivate guard in the cv-builder route to prevent losing unsaved changes.
+3. Add cancel button in the cv-builder route.
 
 ---
 
