@@ -10,11 +10,13 @@ import { CvStore } from '../../core/stores/cv.store';
 
 const mockCv: CvDocumentListItem = {
   id: 'cv-id-1',
+  name: 'my-cv',
   fileName: 'my-cv.pdf',
   fileSize: 2048,
   mimeType: 'application/pdf',
   storageKey: 'uploads/user-id/uuid.pdf',
   createdAt: new Date('2024-01-01').toISOString(),
+  updatedAt: new Date('2024-01-01').toISOString(),
   parsedText: null,
   parseStatus: 'COMPLETED',
   extractionStatus: 'COMPLETED',

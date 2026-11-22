@@ -16,7 +16,7 @@ const mockItems: JobApplicationListItem[] = [
     atsScore: 85,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-02T00:00:00.000Z',
-    cvDocument: { id: 'cv-id-1', fileName: 'cv.pdf' },
+    cvDocument: { id: 'cv-id-1', name: 'Frontend CV' },
   },
   {
     id: 'app-id-2',
@@ -27,7 +27,7 @@ const mockItems: JobApplicationListItem[] = [
     atsScore: null,
     createdAt: '2024-02-01T00:00:00.000Z',
     updatedAt: '2024-02-02T00:00:00.000Z',
-    cvDocument: { id: 'cv-id-2', fileName: 'resume.docx' },
+    cvDocument: { id: 'cv-id-2', name: 'Backend resume' },
   },
 ];
 
@@ -78,6 +78,28 @@ describe('OptimizationList', () => {
         'p-button[label="Retry"]',
       );
       expect(retryButton).toBeTruthy();
+    });
+
+    it('renders the CV name for each item', () => {
+      const rows = fixture.debugElement.queryAll(By.css('tbody tr'));
+      expect(rows[0].nativeElement.textContent).toContain('Frontend CV');
+      expect(rows[1].nativeElement.textContent).toContain('Backend resume');
+    });
+  });
+
+  describe('search', () => {
+    it('filters rows by the CV name', async () => {
+      const input: HTMLInputElement = fixture.nativeElement.querySelector(
+        'input[placeholder="Search"]',
+      );
+      input.value = 'resume';
+      input.dispatchEvent(new Event('input'));
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      fixture.detectChanges();
+
+      const rows = fixture.debugElement.queryAll(By.css('tbody tr'));
+      expect(rows.length).toBe(1);
+      expect(rows[0].nativeElement.textContent).toContain('Backend resume');
     });
   });
 
