@@ -1597,8 +1597,8 @@ After changes in the ui some images require update:
 
 ## 117. Implement CV builder feature
 
-**status: in progress**
-**time: 25.08.2026**
+**status: done**
+**time: 25.08.2026-18.11.2026**
 
 - implement new feature - cv builder for users with no cv, allow them create one from scratch,
 - use existing data models used in cvStructuredData
@@ -2234,13 +2234,24 @@ Show a small tier badge (Free/Basic/Pro) next to the avatar for logged-in users.
 
 ## 138. CV Builder - CV names + unified "My CVs" table
 
-**status: todo**
-**time:**
+**status: in progress**
+**time: 18.11.2018**
 
 Allow naming cvs that were built inside the app and the ones that were uploaded.
-Reorganize CV table in the dashboard.
+Add default name to the CV document and allow renaming cv documents in dashboard.
+Reorganize CV table in the dashboard. Remove columns that for the built cv have no values.
 
 @docs/cv-naming-plan.md
+
+---
+
+## 139. CV Builder - add template selector
+
+**status: todo**
+**time: 20.11.2018**
+
+Add template selector in the cv builder feature so that user can select from the available templates.
+Keep the same limits as in the cv optimization page regarding the available templates for given tier.
 
 ---
 
