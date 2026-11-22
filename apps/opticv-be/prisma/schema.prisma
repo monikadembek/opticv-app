@@ -130,6 +130,7 @@ model CvDocument {
   userId       String
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  name         String   @db.VarChar(100)
   fileName     String?
   fileSize     Int?
   mimeType     String?
