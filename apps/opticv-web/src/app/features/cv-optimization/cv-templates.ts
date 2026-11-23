@@ -1,3 +1,10 @@
+import {
+  getEffectiveTier,
+  TIER_LIMITS,
+  type SubscriptionStatus,
+  type SubscriptionTier,
+} from '@opticv/datatypes';
+
 export type CvTemplateId =
   | 'default'
   | 'classic'
@@ -72,3 +79,18 @@ export const ACCENT_AWARE_TEMPLATE_IDS: CvTemplateId[] = [
 
 export const DEFAULT_GDPR_CLAUSE =
   'I hereby give consent for my personal data included in this application to be processed for the purposes of the recruitment process, in accordance with Regulation (EU) 2016/679 (GDPR).';
+
+export function getAllowedTemplateIds(
+  subscription:
+    | { tier: SubscriptionTier; status: SubscriptionStatus }
+    | null
+    | undefined,
+): CvTemplateId[] {
+  const tier = subscription
+    ? getEffectiveTier(subscription.tier, subscription.status)
+    : 'FREE';
+  const allowed = TIER_LIMITS[tier].allowedTemplates;
+  return allowed === 'ALL'
+    ? CV_TEMPLATES.map((t) => t.id)
+    : (allowed as CvTemplateId[]);
+}

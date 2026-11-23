@@ -7,6 +7,7 @@ import {
   getMimeLabel,
   getSourceLabel,
   isNearLimit,
+  toExportFileName,
   usagePercent,
   validateCvName,
 } from './utils';
@@ -161,5 +162,36 @@ describe('getErrorMessage', () => {
   it('returns the fallback when there is no message', () => {
     expect(getErrorMessage({}, 'fallback')).toBe('fallback');
     expect(getErrorMessage(null, 'fallback')).toBe('fallback');
+  });
+});
+
+describe('toExportFileName', () => {
+  it('keeps an ordinary name', () => {
+    expect(toExportFileName('My Backend CV')).toBe('My Backend CV');
+  });
+
+  it('strips illegal characters and trims', () => {
+    expect(toExportFileName('  CV: 2026/Q1  ')).toBe('CV 2026Q1');
+    expect(toExportFileName('a\\b*c?"d<e>f|g')).toBe('abcdefg');
+    expect(toExportFileName('Senior / Lead CV')).toBe('Senior Lead CV');
+  });
+
+  it('falls back to cv when nothing is left', () => {
+    expect(toExportFileName('???')).toBe('cv');
+    expect(toExportFileName('')).toBe('cv');
+    expect(toExportFileName('   ')).toBe('cv');
+  });
+
+  it('removes leading and trailing dots', () => {
+    expect(toExportFileName('..cv..')).toBe('cv');
+    expect(toExportFileName('...')).toBe('cv');
+  });
+
+  it('removes control characters', () => {
+    expect(toExportFileName('My\u0000CV\u0007')).toBe('MyCV');
+  });
+
+  it('collapses tabs and newlines into single spaces', () => {
+    expect(toExportFileName('My\t\tBackend\nCV')).toBe('My Backend CV');
   });
 });

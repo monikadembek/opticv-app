@@ -2248,13 +2248,16 @@ Show a small tier badge (Free/Basic/Pro) next to the avatar for logged-in users.
 
 ---
 
-## 139. CV Builder - add template selector
+## 139. CV Builder - add export cv dialog
 
 **status: todo**
 **time: 20.11.2018**
 
-Add template selector in the cv builder feature so that user can select from the available templates.
-Keep the same limits as in the cv optimization page regarding the available templates for given tier.
+In the cv builder feature add export cv dialog similar to the one in the cv-optimization page.
+Allow user to select template and accent color.
+Keep the same limits as in the cv optimization page regarding the available templates for given subscription tier.
+Allow user to export created cv to pdf and docx.
+Don't implement the compliance section in the export dialog, as we already have the gdpr section in the cv builder form.
 
 ---
 

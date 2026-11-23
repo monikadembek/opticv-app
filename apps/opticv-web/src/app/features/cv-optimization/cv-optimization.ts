@@ -69,11 +69,10 @@ import { CoverLetterEditor } from './components/cover-letter-editor/cover-letter
 import { InterviewPrep } from './components/interview-prep/interview-prep';
 import { LinkedInUpdates } from './components/linkedin-updates/linkedin-updates';
 import {
-  CV_TEMPLATES,
   CvTemplateId,
   DEFAULT_ACCENT_COLOR,
+  getAllowedTemplateIds,
 } from './cv-templates';
-import { getEffectiveTier, TIER_LIMITS } from '@opticv/datatypes';
 import { UserSettingsApiService } from '../../core/services/user-settings-api.service';
 import { applySelectionsToCV } from './utils/apply-selections';
 import {
@@ -357,17 +356,11 @@ export class CvOptimization implements OnInit {
   readonly isExportingDocx = signal(false);
   readonly selectedTemplate = signal<CvTemplateId>('default');
   readonly accentColor = signal<string>(DEFAULT_ACCENT_COLOR);
-  readonly allowedTemplateIds = computed<CvTemplateId[]>(() => {
-    const subscription =
-      this.userSettingsApiService.userProfile.value()?.subscription;
-    const effectiveTier = subscription
-      ? getEffectiveTier(subscription.tier, subscription.status)
-      : 'FREE';
-    const allowed = TIER_LIMITS[effectiveTier].allowedTemplates;
-    return allowed === 'ALL'
-      ? CV_TEMPLATES.map((t) => t.id)
-      : (allowed as CvTemplateId[]);
-  });
+  readonly allowedTemplateIds = computed<CvTemplateId[]>(() =>
+    getAllowedTemplateIds(
+      this.userSettingsApiService.userProfile.value()?.subscription,
+    ),
+  );
   readonly isStoredMode = signal(false);
   readonly loadError = signal<string | null>(null);
   readonly jobApplication = signal<JobApplicationWithCv | null>(null);

@@ -356,6 +356,7 @@ export class CvExportService {
     cv: CvStructuredData,
     templateId: CvTemplateId = 'default',
     accentColor: string = DEFAULT_ACCENT_COLOR,
+    fileName = 'optimized-cv',
   ): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) return;
 
@@ -395,8 +396,7 @@ export class CvExportService {
       doc.setFontSize(gdprFooterFontSize);
       doc.setFont(profile.bodyFont, 'italic');
       gdprFooterLines = doc.splitTextToSize(cv.gdprClause, maxWidth);
-      gdprFooterHeight =
-        gdprFooterLines.length * gdprFooterFontSize * 1.4 + 10;
+      gdprFooterHeight = gdprFooterLines.length * gdprFooterFontSize * 1.4 + 10;
       doc.setFontSize(profile.bodySize);
       doc.setFont(profile.bodyFont, 'normal');
     }
@@ -957,13 +957,14 @@ export class CvExportService {
       }
     }
 
-    doc.save('optimized-cv.pdf');
+    doc.save(`${fileName}.pdf`);
   }
 
   async exportToDocx(
     cv: CvStructuredData,
     templateId: CvTemplateId = 'default',
     accentColor: string = DEFAULT_ACCENT_COLOR,
+    fileName = 'optimized-cv',
   ): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) return;
 
@@ -1461,7 +1462,7 @@ export class CvExportService {
     const url = URL.createObjectURL(blob);
     const anchor = window.document.createElement('a');
     anchor.href = url;
-    anchor.download = 'optimized-cv.docx';
+    anchor.download = `${fileName}.docx`;
     window.document.body.appendChild(anchor);
     anchor.click();
     window.document.body.removeChild(anchor);

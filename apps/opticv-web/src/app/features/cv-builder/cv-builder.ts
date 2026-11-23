@@ -3,6 +3,7 @@ import {
   Component,
   DestroyRef,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -31,16 +32,24 @@ import {
 } from '@opticv/datatypes';
 import { CvApiService } from '../../core/services/cv-api.service';
 import { CvStore } from '../../core/stores/cv.store';
+import { UserSettingsApiService } from '../../core/services/user-settings-api.service';
 import { SectionCard } from '../cv-optimization/components/section-card/section-card';
 import { CvA4Preview } from '../cv-optimization/components/cv-a4-preview/cv-a4-preview';
+import { CvExportDialog } from '../cv-optimization/components/cv-export-dialog/cv-export-dialog';
+import { CvExportService } from '../cv-optimization/services/cv-export.service';
 import {
   CvTemplateId,
   DEFAULT_ACCENT_COLOR,
   DEFAULT_GDPR_CLAUSE,
+  getAllowedTemplateIds,
 } from '../cv-optimization/cv-templates';
 import { ExperienceSection } from './components/experience-section/experience-section';
 import { EducationSection } from './components/education-section/education-section';
-import { getErrorMessage, validateCvName } from '../../shared/utils';
+import {
+  getErrorMessage,
+  toExportFileName,
+  validateCvName,
+} from '../../shared/utils';
 import type { HasUnsavedChanges } from '../../core/guards/unsaved-changes.guard';
 
 const EMPTY_CONTACT: CvContactInfo = {
@@ -67,6 +76,7 @@ const EMPTY_CONTACT: CvContactInfo = {
     ExperienceSection,
     EducationSection,
     ConfirmDialogModule,
+    CvExportDialog,
   ],
   templateUrl: './cv-builder.html',
   styleUrl: './cv-builder.css',
@@ -84,6 +94,8 @@ export class CvBuilder implements HasUnsavedChanges {
   private readonly cvStore = inject(CvStore);
   private readonly messageService = inject(MessageService);
   private readonly confirmationService = inject(ConfirmationService);
+  private readonly userSettingsApiService = inject(UserSettingsApiService);
+  private readonly cvExportService = inject(CvExportService);
 
   readonly cvId = signal<string | null>(null);
 
@@ -116,6 +128,14 @@ export class CvBuilder implements HasUnsavedChanges {
 
   readonly selectedTemplate = signal<CvTemplateId>('default');
   readonly accentColor = signal<string>(DEFAULT_ACCENT_COLOR);
+  readonly allowedTemplateIds = computed<CvTemplateId[]>(() =>
+    getAllowedTemplateIds(
+      this.userSettingsApiService.userProfile.value()?.subscription,
+    ),
+  );
+  readonly exportDialogVisible = signal<boolean>(false);
+  readonly isExportingPdf = signal<boolean>(false);
+  readonly isExportingDocx = signal<boolean>(false);
 
   readonly saving = signal<boolean>(false);
   readonly loading = signal<boolean>(false);
@@ -152,6 +172,13 @@ export class CvBuilder implements HasUnsavedChanges {
   });
 
   constructor() {
+    effect(() => {
+      const allowed = this.allowedTemplateIds();
+      if (!allowed.includes(this.selectedTemplate())) {
+        this.selectedTemplate.set(allowed[0] ?? 'default');
+      }
+    });
+
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.cvId.set(id);
@@ -363,6 +390,32 @@ export class CvBuilder implements HasUnsavedChanges {
         }
       },
     });
+  }
+
+  exportCvAsPdf(): void {
+    if (this.isExportingPdf()) return;
+    this.isExportingPdf.set(true);
+    this.cvExportService
+      .exportToPdf(
+        this.mergedCv(),
+        this.selectedTemplate(),
+        this.accentColor(),
+        toExportFileName(this.name()),
+      )
+      .finally(() => this.isExportingPdf.set(false));
+  }
+
+  exportCvAsDocx(): void {
+    if (this.isExportingDocx()) return;
+    this.isExportingDocx.set(true);
+    this.cvExportService
+      .exportToDocx(
+        this.mergedCv(),
+        this.selectedTemplate(),
+        this.accentColor(),
+        toExportFileName(this.name()),
+      )
+      .finally(() => this.isExportingDocx.set(false));
   }
 
   private syncCvStore(doc: CvDocument): void {

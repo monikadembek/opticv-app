@@ -3,11 +3,15 @@ import { Location } from '@angular/common';
 import { signal } from '@angular/core';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import type { CvDocument, CvStructuredData } from '@opticv/datatypes';
 import { CvBuilder } from './cv-builder';
 import { CvApiService } from '../../core/services/cv-api.service';
+import { By } from '@angular/platform-browser';
 import { CvStore } from '../../core/stores/cv.store';
+import { UserSettingsApiService } from '../../core/services/user-settings-api.service';
+import { CvExportService } from '../cv-optimization/services/cv-export.service';
+import { CvExportDialog } from '../cv-optimization/components/cv-export-dialog/cv-export-dialog';
 
 const mockStructuredData: CvStructuredData = {
   contact: {
@@ -73,6 +77,19 @@ describe('CvBuilder', () => {
     >;
   };
   let location: { back: ReturnType<typeof vi.fn> };
+  let userSettingsApiService: {
+    userProfile: {
+      value: ReturnType<
+        typeof signal<{
+          subscription: { tier: string; status: string } | null;
+        } | null>
+      >;
+    };
+  };
+  let cvExportService: {
+    exportToPdf: ReturnType<typeof vi.fn>;
+    exportToDocx: ReturnType<typeof vi.fn>;
+  };
 
   function setup(routeId: string | null = null) {
     vi.stubGlobal(
@@ -99,6 +116,17 @@ describe('CvBuilder', () => {
       ),
     };
     location = { back: vi.fn() };
+    userSettingsApiService = {
+      userProfile: {
+        value: signal<{
+          subscription: { tier: string; status: string } | null;
+        } | null>(null),
+      },
+    };
+    cvExportService = {
+      exportToPdf: vi.fn().mockResolvedValue(undefined),
+      exportToDocx: vi.fn().mockResolvedValue(undefined),
+    };
 
     TestBed.configureTestingModule({
       imports: [CvBuilder],
@@ -107,6 +135,8 @@ describe('CvBuilder', () => {
         { provide: MessageService, useValue: messageService },
         { provide: Router, useValue: router },
         { provide: Location, useValue: location },
+        { provide: UserSettingsApiService, useValue: userSettingsApiService },
+        { provide: CvExportService, useValue: cvExportService },
         { provide: ActivatedRoute, useValue: makeActivatedRoute(routeId) },
       ],
     }).compileComponents();
@@ -253,6 +283,17 @@ describe('CvBuilder', () => {
           ) as NodeListOf<Element>,
         ).map((b) => b.getAttribute('label'));
         expect(labels).toEqual(['Cancel', 'Save']);
+      });
+
+      it('places Cancel/Save on the left and Export CV on the right of the footer', () => {
+        const footer = fixture.nativeElement.querySelector(
+          'footer.builder-footer',
+        );
+        expect(footer.firstElementChild.classList).toContain('builder-actions');
+        expect(footer.lastElementChild.getAttribute('label')).toBe('Export CV');
+        expect(
+          fixture.nativeElement.querySelector('.builder-header p-button'),
+        ).toBeNull();
       });
 
       it('goes back to the previous page when there is one', () => {
@@ -502,6 +543,11 @@ describe('CvBuilder', () => {
           { provide: MessageService, useValue: messageService },
           { provide: Router, useValue: router },
           { provide: Location, useValue: location },
+          {
+            provide: UserSettingsApiService,
+            useValue: userSettingsApiService,
+          },
+          { provide: CvExportService, useValue: cvExportService },
           { provide: ActivatedRoute, useValue: makeActivatedRoute('doc-id') },
         ],
       });
@@ -612,6 +658,11 @@ describe('CvBuilder', () => {
           { provide: MessageService, useValue: messageService },
           { provide: Router, useValue: router },
           { provide: Location, useValue: location },
+          {
+            provide: UserSettingsApiService,
+            useValue: userSettingsApiService,
+          },
+          { provide: CvExportService, useValue: cvExportService },
           { provide: ActivatedRoute, useValue: makeActivatedRoute('doc-id') },
         ],
       }).compileComponents();
@@ -647,6 +698,11 @@ describe('CvBuilder', () => {
           { provide: MessageService, useValue: messageService },
           { provide: Router, useValue: router },
           { provide: Location, useValue: location },
+          {
+            provide: UserSettingsApiService,
+            useValue: userSettingsApiService,
+          },
+          { provide: CvExportService, useValue: cvExportService },
           { provide: ActivatedRoute, useValue: makeActivatedRoute('doc-id') },
         ],
       }).compileComponents();
@@ -665,6 +721,198 @@ describe('CvBuilder', () => {
       expect(c.summary()).toBeNull();
       expect(c.other()).toBeNull();
       expect(c.includeGdprClause()).toBe(false);
+    });
+  });
+
+  describe('export', () => {
+    function exportDialog(): CvExportDialog {
+      return fixture.debugElement.query(By.directive(CvExportDialog))
+        .componentInstance;
+    }
+
+    function deferred(): {
+      promise: Promise<void>;
+      resolve: () => void;
+      reject: (e: unknown) => void;
+    } {
+      let resolve!: () => void;
+      let reject!: (e: unknown) => void;
+      const promise = new Promise<void>((res, rej) => {
+        resolve = res;
+        reject = rej;
+      });
+      return { promise, resolve, reject };
+    }
+
+    function configureWith(getStructuredData$: unknown) {
+      setup('doc-id');
+      TestBed.resetTestingModule();
+      cvApiService.getStructuredData.mockReturnValue(getStructuredData$);
+      TestBed.configureTestingModule({
+        imports: [CvBuilder],
+        providers: [
+          { provide: CvApiService, useValue: cvApiService },
+          { provide: MessageService, useValue: messageService },
+          { provide: Router, useValue: router },
+          { provide: Location, useValue: location },
+          { provide: UserSettingsApiService, useValue: userSettingsApiService },
+          { provide: CvExportService, useValue: cvExportService },
+          { provide: ActivatedRoute, useValue: makeActivatedRoute('doc-id') },
+        ],
+      });
+      const f = TestBed.createComponent(CvBuilder);
+      f.detectChanges();
+      return f;
+    }
+
+    describe('in the loaded state', () => {
+      beforeEach(() => setup('doc-id'));
+
+      it('renders the footer and the export dialog', () => {
+        expect(
+          fixture.nativeElement.querySelector('footer.builder-footer'),
+        ).toBeTruthy();
+        expect(exportDialog()).toBeTruthy();
+      });
+
+      it('opens the export dialog from the footer button', () => {
+        const button = fixture.debugElement.query(
+          By.css('footer.builder-footer p-button[label="Export CV"]'),
+        );
+        button.triggerEventHandler('onClick', null);
+        fixture.detectChanges();
+        expect(component.exportDialogVisible()).toBe(true);
+        expect(exportDialog().visible()).toBe(true);
+      });
+
+      it('hides the compliance section in the export dialog', () => {
+        expect(exportDialog().showCompliance()).toBe(false);
+      });
+
+      it('limits templates by subscription tier', () => {
+        expect(component.allowedTemplateIds()).toEqual(['default', 'classic']);
+        userSettingsApiService.userProfile.value.set({
+          subscription: { tier: 'PRO', status: 'ACTIVE' },
+        });
+        expect(component.allowedTemplateIds()).toHaveLength(6);
+      });
+
+      it('resets a locked template to the first allowed one', () => {
+        userSettingsApiService.userProfile.value.set({
+          subscription: { tier: 'PRO', status: 'ACTIVE' },
+        });
+        fixture.detectChanges();
+        component.selectedTemplate.set('modern');
+        fixture.detectChanges();
+        expect(component.selectedTemplate()).toBe('modern');
+
+        userSettingsApiService.userProfile.value.set(null);
+        TestBed.tick();
+        expect(component.selectedTemplate()).toBe('default');
+      });
+
+      it('exports the current CV to PDF with template, accent and file name', async () => {
+        component.name.set('My: CV');
+        component.selectedTemplate.set('classic');
+        component.accentColor.set('#2563eb');
+
+        component.exportCvAsPdf();
+        expect(component.isExportingPdf()).toBe(true);
+        expect(cvExportService.exportToPdf).toHaveBeenCalledWith(
+          component.mergedCv(),
+          'classic',
+          '#2563eb',
+          'My CV',
+        );
+
+        await fixture.whenStable();
+        expect(component.isExportingPdf()).toBe(false);
+      });
+
+      it('exports the current CV to DOCX with template, accent and file name', async () => {
+        component.name.set('My: CV');
+
+        component.exportCvAsDocx();
+        expect(component.isExportingDocx()).toBe(true);
+        expect(cvExportService.exportToDocx).toHaveBeenCalledWith(
+          component.mergedCv(),
+          'default',
+          '#059669',
+          'My CV',
+        );
+
+        await fixture.whenStable();
+        expect(component.isExportingDocx()).toBe(false);
+      });
+
+      it('falls back to "cv" as the file name when the CV name is empty', () => {
+        component.name.set('');
+        component.exportCvAsPdf();
+        expect(cvExportService.exportToPdf).toHaveBeenCalledWith(
+          expect.anything(),
+          'default',
+          '#059669',
+          'cv',
+        );
+      });
+
+      it('ignores a second export while the first one is running', async () => {
+        const pending = deferred();
+        cvExportService.exportToPdf.mockReturnValueOnce(pending.promise);
+
+        component.exportCvAsPdf();
+        component.exportCvAsPdf();
+        expect(cvExportService.exportToPdf).toHaveBeenCalledTimes(1);
+
+        pending.resolve();
+        await pending.promise;
+        await fixture.whenStable();
+        expect(component.isExportingPdf()).toBe(false);
+      });
+
+      it('does not save, navigate or mark the form dirty when exporting', async () => {
+        component.exportCvAsPdf();
+        component.exportCvAsDocx();
+        await fixture.whenStable();
+
+        expect(component.hasUnsavedChanges()).toBe(false);
+        expect(router.navigate).not.toHaveBeenCalled();
+        expect(cvApiService.updateStructuredData).not.toHaveBeenCalled();
+        expect(cvApiService.createManualCv).not.toHaveBeenCalled();
+        expect(cvApiService.renameCv).not.toHaveBeenCalled();
+      });
+
+      it('does not treat template or accent changes as unsaved changes', () => {
+        component.selectedTemplate.set('classic');
+        component.accentColor.set('#2563eb');
+        expect(component.hasUnsavedChanges()).toBe(false);
+      });
+    });
+
+    it('does not render the footer or dialog while loading', () => {
+      const loadingFixture = configureWith(new Subject());
+
+      expect(loadingFixture.componentInstance.loading()).toBe(true);
+      expect(
+        loadingFixture.nativeElement.querySelector('footer.builder-footer'),
+      ).toBeNull();
+      expect(
+        loadingFixture.nativeElement.querySelector('app-cv-export-dialog'),
+      ).toBeNull();
+    });
+
+    it('does not render the footer or dialog after a load error', () => {
+      const failedFixture = configureWith(
+        throwError(() => ({ error: { message: 'Not found' } })),
+      );
+
+      expect(failedFixture.componentInstance.loadError()).toBe('Not found');
+      expect(
+        failedFixture.nativeElement.querySelector('footer.builder-footer'),
+      ).toBeNull();
+      expect(
+        failedFixture.nativeElement.querySelector('app-cv-export-dialog'),
+      ).toBeNull();
     });
   });
 });

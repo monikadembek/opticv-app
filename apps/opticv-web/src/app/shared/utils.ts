@@ -63,3 +63,17 @@ export function usagePercent(used: number, limit: number): number {
 export function isNearLimit(used: number, limit: number): boolean {
   return limit > 0 && used / limit >= NEAR_LIMIT_RATIO;
 }
+
+// eslint-disable-next-line no-control-regex
+const ILLEGAL_FILE_NAME_CHARS = /[\\/:*?"<>|\u0000-\u001F]/g;
+
+export function toExportFileName(name: string): string {
+  const cleaned = name
+    .replace(/\s+/g, ' ')
+    .replace(ILLEGAL_FILE_NAME_CHARS, '')
+    .replace(/ {2,}/g, ' ')
+    .trim()
+    .replace(/^\.+|\.+$/g, '')
+    .trim();
+  return cleaned || 'cv';
+}

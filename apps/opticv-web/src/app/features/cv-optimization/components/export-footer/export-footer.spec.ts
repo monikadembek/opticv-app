@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { vi } from 'vitest';
 import { ExportFooter } from './export-footer';
-import { CV_ACCENT_COLORS, CV_TEMPLATES } from '../../cv-templates';
+import { CvExportDialog } from '../cv-export-dialog/cv-export-dialog';
 
 describe('ExportFooter', () => {
   let fixture: ComponentFixture<ExportFooter>;
@@ -84,172 +84,68 @@ describe('ExportFooter', () => {
     });
   });
 
-  describe('template selector (inside export dialog)', () => {
-    beforeEach(() => {
-      component.exportDialogVisible.set(true);
-      fixture.detectChanges();
+  describe('shared export dialog', () => {
+    function dialog(): CvExportDialog {
+      return fixture.debugElement.query(By.directive(CvExportDialog))
+        .componentInstance;
+    }
+
+    it('renders app-cv-export-dialog with the compliance section enabled', () => {
+      expect(dialog()).toBeTruthy();
+      expect(dialog().showCompliance()).toBe(true);
     });
 
-    it('exposes all CV templates via the templates computed by default (all tiers allowed)', () => {
-      expect(component.templates().length).toBe(CV_TEMPLATES.length);
-      expect(component.templates().every((t) => !t.disabled)).toBe(true);
-    });
-
-    it('marks templates outside allowedTemplateIds as disabled', () => {
+    it('mirrors footer inputs into the dialog', () => {
       fixture.componentRef.setInput('allowedTemplateIds', [
         'default',
         'classic',
       ]);
-      fixture.detectChanges();
-
-      const disabledIds = component
-        .templates()
-        .filter((t) => t.disabled)
-        .map((t) => t.id);
-      expect(disabledIds).toEqual(
-        CV_TEMPLATES.filter((t) => !['default', 'classic'].includes(t.id)).map(
-          (t) => t.id,
-        ),
-      );
-      expect(
-        component.templates().find((t) => t.id === 'default')?.disabled,
-      ).toBe(false);
-    });
-
-    it('defaults selectedTemplate to default', () => {
-      expect(component.selectedTemplate()).toBe('default');
-    });
-
-    it('updates selectedTemplate model when set directly', () => {
-      component.selectedTemplate.set('modern');
-      fixture.detectChanges();
-      expect(component.selectedTemplate()).toBe('modern');
-    });
-
-    it('renders a p-select for the template', () => {
-      const selects = fixture.debugElement.queryAll(By.css('p-select'));
-      expect(selects.length).toBeGreaterThanOrEqual(1);
-    });
-  });
-
-  describe('accent color selector (inside export dialog)', () => {
-    beforeEach(() => {
-      component.exportDialogVisible.set(true);
-      fixture.detectChanges();
-    });
-
-    it('defaults accentColor to emerald (#059669)', () => {
-      expect(component.accentColor()).toBe('#059669');
-    });
-
-    it('exposes all accent colors via the accentColors property', () => {
-      expect(component.accentColors.length).toBe(CV_ACCENT_COLORS.length);
-      expect(component.accentColors).toEqual(CV_ACCENT_COLORS);
-    });
-
-    it('renders a p-select for the accent color', () => {
-      const selects = fixture.debugElement.queryAll(By.css('p-select'));
-      expect(selects.length).toBeGreaterThanOrEqual(2);
-    });
-
-    it('updates the accentColor model when set directly', () => {
-      const blue = CV_ACCENT_COLORS.find((c) => c.id === 'blue')!;
-      component.accentColor.set(blue.hex);
-      fixture.detectChanges();
-      expect(component.accentColor()).toBe('#2563eb');
-    });
-  });
-
-  describe('ATS info dialog', () => {
-    beforeEach(() => {
-      component.exportDialogVisible.set(true);
-      fixture.detectChanges();
-    });
-
-    it('infoDialogVisible is false by default', () => {
-      expect(component.infoDialogVisible()).toBe(false);
-    });
-
-    it('opens the dialog when the ATS info button is clicked', () => {
-      const infoBtn = fixture.debugElement.query(By.css('.ats-info-banner'));
-      expect(infoBtn).toBeTruthy();
-      infoBtn.nativeElement.click();
-      expect(component.infoDialogVisible()).toBe(true);
-    });
-
-    it('dialog content includes ATS-related text when visible', () => {
-      component.infoDialogVisible.set(true);
-      fixture.detectChanges();
-      const text = fixture.nativeElement.textContent;
-      expect(text).toContain('Single-column layout');
-      expect(text).toContain('Default, Modern, Corporate, and Impact');
-    });
-
-    it('closes the dialog when infoDialogVisible is set to false', () => {
-      component.infoDialogVisible.set(true);
-      fixture.detectChanges();
-      component.infoDialogVisible.set(false);
-      fixture.detectChanges();
-      expect(component.infoDialogVisible()).toBe(false);
-    });
-
-    it('keeps the export dialog open when the ATS info dialog is opened', () => {
-      component.infoDialogVisible.set(true);
-      fixture.detectChanges();
-      expect(component.exportDialogVisible()).toBe(true);
-    });
-  });
-
-  describe('export buttons (inside export dialog)', () => {
-    beforeEach(() => {
-      component.exportDialogVisible.set(true);
-      fixture.detectChanges();
-    });
-
-    it('emits exportPdf when Export PDF button is clicked', () => {
-      const emitSpy = vi.spyOn(component.exportPdf, 'emit');
-      const pBtns = fixture.debugElement.queryAll(By.css('p-button'));
-      const pdfBtn = pBtns.find(
-        (b) =>
-          b.nativeElement.getAttribute('label') === 'Export PDF' ||
-          b.nativeElement.textContent?.includes('Export PDF'),
-      );
-      pdfBtn?.triggerEventHandler('onClick', null);
-      expect(emitSpy).toHaveBeenCalledOnce();
-    });
-
-    it('emits exportDocx when Export DOCX button is clicked', () => {
-      const emitSpy = vi.spyOn(component.exportDocx, 'emit');
-      const pBtns = fixture.debugElement.queryAll(By.css('p-button'));
-      const docxBtn = pBtns.find(
-        (b) =>
-          b.nativeElement.getAttribute('label') === 'Export DOCX' ||
-          b.nativeElement.textContent?.includes('Export DOCX'),
-      );
-      docxBtn?.triggerEventHandler('onClick', null);
-      expect(emitSpy).toHaveBeenCalledOnce();
-    });
-
-    it('Export PDF button is disabled when isExportingPdf is true', () => {
+      fixture.componentRef.setInput('selectedTemplate', 'classic');
+      fixture.componentRef.setInput('accentColor', '#2563eb');
+      fixture.componentRef.setInput('includeGdprClause', true);
       fixture.componentRef.setInput('isExportingPdf', true);
-      fixture.detectChanges();
-      const pBtns = fixture.debugElement.queryAll(By.css('p-button'));
-      const pdfBtn = pBtns.find(
-        (b) => b.nativeElement.getAttribute('label') === 'Export PDF',
-      );
-      const btn = pdfBtn?.nativeElement.querySelector('button');
-      expect(btn?.disabled).toBe(true);
-    });
-
-    it('Export DOCX button is disabled when isExportingDocx is true', () => {
       fixture.componentRef.setInput('isExportingDocx', true);
       fixture.detectChanges();
-      const pBtns = fixture.debugElement.queryAll(By.css('p-button'));
-      const docxBtn = pBtns.find(
-        (b) => b.nativeElement.getAttribute('label') === 'Export DOCX',
-      );
-      const btn = docxBtn?.nativeElement.querySelector('button');
-      expect(btn?.disabled).toBe(true);
+
+      expect(dialog().allowedTemplateIds()).toEqual(['default', 'classic']);
+      expect(dialog().selectedTemplate()).toBe('classic');
+      expect(dialog().accentColor()).toBe('#2563eb');
+      expect(dialog().includeGdprClause()).toBe(true);
+      expect(dialog().isExportingPdf()).toBe(true);
+      expect(dialog().isExportingDocx()).toBe(true);
+    });
+
+    it('opens the dialog when exportDialogVisible is set', () => {
+      component.exportDialogVisible.set(true);
+      fixture.detectChanges();
+      expect(dialog().visible()).toBe(true);
+    });
+
+    it('propagates dialog model changes back to the footer', () => {
+      dialog().selectedTemplate.set('modern');
+      dialog().accentColor.set('#7c3aed');
+      dialog().includeGdprClause.set(true);
+      fixture.detectChanges();
+      expect(component.selectedTemplate()).toBe('modern');
+      expect(component.accentColor()).toBe('#7c3aed');
+      expect(component.includeGdprClause()).toBe(true);
+    });
+
+    it('sets exportDialogVisible to false when the dialog closes', () => {
+      component.exportDialogVisible.set(true);
+      fixture.detectChanges();
+      dialog().visible.set(false);
+      fixture.detectChanges();
+      expect(component.exportDialogVisible()).toBe(false);
+    });
+
+    it('re-emits exportPdf and exportDocx from the dialog', () => {
+      const pdfSpy = vi.spyOn(component.exportPdf, 'emit');
+      const docxSpy = vi.spyOn(component.exportDocx, 'emit');
+      dialog().exportPdf.emit();
+      dialog().exportDocx.emit();
+      expect(pdfSpy).toHaveBeenCalledOnce();
+      expect(docxSpy).toHaveBeenCalledOnce();
     });
   });
 
@@ -275,45 +171,6 @@ describe('ExportFooter', () => {
       component.previewVisible.set(false);
       fixture.detectChanges();
       expect(component.previewVisible()).toBe(false);
-    });
-  });
-
-  describe('GDPR clause checkbox (inside export dialog)', () => {
-    beforeEach(() => {
-      component.exportDialogVisible.set(true);
-      fixture.detectChanges();
-    });
-
-    it('defaults includeGdprClause to false', () => {
-      expect(component.includeGdprClause()).toBe(false);
-    });
-
-    it('reflects includeGdprClause input as the checkbox checked state', () => {
-      fixture.componentRef.setInput('includeGdprClause', true);
-      fixture.detectChanges();
-      const checkbox = fixture.debugElement.query(
-        By.css('input[type="checkbox"][aria-label="Include GDPR clause"]'),
-      );
-      expect(checkbox.nativeElement.checked).toBe(true);
-    });
-
-    it('updates the includeGdprClause model when the checkbox is toggled', () => {
-      const checkbox = fixture.debugElement.query(
-        By.css('input[type="checkbox"][aria-label="Include GDPR clause"]'),
-      );
-      checkbox.nativeElement.checked = true;
-      checkbox.nativeElement.dispatchEvent(new Event('change'));
-      fixture.detectChanges();
-      expect(component.includeGdprClause()).toBe(true);
-    });
-
-    it('renders the GDPR clause description text', () => {
-      const description = fixture.debugElement.query(
-        By.css('.gdpr-card-description'),
-      );
-      expect(description.nativeElement.textContent).toContain(
-        "Include if you're applying to companies based in the EU, EEA, UK, or Switzerland",
-      );
     });
   });
 
