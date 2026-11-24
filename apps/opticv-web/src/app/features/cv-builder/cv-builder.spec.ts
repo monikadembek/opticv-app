@@ -91,7 +91,7 @@ describe('CvBuilder', () => {
     exportToDocx: ReturnType<typeof vi.fn>;
   };
 
-  function setup(routeId: string | null = null) {
+  function setup(routeId: string | null = null, beforeCompile?: () => void) {
     vi.stubGlobal(
       'ResizeObserver',
       vi.fn(function () {
@@ -139,7 +139,9 @@ describe('CvBuilder', () => {
         { provide: CvExportService, useValue: cvExportService },
         { provide: ActivatedRoute, useValue: makeActivatedRoute(routeId) },
       ],
-    }).compileComponents();
+    });
+    beforeCompile?.();
+    TestBed.compileComponents();
 
     fixture = TestBed.createComponent(CvBuilder);
     component = fixture.componentInstance;
@@ -765,15 +767,16 @@ describe('CvBuilder', () => {
       return f;
     }
 
-    describe('in the loaded state', () => {
-      beforeEach(() => setup('doc-id'));
-
-      it('renders the footer and the export dialog', () => {
-        expect(
-          fixture.nativeElement.querySelector('footer.builder-footer'),
-        ).toBeTruthy();
-        expect(exportDialog()).toBeTruthy();
-      });
+    // Only the builder -> dialog wiring is under test here; the dialog's own
+    // markup is covered by cv-export-dialog.spec.ts. Rendering the open
+    // p-dialog together with the full builder form is slow enough to exceed
+    // the default timeout when the whole suite runs, so its template is stubbed.
+    describe('with a stubbed export dialog template', () => {
+      beforeEach(() =>
+        setup('doc-id', () =>
+          TestBed.overrideComponent(CvExportDialog, { set: { template: '' } }),
+        ),
+      );
 
       it('opens the export dialog from the footer button', () => {
         const button = fixture.debugElement.query(
@@ -783,6 +786,25 @@ describe('CvBuilder', () => {
         fixture.detectChanges();
         expect(component.exportDialogVisible()).toBe(true);
         expect(exportDialog().visible()).toBe(true);
+      });
+
+      it('closes the export dialog when it emits visibleChange(false)', () => {
+        component.exportDialogVisible.set(true);
+        fixture.detectChanges();
+        exportDialog().visible.set(false);
+        fixture.detectChanges();
+        expect(component.exportDialogVisible()).toBe(false);
+      });
+    });
+
+    describe('in the loaded state', () => {
+      beforeEach(() => setup('doc-id'));
+
+      it('renders the footer and the export dialog', () => {
+        expect(
+          fixture.nativeElement.querySelector('footer.builder-footer'),
+        ).toBeTruthy();
+        expect(exportDialog()).toBeTruthy();
       });
 
       it('hides the compliance section in the export dialog', () => {

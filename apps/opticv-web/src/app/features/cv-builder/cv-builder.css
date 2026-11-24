@@ -99,7 +99,7 @@
 
 @media (min-width: 1024px) {
   .builder-content {
-    grid-template-columns: minmax(0, 600px) minmax(0, 480px);
+    grid-template-columns: minmax(0, 560px) minmax(0, 480px);
     align-items: start;
   }
 

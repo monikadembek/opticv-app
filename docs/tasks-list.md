@@ -2235,7 +2235,7 @@ Show a small tier badge (Free/Basic/Pro) next to the avatar for logged-in users.
 ## 138. CV Builder - CV names + unified "My CVs" table
 
 **status: done**
-**time: 18.11.2018 - 23.11.2026**
+**time: 18.11.2026 - 23.11.2026**
 
 1. Allow naming cvs that were built inside the app and the ones that were uploaded.
    Add default name to the CV document and allow renaming cv documents in dashboard.
@@ -2250,8 +2250,8 @@ Show a small tier badge (Free/Basic/Pro) next to the avatar for logged-in users.
 
 ## 139. CV Builder - add export cv dialog
 
-**status: todo**
-**time: 20.11.2018**
+**status: done**
+**time: 20.11.2026-24.11.2026**
 
 In the cv builder feature add export cv dialog similar to the one in the cv-optimization page.
 Allow user to select template and accent color.
@@ -2267,7 +2267,7 @@ Implement a scheduled cleanup job that checks accounts for inactivity. If accoun
 
 ---
 
-## Refactoring - when deleting a cv first delete rows in the database and only the file in the R2, so that in case dataabse delete fails we don't point to an empty file which no longer exists on the R2
+## Refactoring - when deleting a cv first delete rows in the database and only the file in the R2, so that in case database delete fails we don't point to an empty file which no longer exists on the R2
 
 Order of operations: the R2 file is deleted before the database row. If the database delete fails, the record stays but points to a file that no longer exists. Deleting the row first and the file afterwards would fail more safely, leaving at worst an unused file in storage.
 
