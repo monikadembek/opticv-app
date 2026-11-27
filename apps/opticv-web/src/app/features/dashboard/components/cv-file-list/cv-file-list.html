@@ -8,11 +8,20 @@
   <span class="text-surface-500 text-lg"
     >You haven't uploaded any CVs yet.</span
   >
-  <p-button
-    label="Upload your first CV"
-    icon="pi pi-upload"
-    routerLink="/upload-cv"
-  />
+  <div class="flex flex-col sm:flex-row items-center gap-2">
+    <p-button
+      label="Upload your first CV"
+      icon="pi pi-upload"
+      routerLink="/upload-cv"
+    />
+    <p-button
+      label="Create CV from scratch"
+      icon="pi pi-plus"
+      severity="secondary"
+      outlined="true"
+      routerLink="/cv-builder"
+    />
+  </div>
 </div>
 } @else {
 <div class="mb-3 flex justify-end">
@@ -35,27 +44,34 @@
   [value]="cvFiles()"
   [loading]="isCvsLoading()"
   [pt]="{ loadingIcon: { class: 'w-auto! h-auto!' } }"
-  [globalFilterFields]="['fileName']"
+  [globalFilterFields]="['name']"
   [tableStyle]="{ 'border': '1px solid var(--border-subtle)' }"
   class="optim-table mt-4"
 >
   <ng-template #header>
     <tr class="uppercase text-sm text-(--text-muted) bg-(--primary-50)">
-      <th>File</th>
-      <th>Type</th>
-      <th>Size</th>
-      <th>Uploaded</th>
+      <th>Name</th>
+      <th>Source</th>
+      <th>Updated</th>
       <th>Actions</th>
     </tr>
   </ng-template>
   <ng-template #body let-file>
     <tr>
       <td class="font-semibold">
-        @if(getMimeLabel(file.mimeType) === 'PDF') {
-        <i class="pi pi-file-pdf text-(--critical) mr-0.5"></i>
-        } @else {
-        <i class="pi pi-file-word text-(--info) mr-0.5"></i>
-        } {{ file.fileName}}
+        @switch (getCvSource(file)) { @case ('pdf') {
+        <i
+          class="pi pi-file-pdf text-(--critical) mr-0.5"
+          aria-hidden="true"
+        ></i>
+        } @case ('docx') {
+        <i class="pi pi-file-word text-(--info) mr-0.5" aria-hidden="true"></i>
+        } @case ('built') {
+        <i
+          class="pi pi-file-edit text-(--primary-700) mr-0.5"
+          aria-hidden="true"
+        ></i>
+        } } {{ file.name }}
         <span class="flex items-center gap-1 text-xs ml-0.5 mt-0.5">
           @switch (file.parseStatus) { @case ('PENDING') {
           <i
@@ -75,11 +91,15 @@
       <td>
         <span
           class="uppercase text-sm px-3 py-1 bg-(--neutral-100) rounded-full"
-          >{{ getMimeLabel(file.mimeType) }}</span
+          [attr.title]="
+            file.mimeType && file.fileSize !== null
+              ? formatFileSize(file.fileSize)
+              : null
+          "
+          >{{ getSourceLabel(file) }}</span
         >
       </td>
-      <td>{{ formatFileSize(file.fileSize) }}</td>
-      <td>{{ file.createdAt | date: 'MMM d, yyyy'}}</td>
+      <td>{{ file.updatedAt | date: 'MMM d, yyyy' }}</td>
       <td>
         <div class="flex items-center gap-2 shrink-0">
           <p-button
@@ -90,6 +110,31 @@
             (onClick)="optimizeCv(file)"
           />
           <p-button
+            icon="pi pi-pencil"
+            severity="secondary"
+            size="small"
+            [text]="true"
+            [disabled]="file.extractionStatus !== 'COMPLETED'"
+            styleClass="action-icon-btn"
+            [title]="
+              file.extractionStatus !== 'COMPLETED'
+                ? 'Extract structured data first'
+                : 'Edit'
+            "
+            (onClick)="editCv(file)"
+          />
+          <p-button
+            icon="pi pi-pen-to-square"
+            severity="secondary"
+            size="small"
+            [text]="true"
+            styleClass="action-icon-btn"
+            title="Rename"
+            ariaLabel="Rename"
+            (onClick)="renameCv(file)"
+          />
+          @if (file.storageKey) {
+          <p-button
             icon="pi pi-download"
             severity="secondary"
             size="small"
@@ -98,6 +143,7 @@
             title="Download"
             (onClick)="downloadCv(file)"
           />
+          }
           <p-button
             icon="pi pi-trash"
             severity="danger"

@@ -29,6 +29,7 @@ function createPlanUsageStoreMock() {
 
 const mockResponse: UploadCvResponse = {
   id: 'cv-1',
+  name: 'resume',
   fileName: 'resume.pdf',
   fileSize: 2 * 1024 * 1024,
   mimeType: 'application/pdf',

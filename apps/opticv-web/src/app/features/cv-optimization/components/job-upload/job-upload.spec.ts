@@ -13,12 +13,17 @@ import { CvStore } from '../../../../core/stores/cv.store';
 
 const mockCv: CvDocumentListItem = {
   id: 'cv-id-1',
+  name: 'my-cv',
   fileName: 'my-cv.pdf',
   fileSize: 2048,
   mimeType: 'application/pdf',
+  storageKey: 'uploads/user-id/uuid.pdf',
   createdAt: new Date('2024-01-01').toISOString(),
+  updatedAt: new Date('2024-01-01').toISOString(),
   parsedText: null,
   parseStatus: 'COMPLETED',
+  extractionStatus: 'COMPLETED',
+  manuallyEdited: false,
 };
 
 const mockJobApplicationResponse: JobApplicationResponse = {
@@ -282,6 +287,29 @@ describe('JobUpload', () => {
       component.jobSubmitted.subscribe((v) => emitted.push(v));
       component.onSubmit();
       expect(emitted).toHaveLength(0);
+    });
+
+    it('should set submitError and reset isSubmitting when extractCvData fails', () => {
+      fillValidForm();
+      apiService.extractCvData.mockReturnValue(
+        throwError(() => ({ error: { message: 'Extraction failed' } })),
+      );
+      const emitted: unknown[] = [];
+      component.jobSubmitted.subscribe((v) => emitted.push(v));
+      component.onSubmit();
+      expect(component.submitError()).toBe('Extraction failed');
+      expect(component.isSubmitting()).toBe(false);
+      expect(emitted).toHaveLength(0);
+    });
+
+    it('should use fallback error message when extractCvData fails without a message', () => {
+      fillValidForm();
+      apiService.extractCvData.mockReturnValue(throwError(() => ({})));
+      component.onSubmit();
+      expect(component.submitError()).toBe(
+        'Could not read your CV data. Please try again.',
+      );
+      expect(component.isSubmitting()).toBe(false);
     });
   });
 

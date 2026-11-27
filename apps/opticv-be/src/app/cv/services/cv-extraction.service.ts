@@ -1,6 +1,7 @@
 import {
   BadGatewayException,
   BadRequestException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
@@ -39,11 +40,23 @@ export class CvExtractionService {
       return doc.structuredData as unknown as CvStructuredData;
     }
 
+    // Only block an actual re-run of AI extraction — returning stored data
+    // (cache hit above) never overwrites manual edits.
+    if (doc.manuallyEdited) {
+      throw new ForbiddenException({ code: 'MANUAL_EDIT_PROTECTED' });
+    }
+
     const isPdf = doc.mimeType === 'application/pdf';
 
     if (!isPdf && (!doc.parsedText || doc.parsedText.trim() === '')) {
       throw new BadRequestException(
         'CV text not available for extraction. Please re-upload the file.',
+      );
+    }
+
+    if (!doc.storageKey || !doc.fileName) {
+      throw new BadRequestException(
+        'CV file not available for extraction. Please re-upload the file.',
       );
     }
 

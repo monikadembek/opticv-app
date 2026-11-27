@@ -11,7 +11,11 @@ import { ButtonModule } from 'primeng/button';
 import { Router, RouterLink } from '@angular/router';
 import { TableModule } from 'primeng/table';
 import { DatePipe } from '@angular/common';
-import { formatFileSize, getMimeLabel } from '../../../../shared/utils';
+import {
+  formatFileSize,
+  getCvSource,
+  getSourceLabel,
+} from '../../../../shared/utils';
 import { FormsModule } from '@angular/forms';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
@@ -44,10 +48,12 @@ export class CvFileList {
 
   readonly downloadCvFile = output<CvDocumentListItem>();
   readonly deleteCvFile = output<CvDocumentListItem>();
+  readonly renameCvFile = output<CvDocumentListItem>();
   readonly loadCvs = output<void>();
 
   readonly formatFileSize = formatFileSize;
-  readonly getMimeLabel = getMimeLabel;
+  readonly getCvSource = getCvSource;
+  readonly getSourceLabel = getSourceLabel;
 
   loadUserCvs() {
     this.loadCvs.emit();
@@ -57,6 +63,14 @@ export class CvFileList {
     this.router.navigate(['/cv-optimization'], {
       queryParams: { cvId: file.id },
     });
+  }
+
+  editCv(file: CvDocumentListItem): void {
+    this.router.navigate(['/cv-builder', file.id]);
+  }
+
+  renameCv(file: CvDocumentListItem): void {
+    this.renameCvFile.emit(file);
   }
 
   downloadCv(file: CvDocumentListItem): void {

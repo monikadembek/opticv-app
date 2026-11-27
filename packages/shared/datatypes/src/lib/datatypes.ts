@@ -78,13 +78,17 @@ export type LimitedFeature =
   | 'CV_OPTIMIZATION'
   | 'COVER_LETTER'
   | 'INTERVIEW_PREP'
-  | 'LINKEDIN';
+  | 'LINKEDIN'
+  | 'CV_BUILDER';
 
 export type TierLimits = {
   features: Record<LimitedFeature, number>;
   maxStoredCvs: number;
   allowedTemplates: 'ALL' | string[];
 };
+
+export const DEFAULT_CV_NAME = 'Untitled CV';
+export const CV_NAME_MAX_LENGTH = 100;
 
 export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
   FREE: {
@@ -93,6 +97,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
       COVER_LETTER: 1,
       INTERVIEW_PREP: 1,
       LINKEDIN: 1,
+      CV_BUILDER: 1,
     },
     maxStoredCvs: 1,
     allowedTemplates: ['default', 'classic'],
@@ -103,6 +108,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
       COVER_LETTER: 10,
       INTERVIEW_PREP: 10,
       LINKEDIN: 10,
+      CV_BUILDER: 5,
     },
     maxStoredCvs: 5,
     allowedTemplates: 'ALL',
@@ -113,6 +119,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
       COVER_LETTER: 30,
       INTERVIEW_PREP: 30,
       LINKEDIN: 30,
+      CV_BUILDER: 10,
     },
     maxStoredCvs: 10,
     allowedTemplates: 'ALL',
@@ -179,15 +186,17 @@ export type UserProfile = {
 export type CvDocument = {
   id: string;
   userId: string;
-  fileName: string;
-  fileSize: number;
-  mimeType: string;
-  storageKey: string;
+  name: string;
+  fileName: string | null;
+  fileSize: number | null;
+  mimeType: string | null;
+  storageKey: string | null;
   parsedText: string | null;
   parseStatus: ParseStatus;
   structuredData: CvStructuredData | null;
   extractionStatus: ExtractionStatus;
   isActive: boolean;
+  manuallyEdited: boolean;
   createdAt: Date | string;
   updatedAt: Date | string;
 };
@@ -195,6 +204,7 @@ export type CvDocument = {
 export type UploadCvResponse = Pick<
   CvDocument,
   | 'id'
+  | 'name'
   | 'fileName'
   | 'fileSize'
   | 'mimeType'
@@ -206,13 +216,31 @@ export type UploadCvResponse = Pick<
 export type CvDocumentListItem = Pick<
   CvDocument,
   | 'id'
+  | 'name'
   | 'fileName'
   | 'fileSize'
   | 'mimeType'
+  | 'storageKey'
   | 'createdAt'
+  | 'updatedAt'
   | 'parsedText'
   | 'parseStatus'
+  | 'extractionStatus'
+  | 'manuallyEdited'
 >;
+
+export type RenameCvRequest = {
+  name: string;
+};
+
+export type CreateManualCvRequest = CvStructuredData & {
+  name?: string;
+};
+
+export type CvStructuredDataResponse = {
+  data: CvStructuredData;
+  name: string;
+};
 
 export type JobApplication = {
   id: string;
@@ -240,11 +268,11 @@ export type JobApplicationListItem = Pick<
   | 'createdAt'
   | 'updatedAt'
 > & {
-  cvDocument: { id: string; fileName: string };
+  cvDocument: { id: string; name: string };
 };
 
 export type JobApplicationWithCv = JobApplication & {
-  cvDocument: { id: string; fileName: string };
+  cvDocument: { id: string; name: string };
 };
 
 export type JobApplicationListResponse = {

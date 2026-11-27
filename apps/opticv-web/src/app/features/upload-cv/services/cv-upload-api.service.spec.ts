@@ -44,6 +44,7 @@ describe('CvUploadApiService', () => {
       });
       const mockResponse: UploadCvResponse = {
         id: 'cv-123',
+        name: 'resume',
         fileName: 'resume.pdf',
         fileSize: 1024,
         mimeType: 'application/pdf',
@@ -78,6 +79,7 @@ describe('CvUploadApiService', () => {
       });
       const mockResponse: UploadCvResponse = {
         id: 'cv-abc',
+        name: 'resume',
         fileName: 'resume.pdf',
         fileSize: 1024,
         mimeType: 'application/pdf',

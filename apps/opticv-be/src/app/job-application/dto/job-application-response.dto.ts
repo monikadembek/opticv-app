@@ -4,8 +4,8 @@ class CvDocumentSummaryDto {
   @ApiProperty({ example: 'cv-uuid-789' })
   id!: string;
 
-  @ApiProperty({ example: 'my-resume.pdf' })
-  fileName!: string;
+  @ApiProperty({ example: 'my-resume' })
+  name!: string;
 }
 
 export class JobApplicationResponseDto {

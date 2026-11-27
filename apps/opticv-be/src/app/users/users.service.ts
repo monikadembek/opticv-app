@@ -261,6 +261,7 @@ export class UsersService {
     });
 
     for (const doc of cvDocuments) {
+      if (!doc.storageKey) continue;
       try {
         await this.r2.delete(doc.storageKey);
       } catch (error) {

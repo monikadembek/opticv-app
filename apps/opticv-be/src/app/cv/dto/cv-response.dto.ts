@@ -126,11 +126,17 @@ export class CvStructuredDataDto {
 
   @ApiProperty({ nullable: true, example: null })
   other!: string | null;
+
+  @ApiProperty({ nullable: true, example: null })
+  gdprClause!: string | null;
 }
 
 export class UploadCvResponseDto {
   @ApiProperty({ example: 'cv-uuid-123' })
   id!: string;
+
+  @ApiProperty({ example: 'my-cv' })
+  name!: string;
 
   @ApiProperty({ example: 'my-cv.pdf' })
   fileName!: string;
@@ -155,14 +161,20 @@ export class CvDocumentListItemDto {
   @ApiProperty({ example: 'cv-uuid-123' })
   id!: string;
 
-  @ApiProperty({ example: 'my-cv.pdf' })
-  fileName!: string;
+  @ApiProperty({ example: 'my-cv' })
+  name!: string;
 
-  @ApiProperty({ example: 204800 })
-  fileSize!: number;
+  @ApiProperty({ nullable: true, example: 'my-cv.pdf' })
+  fileName!: string | null;
 
-  @ApiProperty({ example: 'application/pdf' })
-  mimeType!: string;
+  @ApiProperty({ nullable: true, example: 204800 })
+  fileSize!: number | null;
+
+  @ApiProperty({ nullable: true, example: 'application/pdf' })
+  mimeType!: string | null;
+
+  @ApiProperty({ nullable: true, example: 'users/user-id/cv-uuid-123.pdf' })
+  storageKey!: string | null;
 
   @ApiProperty({ example: 'PENDING', enum: ['PENDING', 'COMPLETED', 'FAILED'] })
   parseStatus!: string;
@@ -170,13 +182,83 @@ export class CvDocumentListItemDto {
   @ApiProperty({ nullable: true, example: 'Extracted CV text...' })
   parsedText!: string | null;
 
+  @ApiProperty({
+    example: 'COMPLETED',
+    enum: ['PENDING', 'COMPLETED', 'FAILED'],
+  })
+  extractionStatus!: string;
+
+  @ApiProperty({ example: false })
+  manuallyEdited!: boolean;
+
   @ApiProperty({ example: '2024-01-15T10:30:00.000Z' })
   createdAt!: string;
+
+  @ApiProperty({ example: '2024-01-15T10:30:00.000Z' })
+  updatedAt!: string;
 }
 
 export class CvExtractResponseDto {
   @ApiProperty({ type: () => CvStructuredDataDto })
   data!: CvStructuredDataDto;
+}
+
+export class CvStructuredDataResponseDto {
+  @ApiProperty({ type: () => CvStructuredDataDto })
+  data!: CvStructuredDataDto;
+
+  @ApiProperty({ example: 'my-cv' })
+  name!: string;
+}
+
+export class CvDocumentDto {
+  @ApiProperty({ example: 'cv-uuid-123' })
+  id!: string;
+
+  @ApiProperty({ example: 'user-uuid-123' })
+  userId!: string;
+
+  @ApiProperty({ example: 'Untitled CV' })
+  name!: string;
+
+  @ApiProperty({ nullable: true, example: null })
+  fileName!: string | null;
+
+  @ApiProperty({ nullable: true, example: null })
+  fileSize!: number | null;
+
+  @ApiProperty({ nullable: true, example: null })
+  mimeType!: string | null;
+
+  @ApiProperty({ nullable: true, example: null })
+  storageKey!: string | null;
+
+  @ApiProperty({
+    example: 'COMPLETED',
+    enum: ['PENDING', 'COMPLETED', 'FAILED'],
+  })
+  parseStatus!: string;
+
+  @ApiProperty({ type: () => CvStructuredDataDto })
+  structuredData!: CvStructuredDataDto;
+
+  @ApiProperty({
+    example: 'COMPLETED',
+    enum: ['PENDING', 'COMPLETED', 'FAILED'],
+  })
+  extractionStatus!: string;
+
+  @ApiProperty({ example: true })
+  isActive!: boolean;
+
+  @ApiProperty({ example: true })
+  manuallyEdited!: boolean;
+
+  @ApiProperty({ example: '2024-01-15T10:30:00.000Z' })
+  createdAt!: string;
+
+  @ApiProperty({ example: '2024-01-15T10:30:00.000Z' })
+  updatedAt!: string;
 }
 
 export class CvDownloadUrlResponseDto {

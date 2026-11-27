@@ -1,5 +1,14 @@
 <div class="container mx-auto p-6">
-  <h1 class="text-2xl font-bold mb-6">Dashboard</h1>
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold">Dashboard</h1>
+    <p-button
+      label="Create CV"
+      icon="pi pi-plus"
+      size="small"
+      routerLink="/cv-builder"
+      ariaLabel="Create a CV from scratch"
+    />
+  </div>
 
   <div class="flex flex-col md:flex-row gap-4 mb-8">
     <div
@@ -100,6 +109,7 @@
           [cvsError]="cvsError()"
           (downloadCvFile)="downloadCv($event)"
           (deleteCvFile)="deleteCv($event)"
+          (renameCvFile)="openRenameDialog($event)"
           (loadCvs)="loadUserCvs()"
         />
       </p-tabpanel>
@@ -117,3 +127,11 @@
 </div>
 
 <p-confirmDialog [style]="{ width: '600px', maxWidth: '95vw' }" />
+
+<app-rename-cv-dialog
+  [visible]="!!renameTarget()"
+  [cvName]="renameTarget()?.name ?? ''"
+  [saving]="renaming()"
+  (save)="renameCv($event)"
+  (dismiss)="closeRenameDialog()"
+/>

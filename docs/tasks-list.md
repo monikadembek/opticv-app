@@ -1597,8 +1597,8 @@ After changes in the ui some images require update:
 
 ## 117. Implement CV builder feature
 
-**status: in progress**
-**time: 25.08.2026**
+**status: done**
+**time: 25.08.2026-18.11.2026**
 
 - implement new feature - cv builder for users with no cv, allow them create one from scratch,
 - use existing data models used in cvStructuredData
@@ -2232,9 +2232,60 @@ Show a small tier badge (Free/Basic/Pro) next to the avatar for logged-in users.
 
 ---
 
+## 138. CV Builder - CV names + unified "My CVs" table
+
+**status: done**
+**time: 18.11.2026 - 23.11.2026**
+
+1. Allow naming cvs that were built inside the app and the ones that were uploaded.
+   Add default name to the CV document and allow renaming cv documents in dashboard.
+   Reorganize CV table in the dashboard. Remove columns that for the built cv have no values.
+
+@docs/cv-naming-plan.md
+
+2. Add can deactivate guard in the cv-builder route to prevent losing unsaved changes.
+3. Add cancel button in the cv-builder route.
+
+---
+
+## 139. CV Builder - add export cv dialog
+
+**status: done**
+**time: 20.11.2026-24.11.2026**
+
+In the cv builder feature add export cv dialog similar to the one in the cv-optimization page.
+Allow user to select template and accent color.
+Keep the same limits as in the cv optimization page regarding the available templates for given subscription tier.
+Allow user to export created cv to pdf and docx.
+Don't implement the compliance section in the export dialog, as we already have the gdpr section in the cv builder form.
+
+---
+
 ## Automatically delete accounts after 24 months of inactivity
 
 Implement a scheduled cleanup job that checks accounts for inactivity. If account has a 24 months of inactivity it sends an email to user with information that account may be deleted and after 30 days it deletes the account.
+
+---
+
+## Refactoring - when deleting a cv first delete rows in the database and only the file in the R2, so that in case database delete fails we don't point to an empty file which no longer exists on the R2
+
+Order of operations: the R2 file is deleted before the database row. If the database delete fails, the record stays but points to a file that no longer exists. Deleting the row first and the file afterwards would fail more safely, leaving at worst an unused file in storage.
+
+---
+
+## Refactoring - archiving deleted CV instead of removing it from database
+
+Now we have limitations about max number of uploaded cv files on the account, for the pro account it is 10cvs stored and above user can't upload any more cv files without deleting the previous files. What could we do so that the previously run optimization are preserved and not deleted when user deletes a cv file?
+
+Archived CV
+
+I recommend 'archiving' a deleted CV instead of removing its row. The original file would be deleted from R2 storage, the CV would be hidden from the CV list and no longer count toward the 10-CV limit (the limit already counts only `isActive` CVs), and its parsed text and structured data would be kept. Past optimizations need that data: the optimization page loads the CV's structured data to show results. After a CV is archived, what should the user still be able to do with job applications that used it?
+
+View + re-run (Recommended)
+Past optimizations stay fully viewable and editable, and the user can still re-run or regenerate optimizations for those existing job applications. New job applications can't pick an archived CV.
+
+Implementation plan:
+@docs/cv-archive-on-delete-plan.md
 
 ---
 
@@ -2362,6 +2413,57 @@ Implement a guided tour specific to the cv-optimization page, highlighting its k
 **time:**
 
 - some selected bullet rewrites are not applied to A4 cv template preview and not applied to exported CV, investigate the issue, it happens when missing bullets target position which is not listed on the cv, it may be included in results in 'other' property
+
+---
+
+### Bug - "Start Optimization Process" leaves orphan job applications, retries non-retryable errors and can get stuck loading
+
+**status: todo**
+**time:**
+
+**Context**
+
+`JobUpload.onSubmit()` (`apps/opticv-web/src/app/features/cv-optimization/components/job-upload/job-upload.ts`) chains two requests:
+
+1. `createJobApplication(payload)`, which creates a `JobApplication` row
+2. `extractCvData(cvDocumentId)` (`POST /cv/:id/extract`) with `retry(2)`, which returns the CV's structured data (or runs AI extraction if there is none yet)
+
+Extraction can fail for many reasons: OpenAI timeout or error (502), R2 download failure, DOCX without `parsedText` (400), rate limiting by `AiThrottlerGuard` (429), `MANUAL_EDIT_PROTECTED` (403), or a network drop.
+
+**Already fixed (task 117):** before the fix, the extraction error was only `console.log`-ed. `isSubmitting` was never reset, so the "Start Optimization Process" button kept spinning and stayed disabled until a page reload, and the user saw no message. The `subscribe.error` handler now sets `submitError` (server message or "Could not read your CV data. Please try again.") and resets `isSubmitting`. Covered by two tests in `job-upload.spec.ts`.
+
+**Remaining issues**
+
+1. **Orphan / duplicate job applications.** By the time extraction fails, request 1 has already created a `JobApplication`. Each new attempt creates another one, so the dashboard "My Optimizations" list fills up with duplicate entries that have no results.
+2. **`retry(2)` retries everything, including errors that will never succeed.** 400 / 403 / 404 / 429 are retried pointlessly. A 502 retry re-runs the paid OpenAI extraction up to 3 times per click.
+3. **Stuck spinner on early return.** `isSubmitting.set(true)` runs before `if (!payload) return;` (around line 157), and the early return never resets it. In practice `isSubmitDisabled()` should prevent this, but it's the same stuck-loading pattern.
+4. **(minor)** Leftover `console.log` calls in `onSubmit()` (submit result, extracted data, error).
+
+**Possible solutions**
+
+- **Orphans (pick one):**
+  - **a) Reuse the job application on retry (simplest, frontend only):** keep `this.jobApplication` after a successful request 1. If extraction then fails and the user resubmits with the same form values, skip `createJobApplication` and call only `extractCvData`. Clear `this.jobApplication` when the form values (CV, job title, company, description) change.
+  - **b) Extract first, then create:** call `extractCvData` before `createJobApplication`, so a job application only exists once the CV data is available. Small reorder; extraction is idempotent (cache hit) so repeating it is cheap.
+  - **c) Roll back on failure:** delete the just-created job application in the extraction error handler. More moving parts and needs an extra request; less preferred.
+- **Retries:** retry only errors that can succeed on a second try (status `0` network errors and 5xx, maybe excluding 502 if we don't want to re-pay for AI), with a short backoff, for example:
+  ```ts
+  retry({
+    count: 2,
+    delay: (err, attempt) =>
+      err?.status === 0 || err?.status >= 500
+        ? timer(attempt * 1000)
+        : throwError(() => err),
+  });
+  ```
+- **Early return:** move `isSubmitting.set(true)` below the `if (!payload) return;` check, or reset it before returning.
+- **Logging:** remove the `console.log` calls (or replace them with the app's logging approach, if any).
+
+**Acceptance**
+
+- A failed extraction followed by a retry does not create a second `JobApplication`.
+- 4xx errors from `extractCvData` are not retried; network and 5xx errors are retried at most twice.
+- `isSubmitting` is always reset on every exit path of `onSubmit()`.
+- Unit tests in `job-upload.spec.ts` cover: no duplicate `createJobApplication` call on retry, no retry on 4xx, retry on 5xx, early-return path.
 
 ---
 

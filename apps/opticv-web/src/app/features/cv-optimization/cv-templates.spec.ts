@@ -3,6 +3,7 @@ import {
   CV_ACCENT_COLORS,
   CV_TEMPLATES,
   DEFAULT_ACCENT_COLOR,
+  getAllowedTemplateIds,
 } from './cv-templates';
 import type { CvTemplateId } from './cv-templates';
 
@@ -70,5 +71,40 @@ describe('ACCENT_AWARE_TEMPLATE_IDS', () => {
     expect(new Set(ACCENT_AWARE_TEMPLATE_IDS)).toEqual(
       new Set(['default', 'modern', 'corporate', 'impact']),
     );
+  });
+});
+
+describe('getAllowedTemplateIds', () => {
+  const ALL_IDS = CV_TEMPLATES.map((t) => t.id);
+
+  it('returns FREE templates when there is no subscription', () => {
+    expect(getAllowedTemplateIds(null)).toEqual(['default', 'classic']);
+    expect(getAllowedTemplateIds(undefined)).toEqual(['default', 'classic']);
+  });
+
+  it('returns FREE templates for an active FREE subscription', () => {
+    expect(getAllowedTemplateIds({ tier: 'FREE', status: 'ACTIVE' })).toEqual([
+      'default',
+      'classic',
+    ]);
+  });
+
+  it('returns all templates for active BASIC and PRO subscriptions', () => {
+    expect(getAllowedTemplateIds({ tier: 'BASIC', status: 'ACTIVE' })).toEqual(
+      ALL_IDS,
+    );
+    expect(getAllowedTemplateIds({ tier: 'PRO', status: 'TRIALING' })).toEqual(
+      ALL_IDS,
+    );
+  });
+
+  it('falls back to FREE templates for a lapsed paid subscription', () => {
+    expect(getAllowedTemplateIds({ tier: 'PRO', status: 'PAST_DUE' })).toEqual([
+      'default',
+      'classic',
+    ]);
+    expect(
+      getAllowedTemplateIds({ tier: 'BASIC', status: 'CANCELED' }),
+    ).toEqual(['default', 'classic']);
   });
 });

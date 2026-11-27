@@ -49,7 +49,7 @@
   [value]="items()"
   [loading]="isLoading()"
   [pt]="{ loadingIcon: { class: 'w-auto! h-auto!' } }"
-  [globalFilterFields]="['jobTitle', 'companyName', 'fileName']"
+  [globalFilterFields]="['jobTitle', 'companyName', 'cvDocument.name']"
   [tableStyle]="{ 'border': '1px solid var(--border-subtle)' }"
   class="optim-table mt-4"
 >
@@ -68,7 +68,7 @@
       <td>{{ item.companyName }}</td>
       <td>
         <i class="pi pi-file text-(--text-subtle)"></i>
-        {{ item.cvDocument.fileName }}
+        {{ item.cvDocument.name }}
       </td>
       <td>{{ item.createdAt | date: 'MMM d, yyyy'}}</td>
       <td>

@@ -28,12 +28,17 @@ import { UserSettingsApiService } from '../../core/services/user-settings-api.se
 
 const mockCv: CvDocumentListItem = {
   id: 'cv-id-1',
+  name: 'my-cv',
   fileName: 'my-cv.pdf',
   fileSize: 2048,
   mimeType: 'application/pdf',
+  storageKey: 'uploads/user-id/uuid.pdf',
   createdAt: new Date('2024-01-01').toISOString(),
+  updatedAt: new Date('2024-01-01').toISOString(),
   parsedText: null,
   parseStatus: 'COMPLETED',
+  extractionStatus: 'COMPLETED',
+  manuallyEdited: false,
 };
 
 const mockJobApplication: JobApplication = {
@@ -77,7 +82,7 @@ const mockJobSubmittedData: JobSubmittedData = {
 
 const mockJobApplicationWithCv: JobApplicationWithCv = {
   ...mockJobApplication,
-  cvDocument: { id: 'cv-id-1', fileName: 'my-cv.pdf' },
+  cvDocument: { id: 'cv-id-1', name: 'my-cv' },
 };
 
 function makeActivatedRoute(

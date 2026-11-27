@@ -35,7 +35,7 @@ const mockListResponse: JobApplicationListResponse = {
       atsScore: mockApp.atsScore,
       createdAt: mockApp.createdAt,
       updatedAt: mockApp.updatedAt,
-      cvDocument: { id: mockApp.cvDocumentId, fileName: 'resume.pdf' },
+      cvDocument: { id: mockApp.cvDocumentId, name: 'resume' },
     },
   ],
   total: 1,

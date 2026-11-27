@@ -1,0 +1,48 @@
+<p-dialog
+  header="Rename CV"
+  [visible]="visible()"
+  (visibleChange)="onVisibleChange($event)"
+  [modal]="true"
+  [closable]="!saving()"
+  [closeOnEscape]="!saving()"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '480px', maxWidth: '95vw' }"
+  (onHide)="onHide()"
+>
+  <form class="flex flex-col gap-2" (submit)="onFormSubmit($event)">
+    <label for="rename-cv-name" class="text-sm font-semibold">Name</label>
+    <input
+      pInputText
+      id="rename-cv-name"
+      type="text"
+      class="w-full"
+      [attr.maxlength]="maxLength"
+      [formControl]="nameControl"
+      [invalid]="showError()"
+      [attr.aria-invalid]="showError()"
+      [attr.aria-describedby]="showError() ? 'rename-cv-name-error' : null"
+    />
+    @if (showError()) {
+    <small id="rename-cv-name-error" class="text-(--critical)" role="alert"
+      >{{ errorMessage() }}</small
+    >
+    }
+  </form>
+
+  <ng-template #footer>
+    <p-button
+      label="Cancel"
+      severity="secondary"
+      [text]="true"
+      [disabled]="saving()"
+      (onClick)="cancel()"
+    />
+    <p-button
+      label="Save"
+      [disabled]="nameControl.invalid || saving()"
+      [loading]="saving()"
+      (onClick)="submit()"
+    />
+  </ng-template>
+</p-dialog>

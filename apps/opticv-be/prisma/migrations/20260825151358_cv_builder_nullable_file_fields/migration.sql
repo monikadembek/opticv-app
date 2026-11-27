@@ -1,0 +1,9 @@
+-- AlterEnum
+ALTER TYPE "LimitedFeature" ADD VALUE 'CV_BUILDER';
+
+-- AlterTable
+ALTER TABLE "cv_documents" ADD COLUMN     "manuallyEdited" BOOLEAN NOT NULL DEFAULT false,
+ALTER COLUMN "fileName" DROP NOT NULL,
+ALTER COLUMN "fileSize" DROP NOT NULL,
+ALTER COLUMN "mimeType" DROP NOT NULL,
+ALTER COLUMN "storageKey" DROP NOT NULL;

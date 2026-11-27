@@ -152,6 +152,10 @@ export class TopHeader {
           route: '/upload-cv',
         },
         {
+          label: 'CV Builder',
+          route: '/cv-builder',
+        },
+        {
           label: 'Optimize CV',
           route: '/cv-optimization',
         },

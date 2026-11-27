@@ -187,6 +187,11 @@ describe('CvExportService (browser)', () => {
       expect(saveMock).toHaveBeenCalledWith('optimized-cv.pdf');
     });
 
+    it('saves the PDF with a custom fileName', async () => {
+      await service.exportToPdf(makeCv(), 'default', '#059669', 'My CV');
+      expect(saveMock).toHaveBeenCalledWith('My CV.pdf');
+    });
+
     it('defaults to the default template and emerald accent color', async () => {
       await expect(service.exportToPdf(makeCv())).resolves.toBeUndefined();
     });
@@ -270,6 +275,25 @@ describe('CvExportService (browser)', () => {
 
       expect(anchor.download).toBe('optimized-cv.docx');
       expect(clickSpy).toHaveBeenCalled();
+    });
+
+    it('downloads the DOCX with a custom fileName', async () => {
+      const anchor = {
+        href: '',
+        download: '',
+        click: vi.fn(),
+      } as unknown as HTMLAnchorElement;
+      vi.spyOn(window.document.body, 'appendChild').mockImplementation(
+        () => anchor,
+      );
+      vi.spyOn(window.document.body, 'removeChild').mockImplementation(
+        () => anchor,
+      );
+      vi.spyOn(window.document, 'createElement').mockReturnValue(anchor);
+
+      await service.exportToDocx(makeCv(), 'default', '#059669', 'My CV');
+
+      expect(anchor.download).toBe('My CV.docx');
     });
 
     it.each(DOCX_ACCENT_COLOR_IDS)(

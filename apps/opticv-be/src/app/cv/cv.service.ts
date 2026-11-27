@@ -10,9 +10,17 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { R2Service } from '../storage/r2.service';
 import { CvParserService } from './services/cv-parser.service';
+import { QuotaService } from '../quota/quota.service';
 import {
+  CreateManualCvRequest,
+  CV_NAME_MAX_LENGTH,
+  CvDocument,
   CvDocumentListItem,
   CvStructuredData,
+  CvStructuredDataResponse,
+  DEFAULT_CV_NAME,
+  getEffectiveTier,
+  SubscriptionStatus,
   SubscriptionTier,
   TIER_LIMITS,
   UploadCvResponse,
@@ -37,9 +45,40 @@ export class CvService {
     private readonly prisma: PrismaService,
     private readonly r2: R2Service,
     private readonly cvParser: CvParserService,
+    private readonly quotaService: QuotaService,
   ) {}
 
   private readonly logger = new Logger(CvService.name);
+
+  private async resolveTierAndPeriod(userId: string): Promise<{
+    tier: SubscriptionTier;
+    periodStart: Date;
+    periodEnd: Date | null;
+    cancelAtPeriodEnd: boolean;
+  }> {
+    const subscription = await this.prisma.subscription.findUnique({
+      where: { userId },
+      select: {
+        tier: true,
+        status: true,
+        currentPeriodStart: true,
+        currentPeriodEnd: true,
+        cancelAtPeriodEnd: true,
+      },
+    });
+    const effectiveTier = subscription
+      ? getEffectiveTier(
+          subscription.tier as SubscriptionTier,
+          subscription.status as SubscriptionStatus,
+        )
+      : 'FREE';
+    return {
+      tier: effectiveTier,
+      periodStart: subscription?.currentPeriodStart ?? new Date(),
+      periodEnd: subscription?.currentPeriodEnd ?? null,
+      cancelAtPeriodEnd: subscription?.cancelAtPeriodEnd ?? false,
+    };
+  }
 
   async uploadCv(
     file: Express.Multer.File | undefined,
@@ -87,6 +126,7 @@ export class CvService {
         const doc = await this.prisma.cvDocument.create({
           data: {
             userId,
+            name: this.buildCvNameFromFileName(file.originalname),
             fileName: file.originalname,
             fileSize: file.size,
             mimeType: file.mimetype,
@@ -104,6 +144,7 @@ export class CvService {
       const doc = await this.prisma.cvDocument.create({
         data: {
           userId,
+          name: this.buildCvNameFromFileName(file.originalname),
           fileName: file.originalname,
           fileSize: file.size,
           mimeType: file.mimetype,
@@ -163,20 +204,38 @@ export class CvService {
     }
   }
 
+  /**
+   * Default display name for an uploaded CV: the original file name without
+   * its last extension, truncated to CV_NAME_MAX_LENGTH characters (code
+   * points, matching Postgres VARCHAR semantics). Falls back to
+   * DEFAULT_CV_NAME when nothing is left.
+   */
+  private buildCvNameFromFileName(originalName: string): string {
+    const stripped = originalName.replace(/\.[^.]+$/, '').trim();
+    const truncated = Array.from(stripped)
+      .slice(0, CV_NAME_MAX_LENGTH)
+      .join('');
+    return truncated || DEFAULT_CV_NAME;
+  }
+
   private toUploadCvResponse(doc: {
     id: string;
-    fileName: string;
-    fileSize: number;
-    mimeType: string;
-    storageKey: string;
+    name: string;
+    fileName: string | null;
+    fileSize: number | null;
+    mimeType: string | null;
+    storageKey: string | null;
     createdAt: Date;
   }): UploadCvResponse {
+    // uploadCv() always populates these fields at creation; they're only
+    // nullable in the schema to support builder-created CVs with no file.
     return {
       id: doc.id,
-      fileName: doc.fileName,
-      fileSize: doc.fileSize,
-      mimeType: doc.mimeType,
-      storageKey: doc.storageKey,
+      name: doc.name,
+      fileName: doc.fileName!,
+      fileSize: doc.fileSize!,
+      mimeType: doc.mimeType!,
+      storageKey: doc.storageKey!,
       createdAt: doc.createdAt,
       parseStatus: 'COMPLETED',
     };
@@ -188,12 +247,17 @@ export class CvService {
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
+        name: true,
         fileName: true,
         fileSize: true,
         mimeType: true,
+        storageKey: true,
         createdAt: true,
+        updatedAt: true,
         parsedText: true,
         parseStatus: true,
+        extractionStatus: true,
+        manuallyEdited: true,
       },
     });
   }
@@ -203,18 +267,103 @@ export class CvService {
     if (!doc) throw new NotFoundException('CV document not found.');
     if (doc.userId !== userId) throw new ForbiddenException();
     if (!doc.storageKey) {
-      throw new InternalServerErrorException(
-        'Storage key is missing for this document.',
-      );
+      throw new NotFoundException('This CV has no downloadable file.');
     }
     const url = await this.r2.getPresignedUrl(doc.storageKey, 900);
     return { url };
   }
 
-  async getStructuredData(cvId: string, userId: string): Promise<{ data: CvStructuredData }> {
+  async createManualCv(
+    body: CreateManualCvRequest,
+    userId: string,
+  ): Promise<CvDocument> {
+    // `name` is document metadata, not part of the CV content.
+    const { name, ...structuredData } = body;
+    const { tier, periodStart, periodEnd, cancelAtPeriodEnd } =
+      await this.resolveTierAndPeriod(userId);
+    await this.quotaService.checkAndConsume(
+      userId,
+      'CV_BUILDER',
+      tier,
+      periodStart,
+      periodEnd,
+      cancelAtPeriodEnd,
+    );
+
+    const doc = await this.prisma.cvDocument.create({
+      data: {
+        userId,
+        name: name ?? DEFAULT_CV_NAME,
+        fileName: null,
+        fileSize: null,
+        mimeType: null,
+        storageKey: null,
+        parsedText: null,
+        parseStatus: 'COMPLETED',
+        structuredData,
+        extractionStatus: 'COMPLETED',
+        manuallyEdited: true,
+        isActive: true,
+      },
+    });
+
+    return doc as unknown as CvDocument;
+  }
+
+  async updateStructuredData(
+    id: string,
+    data: CvStructuredData,
+    userId: string,
+  ): Promise<CvDocument> {
+    const doc = await this.prisma.cvDocument.findUnique({ where: { id } });
+    if (!doc || doc.userId !== userId) {
+      throw new NotFoundException('CV document not found.');
+    }
+
+    const updated = await this.prisma.cvDocument.update({
+      where: { id },
+      data: {
+        structuredData: data,
+        manuallyEdited: true,
+      },
+    });
+
+    return updated as unknown as CvDocument;
+  }
+
+  async renameCv(
+    id: string,
+    name: string,
+    userId: string,
+  ): Promise<CvDocument> {
+    const doc = await this.prisma.cvDocument.findUnique({
+      where: { id },
+      select: { userId: true },
+    });
+    if (!doc || doc.userId !== userId) {
+      throw new NotFoundException('CV document not found.');
+    }
+
+    const updated = await this.prisma.cvDocument.update({
+      where: { id },
+      data: { name },
+    });
+
+    return updated as unknown as CvDocument;
+  }
+
+  async getStructuredData(
+    cvId: string,
+    userId: string,
+  ): Promise<CvStructuredDataResponse> {
     const doc = await this.prisma.cvDocument.findUnique({
       where: { id: cvId },
-      select: { userId: true, extractionStatus: true, structuredData: true },
+      select: {
+        userId: true,
+        name: true,
+        extractionStatus: true,
+        structuredData: true,
+      },
     });
 
     if (!doc || doc.userId !== userId) {
@@ -225,14 +374,19 @@ export class CvService {
       throw new NotFoundException('Structured data not available.');
     }
 
-    return { data: doc.structuredData as unknown as CvStructuredData };
+    return {
+      data: doc.structuredData as unknown as CvStructuredData,
+      name: doc.name,
+    };
   }
 
   async deleteCv(id: string, userId: string): Promise<void> {
     const doc = await this.prisma.cvDocument.findUnique({ where: { id } });
     if (!doc) throw new NotFoundException('CV document not found.');
     if (doc.userId !== userId) throw new ForbiddenException();
-    await this.r2.delete(doc.storageKey);
+    if (doc.storageKey) {
+      await this.r2.delete(doc.storageKey);
+    }
     await this.prisma.cvDocument.delete({ where: { id } });
   }
 }

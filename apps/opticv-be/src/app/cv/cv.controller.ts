@@ -1,10 +1,12 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   UploadedFile,
   UseGuards,
@@ -27,16 +29,25 @@ import { CvService } from './cv.service';
 import { CvExtractionService } from './services/cv-extraction.service';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type {
+  CvDocument,
   CvDocumentListItem,
   CvStructuredData,
+  CvStructuredDataResponse,
   UploadCvResponse,
 } from '@opticv/datatypes';
 import {
+  CvDocumentDto,
   CvDocumentListItemDto,
   CvDownloadUrlResponseDto,
   CvExtractResponseDto,
+  CvStructuredDataResponseDto,
   UploadCvResponseDto,
 } from './dto/cv-response.dto';
+import {
+  CreateManualCvRequestDto,
+  CvStructuredDataRequestDto,
+  RenameCvDto,
+} from './dto/cv-request.dto';
 
 @ApiTags('cv')
 @ApiBearerAuth()
@@ -78,6 +89,27 @@ export class CvController {
     return this.cvService.uploadCv(file, user.id);
   }
 
+  @Post('manual')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create a CV from structured data (CV Builder)' })
+  @ApiResponse({
+    status: 201,
+    type: CvDocumentDto,
+    description: 'CV created successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid request body' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'Quota exceeded or feature not available',
+  })
+  createManualCv(
+    @Body() body: CreateManualCvRequestDto,
+    @CurrentUser() user: UserModel,
+  ): Promise<CvDocument> {
+    return this.cvService.createManualCv(body, user.id);
+  }
+
   @Get()
   @ApiOperation({ summary: 'List all CVs for the current user' })
   @ApiResponse({
@@ -106,6 +138,26 @@ export class CvController {
     return this.cvService.getDownloadUrl(id, user.id);
   }
 
+  @Patch(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Rename a CV' })
+  @ApiBody({ type: RenameCvDto })
+  @ApiResponse({
+    status: 200,
+    type: CvDocumentDto,
+    description: 'CV renamed successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid name' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'CV not found' })
+  renameCv(
+    @Param('id') id: string,
+    @Body() body: RenameCvDto,
+    @CurrentUser() user: UserModel,
+  ): Promise<CvDocument> {
+    return this.cvService.renameCv(id, body.name, user.id);
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a CV document' })
@@ -123,8 +175,8 @@ export class CvController {
   @ApiOperation({ summary: 'Get extracted structured data for a CV' })
   @ApiResponse({
     status: 200,
-    type: CvExtractResponseDto,
-    description: 'Structured CV data',
+    type: CvStructuredDataResponseDto,
+    description: 'Structured CV data with the CV name',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
@@ -134,8 +186,26 @@ export class CvController {
   getStructuredData(
     @Param('id') id: string,
     @CurrentUser() user: UserModel,
-  ): Promise<{ data: CvStructuredData }> {
+  ): Promise<CvStructuredDataResponse> {
     return this.cvService.getStructuredData(id, user.id);
+  }
+
+  @Patch(':id/structured-data')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update structured data for a CV (CV Builder)' })
+  @ApiResponse({
+    status: 200,
+    type: CvDocumentDto,
+    description: 'CV updated successfully',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'CV not found' })
+  updateStructuredData(
+    @Param('id') id: string,
+    @Body() body: CvStructuredDataRequestDto,
+    @CurrentUser() user: UserModel,
+  ): Promise<CvDocument> {
+    return this.cvService.updateStructuredData(id, body, user.id);
   }
 
   @Post(':id/extract')

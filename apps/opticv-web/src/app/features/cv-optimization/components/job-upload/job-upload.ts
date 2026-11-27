@@ -204,6 +204,11 @@ export class JobUpload {
         },
         error: (err) => {
           console.log('error when extracting data from cv: ', err);
+          this.submitError.set(
+            err?.error?.message ??
+              'Could not read your CV data. Please try again.',
+          );
+          this.isSubmitting.set(false);
         },
       });
   }

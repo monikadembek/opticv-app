@@ -4,7 +4,10 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import type { JobApplicationListItem, JobApplicationWithCv } from '@opticv/datatypes';
+import type {
+  JobApplicationListItem,
+  JobApplicationWithCv,
+} from '@opticv/datatypes';
 import { JobApplicationApiService } from './job-application-api.service';
 import { environment } from '../../../environments/environment';
 
@@ -19,7 +22,7 @@ const mockListItem: JobApplicationListItem = {
   atsScore: 85,
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-02T00:00:00.000Z',
-  cvDocument: { id: 'cv-id-1', fileName: 'cv.pdf' },
+  cvDocument: { id: 'cv-id-1', name: 'cv' },
 };
 
 const mockJobApplicationWithCv: JobApplicationWithCv = {
@@ -33,7 +36,7 @@ const mockJobApplicationWithCv: JobApplicationWithCv = {
   notes: null,
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-02T00:00:00.000Z',
-  cvDocument: { id: 'cv-id-1', fileName: 'cv.pdf' },
+  cvDocument: { id: 'cv-id-1', name: 'cv' },
 };
 
 describe('JobApplicationApiService', () => {
@@ -84,7 +87,9 @@ describe('JobApplicationApiService', () => {
     it('propagates HTTP errors', () => {
       let errorReceived = false;
 
-      service.getJobApplications().subscribe({ error: () => (errorReceived = true) });
+      service
+        .getJobApplications()
+        .subscribe({ error: () => (errorReceived = true) });
 
       const req = httpMock.expectOne(`${API}/job-applications`);
       req.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });

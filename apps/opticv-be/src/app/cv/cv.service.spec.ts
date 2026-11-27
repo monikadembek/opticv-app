@@ -10,17 +10,44 @@ import { CvService } from './cv.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { R2Service } from '../storage/r2.service';
 import { CvParserService } from './services/cv-parser.service';
+import { QuotaService } from '../quota/quota.service';
+import type { CvStructuredData } from '@opticv/datatypes';
 
 const mockDoc = {
   id: 'doc-id',
   userId: 'user-id',
+  name: 'cv',
   fileName: 'cv.pdf',
   fileSize: 1024,
   mimeType: 'application/pdf',
   storageKey: 'uploads/user-id/uuid.pdf',
   createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-02'),
   parsedText: 'parsed text',
   parseStatus: 'COMPLETED' as const,
+  extractionStatus: 'PENDING' as const,
+  manuallyEdited: false,
+};
+
+const mockStructuredData: CvStructuredData = {
+  contact: {
+    name: 'Jane',
+    position: null,
+    email: null,
+    phone: null,
+    location: null,
+    linkedin: null,
+    website: null,
+  },
+  summary: null,
+  experience: [],
+  education: [],
+  skills: [],
+  certifications: [],
+  projects: [],
+  languages: [],
+  other: null,
+  gdprClause: null,
 };
 
 const mockPrisma = {
@@ -41,6 +68,10 @@ const mockR2 = {
   upload: jest.fn().mockResolvedValue(undefined),
   delete: jest.fn().mockResolvedValue(undefined),
   getPresignedUrl: jest.fn().mockResolvedValue('https://signed.url/file.pdf'),
+};
+
+const mockQuotaService = {
+  checkAndConsume: jest.fn().mockResolvedValue(undefined),
 };
 
 function makeFile(
@@ -75,6 +106,7 @@ describe('CvService', () => {
           provide: CvParserService,
           useValue: { parse: jest.fn().mockResolvedValue('parsed text') },
         },
+        { provide: QuotaService, useValue: mockQuotaService },
       ],
     }).compile();
 
@@ -110,6 +142,7 @@ describe('CvService', () => {
           { provide: PrismaService, useValue: mockPrisma },
           { provide: R2Service, useValue: mockR2 },
           { provide: CvParserService, useValue: { parse: parseSpy } },
+          { provide: QuotaService, useValue: mockQuotaService },
         ],
       }).compile();
       const svc = module.get<CvService>(CvService);
@@ -121,6 +154,7 @@ describe('CvService', () => {
       expect(mockPrisma.cvDocument.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           userId: 'user-id',
+          name: 'cv',
           fileName: 'cv.pdf',
           fileSize: 1024,
           mimeType: 'application/pdf',
@@ -133,6 +167,7 @@ describe('CvService', () => {
       expect(parseSpy).not.toHaveBeenCalled();
       expect(result).toEqual({
         id: mockDoc.id,
+        name: mockDoc.name,
         fileName: mockDoc.fileName,
         fileSize: mockDoc.fileSize,
         mimeType: mockDoc.mimeType,
@@ -160,6 +195,52 @@ describe('CvService', () => {
       const [key] = mockR2.upload.mock.calls[0] as [string, ...unknown[]];
       expect(key).toMatch(/\.docx$/);
       expect(result.mimeType).toBe(file.mimetype);
+      expect(mockPrisma.cvDocument.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ name: 'cv', fileName: 'cv.docx' }),
+      });
+    });
+
+    it.each([
+      ['Foo Bar.pdf', 'Foo Bar'],
+      ['a.b.c.pdf', 'a.b.c'],
+      ['resume', 'resume'],
+      ['.pdf', 'Untitled CV'],
+      ['   .pdf', 'Untitled CV'],
+    ])(
+      'derives the CV name from the file name (%s -> %s)',
+      async (originalname, expectedName) => {
+        await service.uploadCv(makeFile({ originalname }), 'user-id');
+
+        expect(mockPrisma.cvDocument.create).toHaveBeenCalledWith({
+          data: expect.objectContaining({ name: expectedName }),
+        });
+      },
+    );
+
+    it('truncates the derived CV name to 100 characters', async () => {
+      const longBase = 'x'.repeat(150);
+      await service.uploadCv(
+        makeFile({ originalname: `${longBase}.pdf` }),
+        'user-id',
+      );
+
+      const [{ data }] = mockPrisma.cvDocument.create.mock.calls[0] as [
+        { data: { name: string } },
+      ];
+      expect(data.name).toBe('x'.repeat(100));
+    });
+
+    it('does not split multi-code-unit characters when truncating', async () => {
+      const emoji = '\u{1F600}';
+      await service.uploadCv(
+        makeFile({ originalname: `${emoji.repeat(120)}.pdf` }),
+        'user-id',
+      );
+
+      const [{ data }] = mockPrisma.cvDocument.create.mock.calls[0] as [
+        { data: { name: string } },
+      ];
+      expect(data.name).toBe(emoji.repeat(100));
     });
 
     it('storage key encodes the userId and uses the correct extension', async () => {
@@ -182,6 +263,7 @@ describe('CvService', () => {
               parse: jest.fn().mockRejectedValue(new Error('bad pdf')),
             },
           },
+          { provide: QuotaService, useValue: mockQuotaService },
         ],
       }).compile();
       const svc = module.get<CvService>(CvService);
@@ -277,12 +359,17 @@ describe('CvService', () => {
         orderBy: { createdAt: 'desc' },
         select: {
           id: true,
+          name: true,
           fileName: true,
           fileSize: true,
           mimeType: true,
+          storageKey: true,
           createdAt: true,
+          updatedAt: true,
           parsedText: true,
           parseStatus: true,
+          extractionStatus: true,
+          manuallyEdited: true,
         },
       });
       expect(result).toEqual([mockDoc]);
@@ -328,13 +415,13 @@ describe('CvService', () => {
       );
     });
 
-    it('throws InternalServerErrorException when storageKey is missing', async () => {
+    it('throws NotFoundException when storageKey is missing (builder-created CV)', async () => {
       mockPrisma.cvDocument.findUnique.mockResolvedValueOnce({
         ...mockDoc,
-        storageKey: '',
+        storageKey: null,
       });
       await expect(service.getDownloadUrl('doc-id', 'user-id')).rejects.toThrow(
-        InternalServerErrorException,
+        NotFoundException,
       );
     });
   });
@@ -346,16 +433,24 @@ describe('CvService', () => {
       structuredData: { contact: { name: 'Jane' } },
     };
 
-    it('returns structured data for a completed extraction', async () => {
+    it('returns structured data and the CV name for a completed extraction', async () => {
       mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(mockStructuredDoc);
 
       const result = await service.getStructuredData('doc-id', 'user-id');
 
       expect(mockPrisma.cvDocument.findUnique).toHaveBeenCalledWith({
         where: { id: 'doc-id' },
-        select: { userId: true, extractionStatus: true, structuredData: true },
+        select: {
+          userId: true,
+          name: true,
+          extractionStatus: true,
+          structuredData: true,
+        },
       });
-      expect(result).toEqual({ data: mockStructuredDoc.structuredData });
+      expect(result).toEqual({
+        data: mockStructuredDoc.structuredData,
+        name: mockStructuredDoc.name,
+      });
     });
 
     it('throws NotFoundException when document does not exist', async () => {
@@ -435,6 +530,210 @@ describe('CvService', () => {
 
       await expect(service.deleteCv('doc-id', 'user-id')).rejects.toThrow();
       expect(mockPrisma.cvDocument.delete).not.toHaveBeenCalled();
+    });
+
+    it('skips R2 deletion for a builder-created CV with no storageKey', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce({
+        ...mockDoc,
+        storageKey: null,
+      });
+
+      await service.deleteCv('doc-id', 'user-id');
+
+      expect(mockR2.delete).not.toHaveBeenCalled();
+      expect(mockPrisma.cvDocument.delete).toHaveBeenCalledWith({
+        where: { id: 'doc-id' },
+      });
+    });
+  });
+
+  describe('createManualCv', () => {
+    const manualDoc = {
+      ...mockDoc,
+      name: 'Untitled CV',
+      fileName: null,
+      fileSize: null,
+      mimeType: null,
+      storageKey: null,
+      structuredData: mockStructuredData,
+      extractionStatus: 'COMPLETED' as const,
+      manuallyEdited: true,
+    };
+
+    it('consumes CV_BUILDER quota and creates a CvDocument with no file fields', async () => {
+      mockPrisma.subscription.findUnique.mockResolvedValueOnce(null);
+      mockPrisma.cvDocument.create.mockResolvedValueOnce(manualDoc);
+
+      const result = await service.createManualCv(
+        mockStructuredData,
+        'user-id',
+      );
+
+      expect(mockQuotaService.checkAndConsume).toHaveBeenCalledWith(
+        'user-id',
+        'CV_BUILDER',
+        'FREE',
+        expect.any(Date),
+        null,
+        false,
+      );
+      expect(mockPrisma.cvDocument.create).toHaveBeenCalledWith({
+        data: {
+          userId: 'user-id',
+          name: 'Untitled CV',
+          fileName: null,
+          fileSize: null,
+          mimeType: null,
+          storageKey: null,
+          parsedText: null,
+          parseStatus: 'COMPLETED',
+          structuredData: mockStructuredData,
+          extractionStatus: 'COMPLETED',
+          manuallyEdited: true,
+          isActive: true,
+        },
+      });
+      expect(result).toEqual(manualDoc);
+    });
+
+    it('stores the provided name and keeps it out of structuredData', async () => {
+      mockPrisma.subscription.findUnique.mockResolvedValueOnce(null);
+      mockPrisma.cvDocument.create.mockResolvedValueOnce({
+        ...manualDoc,
+        name: 'My CV',
+      });
+
+      const result = await service.createManualCv(
+        { ...mockStructuredData, name: 'My CV' },
+        'user-id',
+      );
+
+      const [{ data }] = mockPrisma.cvDocument.create.mock.calls[0] as [
+        { data: { name: string; structuredData: Record<string, unknown> } },
+      ];
+      expect(data.name).toBe('My CV');
+      expect(data.structuredData).toEqual(mockStructuredData);
+      expect(data.structuredData).not.toHaveProperty('name');
+      expect(result.name).toBe('My CV');
+    });
+
+    it('propagates ForbiddenException when quota is exceeded', async () => {
+      mockPrisma.subscription.findUnique.mockResolvedValueOnce(null);
+      mockQuotaService.checkAndConsume.mockRejectedValueOnce(
+        new ForbiddenException({ code: 'QUOTA_EXCEEDED' }),
+      );
+
+      await expect(
+        service.createManualCv(mockStructuredData, 'user-id'),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.cvDocument.create).not.toHaveBeenCalled();
+    });
+
+    it('propagates ForbiddenException when the feature is not available on the tier', async () => {
+      mockPrisma.subscription.findUnique.mockResolvedValueOnce(null);
+      mockQuotaService.checkAndConsume.mockRejectedValueOnce(
+        new ForbiddenException({ code: 'FEATURE_NOT_AVAILABLE' }),
+      );
+
+      await expect(
+        service.createManualCv(mockStructuredData, 'user-id'),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrisma.cvDocument.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('renameCv', () => {
+    it('renames a CV owned by the user and returns the updated document', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce({
+        userId: 'user-id',
+      });
+      const renamedDoc = { ...mockDoc, name: 'New name' };
+      mockPrisma.cvDocument.update.mockResolvedValueOnce(renamedDoc);
+
+      const result = await service.renameCv('doc-id', 'New name', 'user-id');
+
+      expect(mockPrisma.cvDocument.findUnique).toHaveBeenCalledWith({
+        where: { id: 'doc-id' },
+        select: { userId: true },
+      });
+      expect(mockPrisma.cvDocument.update).toHaveBeenCalledWith({
+        where: { id: 'doc-id' },
+        data: { name: 'New name' },
+      });
+      expect(result).toEqual(renamedDoc);
+    });
+
+    it('throws NotFoundException when document does not exist', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(null);
+
+      await expect(
+        service.renameCv('missing-id', 'New name', 'user-id'),
+      ).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.cvDocument.update).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFoundException when document belongs to another user', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce({
+        userId: 'other-user',
+      });
+
+      await expect(
+        service.renameCv('doc-id', 'New name', 'user-id'),
+      ).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.cvDocument.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateStructuredData', () => {
+    it('overwrites structuredData and sets manuallyEdited to true for the owner', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(mockDoc);
+      const updatedDoc = {
+        ...mockDoc,
+        structuredData: mockStructuredData,
+        manuallyEdited: true,
+      };
+      mockPrisma.cvDocument.update.mockResolvedValueOnce(updatedDoc);
+
+      const result = await service.updateStructuredData(
+        'doc-id',
+        mockStructuredData,
+        'user-id',
+      );
+
+      expect(mockPrisma.cvDocument.update).toHaveBeenCalledWith({
+        where: { id: 'doc-id' },
+        data: {
+          structuredData: mockStructuredData,
+          manuallyEdited: true,
+        },
+      });
+      expect(mockQuotaService.checkAndConsume).not.toHaveBeenCalled();
+      expect(result).toEqual(updatedDoc);
+    });
+
+    it('throws NotFoundException when document does not exist', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce(null);
+
+      await expect(
+        service.updateStructuredData(
+          'missing-id',
+          mockStructuredData,
+          'user-id',
+        ),
+      ).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.cvDocument.update).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFoundException when document belongs to another user', async () => {
+      mockPrisma.cvDocument.findUnique.mockResolvedValueOnce({
+        ...mockDoc,
+        userId: 'other-user',
+      });
+
+      await expect(
+        service.updateStructuredData('doc-id', mockStructuredData, 'user-id'),
+      ).rejects.toThrow(NotFoundException);
+      expect(mockPrisma.cvDocument.update).not.toHaveBeenCalled();
     });
   });
 });

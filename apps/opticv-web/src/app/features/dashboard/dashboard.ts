@@ -8,7 +8,9 @@ import {
   PLATFORM_ID,
   signal,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { TabsModule } from 'primeng/tabs';
+import { ButtonModule } from 'primeng/button';
 import { CvFileList } from './components/cv-file-list/cv-file-list';
 import { OptimizationList } from './components/optimization-list/optimization-list';
 import { CvStore } from '../../core/stores/cv.store';
@@ -23,16 +25,21 @@ import { DatePipe, isPlatformBrowser } from '@angular/common';
 import { CvApiService } from '../../core/services/cv-api.service';
 import { PlanUsageStore } from '../../core/stores/plan-usage.store';
 import { UsageMeter } from '../../shared/usage-meter/usage-meter';
+import { RenameCvDialog } from './components/rename-cv-dialog/rename-cv-dialog';
+import { getCvSource, getErrorMessage } from '../../shared/utils';
 
 @Component({
   selector: 'app-dashboard',
   imports: [
+    RouterLink,
     TabsModule,
+    ButtonModule,
     CvFileList,
     OptimizationList,
     ConfirmDialogModule,
     DatePipe,
     UsageMeter,
+    RenameCvDialog,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
@@ -59,6 +66,9 @@ export class Dashboard implements OnInit {
   readonly optimizationsError = signal<string | null>(null);
 
   lastActivityTime = signal<Date | null>(null);
+
+  readonly renameTarget = signal<CvDocumentListItem | null>(null);
+  readonly renaming = signal(false);
 
   constructor() {
     effect(() => {
@@ -109,7 +119,7 @@ export class Dashboard implements OnInit {
             page: 'dashboard',
             button_icon: 'download',
             file_id: file.id,
-            file_name: file.fileName,
+            cv_source: getCvSource(file),
           });
         }
       },
@@ -137,7 +147,7 @@ export class Dashboard implements OnInit {
           page: 'dashboard',
           button_icon: 'trash',
           file_id: file.id,
-          file_name: file.fileName,
+          cv_source: getCvSource(file),
         });
         this.cvApiService
           .deleteCv(file.id)
@@ -165,6 +175,54 @@ export class Dashboard implements OnInit {
           });
       },
     });
+  }
+
+  openRenameDialog(file: CvDocumentListItem): void {
+    this.renameTarget.set(file);
+  }
+
+  closeRenameDialog(): void {
+    if (this.renaming()) return;
+    this.renameTarget.set(null);
+  }
+
+  renameCv(name: string): void {
+    const target = this.renameTarget();
+    if (!target || this.renaming()) return;
+
+    this.renaming.set(true);
+    this.cvApiService
+      .renameCv(target.id, name)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (doc) => {
+          this.cvStore.updateCvList(
+            this.cvFiles().map((f) =>
+              f.id === doc.id
+                ? { ...f, name: doc.name, updatedAt: doc.updatedAt }
+                : f,
+            ),
+          );
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Success',
+            detail: 'CV renamed successfully.',
+          });
+          this.renaming.set(false);
+          this.renameTarget.set(null);
+        },
+        error: (err) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Rename failed',
+            detail: getErrorMessage(
+              err,
+              'Renaming CV failed. Please try again.',
+            ),
+          });
+          this.renaming.set(false);
+        },
+      });
   }
 
   onUpgradeClicked(

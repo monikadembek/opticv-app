@@ -1,5 +1,6 @@
 import { Route } from '@angular/router';
 import { guestGuard } from './core/auth/guards/guest-guard';
+import { unsavedChangesGuard } from './core/guards/unsaved-changes.guard';
 import { authGuard } from './core/auth/guards/auth-guard';
 
 export const appRoutes: Route[] = [
@@ -46,6 +47,20 @@ export const appRoutes: Route[] = [
         (m) => m.CvOptimization,
       ),
     canActivate: [authGuard],
+  },
+  {
+    path: 'cv-builder/:id',
+    loadComponent: () =>
+      import('./features/cv-builder/cv-builder').then((m) => m.CvBuilder),
+    canActivate: [authGuard],
+    canDeactivate: [unsavedChangesGuard],
+  },
+  {
+    path: 'cv-builder',
+    loadComponent: () =>
+      import('./features/cv-builder/cv-builder').then((m) => m.CvBuilder),
+    canActivate: [authGuard],
+    canDeactivate: [unsavedChangesGuard],
   },
   {
     path: 'settings',

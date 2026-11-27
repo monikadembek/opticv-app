@@ -1,0 +1,91 @@
+<div class="education-list">
+  @for (item of items(); track $index; let i = $index) {
+  <div class="education-item">
+    <div class="education-item-header">
+      <span class="education-item-title">Education {{ i + 1 }}</span>
+      <button
+        type="button"
+        class="icon-btn"
+        [attr.aria-label]="'Remove education entry ' + (i + 1)"
+        title="Remove education entry"
+        (click)="removeItem(i)"
+      >
+        <i class="pi pi-trash" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <div class="field-grid">
+      <div class="field">
+        <label [for]="'edu-degree-' + i">Degree</label>
+        <input
+          pInputText
+          [id]="'edu-degree-' + i"
+          type="text"
+          [ngModel]="item.degree"
+          (ngModelChange)="updateField(i, 'degree', $event)"
+        />
+      </div>
+      <div class="field">
+        <label [for]="'edu-institution-' + i">Institution</label>
+        <input
+          pInputText
+          [id]="'edu-institution-' + i"
+          type="text"
+          [ngModel]="item.institution"
+          (ngModelChange)="updateField(i, 'institution', $event)"
+        />
+      </div>
+      <div class="field">
+        <label [for]="'edu-field-' + i">Field of study</label>
+        <input
+          pInputText
+          [id]="'edu-field-' + i"
+          type="text"
+          [ngModel]="item.field"
+          (ngModelChange)="updateField(i, 'field', $event)"
+        />
+      </div>
+      <div class="field">
+        <label [for]="'edu-location-' + i">Location</label>
+        <input
+          pInputText
+          [id]="'edu-location-' + i"
+          type="text"
+          [ngModel]="item.location"
+          (ngModelChange)="updateField(i, 'location', $event)"
+        />
+      </div>
+      <div class="field">
+        <label [for]="'edu-start-' + i">Start date</label>
+        <input
+          pInputText
+          [id]="'edu-start-' + i"
+          type="text"
+          placeholder="e.g. 2015-10"
+          [ngModel]="item.startDate"
+          (ngModelChange)="updateField(i, 'startDate', $event)"
+        />
+      </div>
+      <div class="field">
+        <label [for]="'edu-end-' + i">End date</label>
+        <input
+          pInputText
+          [id]="'edu-end-' + i"
+          type="text"
+          placeholder="e.g. 2019-06"
+          [ngModel]="item.endDate"
+          (ngModelChange)="updateField(i, 'endDate', $event)"
+        />
+      </div>
+    </div>
+  </div>
+  }
+
+  <p-button
+    label="Add education"
+    icon="pi pi-plus"
+    size="small"
+    outlined="true"
+    (onClick)="addItem()"
+  />
+</div>

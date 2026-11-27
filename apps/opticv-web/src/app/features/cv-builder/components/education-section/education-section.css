@@ -1,0 +1,57 @@
+.education-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 16px);
+}
+
+.education-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 12px);
+  padding: var(--space-4, 16px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 8px);
+}
+
+.education-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.education-item-title {
+  font-weight: var(--weight-semibold);
+  color: var(--text-strong);
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3, 12px);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 4px);
+}
+
+.field label {
+  font-size: var(--text-sm);
+  color: var(--text-body);
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: var(--space-1, 4px);
+}
+
+.icon-btn:hover {
+  color: var(--critical);
+}

@@ -48,15 +48,17 @@ export class CvA4Preview implements AfterViewInit {
   private readonly destroyRef = inject(DestroyRef);
 
   private observer: ResizeObserver | null = null;
-  private pendingMeasure = false;
+  private viewReady = false;
 
   constructor() {
     effect(() => {
       this.cv();
       this.templateId();
       this.accentColor();
-      this.pendingMeasure = true;
       this.measuring.set(true);
+      if (this.viewReady && isPlatformBrowser(this.platformId)) {
+        this.doMeasure();
+      }
     });
   }
 
@@ -66,12 +68,15 @@ export class CvA4Preview implements AfterViewInit {
       return;
     }
 
-    this.observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (entry.contentRect.height > 0 && this.pendingMeasure) {
-        this.pendingMeasure = false;
-        this.doMeasure();
-      }
+    this.viewReady = true;
+    this.doMeasure();
+
+    // Fallback for size changes not driven by cv/templateId/accentColor
+    // (e.g. late-loading web fonts, container resize) — re-measures without
+    // depending on it as the sole trigger for edits, since ResizeObserver
+    // never fires when two consecutive renders happen to have equal height.
+    this.observer = new ResizeObserver(() => {
+      if (this.viewReady) this.doMeasure();
     });
 
     this.observer.observe(this.hiddenContainer().nativeElement);
@@ -83,7 +88,8 @@ export class CvA4Preview implements AfterViewInit {
   }
 
   private doMeasure(): void {
-    document.fonts.ready.then(() => {
+    const fontsReady = document.fonts?.ready ?? Promise.resolve();
+    fontsReady.then(() => {
       requestAnimationFrame(() => {
         const el = this.hiddenContainer().nativeElement;
         const scrollHeight = el.scrollHeight;

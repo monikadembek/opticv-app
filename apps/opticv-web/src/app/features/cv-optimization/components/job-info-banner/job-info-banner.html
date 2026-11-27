@@ -15,14 +15,14 @@
     }
   </div>
 
-  @if (jobApplication().cvDocument.fileName) {
+  @if (jobApplication().cvDocument.name) {
   <button
     type="button"
     (click)="openCv.emit()"
     class="job-banner-cv-btn"
-    [attr.aria-label]="'Open ' + jobApplication().cvDocument.fileName"
+    [attr.aria-label]="'Open ' + jobApplication().cvDocument.name"
   >
-    <i class="pi pi-file"></i>{{ jobApplication().cvDocument.fileName }}
+    <i class="pi pi-file"></i>{{ jobApplication().cvDocument.name }}
   </button>
   }
   <br />

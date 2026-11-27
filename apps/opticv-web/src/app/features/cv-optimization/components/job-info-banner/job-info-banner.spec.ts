@@ -14,7 +14,7 @@ const mockJobApplication = {
   notes: null,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
-  cvDocument: { id: 'cv-1', fileName: 'my-cv.pdf' },
+  cvDocument: { id: 'cv-1', name: 'my-cv' },
 };
 
 describe('JobInfoBanner', () => {
@@ -41,10 +41,11 @@ describe('JobInfoBanner', () => {
     expect(fixture.nativeElement.textContent).toContain('Acme Corp');
   });
 
-  it('renders cv file button with fileName', () => {
+  it('renders cv button with the CV name', () => {
     const btn = fixture.nativeElement.querySelector('.job-banner-cv-btn');
     expect(btn).toBeTruthy();
-    expect(btn.textContent).toContain('my-cv.pdf');
+    expect(btn.textContent).toContain('my-cv');
+    expect(btn.getAttribute('aria-label')).toBe('Open my-cv');
   });
 
   it('emits openCv output when cv button is clicked', () => {
@@ -68,7 +69,9 @@ describe('JobInfoBanner', () => {
     fixture.detectChanges();
     const textarea = fixture.nativeElement.querySelector('textarea');
     expect(textarea).toBeTruthy();
-    expect(textarea.textContent.trim()).toContain('Build amazing UIs with Angular.');
+    expect(textarea.textContent.trim()).toContain(
+      'Build amazing UIs with Angular.',
+    );
   });
 
   it('shows "Hide job description" after toggling open', () => {
@@ -86,17 +89,21 @@ describe('JobInfoBanner', () => {
     expect(fixture.nativeElement.querySelector('textarea')).toBeNull();
   });
 
-  it('does not render cv button when fileName is empty', () => {
+  it('does not render cv button when the CV name is empty', () => {
     fixture.componentRef.setInput('jobApplication', {
       ...mockJobApplication,
-      cvDocument: { id: 'cv-1', fileName: '' },
+      cvDocument: { id: 'cv-1', name: '' },
     });
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.job-banner-cv-btn')).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('.job-banner-cv-btn'),
+    ).toBeNull();
   });
 
   it('sets section-JOB_POSTING id on root element', () => {
-    const root = fixture.nativeElement.querySelector('[data-section="JOB_POSTING"]');
+    const root = fixture.nativeElement.querySelector(
+      '[data-section="JOB_POSTING"]',
+    );
     expect(root).toBeTruthy();
     expect(root.id).toBe('section-JOB_POSTING');
   });

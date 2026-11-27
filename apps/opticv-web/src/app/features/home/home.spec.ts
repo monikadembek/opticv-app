@@ -10,12 +10,17 @@ import { CvStore } from '../../core/stores/cv.store';
 
 const mockCv: CvDocumentListItem = {
   id: 'cv-id-1',
+  name: 'my-cv',
   fileName: 'my-cv.pdf',
   fileSize: 2048,
   mimeType: 'application/pdf',
+  storageKey: 'uploads/user-id/uuid.pdf',
   createdAt: new Date('2024-01-01').toISOString(),
+  updatedAt: new Date('2024-01-01').toISOString(),
   parsedText: null,
   parseStatus: 'COMPLETED',
+  extractionStatus: 'COMPLETED',
+  manuallyEdited: false,
 };
 
 function makeSupabaseMock(loggedIn = false) {
@@ -30,7 +35,10 @@ describe('Home', () => {
   let router: Router;
   let cvApiService: { getUserCvs: ReturnType<typeof vi.fn> };
 
-  async function createComponent(loggedIn = false, cvList: CvDocumentListItem[] = [mockCv]) {
+  async function createComponent(
+    loggedIn = false,
+    cvList: CvDocumentListItem[] = [mockCv],
+  ) {
     TestBed.resetTestingModule();
     cvApiService = { getUserCvs: vi.fn().mockReturnValue(of(cvList)) };
 
